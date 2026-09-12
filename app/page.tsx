@@ -1,23 +1,27 @@
 "use client";
-import {useState,useEffect,useRef} from "react";
-export default function ChitPix(){
-const USERS=[{n:"You",l:"Y",c:"from-orange-400 to-pink-500",on:true},{n:"Maya",l:"M",c:"from-orange-400 to-pink-500",on:true},{n:"Leo",l:"L",c:"from-emerald-400 to-cyan-400",on:true},{n:"Ava",l:"A",c:"from-fuchsia-500 to-purple-600",on:false},{n:"Kai",l:"K",c:"from-orange-400 to-pink-500",on:true}];
-const [tab,setTab]=useState("home");
-const [posts,setPosts]=useState<any[]>(()=>{if(typeof window!=="undefined"){let s=localStorage.getItem("cpv2");return s?JSON.parse(s):[]}return[]});
-const [cap,setCap]=useState("");const [q,setQ]=useState("");
-const [msgs,setMsgs]=useState([{u:"Maya",t:"Heyy! Welcome 🔥",time:"3:32 AM"},{u:"Leo",t:"Drop a pic, feed is live",time:"3:32 AM"},{u:"You",t:"This dark theme is gorgeous 😍",me:true,time:"3:32 AM"}]);
-const [inp,setInp]=useState("");const ref=useRef<any>(null);
-useEffect(()=>localStorage.setItem("cpv2",JSON.stringify(posts)),[posts]);
-useEffect(()=>ref.current?.scrollIntoView({behavior:"smooth"}),[msgs,posts]);
-const add=(d:any,ty:any)=>{setPosts([{id:Date.now(),data:d,type:ty,cap},...posts]);setCap("");setTab("home")};
-const send=()=>{if(!inp.trim())return;setMsgs([...msgs,{u:"You",t:inp,me:true,time:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}]);setInp("")};
-return(<div className="h-[100dvh] bg-black text-white flex flex-col">
-<div className="flex gap-4 p-4 overflow-x-auto border-b border-zinc-800">{USERS.map((u:any)=>(<div key={u.n} className="flex flex-col items-center gap-1 min-w-[58px]"><div className={`w-14 h-14 rounded-full bg-gradient-to-br ${u.c} p-[2.5px]`}><div className="w-full h-full rounded-full bg-black flex items-center justify-center relative"><b>{u.l}</b><span className={`absolute -bottom-0 -right-0 w-3 h-3 rounded-full border-2 border-black ${u.on?'bg-green-400':'bg-yellow-500'}`}></span></div></div><span className="text-[11px] text-zinc-400">{u.n}</span></div>))}</div>
-<div className="flex justify-around p-2 border-b border-zinc-800 text-sm"><button onClick={()=>setTab("home")} className={tab==="home"?"text-white font-bold":"text-zinc-500"}>Home</button><button onClick={()=>setTab("chat")} className={tab==="chat"?"text-white font-bold":"text-zinc-500"}>Chat</button><button onClick={()=>setTab("add")} className={tab==="add"?"text-white font-bold":"text-zinc-500"}>+ Post</button></div>
-<div className="flex-1 overflow-y-auto">
-{tab==="home"&&<div className="p-3 space-y-4"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search..." className="w-full bg-zinc-900 rounded-full px-4 py-2 text-sm outline-none"/>{posts.filter(p=>p.cap.toLowerCase().includes(q.toLowerCase())).map(p=>(<div key={p.id} className="bg-zinc-900 rounded-2xl p-3">{p.type==="image"?<img src={p.data} className="rounded-xl w-full"/>:<video src={p.data} controls className="rounded-xl w-full"/>}<p className="mt-2 text-sm">{p.cap}</p></div>))}{posts.length===0&&<p className="text-center text-zinc-500 mt-10">No posts yet - Add one!</p>}</div>}
-{tab==="chat"&&<div className="p-3 space-y-3">{msgs.map((m:any,i)=>(<div key={i} className={`flex ${m.me?'justify-end':'justify-start'}`}><div className={`max-w-[75%] rounded-[20px] px-4 py-2.5 text-[14px] ${m.me?'bg-gradient-to-br from-fuchsia-500 to-pink-500 rounded-br-md':'bg-zinc-900 rounded-bl-md'}`}>{!m.me&&<p className="text-xs font-bold text-pink-400">{m.u}</p>}<p>{m.t}</p><p className="text-[10px] opacity-60 text-right mt-1">{m.time}</p></div></div>))}<div ref={ref}></div></div>}
-{tab==="add"&&<div className="p-6"><h2 className="font-bold text-lg mb-3">Create Post</h2><input value={cap} onChange={e=>setCap(e.target.value)} placeholder="Caption..." className="w-full bg-zinc-900 rounded-xl px-4 py-3 mb-4 outline-none"/><div className="grid grid-cols-2 gap-3"><label className="bg-zinc-900 rounded-xl p-6 text-center cursor-pointer">📷 Photo<input type="file" hidden accept="image/*" onChange={e=>{let f=e.target.files?.[0];if(f){let r=new FileReader();r.onload=()=>add(r.result,"image");r.readAsDataURL(f);}}}/></label><label className="bg-zinc-900 rounded-xl p-6 text-center cursor-pointer">🎥 Video<input type="file" hidden accept="video/*" onChange={e=>{let f=e.target.files?.[0];if(f){let r=new FileReader();r.onload=()=>add(r.result,"video");r.readAsDataURL(f);}}}/></label></div></div>}
-</div>
-{tab==="chat"&&<div className="p-3 bg-zinc-950 border-t border-zinc-800 flex gap-2"><input value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Message..." className="flex-1 bg-zinc-900 rounded-full px-4 py-3 text-sm outline-none"/><button onClick={send} className="w-12 h-12 rounded-full bg-gradient-to-br from-fuchsia-500 to-pink-500 flex items-center justify-center">➤</button></div>}
-</div>)}
+import { useState, useEffect, useRef } from "react";
+export default function ChitPix() {
+  const USERS = [{ n: "You", l: "Y", c: "from-yellow-400 to-pink-500" }, { n: "Mahesh", l: "M", c: "from-blue-500 to-cyan-400" }, { n: "Sravani", l: "S", c: "from-purple-500 to-pink-500" }];
+  const [tab, setTab] = useState("home");
+  const [posts, setPosts] = useState<any[]>([{ id: 1, u: 1, cap: "First post on ChitPix 🔥 Welcome!", like: 12, liked: false }]);
+  const [cap, setCap] = useState("");
+  const [msgs, setMsgs] = useState([{ u: 1, t: "Hey bro! ChitPix ready ah?" }]);
+  const [inp, setInp] = useState("");
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { ref.current?.scrollIntoView({ behavior: "smooth" }) }, [msgs]);
+  const addPost = () => {
+    if (!cap.trim()) return;
+    setPosts([{ id: Date.now(), u: 0, cap, like: 0, liked: false },...posts]);
+    setCap(""); setTab("home");
+  };
+  const like = (id: number) => {
+    setPosts(posts.map(p => p.id === id? {...p, liked:!p.liked, like: p.liked? p.like - 1 : p.like + 1 } : p));
+  };
+  return (
+    <div className="min-h-[100dvh] bg-black text-white flex flex-col max-w-[480px] mx-auto border-x border-zinc-900">
+      <div className="sticky top-0 z-20 bg-black/90 backdrop-blur-md border-b border-zinc-900 p-3 flex justify-between items-center">
+        <h1 className="text-[22px] font-black tracking-tighter">ChitPix</h1>
+        <div className="flex gap-2">
+          <button onClick={() => setTab("home")} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium border ${tab === 'home'? 'bg-white text-black border-white' : 'bg-zinc-900 border-zinc-800'}`}>Home</button>
+          <button onClick={() => setTab("chat")} className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium border ${tab === 'chat'? 'bg-white text-black border-white' : 'bg-zinc-900 border-zinc-800'}`}>Chat</
