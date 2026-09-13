@@ -1,24 +1,51 @@
 "use client";
-import {useState,useEffect,useRef} from "react";
+import {useState,useEffect,useRef} from "react"
+
 export default function ChitPix(){
-const USERS=[{n:"You",l:"Y",c:"from-yellow-400 to-pink-500"},{n:"Mahesh",l:"M",c:"from-blue-500 to-cyan-400"},{n:"Sravani",l:"S",c:"from-purple-500 to-pink-500"}];
-const[tab,setTab]=useState("home");
-const[posts,setPosts]=useState([{id:1,u:1,cap:"First post on ChitPix 🔥",like:12,liked:false}]);
-const[cap,setCap]=useState("");const[msgs,setMsgs]=useState([{u:1,t:"Hey bro! ChitPix ready ah?"}]);
-const[inp,setInp]=useState("");const ref=useRef<HTMLDivElement>(null);
-useEffect(()=>{ref.current?.scrollIntoView({behavior:"smooth"})},[msgs]);
-return(<div className="min-h-[100dvh] bg-black text-white flex flex-col max-w-[480px] mx-auto border-x border-zinc-900">
-<div className="sticky top-0 z-20 bg-black border-b border-zinc-900 p-3 flex justify-between items-center">
-<h1 className="text-[22px] font-black">ChitPix</h1>
-<div className="flex gap-2">
-<button onClick={()=>setTab("home")} className={`px-3.5 py-1.5 rounded-full text-[13px] border ${tab==='home'?'bg-white text-black':'bg-zinc-900 border-zinc-800'}`}>Home</button>
-<button onClick={()=>setTab("chat")} className={`px-3.5 py-1.5 rounded-full text-[13px] border ${tab==='chat'?'bg-white text-black':'bg-zinc-900 border-zinc-800'}`}>Chat</button>
-<button onClick={()=>setTab("post")} className="px-3.5 py-1.5 rounded-full text-[13px] bg-white text-black font-bold">+ Post</button>
-</div></div>
-<div className="flex-1 overflow-auto">
-{tab==='post'&&<div className="p-4 space-y-4"><textarea value={cap} onChange={e=>setCap(e.target.value)} placeholder="What's happening? ✨" className="w-full h-32 bg-zinc-900 border border-zinc-800 rounded-2xl p-4 outline-none"/><button onClick={()=>{if(!cap.trim())return;setPosts([{id:Date.now(),u:0,cap,like:0,liked:false},...posts]);setCap("");setTab("home")}} className="w-full py-3 bg-white text-black rounded-full font-bold">Share Post</button></div>}
-{tab==='home'&&<div><div className="flex gap-4 p-4 overflow-x-auto border-b border-zinc-900">{USERS.map((u,i)=><div key={i} className="flex flex-col items-center gap-1.5 shrink-0"><div className={`w-[60px] h-[60px] rounded-full bg-gradient-to-br ${u.c} p-[2px]`}><div className="w-full h-full rounded-full bg-black flex items-center justify-center font-bold">{u.l}</div></div><span className="text-[11px] text-zinc-400">{u.n}</span></div>)}</div><div className="divide-y divide-zinc-900">{posts.map(p=>{const u=USERS[p.u];return(<div key={p.id} className="p-4"><div className="flex items-center gap-2 mb-3"><div className={`w-8 h-8 rounded-full bg-gradient-to-br ${u.c} flex items-center justify-center font-bold text-[12px]`}>{u.l}</div><span className="font-semibold text-[14px]">{u.n}</span></div><p className="text-[14px] mb-3">{p.cap}</p><div className="flex gap-4 text-[13px]"><button onClick={()=>setPosts(posts.map(x=>x.id===p.id?{...x,liked:!x.liked,like:x.liked?x.like-1:x.like+1}:x))} className={p.liked?'text-red-500 font-bold':'text-zinc-400'}>❤️ {p.like} Like</button><button className="text-zinc-400">💬 Comment</button><button className="text-zinc-400">↗️ Share</button></div></div>)})}</div></div>}
-{tab==='chat'&&<div className="flex flex-col h-[calc(100dvh-60px)]"><div className="flex-1 p-4 space-y-3 overflow-auto">{msgs.map((m,i)=><div key={i} className={`flex ${m.u===0?'justify-end':''}`}><div className={`px-3.5 py-2 rounded-2xl text-[14px] max-w-[70%] ${m.u===0?'bg-white text-black':'bg-zinc-900 border border-zinc-800'}`}>{m.t}</div></div>)}<div ref={ref}/></div><div className="p-3 border-t border-zinc-900 flex gap-2"><input value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){setMsgs([...msgs,{u:0,t:inp}]);setInp("")}}} placeholder="Message..." className="flex-1 bg-zinc-900 border border-zinc-800 rounded-full px-4 py-2.5 outline-none"/><button onClick={()=>{if(!inp.trim())return;setMsgs([...msgs,{u:0,t:inp}]);setInp("")}} className="px-5 bg-white text-black rounded-full font-bold">Send</button></div></div>}
+const USERS=[{n:"You",l:"Y",c:"from-orange-400 to-pink-500"},{n:"Ammu",l:"A",c:"from-purple-400 to-pink-500"},{n:"Rahul",l:"R",c:"from-blue-400 to-cyan-400"}]
+const [tab,setTab]=useState("home")
+const [posts,setPosts]=useState([{id:1,u:1,img:"https://picsum.photos/seed/1/600/600",cap:"My first post ❤️ #chitpix",likes:12,liked:false,comments:[]},{id:2,u:2,img:"https://picsum.photos/seed/2/600/800",cap:"Sunset vibes 🌅",likes:45,liked:true,comments:[{u:"Rahul",t:"Nice pic!"}]}])
+const [cap,setCap]=useState("");const [showNew,setShowNew]=useState(false)
+const [inp,setInp]=useState("");const [msgs,setMsgs]=useState([{f:0,t:"hi"},{f:1,t:"Hey! 😍"}])
+const ref=useRef<HTMLDivElement>(null)
+useEffect(()=>{ref.current?.scrollTo(0,99999)},[msgs,tab])
+
+return(<div className="min-h-[100dvh] bg-white text-black flex flex-col">
+<div className="sticky top-0 z-20 bg-white border-b flex items-center justify-between px-4 py-3">
+<h1 className="text-[26px] font-black tracking-tight" style={{fontFamily:"cursive"}}>ChitPix</h1>
+<div className="flex gap-4 text-[22px]"><span onClick={()=>setTab("chat")}>💬</span><span onClick={()=>setTab("profile")}>👤</span></div>
 </div>
-<div className="sticky bottom-0 bg-black border-t border-zinc-900 flex justify-around py-2.5"><button onClick={()=>setTab("home")} className="text-xl">🏠</button><button className="text-xl">🔍</button><button onClick={()=>setTab("post")} className="text-xl">➕</button><button className="text-xl">🎬</button><button className="text-xl">👤</button></div>
+
+{tab==="home" && <div className="flex-1 max-w-[480px] w-full mx-auto">
+<div className="flex gap-4 p-3 overflow-x-auto border-b">
+{USERS.map((u,i)=><div key={i} className="flex flex-col items-center"><div className={`w-16 h-16 rounded-full bg-gradient-to-br ${u.c} p-[3px]`}><div className="w-full h-full bg-white rounded-full flex items-center justify-center font-bold">{u.l}</div></div><span className="text-[11px] mt-1">{u.n}</span></div>)}
+</div>
+{posts.map(p=><div key={p.id} className="border-b pb-3">
+<div className="flex items-center gap-2 p-3"><div className={`w-8 h-8 rounded-full bg-gradient-to-br ${USERS[p.u].c} flex items-center justify-center text-white font-bold text-sm`}>{USERS[p.u].l}</div><b className="text-[14px]">{USERS[p.u].n}</b></div>
+<img src={p.img} className="w-full"/>
+<div className="flex gap-4 px-3 py-2 text-[22px]"><span onClick={()=>{setPosts(posts.map(x=>x.id===p.id?{...x,liked:!x.liked,likes:x.liked?x.likes-1:x.likes+1}:x))}}>{p.liked?"❤️":"🤍"}</span><span>💬</span><span>✈️</span></div>
+<div className="px-3 text-[14px]"><b>{p.likes} likes</b><div><b>{USERS[p.u].n}</b> {p.cap}</div>{p.comments.map((c:any,j:number)=><div key={j} className="text-[13px]"><b>{c.u}</b> {c.t}</div>)}</div>
 </div>)}
+</div>}
+
+{tab==="chat" && <div className="flex-1 flex flex-col max-w-[480px] w-full mx-auto bg-white">
+<div className="p-3 border-b font-bold">Messages</div>
+<div ref={ref} className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#fafafa]">
+{msgs.map((m,i)=><div key={i} className={`max-w-[75%] p-3 rounded-[18px] text-[14px] ${m.f===0?"ml-auto bg-[#0095f6] text-white rounded-br-[4px]":"bg-white border rounded-bl-[4px]"}`}>{m.t}</div>)}
+</div>
+<div className="p-3 border-t flex gap-2"><input value={inp} onChange={e=>setInp(e.target.value)} placeholder="Message..." className="flex-1 bg-[#efefef] rounded-full px-4 py-2 text-[14px] outline-none"/><button onClick={()=>{if(!inp)return;setMsgs([...msgs,{f:0,t:inp}]);setInp("")}} className="text-[#0095f6] font-bold text-[14px]">Send</button></div>
+</div>}
+
+{tab==="profile" && <div className="flex-1 max-w-[480px] w-full mx-auto p-6 text-center"><div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 mx-auto flex items-center justify-center text-white text-[30px] font-bold">Y</div><h2 className="mt-3 font-bold text-[18px]">You</h2><div className="grid grid-cols-3 gap-1 mt-6">{posts.filter(p=>p.u===0).map(p=><img key={p.id} src={p.img} className="aspect-square object-cover"/>)}</div></div>}
+
+<div className="sticky bottom-0 bg-white border-t flex justify-around py-3 text-[22px] max-w-[480px] w-full mx-auto">
+<span onClick={()=>setTab("home")} className={tab==="home"?"font-black":""}>🏠</span>
+<span>🔍</span>
+<span onClick={()=>setShowNew(true)} className="text-[26px]">➕</span>
+<span onClick={()=>setTab("chat")}>💬</span>
+<span onClick={()=>setTab("profile")}>👤</span>
+</div>
+
+{showNew && <div className="fixed inset-0 z-50 bg-white p-4 flex flex-col"><div className="flex justify-between items-center mb-4"><button onClick={()=>setShowNew(false)}>✕</button><b>New Post</b><button onClick={()=>{if(!cap)return;setPosts([{id:Date.now(),u:0,img:`https://picsum.photos/seed/${Date.now()}/600/600`,cap,likes:0,liked:false,comments:[]},...posts]);setCap("");setShowNew(false);setTab("home")}} className="text-[#0095f6] font-bold">Share</button></div><textarea value={cap} onChange={e=>setCap(e.target.value)} placeholder="Write a caption..." className="flex-1 border rounded p-3 outline-none"/><img src={`https://picsum.photos/seed/${Date.now()}/600/600`} className="mt-4 rounded"/></div>}
+</div>)
+                                           }
