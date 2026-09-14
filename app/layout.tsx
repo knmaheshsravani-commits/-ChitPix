@@ -20,7 +20,7 @@ export default function RootLayout({
         <meta name="theme-color" content="#000000" />
         <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/174/174855.png" />
       </head>
-      <body>{children}</body>
+      <body style={{margin:0}}>{children}</body>
     </html>
   );
 }
