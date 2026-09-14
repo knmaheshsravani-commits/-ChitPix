@@ -10,29 +10,43 @@ export default function Home() {
   const [imgData, setImgData] = useState("")
   const [cmt, setCmt] = useState<{[key:number]:string}>({})
   const [showCmt, setShowCmt] = useState<{[key:number]:boolean}>({})
+  const [stories, setStories] = useState<any[]>([
+    { user: "mahesh-07", img: "https://picsum.photos/500/500?10", seen: false },
+    { user: "sravani", img: "https://picsum.photos/500/500?11", seen: false },
+  ])
+  const [viewStory, setViewStory] = useState<any>(null)
 
   useEffect(() => {
     const u = localStorage.getItem("chitpix_user")
     if (!u) window.location.href = "/login"
     else setUser(u)
-    const s = localStorage.getItem("chitpix_posts_v3")
+    const s = localStorage.getItem("chitpix_posts_final")
     if (s) setPosts(JSON.parse(s))
     else setPosts([
       { id: 1, user: "mahesh-07", img: "https://picsum.photos/500/500?1", cap: "First post 🔥", likes: 12, comments: [{user:"sravani", text:"super bro!"}] },
       { id: 2, user: "sravani", img: "https://picsum.photos/500/500?2", cap: "Nature 🌿", likes: 5, comments: [] },
     ])
+    const st = localStorage.getItem("chitpix_stories")
+    if (st) setStories(JSON.parse(st))
   }, [])
 
   const save = (up:any[]) => {
     setPosts(up)
-    localStorage.setItem("chitpix_posts_v3", JSON.stringify(up))
+    localStorage.setItem("chitpix_posts_final", JSON.stringify(up))
   }
 
-  const onFile = (e: any) => {
+  const onFile = (e: any, type="post") => {
     const file = e.target.files[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => setImgData(reader.result as string)
+    reader.onload = () => {
+      if (type==="post") setImgData(reader.result as string)
+      else {
+        const ns = [{ user, img: reader.result as string, seen: false },...stories]
+        setStories(ns)
+        localStorage.setItem("chitpix_stories", JSON.stringify(ns))
+      }
+    }
     reader.readAsDataURL(file)
   }
 
@@ -44,15 +58,12 @@ export default function Home() {
     setCap(""); setImgData("")
   }
 
-  const like = (id: number) => {
-    save(posts.map(p => p.id === id? {...p, likes: p.likes+1} : p))
-  }
+  const like = (id: number) => save(posts.map(p => p.id === id? {...p, likes: p.likes+1} : p))
 
   const addComment = (id: number) => {
     const txt = cmt[id]
     if (!txt) return
-    const up = posts.map(p => p.id === id? {...p, comments: [...(p.comments||[]), {user, text: txt}]} : p)
-    save(up)
+    save(posts.map(p => p.id === id? {...p, comments: [...(p.comments||[]), {user, text: txt}]} : p))
     setCmt({...cmt, [id]: ""})
   }
 
@@ -68,42 +79,68 @@ export default function Home() {
         </div>
       </div>
 
+      {viewStory && (
+        <div onClick={()=>setViewStory(null)} style={{ position: 'fixed', inset: 0, background: 'black', zIndex: 100, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '15px', display: 'flex', justifyContent: 'space-between' }}>
+            <b>@{viewStory.user}</b>
+            <span onClick={()=>setViewStory(null)} style={{ fontSize: '24px' }}>✕</span>
+          </div>
+          <img src={viewStory.img} style={{ flex: 1, objectFit: 'contain' }} alt="" />
+        </div>
+      )}
+
       {tab === "home" && (
-        <div style={{ maxWidth: '470px', margin: '0 auto', padding: '15px' }}>
-          <div style={{ border: '1px solid #333', padding: '15px', borderRadius: '12px', background: '#111', marginBottom: '20px' }}>
-            <input value={cap} onChange={e=>setCap(e.target.value)} placeholder="What's on your mind?" style={{ width: '100%', padding: '10px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: 'white', marginBottom: '10px' }} />
-            {imgData && <img src={imgData} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} alt="" />}
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <label style={{ flex: 1, background: '#333', padding: '10px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer' }}>📸 Choose Photo<input type="file" accept="image/*" onChange={onFile} style={{ display: 'none' }} /></label>
-              <button onClick={addPost} style={{ flex: 1, background: '#0095f6', padding: '10px', borderRadius: '8px', border: 'none', color: 'white', fontWeight: 'bold' }}>Post</button>
+        <div style={{ maxWidth: '470px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', gap: '15px', padding: '15px', overflowX: 'auto', borderBottom: '1px solid #222' }}>
+            <div style={{ textAlign: 'center', minWidth: '65px' }}>
+              <label style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px dashed #555', cursor: 'pointer', fontSize: '24px' }}>
+                +<input type="file" accept="image/*" onChange={e=>onFile(e,"story")} style={{ display: 'none' }} />
+              </label>
+              <div style={{ fontSize: '12px', marginTop: '5px' }}>Your Story</div>
             </div>
+            {stories.map((s,i)=>(
+              <div key={i} onClick={()=>setViewStory(s)} style={{ textAlign: 'center', minWidth: '65px', cursor: 'pointer' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', padding: '3px', background: s.seen? '#333' : 'linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)' }}>
+                  <img src={s.img} style={{ width: '100%', height: '100%', borderRadius: '50%', border: '3px solid black', objectFit: 'cover' }} alt="" />
+                </div>
+                <div style={{ fontSize: '12px', marginTop: '5px' }}>{s.user}</div>
+              </div>
+            ))}
           </div>
 
-          {posts.map(p => (
-            <div key={p.id} style={{ border: '1px solid #333', borderRadius: '12px', marginBottom: '20px', background: '#111', overflow: 'hidden' }}>
-              <div style={{ padding: '12px', fontWeight: 'bold' }}>@{p.user}</div>
-              <img src={p.img} style={{ width: '100%', height: '400px', objectFit: 'cover' }} alt="" />
-              <div style={{ padding: '12px' }}>
-                <div style={{ display: 'flex', gap: '15px', marginBottom: '8px' }}>
-                  <button onClick={()=>like(p.id)} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'white' }}>❤️ {p.likes}</button>
-                  <button onClick={()=>setShowCmt({...showCmt, [p.id]:!showCmt[p.id]})} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'white' }}>💬 {p.comments?.length||0}</button>
-                </div>
-                <div><b>@{p.user}</b> {p.cap}</div>
-
-                {showCmt[p.id] && (
-                  <div style={{ marginTop: '12px', borderTop: '1px solid #222', paddingTop: '10px' }}>
-                    {p.comments?.map((c:any,i:number)=>(
-                      <div key={i} style={{ marginBottom: '6px', fontSize: '14px' }}><b>@{c.user}</b> {c.text}</div>
-                    ))}
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                      <input value={cmt[p.id]||""} onChange={e=>setCmt({...cmt, [p.id]: e.target.value})} placeholder="Add a comment..." style={{ flex: 1, padding: '8px', background: '#222', border: '1px solid #444', borderRadius: '20px', color: 'white' }} />
-                      <button onClick={()=>addComment(p.id)} style={{ background: '#0095f6', border: 'none', borderRadius: '20px', padding: '0 16px', color: 'white' }}>Post</button>
-                    </div>
-                  </div>
-                )}
+          <div style={{ padding: '15px' }}>
+            <div style={{ border: '1px solid #333', padding: '15px', borderRadius: '12px', background: '#111', marginBottom: '20px' }}>
+              <input value={cap} onChange={e=>setCap(e.target.value)} placeholder="What's on your mind?" style={{ width: '100%', padding: '10px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: 'white', marginBottom: '10px' }} />
+              {imgData && <img src={imgData} style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} alt="" />}
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <label style={{ flex: 1, background: '#333', padding: '10px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer' }}>📸 Choose Photo<input type="file" accept="image/*" onChange={e=>onFile(e,"post")} style={{ display: 'none' }} /></label>
+                <button onClick={addPost} style={{ flex: 1, background: '#0095f6', padding: '10px', borderRadius: '8px', border: 'none', color: 'white', fontWeight: 'bold' }}>Post</button>
               </div>
             </div>
-          ))}
+
+            {posts.map(p => (
+              <div key={p.id} style={{ border: '1px solid #333', borderRadius: '12px', marginBottom: '20px', background: '#111', overflow: 'hidden' }}>
+                <div style={{ padding: '12px', fontWeight: 'bold' }}>@{p.user}</div>
+                <img src={p.img} style={{ width: '100%', height: '400px', objectFit: 'cover' }} alt="" />
+                <div style={{ padding: '12px' }}>
+                  <div style={{ display: 'flex', gap: '15px', marginBottom: '8px' }}>
+                    <button onClick={()=>like(p.id)} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'white' }}>❤️ {p.likes}</button>
+                    <button onClick={()=>setShowCmt({...showCmt, [p.id]:!showCmt[p.id]})} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'white' }}>💬 {p.comments?.length||0}</button>
+                  </div>
+                  <div><b>@{p.user}</b> {p.cap}</div>
+                  {showCmt[p.id] && (
+                    <div style={{ marginTop: '12px', borderTop: '1px solid #222', paddingTop: '10px' }}>
+                      {p.comments?.map((c:any,i:number)=>(<div key={i} style={{ marginBottom: '6px', fontSize: '14px' }}><b>@{c.user}</b> {c.text}</div>))}
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                        <input value={cmt[p.id]||""} onChange={e=>setCmt({...cmt, [p.id]: e.target.value})} placeholder="Add a comment..." style={{ flex: 1, padding: '8px', background: '#222', border: '1px solid #444', borderRadius: '20px', color: 'white' }} />
+                        <button onClick={()=>addComment(p.id)} style={{ background: '#0095f6', border: 'none', borderRadius: '20px', padding: '0 16px', color: 'white' }}>Post</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -135,7 +172,7 @@ export default function Home() {
         <div style={{ maxWidth: '470px', margin: '0 auto', padding: '15px', textAlign: 'center' }}>
           <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: '#333', margin: '20px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>👤</div>
           <h2>@{user}</h2>
-          <p>{posts.filter(p=>p.user===user).length} Posts</p>
+          <p>{posts.filter(p=>p.user===user).length} Posts • {stories.filter(s=>s.user===user).length} Stories</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '3px', marginTop: '20px' }}>
             {posts.filter(p=>p.user===user).map(p=><img key={p.id} src={p.img} style={{ width: '100%', height: '150px', objectFit: 'cover' }} alt="" />)}
           </div>
@@ -150,4 +187,4 @@ export default function Home() {
       </div>
     </div>
   )
-}
+                             }
