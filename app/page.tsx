@@ -15,7 +15,16 @@ export default function Home() {
     { user: "sravani", img: "https://picsum.photos/500/500?11", seen: false },
   ])
   const [viewStory, setViewStory] = useState<any>(null)
-
+     const handleShare = async (p: any) => {
+    const url = `https://chitpix-p6.vercel.app`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'ChitPix', text: `${p.user} ChitPix post 🔥`, url }) } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      alert('✅ Link Copied bro!');
+    }
+     }
+  
   useEffect(() => {
     const u = localStorage.getItem("chitpix_user")
     if (!u) window.location.href = "/login"
@@ -161,7 +170,7 @@ export default function Home() {
               <div style={{ position: 'absolute', bottom: '20px', left: '15px' }}>
                 <div style={{ fontWeight: 'bold' }}>@{p.user}</div>
                 <div>{p.cap}</div>
-                <div>❤️ {p.likes} 💬 {p.comments?.length||0}</div>
+                <div>❤️ {p.likes} 💬 {p.comments?.length||0} <span onClick={()=>handleShare(p)} style={{marginLeft:'10px',cursor:'pointer',fontWeight:'bold'}}>↗️ Share</span></div>
               </div>
             </div>
           ))}
