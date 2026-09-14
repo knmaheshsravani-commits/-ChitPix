@@ -1,78 +1,112 @@
 "use client"
 import { useState, useEffect } from "react"
 
-export default function Home(){
-  const [user,setUser]=useState("")
-  const [posts,setPosts]=useState<any[]>([])
-  const [cap,setCap]=useState("")
-  const [tab,setTab]=useState("home")
-  const [search,setSearch]=useState("")
+export default function Home() {
+  const [user, setUser] = useState("")
+  const [posts, setPosts] = useState<any[]>([])
+  const [cap, setCap] = useState("")
+  const [tab, setTab] = useState("home")
+  const [search, setSearch] = useState("")
 
-  useEffect(()=>{
-    const u=localStorage.getItem("chitpix_user")
-    if(!u) location.href="/login"
+  useEffect(() => {
+    const u = localStorage.getItem("chitpix_user")
+    if (!u) window.location.href = "/login"
     else setUser(u)
-    const s=localStorage.getItem("chitpix_posts")
-    if(s) setPosts(JSON.parse(s))
+    const s = localStorage.getItem("chitpix_posts")
+    if (s) setPosts(JSON.parse(s))
     else setPosts([
-      {id:1,user:"mahesh",img:"https://picsum.photos/400/400?1",cap:"First 🔥",likes:5},
-      {id:2,user:"sravani",img:"https://picsum.photos/400/400?2",cap:"Hi",likes:3}
+      { id: 1, user: "mahesh-07", img: "https://picsum.photos/500/500?1", cap: "First post 🔥", likes: 12 },
+      { id: 2, user: "sravani", img: "https://picsum.photos/500/500?2", cap: "Nature 🌿", likes: 5 },
+      { id: 3, user: "cherry", img: "https://picsum.photos/500/500?3", cap: "ChitPix mass", likes: 8 }
     ])
-  },[])
+  }, [])
 
-  function addPost(){
-    if(!cap) return
-    const n={id:Date.now(),user,img:"https://picsum.photos/400/400?"+Date.now(),cap,likes:0}
-    const up=[n,...posts]
+  const addPost = () => {
+    if (!cap) return
+    const n = { id: Date.now(), user, img: `https://picsum.photos/500/500?${Date.now()}`, cap, likes: 0 }
+    const up = [n, ...posts]
     setPosts(up)
-    localStorage.setItem("chitpix_posts",JSON.stringify(up))
+    localStorage.setItem("chitpix_posts", JSON.stringify(up))
     setCap("")
   }
 
-  function like(id:number){
-    const up=posts.map(p=> p.id===id ? {...p,likes:p.likes+1} : p)
+  const like = (id: number) => {
+    const up = posts.map(p => p.id === id ? { ...p, likes: p.likes + 1 } : p)
     setPosts(up)
-    localStorage.setItem("chitpix_posts",JSON.stringify(up))
+    localStorage.setItem("chitpix_posts", JSON.stringify(up))
   }
 
-  const list=posts.filter(p=> p.user.includes(search) || p.cap.includes(search))
+  const filtered = posts.filter(p => p.user.toLowerCase().includes(search.toLowerCase()) || p.cap.toLowerCase().includes(search.toLowerCase()))
 
-  return(
-    <div style={{background:"black",color:"white",minHeight:"100vh",paddingBottom:"70px"}}>
-      <div style={{padding:"15px",borderBottom:"1px solid #333",display:"flex",justifyContent:"space-between"}}>
-        <h1>ChitPix</h1>
-        <button onClick={()=>{localStorage.removeItem("chitpix_user");location.href="/login"}} style={{background:"red",color:"white",border:"none",padding:"5px 10px",borderRadius:"10px"}}>Logout</button>
+  return (
+    <div style={{ minHeight: '100vh', background: 'black', color: 'white', paddingBottom: '70px' }}>
+      <div style={{ padding: '15px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', position: 'sticky', top: 0, background: 'black', zIndex: 10 }}>
+        <h1 style={{ fontSize: '28px', fontWeight: 'bold' }}>ChitPix</h1>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <span>@{user}</span>
+          <button onClick={() => { localStorage.removeItem("chitpix_user"); location.href = "/login" }} style={{ background: 'red', padding: '6px 14px', borderRadius: '20px', border: 'none', color: 'white' }}>Logout</button>
+        </div>
       </div>
 
-      {tab==="home" && <div style={{maxWidth:"400px",margin:"0 auto",padding:"15px"}}>
-        <input value={cap} onChange={e=>setCap(e.target.value)} placeholder="Caption..." style={{width:"100%",padding:"10px",background:"#222",color:"white",borderRadius:"8px",border:"1px solid #444"}}/>
-        <button onClick={addPost} style={{width:"100%",marginTop:"10px",background:"#0095f6",padding:"10px",borderRadius:"8px",border:"none",color:"white"}}>Post</button>
-        {posts.map(p=><div key={p.id} style={{marginTop:"15px",border:"1px solid #333",borderRadius:"10px",overflow:"hidden",background:"#111"}}>
-          <div style={{padding:"10px"}}>@{p.user}</div>
-          <img src={p.img} style={{width:"100%",height:"350px",objectFit:"cover"}}/>
-          <div style={{padding:"10px"}}><span onClick={()=>like(p.id)}>❤️ {p.likes}</span> {p.cap}</div>
-        </div>)}
-      </div>}
-
-      {tab==="search" && <div style={{padding:"15px",maxWidth:"400px",margin:"0 auto"}}>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search" style={{width:"100%",padding:"12px",background:"#222",color:"white",borderRadius:"10px",border:"1px solid #444"}}/>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:"2px",marginTop:"10px"}}>
-          {list.map(p=><img key={p.id} src={p.img} style={{height:"120px",objectFit:"cover"}}/>)}
+      {tab === "home" && (
+        <div style={{ maxWidth: '470px', margin: '0 auto', padding: '15px' }}>
+          <div style={{ border: '1px solid #333', padding: '15px', borderRadius: '12px', background: '#111', marginBottom: '20px' }}>
+            <input value={cap} onChange={e => setCap(e.target.value)} placeholder="What's on your mind?" style={{ width: '100%', padding: '10px', background: '#222', border: '1px solid #444', borderRadius: '8px', color: 'white', marginBottom: '10px' }} />
+            <button onClick={addPost} style={{ width: '100%', background: '#0095f6', padding: '10px', borderRadius: '8px', border: 'none', color: 'white', fontWeight: 'bold' }}>Post</button>
+          </div>
+          {posts.map(p => (
+            <div key={p.id} style={{ border: '1px solid #333', borderRadius: '12px', marginBottom: '20px', background: '#111', overflow: 'hidden' }}>
+              <div style={{ padding: '12px', fontWeight: 'bold' }}>@{p.user}</div>
+              <img src={p.img} style={{ width: '100%', height: '400px', objectFit: 'cover' }} alt="" />
+              <div style={{ padding: '12px' }}>
+                <button onClick={() => like(p.id)} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'white' }}>❤️ {p.likes}</button>
+                <div style={{ marginTop: '8px' }}><b>@{p.user}</b> {p.cap}</div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>}
+      )}
 
-      {tab==="reels" && <div style={{maxWidth:"400px",margin:"0 auto"}}>
-        {posts.map(p=><div key={p.id} style={{height:"80vh",position:"relative"}}>
-          <img src={p.img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-          <div style={{position:"absolute",bottom:"20px",left:"10px"}}>@{p.user} - {p.cap}<br/>❤️{p.likes}</div>
-        </div>)}
-      </div>}
+      {tab === "search" && (
+        <div style={{ maxWidth: '470px', margin: '0 auto', padding: '15px' }}>
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Search users..." style={{ width: '100%', padding: '12px', background: '#222', border: '1px solid #444', borderRadius: '10px', color: 'white', marginBottom: '15px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '3px' }}>
+            {filtered.map(p => <img key={p.id} src={p.img} style={{ width: '100%', height: '150px', objectFit: 'cover' }} alt="" />)}
+          </div>
+        </div>
+      )}
 
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"black",borderTop:"1px solid #333",display:"flex",justifyContent:"space-around",padding:"12px 0"}}>
-        <button onClick={()=>setTab("home")} style={{background:"none",border:"none",fontSize:"22px"}}>🏠</button>
-        <button onClick={()=>setTab("search")} style={{background:"none",border:"none",fontSize:"22px"}}>🔍</button>
-        <button onClick={()=>setTab("reels")} style={{background:"none",border:"none",fontSize:"22px"}}>🎬</button>
-        <button style={{background:"none",border:"none",fontSize:"22px"}}>👤</button>
+      {tab === "reels" && (
+        <div style={{ maxWidth: '470px', margin: '0 auto' }}>
+          {posts.map(p => (
+            <div key={p.id} style={{ height: '85vh', position: 'relative', background: 'black', marginBottom: '5px' }}>
+              <img src={p.img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+              <div style={{ position: 'absolute', bottom: '20px', left: '15px' }}>
+                <div style={{ fontWeight: 'bold', fontSize: '18px' }}>@{p.user}</div>
+                <div>{p.cap}</div>
+                <div>❤️ {p.likes}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "profile" && (
+        <div style={{ maxWidth: '470px', margin: '0 auto', padding: '15px', textAlign: 'center' }}>
+          <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: '#333', margin: '20px auto', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>👤</div>
+          <h2>@{user}</h2>
+          <p>{posts.filter(p => p.user === user).length} Posts</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '3px', marginTop: '20px' }}>
+            {posts.filter(p => p.user === user).map(p => <img key={p.id} src={p.img} style={{ width: '100%', height: '150px', objectFit: 'cover' }} alt="" />)}
+          </div>
+        </div>
+      )}
+
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#000', borderTop: '1px solid #333', display: 'flex', justifyContent: 'space-around', padding: '12px 0' }}>
+        <button onClick={() => setTab("home")} style={{ background: 'none', border: 'none', color: tab === "home" ? 'white' : '#777', fontSize: '24px' }}>🏠</button>
+        <button onClick={() => setTab("search")} style={{ background: 'none', border: 'none', color: tab === "search" ? 'white' : '#777', fontSize: '24px' }}>🔍</button>
+        <button onClick={() => setTab("reels")} style={{ background: 'none', border: 'none', color: tab === "reels" ? 'white' : '#777', fontSize: '24px' }}>🎬</button>
+        <button onClick={() => setTab("profile")} style={{ background: 'none', border: 'none', color: tab === "profile" ? 'white' : '#777', fontSize: '24px' }}>👤</button>
       </div>
     </div>
   )
