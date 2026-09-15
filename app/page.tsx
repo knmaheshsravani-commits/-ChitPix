@@ -169,9 +169,11 @@ export default function Home() {
               <img src={p.img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
               <div style={{ position: 'absolute', bottom: '20px', left: '15px' }}>
                 <div style={{ fontWeight: 'bold' }}>@{p.user}</div>
-                <div>{p.cap}</div>
-                <div style={{ display: 'flex', gap: '15px' }}><button onClick={()=>setPosts(posts.map(x=>x.id===p.id?{...x, likes:x.likes+1}:x))} style={{ background: 'none', border: 'none', fontSize: '18px' }}>❤️ {p.likes}</button><span>💬 {p.comments?.length||0}</span><button onClick={()=>handleShare(p)} style={{ background: 'none', border: 'none', fontSize: '18px' }}>🚀 Share</button></div>
-              </div>
+                <div style={{fontWeight:'bold'}}>@{p.user}</div>
+<div>{p.cap}</div>
+<div style={{display:'flex',gap:'15px',marginTop:'8px'}}><span>❤️ {p.likes}</span><span>💬 {p.comments?.length||0}</span><button onClick={()=>handleShare(p)} style={{border:'none',background:'none'}}>🚀 Share</button></div>
+                
+              
             </div>
           ))}
         </div>
