@@ -140,8 +140,8 @@ export default function Home() {
                 <img src={p.img} style={{ width: '100%', height: '400px', objectFit: 'cover' }} alt="" />
                 <div style={{ padding: '12px' }}>
                   <div style={{ display: 'flex', gap: '15px', marginBottom: '8px' }}>
-                    <button onClick={()=>like(p.id)} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'white' }}>❤️ {p.likes}</button>
-                    <button onClick={()=>setShowCmt({...showCmt, [p.id]:!showCmt[p.id]})} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'white' }}>💬 {p.comments?.length||0}</button>
+                    color: 'white' }}>❤️ {p.likes}</button><button onClick={()=>handleShare(p)} style={{border:'none', fontSize:'20px', background:'none', marginLeft:'8px', color:'white'}}>🚀</button><button onClick={()=>{const c=prompt('Comment:'); if(c) handleComment(p.id,c)}} style={{border:'none', fontSize:'20px', background:'none', marginLeft:'8px', color:'white'}}>💬 {p.comments?.length||0}</button>
+                    <button onClick={()=>setShowCmt({...showCmt, [p.id]:!showCmt[p.id]})} style={{ background: 'none', border: 'none', fontSize: '20px', color: 'white' }}>💬 {p.comments?.length||0}</button><button onClick={()=>handleShare(p)} style={{border:'none', fontSize:'20px', background:'none', marginLeft:'8px', color:'white'}}>🚀</button>
                   </div>
                   <div><b>@{p.user}</b> {p.cap}</div>
                   {showCmt[p.id] && (
