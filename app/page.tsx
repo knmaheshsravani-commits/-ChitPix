@@ -170,7 +170,7 @@ export default function Home() {
               <div style={{ position: 'absolute', bottom: '20px', left: '15px' }}>
                 <div style={{ fontWeight: 'bold' }}>@{p.user}</div>
                 <div>{p.cap}</div>
-                <div>❤️ {p.likes} 💬 {p.comments?.length||0} <span onClick={()=>handleShare(p)} style={{marginLeft:'10px',cursor:'pointer',fontWeight:'bold'}}>↗️ Share</span></div>
+                <div style={{ display: 'flex', gap: '15px' }}><button onClick={()=>setPosts(posts.map(x=>x.id===p.id?{...x, likes:x.likes+1}:x))} style={{ background: 'none', border: 'none', fontSize: '18px' }}>❤️ {p.likes}</button><span>💬 {p.comments?.length||0}</span><button onClick={()=>handleShare(p)} style={{ background: 'none', border: 'none', fontSize: '18px' }}>🚀 Share</button></div>
               </div>
             </div>
           ))}
