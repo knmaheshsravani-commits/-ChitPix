@@ -14,19 +14,26 @@ export default function Home() {
     { user: "mahesh-07", img: "https://picsum.photos/500/500?10", seen: false },
     { user: "sravani", img: "https://picsum.photos/500/500?11", seen: false },
   ])
-  const [viewStory, setViewStory] = useState<any>(null)
-     const handleShare = async (p: any) => {
-    const url = `https://chitpix-p6.vercel.app`;
-    if (navigator.share) {
-      try { await navigator.share({ title: 'ChitPix', text: `${p.user} ChitPix post 🔥`, url }) } catch {}
+    const [viewStory, setViewStory] = useState<any>(null)
+  const handleShare = async (p:any) => {
+    const url = `https://chitpix-p6.vercel.app`
+    if(navigator.share){
+      try{ await navigator.share({title:'ChitPix', text:p.cap, url}) }
+      catch{}
     } else {
-      await navigator.clipboard.writeText(url);
-      alert('✅ Link Copied bro!');
+      await navigator.clipboard.writeText(url)
+      alert('Link Copied! 🚀')
     }
-     }
+      }
+     
+    
+    
+      
+    
+      
   
-  useEffect(() => {
-    const u = localStorage.getItem("chitpix_user")
+  
+    
     if (!u) window.location.href = "/login"
     else setUser(u)
     const s = localStorage.getItem("chitpix_posts_final")
