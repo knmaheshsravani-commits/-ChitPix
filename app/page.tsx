@@ -10,8 +10,11 @@ export default function Home() {
   const [imgData, setImgData] = useState("")
   const [cmt, setCmt] = useState<{[key:number]:string}>({})
   const [showCmt, setShowCmt] = useState<{[key:number]:boolean}>({})
-  const [stories, setStories] = useState<any[]>([
-    { user: "mahesh-07", img: "https://picsum.photos/500/500?10", seen: false },
+  const [stories, setStories] = useState<any[]>([   const handleShare = (p:any) => {
+  [
+    { user: "mahesh-07", img: "https://picsum.photos/200/200?1", seen: false },
+  
+    
     { user: "sravani", img: "https://picsum.photos/500/500?11", seen: false },
   ])
     const [viewStory, setViewStory] = useState<any>(null)
