@@ -1,7 +1,3 @@
-<input
-  ref={fileInputRef}
-  type="file"
-  accept="image/*,video/*"
-  onChange={handleFile}
-  className="hidden"
-/>
+const url = URL.createObjectURL(file);
+setPreview(url);
+setType(file.type);
