@@ -3,148 +3,233 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [liked, setLiked] = useState(false);
+  const [search, setSearch] = useState("");
 
   return (
     <main
       style={{
         minHeight: "100vh",
-        background: "#f5f5f5",
+        background: "#f7f7f7",
         fontFamily: "Arial, sans-serif",
       }}
     >
       {/* Header */}
       <header
         style={{
-          background: "white",
-          padding: "15px 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          background: "#ffffff",
+          padding: "18px 20px",
           borderBottom: "1px solid #ddd",
           position: "sticky",
           top: 0,
           zIndex: 10,
         }}
       >
-        <h1 style={{ margin: 0, fontSize: 26 }}>📸 ChitPix</h1>
+        <div
+          style={{
+            maxWidth: "700px",
+            margin: "auto",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+          }}
+        >
+          <h1
+            style={{
+              margin: 0,
+              fontSize: "26px",
+              fontWeight: "800",
+            }}
+          >
+            ChitPix
+          </h1>
 
-        <div style={{ display: "flex", gap: 15, fontSize: 22 }}>
-          <span>🔍</span>
-          <span>💬</span>
-          <span>👤</span>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search profiles..."
+            style={{
+              flex: 1,
+              maxWidth: "300px",
+              padding: "11px 15px",
+              borderRadius: "25px",
+              border: "1px solid #ccc",
+              outline: "none",
+              fontSize: "15px",
+            }}
+          />
+
+          <button
+            style={{
+              border: "none",
+              background: "#111",
+              color: "#fff",
+              padding: "10px 15px",
+              borderRadius: "20px",
+              fontWeight: "600",
+            }}
+          >
+            Profile
+          </button>
         </div>
       </header>
 
-      {/* Welcome */}
-      <section style={{ padding: "20px", textAlign: "center" }}>
-        <h2>Welcome to ChitPix 👋</h2>
-        <p>Share your photos, videos and moments.</p>
-      </section>
+      {/* Search result */}
+      {search && (
+        <section
+          style={{
+            maxWidth: "700px",
+            margin: "20px auto",
+            padding: "18px",
+            background: "#fff",
+            borderRadius: "15px",
+            border: "1px solid #ddd",
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>Search Profile</h3>
 
-      {/* Create Post */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "15px",
+            }}
+          >
+            <div
+              style={{
+                width: "55px",
+                height: "55px",
+                borderRadius: "50%",
+                background: "#ddd",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "22px",
+              }}
+            >
+              👤
+            </div>
+
+            <div>
+              <strong>{search}</strong>
+              <p style={{ margin: "5px 0", color: "#777" }}>
+                ChitPix profile
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Profile */}
       <section
         style={{
-          background: "white",
-          margin: "10px",
-          padding: 20,
-          borderRadius: 15,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          maxWidth: "700px",
+          margin: "20px auto",
+          padding: "25px 20px",
+          background: "#fff",
+          borderRadius: "18px",
+          border: "1px solid #ddd",
         }}
       >
-        <h3>Create a Post</h3>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "20px",
+          }}
+        >
+          <div
+            style={{
+              width: "85px",
+              height: "85px",
+              borderRadius: "50%",
+              background: "#111",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "25px",
+              fontWeight: "bold",
+            }}
+          >
+            CP
+          </div>
 
-        <div style={{ display: "flex", gap: 10 }}>
-          <button style={buttonStyle}>📸 Photo</button>
-          <button style={buttonStyle}>🎥 Video</button>
-          <button style={buttonStyle}>✏️ Text</button>
-        </div>
-      </section>
-
-      {/* Example Post */}
-      <article
-        style={{
-          background: "white",
-          margin: 10,
-          borderRadius: 15,
-          overflow: "hidden",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-        }}
-      >
-        <div style={{ padding: 15 }}>
-          <strong>ChitPix User</strong>
-          <p style={{ marginBottom: 0 }}>My first ChitPix post 🚀</p>
+          <div>
+            <h2 style={{ margin: 0 }}>ChitPix User</h2>
+            <p style={{ color: "#777" }}>@chitpix</p>
+          </div>
         </div>
 
         <div
           style={{
-            height: 280,
-            background: "linear-gradient(135deg, #ddd, #aaa)",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 60,
+            justifyContent: "space-around",
+            marginTop: "25px",
+            textAlign: "center",
           }}
         >
-          📸
-        </div>
-
-        <div style={{ padding: 15 }}>
-          <div style={{ display: "flex", gap: 20, fontSize: 24 }}>
-            <button
-              onClick={() => setLiked(!liked)}
-              style={iconButton}
-            >
-              {liked ? "❤️" : "🤍"}
-            </button>
-
-            <button style={iconButton}>💬</button>
-            <button style={iconButton}>🔖</button>
-            <button style={iconButton}>↗️</button>
+          <div>
+            <strong>0</strong>
+            <br />
+            Posts
           </div>
 
-          <p style={{ marginBottom: 0 }}>
-            {liked ? "1 Like" : "Be the first to like this"}
-          </p>
-        </div>
-      </article>
+          <div>
+            <strong>0</strong>
+            <br />
+            Followers
+          </div>
 
-      {/* Bottom Navigation */}
-      <nav
+          <div>
+            <strong>0</strong>
+            <br />
+            Following
+          </div>
+        </div>
+      </section>
+
+      {/* Create post */}
+      <section
         style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: "white",
-          borderTop: "1px solid #ddd",
-          display: "flex",
-          justifyContent: "space-around",
-          padding: 12,
-          fontSize: 22,
+          maxWidth: "700px",
+          margin: "20px auto",
+          padding: "20px",
+          background: "#fff",
+          borderRadius: "18px",
+          border: "1px solid #ddd",
         }}
       >
-        <span>🏠</span>
-        <span>🔍</span>
-        <span>➕</span>
-        <span>💬</span>
-        <span>👤</span>
-      </nav>
+        <h3>Share on ChitPix</h3>
+
+        <button
+          style={{
+            width: "100%",
+            padding: "14px",
+            borderRadius: "12px",
+            border: "1px solid #ccc",
+            background: "#f5f5f5",
+            fontSize: "16px",
+          }}
+        >
+          📸 Add Photo / Video
+        </button>
+      </section>
+
+      {/* Welcome */}
+      <section
+        style={{
+          maxWidth: "700px",
+          margin: "20px auto",
+          padding: "35px 20px",
+          textAlign: "center",
+        }}
+      >
+        <h2>Welcome to ChitPix 🚀</h2>
+        <p style={{ color: "#666" }}>
+          Share photos, videos and connect with people.
+        </p>
+      </section>
     </main>
   );
-}
-
-const buttonStyle = {
-  border: "none",
-  background: "#eee",
-  padding: "10px 14px",
-  borderRadius: 10,
-  cursor: "pointer",
-};
-
-const iconButton = {
-  border: "none",
-  background: "transparent",
-  fontSize: 24,
-  cursor: "pointer",
-};
+              }
