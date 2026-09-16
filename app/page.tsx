@@ -2,94 +2,65 @@
 
 import { useRef, useState } from "react";
 
-type Post = {
-  id: number;
-  username: string;
-  media: string;
-  type: "image" | "video";
-  caption: string;
-};
-
 export default function Home() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [search, setSearch] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [type, setType] = useState<string>("");
 
-  const addMedia = () => {
+  const openGallery = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
     const url = URL.createObjectURL(file);
-    const type = file.type.startsWith("video") ? "video" : "image";
-
-    const newPost: Post = {
-      id: Date.now(),
-      username: "You",
-      media: url,
-      type,
-      caption: "My new ChitPix post ❤️",
-    };
-
-    setPosts((oldPosts) => [newPost, ...oldPosts]);
-
-    e.target.value = "";
+    setPreview(url);
+    setType(file.type);
   };
 
-  const profiles = [
-    "ChitPix Official",
-    "Ruchi Vantalu",
-    "Mahesh",
-    "Friends",
-  ];
-
-  const filteredProfiles = profiles.filter((name) =>
-    name.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#f5f5f5",
-        color: "#111",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          background: "#ffffff",
-          padding: "15px 20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderBottom: "1px solid #ddd",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "25px",
-            fontWeight: "800",
-          }}
-        >
-          ChitPix
-        </h1>
+    <main className="min-h-screen bg-black text-white p-6">
+      <h1 className="text-3xl font-bold text-center mb-8">
+        ChitPix
+      </h1>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-            alignItems: "center",
-          }}
+      <div className="flex justify-center">
+        <button
+          onClick={openGallery}
+          className="bg-white text-black px-6 py-3 rounded-full font-semibold"
         >
-          <button
-            on
+          📷 Add Photo / Video
+        </button>
+      </div>
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*,video/*"
+        onChange={handleFile}
+        className="hidden"
+      />
+
+      {preview && (
+        <div className="mt-8 flex justify-center">
+          {type.startsWith("image/") ? (
+            <img
+              src={preview}
+              alt="Selected"
+              className="max-w-full max-h-[500px] rounded-2xl"
+            />
+          ) : (
+            <video
+              src={preview}
+              controls
+              className="max-w-full max-h-[500px] rounded-2xl"
+            />
+          )}
+        </div>
+      )}
+    </main>
+  );
+}
