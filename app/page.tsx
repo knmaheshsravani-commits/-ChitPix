@@ -1,49 +1,41 @@
-"use client"
-import { useState, useEffect, useRef } from "react"
-export default function Home(){
-  const [currentUser,setCurrentUser]=useState<string|null>(null)
-  const [loginUser,setLoginUser]=useState("")
-  const [showAdd,setShowAdd]=useState(false)
-  const [showComment,setShowComment]=useState<number|null>(null)
-  const [showEdit,setShowEdit]=useState(false)
-  const [editName,setEditName]=useState("")
-  const [editBio,setEditBio]=useState("ChitPix lover 📸 | Hiking ⛰️")
-  const [editAvatar,setEditAvatar]=useState("")
-  const [newComment,setNewComment]=useState("")
-  const [newImg,setNewImg]=useState("")
-  const [newCap,setNewCap]=useState("")
-  const [activeTab,setActiveTab]=useState("home")
-  const [searchQ,setSearchQ]=useState("")
-  const fileRef=useRef<HTMLInputElement>(null)
-  const [posts,setPosts]=useState<any[]>([
-    {id:1,user:"mahesh-07",avatar:"https://i.pravatar.cc/150?img=1",img:"https://picsum.photos/seed/p1/600/600",cap:"ChitPix first post! 🔥 #hiking",likes:24,liked:false,comments:["Super bro!"]},
-    {id:2,user:"sravani",avatar:"https://i.pravatar.cc/150?img=5",img:"https://picsum.photos/seed/p2/600/600",cap:"Beach vibes 🌊 #beach",likes:41,liked:false,comments:[]},
-    {id:3,user:"arjun",avatar:"https://i.pravatar.cc/150?img=8",img:"https://picsum.photos/seed/p3/600/600",cap:"Mountain hike 🏔️ #hiking",likes:67,liked:false,comments:[]}
-  ])
-  useEffect(()=>{const s=localStorage.getItem("chitpix_user");if(s)setCurrentUser(s)},[])
-  const handleFile=(e:any)=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>setNewImg(r.result as string);r.readAsDataURL(f)}
-  const handleAuth=()=>{if(!loginUser)return;localStorage.setItem("chitpix_user",loginUser);setCurrentUser(loginUser)}
-  const addPost=()=>{if(!newImg)return;setPosts([{id:Date.now(),user:currentUser,avatar:editAvatar||`https://i.pravatar.cc/150?u=${currentUser}`,img:newImg,cap:newCap,likes:0,liked:false,comments:[]},...posts]);setNewImg("");setNewCap("");setShowAdd(false);setActiveTab("home")}
-  const toggleLike=(id:number)=>{setPosts(posts.map(p=>p.id===id?{...p,liked:!p.liked,likes:p.liked?p.likes-1:p.likes+1}:p))}
-  const addComment=(id:number)=>{if(!newComment)return;setPosts(posts.map(p=>p.id===id?{...p,comments:[...p.comments,`${currentUser}: ${newComment}`]}:p));setNewComment("");setShowComment(null)}
-  const filteredPosts = posts.filter(p=>p.user.toLowerCase().includes(searchQ.toLowerCase())||p.cap.toLowerCase().includes(searchQ.toLowerCase()))
-  if(!currentUser){return(<div style={{background:'#000',color:'#fff',minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column'}}><h1 style={{fontSize:50,fontWeight:900,marginBottom:24}}>ChitPix 📸</h1><input placeholder="Username" value={loginUser} onChange={e=>setLoginUser(e.target.value)} style={{padding:'20px 24px',borderRadius:16,border:'3px solid #ff6a00',marginBottom:16,width:320,fontSize:20,color:'#000'}}/><button onClick={handleAuth} style={{background:'#ff6a00',color:'#fff',padding:'20px 60px',borderRadius:16,border:'none',fontWeight:900,fontSize:20}}>LOGIN 🔥</button></div>)}
-  return(
-  <div style={{background:'#000',color:'#fff',minHeight:'100vh',paddingBottom:160}}>
-    <div style={{position:'sticky',top:0,zIndex:10,background:'#000',padding:'22px 24px',display:'flex',justifyContent:'space-between',alignItems:'center',borderBottom:'3px solid #ff6a00'}}><h1 style={{fontWeight:900,fontSize:32}}>ChitPix</h1><div style={{display:'flex',gap:32}}><span onClick={()=>setShowAdd(true)} style={{fontSize:50,cursor:'pointer'}}>➕</span><span style={{fontSize:50}}>💬</span></div></div>
-    {activeTab==="home"&&<div style={{display:'flex',flexDirection:'column',gap:28}}>{posts.map(p=>(<div key={p.id} style={{borderBottom:'3px solid #222'}}><div style={{display:'flex',gap:16,padding:'20px 24px',alignItems:'center'}}><img src={p.avatar} style={{width:60,height:60,borderRadius:30,border:'3px solid #ff6a00'}}/><b style={{fontSize:20}}>{p.user}</b></div><img src={p.img} style={{width:'100%',aspectRatio:'1',objectFit:'cover'}}/><div style={{padding:'20px 24px',display:'flex',gap:32,fontSize:48}}><span onClick={()=>toggleLike(p.id)} style={{cursor:'pointer'}}>{p.liked?'❤️':'🤍'}</span><span onClick={()=>setShowComment(p.id)} style={{cursor:'pointer'}}>💬</span><span>✈️</span></div><div style={{padding:'0 24px 10px',fontSize:18}}><b>{p.user}</b> {p.cap} - <b>{p.likes} likes</b></div></div>))}</div>}
-    {activeTab==="search"&&<div style={{padding:24}}><input placeholder="🔍 Search..." value={searchQ} onChange={e=>setSearchQ(e.target.value)} style={{width:'100%',padding:'18px 20px',borderRadius:16,border:'3px solid #ff6a00',background:'#111',color:'#fff',fontSize:18,marginBottom:20}}/><div style={{display:'flex',flexDirection:'column',gap:16}}>{filteredPosts.map(p=><div key={p.id} style={{display:'flex',gap:16,padding:'16px',background:'#111',borderRadius:16,border:'2px solid #222'}}><img src={p.img} style={{width:70,height:70,borderRadius:12,objectFit:'cover'}}/><div><b>{p.user}</b><div style={{fontSize:14,opacity:0.8}}>{p.cap}</div></div></div>)}</div></div>}
-    {activeTab==="reels"&&<div style={{height:'calc(100vh - 210px)',overflowY:'scroll',scrollSnapType:'y mandatory'}}>{posts.map(p=><div key={p.id} style={{height:'calc(100vh - 210px)',position:'relative',scrollSnapAlign:'start',background:'#000'}}><img src={p.img} style={{width:'100%',height:'100%',objectFit:'cover'}}/><div style={{position:'absolute',bottom:0,left:0,right:0,padding:'30px 20px',background:'linear-gradient(transparent,rgba(0,0,0,0.9))'}}><b>{p.user}</b><div>{p.cap}</div></div><div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',fontSize:80}}>▶️</div></div>)}</div>}
-    {activeTab==="profile"&&<div style={{padding:24,textAlign:'center'}}><img src={editAvatar||`https://i.pravatar.cc/150?u=${currentUser}`} style={{width:110,height:110,borderRadius:55,border:'4px solid #ff6a00',marginBottom:16}}/><h2 style={{fontSize:28,fontWeight:900}}>{currentUser}</h2><p style={{opacity:0.8,marginTop:8}}>{editBio}</p><div style={{display:'flex',gap:12,marginTop:20,justifyContent:'center'}}><button onClick={()=>{setEditName(currentUser||"");setShowEdit(true)}} style={{padding:'12px 24px',borderRadius:12,border:'2px solid #333',background:'#111',color:'#fff',fontWeight:700}}>Edit Profile</button><button onClick={()=>{localStorage.removeItem("chitpix_user");setCurrentUser(null)}} style={{padding:'12px 24px',borderRadius:12,border:'none',background:'#ff006a',color:'#fff',fontWeight:800}}>Logout</button></div></div>}
-    {showEdit&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.95)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}><div style={{background:'#111',padding:28,borderRadius:24,width:'100%',maxWidth:400,border:'4px solid #ff6a00'}}><h3 style={{fontSize:24,fontWeight:900,marginBottom:20}}>Edit Profile ✏️</h3><div style={{textAlign:'center',marginBottom:20}}><img src={editAvatar||`https://i.pravatar.cc/150?u=${currentUser}`} style={{width:90,height:90,borderRadius:45,border:'3px solid #ff6a00'}}/><input type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(!f)return;const r=new FileReader();r.onload=()=>setEditAvatar(r.result as string);r.readAsDataURL(f)}} style={{marginTop:12,color:'#fff'}}/></div><input placeholder="Username" value={editName} onChange={e=>setEditName(e.target.value)} style={{width:'100%',padding:'16px 18px',borderRadius:12,border:'2px solid #333',background:'#000',color:'#fff',marginBottom:14}}/><textarea placeholder="Bio" value={editBio} onChange={e=>setEditBio(e.target.value)} style={{width:'100%',padding:'16px 18px',borderRadius:12,border:'2px solid #333',background:'#000',color:'#fff',marginBottom:20,minHeight:80}}/><div style={{display:'flex',gap:12}}><button onClick={()=>setShowEdit(false)} style={{flex:1,padding:'16px',borderRadius:12,border:'2px solid #333',background:'#222',color:'#fff'}}>Cancel</button><button onClick={()=>{if(editName){localStorage.setItem("chitpix_user",editName);setCurrentUser(editName)};setShowEdit(false)}} style={{flex:1,padding:'16px',borderRadius:12,border:'none',background:'#ff6a00',color:'#fff',fontWeight:900}}>Save ✅</button></div></div></div>}
-    {showComment!==null&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.9)',zIndex:90,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}><div style={{background:'#111',padding:24,borderRadius:20,width:'100%',maxWidth:400,border:'3px solid #ff6a00'}}><div style={{display:'flex',gap:10}}><input placeholder="Add comment..." value={newComment} onChange={e=>setNewComment(e.target.value)} style={{flex:1,padding:'14px 16px',borderRadius:12,border:'2px solid #333',background:'#000',color:'#fff'}}/><button onClick={()=>addComment(showComment!)} style={{padding:'14px 20px',borderRadius:12,border:'none',background:'#ff6a00',color:'#fff',fontWeight:800}}>Post</button></div><button onClick={()=>setShowComment(null)} style={{marginTop:12,width:'100%',padding:'12px',borderRadius:12,border:'1px solid #333',background:'#222',color:'#fff'}}>Close</button></div></div>}
-    {showAdd&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.95)',zIndex:100,display:'flex',alignItems:'center',justifyContent:'center',padding:24}}><div style={{background:'#111',padding:32,borderRadius:28,width:'100%',maxWidth:440,border:'4px solid #ff6a00'}}><h3 style={{fontSize:28,fontWeight:900,marginBottom:24}}>New Post 📸</h3><input ref={fileRef} type="file" accept="image/*" onChange={handleFile} style={{display:'none'}}/><button onClick={()=>fileRef.current?.click()} style={{width:'100%',padding:'60px 20px',border:'4px dashed #ff6a00',borderRadius:20,background:'#000',color:'#fff',fontSize:20,fontWeight:800,marginBottom:20}}>{newImg?"✅ READY!":"📁 CHOOSE IMAGE"}</button>{newImg&&<img src={newImg} style={{width:'100%',height:260,objectFit:'cover',borderRadius:16,marginBottom:20}}/>}<input placeholder="Caption..." value={newCap} onChange={e=>setNewCap(e.target.value)} style={{width:'100%',padding:'18px 20px',borderRadius:14,border:'3px solid #333',background:'#000',color:'#fff',marginBottom:20}}/><div style={{display:'flex',gap:16}}><button onClick={()=>setShowAdd(false)} style={{flex:1,padding:'18px',borderRadius:14,border:'3px solid #333',background:'#222',color:'#fff'}}>Cancel</button><button onClick={addPost} style={{flex:1,padding:'18px',borderRadius:14,border:'none',background:'#ff6a00',color:'#fff',fontWeight:900}}>Post 🚀</button></div></div></div>}
-    <div style={{position:'fixed',bottom:0,left:0,right:0,height:150,background:'#000',borderTop:'4px solid #ff6a00',display:'flex',justifyContent:'space-around',alignItems:'center',zIndex:50}}>
-      <button onClick={()=>{setActiveTab("home");window.scrollTo(0,0)}} style={{background:'none',border:'none',fontSize:68}}>🏠</button>
-      <button onClick={()=>setActiveTab("search")} style={{background:'none',border:'none',fontSize:68}}>🔍</button>
-      <button onClick={()=>setShowAdd(true)} style={{background:'linear-gradient(45deg,#ff6a00,#ff006a)',border:'4px solid #fff',width:100,height:100,borderRadius:50,fontSize:62,color:'#fff',fontWeight:900}}>+</button>
-      <button onClick={()=>setActiveTab("reels")} style={{background:'none',border:'none',fontSize:68}}>🎬</button>
-      <button onClick={()=>setActiveTab("profile")} style={{background:'none',border:'none',fontSize:68}}>👤</button>
-    </div>
-  </div>)
-    }
+'use client'
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+export default function ChitPix(){
+const [posts,setPosts]=useState<any[]>([])
+const [caption,setCaption]=useState('')
+const [file,setFile]=useState<File|null>(null)
+const [loading,setLoading]=useState(false)
+const fetchPosts=async()=>{
+const {data}=await supabase.from('posts').select('*').order('created_at',{ascending:false})
+if(data) setPosts(data)
+}
+useEffect(()=>{fetchPosts()},[])
+const upload=async()=>{
+if(!file) return alert('Photo select chey bro!')
+setLoading(true)
+const name=Date.now()+'-'+file.name
+const {error}=await supabase.storage.from('chitpix-posts').upload(name,file)
+if(error){alert(error.message);setLoading(false);return}
+const {data}=supabase.storage.from('chitpix-posts').getPublicUrl(name)
+await supabase.from('posts').insert({username:'mahesh-07',caption,image_url:data.publicUrl})
+setCaption('');setFile(null);fetchPosts();setLoading(false);alert('Post saved bro! 🔥')
+}
+return(
+<div className="max-w-[480px] mx-auto bg-black text-white min-h-screen pb-20">
+<header className="p-3 flex justify-between border-b border-gray-800"><h1 className="font-bold">ChitPix</h1></header>
+<div className="p-3 flex gap-2 border-b border-gray-800">
+<input type="file" onChange={e=>setFile(e.target.files?.[0]||null)} className="text-xs"/>
+<input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Caption..." className="bg-gray-900 px-2 py-1 rounded text-sm w-full text-white"/>
+<button onClick={upload} className="bg-orange-500 px-3 rounded-full text-sm font-bold">{loading?'...':'Post'}</button>
+</div>
+{posts.map(p=>(
+<div key={p.id} className="border-b border-gray-800">
+<div className="p-3 font-bold">{p.username}</div>
+<img src={p.image_url} className="w-full"/>
+<div className="p-3"><p>{p.caption}</p></div>
+</div>
+))}
+</div>
+)
+}
