@@ -1,40 +1,49 @@
 "use client"
 import { useState, useEffect } from 'react'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '../lib/supabase'
+import Link from 'next/link'
 
-export default function AdminPage(){
-  const [users,setUsers]=useState<any[]>([])
+export default function ChitPix(){
+  const [posts,setPosts]=useState<any[]>([])
+  const [caption,setCaption]=useState('')
+  const [file,setFile]=useState<File|null>(null)
+  const [loading,setLoading]=useState(false)
 
-  useEffect(()=>{ getUsers() },[])
-
-  const getUsers=async()=>{
-    const {data} = await supabase.from('users').select('*').order('created_at',{ascending:false})
-    setUsers(data||[])
+  const fetchPosts=async()=>{
+    const {data}=await supabase.from('posts').select('*').order('created_at',{ascending:false})
+    if(data) setPosts(data)
   }
+  useEffect(()=>{fetchPosts()},[])
 
-  const toggleBan=async(u:any)=>{
-    if(u.username==='knmahesh') return alert('King ni ban cheyalem bro 👑')
-    const {error} = await supabase.from('users').update({is_banned:!u.is_banned}).eq('id', u.id)
-    if(!error) getUsers()
+  const upload=async()=>{
+    if(!file) return alert('Photo select chey bro!')
+    setLoading(true)
+    const name=Date.now()+"."+file.name
+    const {error}=await supabase.storage.from('chitpix-posts').upload(name,file)
+    if(error){alert(error.message);setLoading(false);return}
+    const {data}=await supabase.storage.from('chitpix-posts').getPublicUrl(name)
+    await supabase.from('posts').insert({username:'mahesh-07',caption,image_url:data.publicUrl})
+    setCaption('');setFile(null);fetchPosts();setLoading(false);alert('Post saved bro! 🔥')
   }
 
   return(
-    <div className="min-h-screen bg-black text-white p-4">
-      <h1 className="text-2xl font-black mb-4">chit-pix <span className="text-zinc-500 font-light">ADMIN 👑</span></h1>
-
-      <div className="bg-zinc-900 p-3 rounded-2xl mb-4 border border-zinc-800">
-        <p className="text-xs text-zinc-500">TOTAL USERS</p>
-        <p className="text-xl font-bold">{users.length}</p>
+    <div className="max-w-[480px] mx-auto bg-black text-white min-h-screen pb-20">
+      <header className="p-3 flex justify-between border-b border-gray-800 items-center">
+        <h1 className="font-bold">ChitPix</h1>
+        <Link href="/messages" className="bg-white text-black px-3 py-1 rounded-full text-sm font-bold">DM</Link>
+      </header>
+      <div className="p-3 flex gap-2 border-b border-gray-800">
+        <input type="file" onChange={(e)=>setFile(e.target.files?.[0]||null)} className="text-xs"/>
+        <input value={caption} onChange={(e)=>setCaption(e.target.value)} placeholder="Caption..." className="bg-gray-800 px-2 rounded-full text-sm flex-1"/>
+        <button onClick={upload} className="bg-orange-500 px-3 rounded-full text-sm font-bold">{loading?'...':'Post'}</button>
       </div>
-
-      <div className="space-y-2">
-        {users.map((u:any)=>(
-          <div key={u.id} className={`flex justify-between items-center p-3 rounded-2xl bg-zinc-900 border ${u.is_banned?'border-red-500 bg-red-950/20':'border-zinc-800'}`}>
-            <div className="flex gap-3 items-center">
-              <img src={u.avatar_url||`https://i.pravatar.cc/100?u=${u.username}`} className="w-10 h-10 rounded-full"/>
-              <div>
-                <p className="font-bold text-sm">{u.username} {u.is_banned?'(BANNED)':''}</p>
-                <p className="text-[11px] text-zinc-500">{u.email||u.username}</p>
-              </div>
-            </div>
-            <button onClick={()=>toggleBan(u)} class
+      {posts.map(p=>(
+        <div key={p.id} className="border-b border-gray-800">
+          <div className="p-3 font-bold">{p.username}</div>
+          <img src={p.image_url} className="w-full"/>
+          <div className="p-3"><p>{p.caption}</p></div>
+        </div>
+      ))}
+    </div>
+  )
+}
