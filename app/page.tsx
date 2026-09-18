@@ -16,48 +16,20 @@ export default function ChitPix(){
   const [liked,setLiked] = useState<Set<string>>(new Set())
   const [following,setFollowing] = useState<Set<string>>(new Set())
 
-  useEffect(()=>{
-    supabase.auth.getUser().then(({data})=>{
-      setUser(data.user)
-      getPosts()
-    })
-  },[])
+  useEffect(()=>{ supabase.auth.getUser().then(({data})=>{ setUser(data.user); getPosts() }) },[])
 
-  async function getPosts(){
-    const {data} = await supabase.from("posts").select("*").order("created_at",{ascending:false})
-    if(data) setPosts(data)
-  }
-  async function signup(){
-    const {data,error} = await supabase.auth.signUp({email,password:pass})
-    if(error) alert(error.message)
-    else setUser(data.user)
-  }
-  async function login(){
-    const {data,error} = await supabase.auth.signInWithPassword({email,password:pass})
-    if(error) alert(error.message)
-    else setUser(data.user)
-  }
-  async function logout(){
-    await supabase.auth.signOut()
-    setUser(null)
-  }
+  async function getPosts(){ const {data} = await supabase.from("posts").select("*").order("created_at",{ascending:false}); if(data) setPosts(data) }
+  async function signup(){ const {data,error} = await supabase.auth.signUp({email,password:pass}); if(error) alert(error.message); else setUser(data.user) }
+  async function login(){ const {data,error} = await supabase.auth.signInWithPassword({email,password:pass}); if(error) alert(error.message); else setUser(data.user) }
+  async function logout(){ await supabase.auth.signOut(); setUser(null) }
+
   function likePost(id:string){
-    if(liked.has(id)){
-      const n=new Set(liked); n.delete(id); setLiked(n)
-      setPosts(posts.map(p=>p.id===id?{...p,likes:(p.likes||0)-1}:p))
-    } else {
-      const n=new Set(liked); n.add(id); setLiked(n)
-      setPosts(posts.map(p=>p.id===id?{...p,likes:(p.likes||0)+1}:p))
-    }
+    if(liked.has(id)){ const n=new Set(liked); n.delete(id); setLiked(n); setPosts(posts.map(p=>p.id===id?{...p,likes:(p.likes||0)-1}:p)) }
+    else { const n=new Set(liked); n.add(id); setLiked(n); setPosts(posts.map(p=>p.id===id?{...p,likes:(p.likes||0)+1}:p)) }
   }
-  function followUser(id:string){
-    if(following.has(id)){ const n=new Set(following); n.delete(id); setFollowing(n)}
-    else { const n=new Set(following); n.add(id); setFollowing(n)}
-  }
-  function sharePost(url:string){
-    if(navigator.share){ navigator.share({title:"ChitPix",url})}
-    else { navigator.clipboard.writeText(url); alert("Link copied!")}
-  }
+  function followUser(id:string){ if(following.has(id)){ const n=new Set(following); n.delete(id); setFollowing(n)} else { const n=new Set(following); n.add(id); setFollowing(n)} }
+  function sharePost(url:string){ if(navigator.share){ navigator.share({title:"ChitPix",url})} else { navigator.clipboard.writeText(url); alert("Link copied!")} }
+
   async function postNow(){
     if(!file) return alert("File select chey!")
     const fileName = Date.now()+"_"+file.name
@@ -99,7 +71,7 @@ export default function ChitPix(){
           <div className="px-4 pb-4 text-sm">{p.caption}</div>
         </div>)}
       </div>}
-      {tab==="search" && <div className="p-4"><input placeholder="Search users..." className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-full"/></div>}
+      {tab==="search" && <div className="p-4"><input placeholder="Search..." className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-full"/></div>}
       {tab==="reels" && <div className="p-2">{posts.map((p:any)=><div key={p.id} className="mb-2"><video src={p.image_url} className="w-full h-[80vh] object-cover rounded-xl" controls/></div>)}</div>}
       {tab==="profile" && <div className="p-6"><div className="w-24 h-24 bg-zinc-700 rounded-full mx-auto mb-4 flex items-center justify-center"><User size={48}/></div><h2 className="text-center font-bold">{user.email}</h2></div>}
       {tab==="create" && <div className="p-6 max-w-[500px] mx-auto">
@@ -116,4 +88,4 @@ export default function ChitPix(){
       </div>
     </div>
   )
-        }
+}
