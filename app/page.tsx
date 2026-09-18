@@ -1,71 +1,78 @@
-"use client";
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+"use client"
+import { useState, useEffect } from "react"
+import { createClient } from "@supabase/supabase-js"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+)
 
-export default function ChitPix() {
-  const [posts, setPosts] = useState<any[]>([]);
-  const [file, setFile] = useState<File | null>(null);
-  const [caption, setCaption] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function ChitPix(){
+  const [tab, setTab] = useState("home")
+  const [posts, setPosts] = useState<any[]>([])
+  const [caption, setCaption] = useState("")
+  const [file, setFile] = useState<File|null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [search, setSearch] = useState("")
 
-  useEffect(() => { fetchPosts(); }, []);
+  useEffect(()=>{ fetchPosts() },[])
+  async function fetchPosts(){
+    const { data } = await supabase.from("posts").select("*").order("created_at", {ascending:false})
+    if(data) setPosts(data)
+  }
 
-  const fetchPosts = async () => {
-    const { data } = await supabase.from("posts").select("*").order("created_at", { ascending: false });
-    if (data) setPosts(data);
-  };
+  async function handlePost(){
+    if(!file) return alert("File select chey bro!")
+    setUploading(true)
+    const fileName = `${Date.now()}-${file.name}`
+    const { error: upErr } = await supabase.storage.from("posts").upload(fileName, file)
+    if(upErr){ alert(upErr.message); setUploading(false); return }
+    const { data: urlData } = supabase.storage.from("posts").getPublicUrl(fileName)
+    const type = file.type.startsWith("video") ? "video" : "image"
+    await supabase.from("posts").insert([{ caption, image_url: urlData.publicUrl, type }])
+    setCaption(""); setFile(null); setUploading(false); fetchPosts(); setTab("home")
+  }
 
-  const handlePost = async () => {
-    if (!file) return alert("Photo select chey bro!");
-    setLoading(true);
-    const fileName = Date.now() + "-" + file.name;
-    const { error: uploadError } = await supabase.storage.from("posts").upload(fileName, file);
-    if (uploadError) { alert(uploadError.message); setLoading(false); return; }
-    const { data } = supabase.storage.from("posts").getPublicUrl(fileName);
-    await supabase.from("posts").insert({ image_url: data.publicUrl, caption });
-    setCaption(""); setFile(null); setLoading(false); fetchPosts();
-  };
+  const filtered = posts.filter(p=>p.caption?.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div className="min-h-screen bg-black text-white max-w-[500px] mx-auto border-x border-zinc-800">
+    <div className="min-h-screen bg-black text-white pb-20">
       {/* HEADER */}
-      <div className="flex justify-between items-center p-4 border-b border-zinc-800 sticky top-0 bg-black z-10">
-        <h1 className="text-[22px] font-bold">ChitPix</h1>
-        <div className="flex gap-2">
-          <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="text-[10px] w-[120px]" />
-          <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Caption..." className="bg-zinc-900 px-2 py-1 rounded text-[12px] w-[100px] outline-none" />
-          <button onClick={handlePost} disabled={loading} className="bg-orange-500 text-black px-3 py-1 rounded-full text-[12px] font-bold">{loading? "..." : "Post"}</button>
-        </div>
+      <div className="sticky top-0 bg-black border-b border-zinc-800 p-3 flex justify-between items-center z-10">
+        <h1 className="text-xl font-bold">ChitPix 📸</h1>
+        <button onClick={()=>setTab("create")} className="text-2xl">+</button>
       </div>
 
-      {posts.length === 0? (
-        <div className="p-20 text-center text-zinc-500">No posts yet. First photo nuvve pettu bro!</div>
-      ) : (
-        posts.map((post) => (
-          <div key={post.id} className="border-b border-zinc-800 pb-2">
-            <img src={post.image_url} alt="" className="w-full aspect-square object-cover bg-zinc-900" />
-
-            {/* ICONS - 40px ULTRA MASS */}
-            <div className="flex justify-between items-center p-4">
-              <div className="flex gap-6 items-center">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-              </div>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+      {/* CONTENT */}
+      {tab==="home" && (
+        <div className="max-w-md mx-auto">
+          {posts.map(p=>(
+            <div key={p.id} className="border-b border-zinc-800 p-3">
+              <p className="font-bold mb-2">mahesh</p>
+              {p.type==="video" ? <video src={p.image_url} controls className="w-full rounded" /> : <img src={p.image_url} className="w-full rounded" />}
+              <p className="mt-2"><b>mahesh</b> {p.caption}</p>
+              <div className="flex gap-4 mt-2 text-zinc-400"><span>❤️ Like</span><span>💬 Comment</span><span>↗️ Share</span></div>
             </div>
-
-            <div className="px-4 pb-2">
-              <p className="text-[15px]"><span className="font-bold">You </span>{post.caption}</p>
-            </div>
-          </div>
-        ))
+          ))}
+          {posts.length===0 && <p className="text-center mt-10 text-zinc-500">No posts yet. First post pettu bro!</p>}
+        </div>
       )}
-    </div>
-  );
-      }
+
+      {tab==="search" && (
+        <div className="p-4 max-w-md mx-auto">
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search captions..." className="w-full p-2 rounded bg-zinc-900 border border-zinc-700"/>
+          <div className="grid grid-cols-3 gap-1 mt-4">
+            {filtered.map(p=> p.type==="video" ? <video key={p.id} src={p.image_url} className="h-32 object-cover"/> : <img key={p.id} src={p.image_url} className="h-32 object-cover"/>)}
+          </div>
+        </div>
+      )}
+
+      {tab==="reels" && (
+        <div className="max-w-md mx-auto snap-y snap-mandatory h-[calc(100vh-110px)] overflow-y-scroll">
+          {posts.filter(p=>p.type==="video").map(p=>(
+            <div key={p.id} className="h-[calc(100vh-110px)] snap-start relative">
+              <video src={p.image_url} autoPlay loop muted className="w-full h-full object-cover"/>
+              <div className="absolute bottom-4 left-3"><p className="font-bold">mahesh</p><p>{p.caption}</p></div>
+            </div>
+          ))}
+          {posts.filter(p=>p.type==="video").length===0 && <p className="text-center mt-20 text-zinc-500">No reels yet
