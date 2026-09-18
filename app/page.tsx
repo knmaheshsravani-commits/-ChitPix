@@ -6,29 +6,29 @@ import { Home, Search, Clapperboard, User, Heart, MessageCircle, Send, Plus, Log
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
 export default function ChitPix(){
-  const [tab,setTab]=useState("home")
-  const [posts,setPosts]=useState<any[]>([])
-  const [user,setUser]=useState<any>(null)
-  const [email,setEmail]=useState("")
-  const [pass,setPass]=useState("")
-  const [caption,setCaption]=useState("")
-  const [file,setFile]=useState<File|null>(null)
-  const [liked,setLiked]=useState<Set<string>>(new Set())
-  const [following,setFollowing]=useState<Set<string>>(new Set())
+  const [tab,setTab] = useState("home")
+  const [posts,setPosts] = useState<any[]>([])
+  const [user,setUser] = useState<any>(null)
+  const [email,setEmail] = useState("")
+  const [pass,setPass] = useState("")
+  const [caption,setCaption] = useState("")
+  const [file,setFile] = useState<File|null>(null)
+  const [liked,setLiked] = useState<Set<string>>(new Set())
+  const [following,setFollowing] = useState<Set<string>>(new Set())
 
   useEffect(()=>{ supabase.auth.getUser().then(({data})=>{ setUser(data.user); getPosts() }) },[])
 
-  async function getPosts(){ const {data}=await supabase.from("posts").select("*").order("created_at",{ascending:false}); if(data) setPosts(data) }
-  async function signup(){ const {data,error}=await supabase.auth.signUp({email,password:pass}); if(error) alert(error.message); else setUser(data.user) }
-  async function login(){ const {data,error}=await supabase.auth.signInWithPassword({email,password:pass}); if(error) alert(error.message); else setUser(data.user) }
+  async function getPosts(){ const {data} = await supabase.from("posts").select("*").order("created_at",{ascending:false}); if(data) setPosts(data) }
+  async function signup(){ const {data,error} = await supabase.auth.signUp({email,password:pass}); if(error) alert(error.message); else setUser(data.user) }
+  async function login(){ const {data,error} = await supabase.auth.signInWithPassword({email,password:pass}); if(error) alert(error.message); else setUser(data.user) }
   async function logout(){ await supabase.auth.signOut(); setUser(null) }
 
   function likePost(id:string){
     if(liked.has(id)){ const n=new Set(liked); n.delete(id); setLiked(n); setPosts(posts.map(p=>p.id===id?{...p,likes:(p.likes||0)-1}:p)) }
     else { const n=new Set(liked); n.add(id); setLiked(n); setPosts(posts.map(p=>p.id===id?{...p,likes:(p.likes||0)+1}:p)) }
   }
-  function followUser(id:string){ if(following.has(id)){ const n=new Set(following); n.delete(id); setFollowing(n) } else { const n=new Set(following); n.add(id); setFollowing(n) } }
-  function sharePost(url:string){ if(navigator.share){ navigator.share({title:"ChitPix",url}) } else { navigator.clipboard.writeText(url); alert("Link copied!") } }
+  function followUser(id:string){ if(following.has(id)){ const n=new Set(following); n.delete(id); setFollowing(n)} else { const n=new Set(following); n.add(id); setFollowing(n)} }
+  function sharePost(url:string){ if(navigator.share){ navigator.share({title:"ChitPix",url})} else { navigator.clipboard.writeText(url); alert("Link copied!")} }
 
   async function postNow(){
     if(!file) return alert("File select chey!")
@@ -54,13 +54,13 @@ export default function ChitPix(){
 
   return(
     <div className="min-h-screen bg-black text-white pb-28">
-      <div className="sticky top-0 bg-black border-b border-zinc-800 p-4 flex justify-between items-center">
+      <div className="sticky top-0 bg-black border-b border-zinc-800 p-4 flex justify-between items-center z-10">
         <h1 className="text-xl font-bold">ChitPix</h1>
         <button onClick={logout}><LogOut size={20}/></button>
       </div>
 
       {tab==="home" && <div className="max-w-[500px] mx-auto">
-        {posts.map((p:any)=><div key={p.id} className="border-b-2 border-zinc-800">
+        {posts.map((p:any)=><div key={p.id} className="border-b border-zinc-800">
           <div className="p-4 flex justify-between"><span className="font-bold">user</span><button onClick={()=>followUser(p.user_id)} className="text-sm text-blue-500">{following.has(p.user_id)?"Following":"Follow"}</button></div>
           {p.image_url.includes(".mp4")? <video src={p.image_url} controls className="w-full"/> : <img src={p.image_url} className="w-full"/>}
           <div className="p-4 flex gap-4">
@@ -68,7 +68,7 @@ export default function ChitPix(){
             <MessageCircle size={26}/>
             <button onClick={()=>sharePost(p.image_url)}><Send size={26}/></button>
           </div>
-          <div className="px-4 pb-4 font-bold text-sm">{p.likes||0} likes</div>
+          <div className="px-4 pb-2 font-bold text-sm">{p.likes||0} likes</div>
           <div className="px-4 pb-4 text-sm">{p.caption}</div>
         </div>)}
       </div>}
@@ -79,7 +79,7 @@ export default function ChitPix(){
       {tab==="create" && <div className="p-6 max-w-[500px] mx-auto">
         <input type="file" onChange={e=>setFile(e.target.files?.[0]||null)} className="mb-4"/>
         <input placeholder="Write a caption..." value={caption} onChange={e=>setCaption(e.target.value)} className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-xl mb-4"/>
-        <button onClick={postNow} className="w-full bg-white text-black p-3 rounded-xl font-bold flex justify-center gap-2"><ImageIcon size={20}/> Post</button>
+        <button onClick={postNow} className="w-full bg-white text-black p-3 rounded-xl font-bold flex justify-center gap-2"><ImageIcon size={20}/> Post Now</button>
       </div>}
 
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t-2 border-zinc-800 flex justify-around py-4">
@@ -91,4 +91,4 @@ export default function ChitPix(){
       </div>
     </div>
   )
-          }
+}
