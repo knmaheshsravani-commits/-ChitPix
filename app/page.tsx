@@ -95,12 +95,20 @@ export default function ChitPix(){
 
       {story&&<div onClick={()=>setStory(null)} className="fixed inset-0 z-50 bg-black flex items-center justify-center"><div className="relative w-full max-w-[470px] h-full flex items-center justify-center p-2"><img src={story} className="max-w-full max-h-full rounded"/><div className="absolute top-3 left-3 right-3 h-[2px] bg-zinc-700 rounded"><div className="h-full w-full bg-white rounded"></div></div><div className="absolute top-6 right-4 text-xl">✕</div></div></div>}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around py-2 max-w-[470px] mx-auto z-30">
-        <button onClick={()=>setTab("home")} className={`flex flex-col items-center gap-[2px] ${tab==="home"?"text-white":"text-zinc-500"}`}><svg width="24" height="24" fill={tab==="home"?"white":"none"} stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span className="text-[10px]">Home</span></button>
-        <button onClick={()=>setTab("search")} className={`flex flex-col items-center gap-[2px] ${tab==="search"?"text-white":"text-zinc-500"}`}><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><span className="text-[10px]">Search</span></button>
-        <button onClick={()=>setTab("reels")} className={`flex flex-col items-center gap-[2px] ${tab==="reels"?"text-white":"text-zinc-500"}`}><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg><span className="text-[10px]">Reels</span></button>
-        <button onClick={()=>setTab("profile")} className={`flex flex-col items-center gap-[2px] ${tab==="profile"?"text-white":"text-zinc-500"}`}><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span className="text-[10px]">Profile</span></button>
-      </div>
-    </div>
-  )
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              }
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-3 pb-6 z-50">
+<button onClick={()=>setTab("home")} className={`flex flex-col items-center gap-[2px] ${tab==="home"?"text-white":"text-zinc-500"}`}>
+<svg className="w-[24px] h-[24px]" fill={tab==="home"?"white":"none"} stroke="currentColor" strokeWidth={tab==="home"?"0":"1.7"} viewBox="0 0 24 24"><path d="M12 2.5L3 10.5V21h6v-6h6v6h6v-10.5l-9-8z"/></svg>
+</button>
+<button onClick={()=>setTab("reels")} className={`flex flex-col items-center ${tab==="reels"?"text-white":"text-zinc-500"}`}>
+<svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M10 8l6 4-6 4V8z" fill={tab==="reels"?"white":"none"} /></svg>
+</button>
+<button onClick={()=>setTab("create")} className="flex flex-col items-center text-zinc-400">
+<svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+</button>
+<button onClick={()=>setTab("search")} className={`flex flex-col items-center ${tab==="search"?"text-white":"text-zinc-500"}`}>
+<svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.35-4.35"/></svg>
+</button>
+<button onClick={()=>setTab("profile")} className={`w-[24px] h-[24px] rounded-full overflow-hidden border ${tab==="profile"?"border-white":"border-zinc-600"}`}>
+<img src={user?.user_metadata?.avatar_url || "https://i.pravatar.cc/100"} className="w-full h-full object-cover"/>
+</button>
+</div>
