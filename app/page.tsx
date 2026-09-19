@@ -16,10 +16,10 @@ export default function ChitPix(){
   const [story,setStory]=useState<string|null>(null)
 
   useEffect(()=>{supabase.auth.getUser().then(d=>{setUser(d.data.user); getPosts()})},[])
-  async function getPosts(){const {data}=await supabase.from("posts").select("*").order("created_at",{ascending:false}); if(data) setPosts(data)}
+  async function getPosts(){const {data}=await supabase.from("posts").select("*").order("created_at",{ascending:false}); if(data) setPosts(data.filter((p:any)=> (p.image || p.image_url) ) )}
   async function login(){const {error}=await supabase.auth.signInWithPassword({email,password:pass}); if(error) alert(error.message); else{const {data}=await supabase.auth.getUser(); setUser(data.user); getPosts()}}
   async function logout(){await supabase.auth.signOut(); setUser(null)}
-  async function signup(){const {error}=await supabase.auth.signUp({email,password:pass}); if(error) alert(error.message); else alert("Email check chey bro!")}
+  async function signup(){const {error}=await supabase.auth.signUp({email,password:pass}); if(error) alert(error.message); else alert("Email check chey!")}
   function likePost(id:string){ const n=new Set(liked); liked.has(id)?n.delete(id):n.add(id); setLiked(n)}
   async function postNow(){
     if(!file) return alert("Photo select chey!");
@@ -30,6 +30,7 @@ export default function ChitPix(){
     await supabase.from("posts").insert({image:data.publicUrl,image_url:data.publicUrl,caption,user_id:user.id,username:user.email.split("@")[0]})
     setCaption(""); setFile(null); setTab("home"); getPosts()
   }
+  const getImg = (p:any) => p?.image || p?.image_url || ""
 
   if(!user) return(
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
@@ -43,22 +44,20 @@ export default function ChitPix(){
     </div>
   )
 
-  const getImg = (p:any) => p.image || p.image_url || ""
-
   return(
     <div className="min-h-screen bg-black text-white">
       <div className="sticky top-0 z-20 bg-black border-b border-zinc-800 flex justify-between items-center px-4 py-3">
         <h1 className="text-xl font-serif">ChitPix 📸</h1>
-        <div className="flex gap-3"><button onClick={()=>setTab("create")} className="w-8 h-8 bg-orange-500 rounded-full font-bold">+</button><button onClick={logout} className="text-xs bg-zinc-800 px-3 py-1 rounded-full">Logout</button></div>
+        <div className="flex gap-3"><button onClick={()=>setTab("create")} className="w-7 h-7 bg-white text-black rounded-full font-bold flex items-center justify-center">+</button><button onClick={logout} className="text-xs bg-zinc-800 px-3 py-1 rounded-full">Logout</button></div>
       </div>
 
-      <div className="max-w-[470px] mx-auto pb-20">
+      <div className="max-w-[470px] mx-auto pb-16">
         {tab==="home"&&(
-          <div className="flex gap-4 p-3 overflow-x-auto border-b border-zinc-800">
-            <div className="flex flex-col items-center min-w-[60px]"><div className="w-14 h-14 rounded-full bg-zinc-800 border-2 border-zinc-700 flex items-center justify-center text-xl">+</div><span className="text-[10px] mt-1">Your Story</span></div>
+          <div className="flex gap-4 p-3 overflow-x-auto border-b border-zinc-800 scrollbar-none">
+            <div className="flex flex-col items-center min-w-[60px]"><div className="w-[56px] h-[56px] rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-lg">+</div><span className="text-[10px] mt-1">Your Story</span></div>
             {posts.map((p:any)=>
               <div key={"s"+p.id} onClick={()=>setStory(getImg(p))} className="flex flex-col items-center min-w-[60px] cursor-pointer">
-                <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-500"><img src={getImg(p)} className="w-full h-full rounded-full object-cover border-2 border-black"/></div>
+                <div className="w-[60px] h-[60px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600"><img src={getImg(p)} className="w-full h-full rounded-full object-cover border-[3px] border-black bg-black"/></div>
                 <span className="text-[10px] mt-1 truncate w-[60px] text-center">{p.username||"mahesh"}</span>
               </div>
             )}
@@ -66,42 +65,42 @@ export default function ChitPix(){
         )}
 
         {tab==="home"&&posts.map((p:any)=>
-          <div key={p.id} className="border-b border-zinc-800 pb-3">
-            <div className="flex justify-between items-center p-3"><div className="flex items-center gap-2"><img src={getImg(p)} className="w-8 h-8 rounded-full object-cover"/><span className="text-sm font-semibold">{p.username||"mahesh123"}</span></div><span className="text-xs">•••</span></div>
+          <div key={p.id} className="border-b border-zinc-800 pb-2">
+            <div className="flex justify-between items-center p-3"><div className="flex items-center gap-2"><img src={getImg(p)} className="w-8 h-8 rounded-full object-cover bg-zinc-800"/><span className="text-[13px] font-semibold">{p.username||"mahesh123"}</span></div><span className="text-sm">•••</span></div>
             <div className="w-full aspect-square bg-zinc-900"><img src={getImg(p)} className="w-full h-full object-cover"/></div>
-            <div className="flex gap-4 px-3 pt-3 text-xl"><span onClick={()=>likePost(p.id)}>{liked.has(p.id)?"❤️":"🤍"}</span><span>💬</span><span>📤</span></div>
-            <div className="px-3 pt-2 text-sm"><span className="font-bold">{23 + (liked.has(p.id)?1:0)} likes</span><div><span className="font-bold mr-2">{p.username||"mahesh123"}</span>{p.caption}</div></div>
+            <div className="flex gap-4 px-3 pt-3 text-[22px]"><span onClick={()=>likePost(p.id)} className="cursor-pointer">{liked.has(p.id)?"❤️":"🤍"}</span><span>💬</span><span>✈️</span><span className="ml-auto">🔖</span></div>
+            <div className="px-3 pt-2 text-[13px]"><span className="font-bold">{23 + (liked.has(p.id)?1:0)} likes</span><div className="mt-1"><span className="font-bold mr-2">{p.username||"mahesh123"}</span>{p.caption}</div></div>
           </div>
         )}
 
         {tab==="reels"&&(
-          <div className="h-[calc(100vh-110px)] overflow-y-scroll snap-y snap-mandatory bg-black">
+          <div className="h-[calc(100vh-110px)] overflow-y-scroll snap-y snap-mandatory">
             {posts.map((p:any)=>
               <div key={p.id} className="h-[calc(100vh-110px)] snap-start relative bg-black">
                 <img src={getImg(p)} className="w-full h-full object-cover"/>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/10"></div>
-                <div className="absolute bottom-6 left-0 right-0 px-4 flex justify-between items-end">
-                  <div><p className="font-bold text-[15px]">@{p.username||"mahesh123"}</p><p className="text-sm mt-1">{p.caption}</p><p className="text-xs mt-2 opacity-70">🎵 Original Audio - ChitPix</p></div>
-                  <div className="flex flex-col gap-5 items-center"><span className="text-2xl">❤️</span><span className="text-2xl">💬</span><span className="text-2xl">📤</span><img src={getImg(p)} className="w-8 h-8 rounded-full border-2 border-white object-cover"/></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                <div className="absolute bottom-5 left-0 right-0 px-4 flex justify-between items-end">
+                  <div className="max-w-[70%]"><p className="font-bold text-[14px]">@{p.username||"mahesh123"}</p><p className="text-[13px] mt-1">{p.caption}</p><p className="text-[11px] mt-2 opacity-80">🎵 Original Audio</p></div>
+                  <div className="flex flex-col gap-4 items-center"><div className="flex flex-col items-center"><span className="text-[26px]">❤️</span><span className="text-[11px]">23</span></div><div className="flex flex-col items-center"><span className="text-[26px]">💬</span><span className="text-[11px]">12</span></div><span className="text-[26px]">✈️</span><img src={getImg(p)} className="w-9 h-9 rounded-full border-2 border-white object-cover"/></div>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {tab==="search"&&<div className="p-4"><input placeholder="Search ChitPix..." className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded-lg"/></div>}
-        {tab==="profile"&&<div className="p-6 text-center"><img src={getImg(posts[0]||{})} className="w-20 h-20 rounded-full mx-auto mb-3 object-cover"/><p className="font-bold">{user.email}</p><p className="text-sm text-zinc-400">{posts.length} posts</p><div className="grid grid-cols-3 gap-1 mt-6">{posts.map((p:any)=><img key={p.id} src={getImg(p)} className="aspect-square object-cover"/>)}</div></div>}
-        {tab==="create"&&<div className="p-6"><input type="file" onChange={e=>setFile(e.target.files?.[0]||null)} className="mb-4 w-full text-sm"/><input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Caption..." className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded mb-3"/><button onClick={postNow} className="w-full bg-white text-black py-2 rounded font-bold">Share to ChitPix</button></div>}
+        {tab==="search"&&<div className="p-3"><div className="flex items-center gap-2 bg-zinc-900 rounded-lg px-3 py-2"><span>🔍</span><input placeholder="Search" className="bg-transparent outline-none w-full text-sm"/></div><div className="grid grid-cols-3 gap-[2px] mt-3">{posts.map((p:any)=><img key={p.id} src={getImg(p)} className="aspect-square object-cover"/>)}</div></div>}
+        {tab==="profile"&&<div className="p-5"><div className="flex gap-6 items-center"><img src={getImg(posts[0]||{})} className="w-20 h-20 rounded-full object-cover bg-zinc-800"/><div className="flex gap-6 text-center"><div><p className="font-bold">{posts.length}</p><p className="text-xs text-zinc-400">Posts</p></div><div><p className="font-bold">1.2k</p><p className="text-xs text-zinc-400">Followers</p></div><div><p className="font-bold">340</p><p className="text-xs text-zinc-400">Following</p></div></div></div><p className="font-bold mt-4 text-sm">{user.email.split("@")[0]}</p><div className="grid grid-cols-3 gap-[2px] mt-5">{posts.map((p:any)=><img key={p.id} src={getImg(p)} className="aspect-square object-cover bg-zinc-800"/>)}</div></div>}
+        {tab==="create"&&<div className="p-6"><input type="file" onChange={e=>setFile(e.target.files?.[0]||null)} className="mb-4 w-full text-sm"/><input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Write a caption..." className="w-full p-3 bg-zinc-900 border border-zinc-800 rounded mb-3 text-sm"/><button onClick={postNow} className="w-full bg-white text-black py-2.5 rounded font-bold text-sm">Share</button></div>}
       </div>
 
-      {story&&<div onClick={()=>setStory(null)} className="fixed inset-0 z-50 bg-black flex items-center justify-center p-4"><img src={story} className="max-w-full max-h-full rounded-lg"/><div className="absolute top-4 right-4 text-2xl">✕</div></div>}
+      {story&&<div onClick={()=>setStory(null)} className="fixed inset-0 z-50 bg-black flex items-center justify-center"><div className="relative w-full max-w-[470px] h-full flex items-center justify-center p-2"><img src={story} className="max-w-full max-h-full rounded"/><div className="absolute top-3 left-3 right-3 h-[2px] bg-zinc-700 rounded"><div className="h-full w-full bg-white rounded"></div></div><div className="absolute top-6 right-4 text-xl">✕</div></div></div>}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-700 flex justify-around py-2.5 max-w-[470px] mx-auto z-20">
-        <div onClick={()=>setTab("home")} className="flex flex-col items-center"><span className="text-xl">🏠</span><span className="text-[10px]">Home</span></div>
-        <div onClick={()=>setTab("search")} className="flex flex-col items-center"><span className="text-xl">🔍</span><span className="text-[10px]">Search</span></div>
-        <div onClick={()=>setTab("reels")} className="flex flex-col items-center"><span className="text-xl">🎬</span><span className="text-[10px]">Reels</span></div>
-        <div onClick={()=>setTab("profile")} className="flex flex-col items-center"><span className="text-xl">👤</span><span className="text-[10px]">Profile</span></div>
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around py-2 max-w-[470px] mx-auto z-30">
+        <button onClick={()=>setTab("home")} className={`flex flex-col items-center gap-[2px] ${tab==="home"?"text-white":"text-zinc-500"}`}><svg width="24" height="24" fill={tab==="home"?"white":"none"} stroke="currentColor" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span className="text-[10px]">Home</span></button>
+        <button onClick={()=>setTab("search")} className={`flex flex-col items-center gap-[2px] ${tab==="search"?"text-white":"text-zinc-500"}`}><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><span className="text-[10px]">Search</span></button>
+        <button onClick={()=>setTab("reels")} className={`flex flex-col items-center gap-[2px] ${tab==="reels"?"text-white":"text-zinc-500"}`}><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg><span className="text-[10px]">Reels</span></button>
+        <button onClick={()=>setTab("profile")} className={`flex flex-col items-center gap-[2px] ${tab==="profile"?"text-white":"text-zinc-500"}`}><svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span className="text-[10px]">Profile</span></button>
       </div>
     </div>
   )
-        }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              }
