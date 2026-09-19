@@ -54,9 +54,9 @@ return(
 <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-4 pb-8 z-50">
 <button onClick={()=>setTab("home")} className={`${tab==="home"?"text-white":"text-zinc-500"} active:scale-90 transition`}><svg className="w-8 h-8" fill={tab==="home"?"white":"none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 2.5L3 10.5V21h6v-6h6v6h6v-10.5l-9-8z"/></svg></button>
 <button onClick={()=>setTab("reels")} className={`${tab==="reels"?"text-white":"text-zinc-500"} active:scale-90 transition`}><svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={tab==="reels"?"2.5":"2"} viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M10 8l6 4-6 4V8z" fill="currentColor"/></svg></button>
-<button onClick={()=>setTab("create")} className="text-zinc-400 active:scale-90 transition"><svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+<button onClick={()=>setTab("create")} className="text-zinc-400 active:scale-90 transition"><svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
 <button onClick={()=>setTab("search")} className={`${tab==="search"?"text-white":"text-zinc-500"} active:scale-90 transition`}><svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth={tab==="search"?"2.5":"2"} viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/></svg></button>
-<button onClick={()=>setTab("profile")} className={`w-8 h-8 rounded-full overflow-hidden border-2 active:scale-90 transition ${tab==="profile"?"border-white":"border-zinc-600"}`}><img src="https://i.pravatar.cc/100" className="w-full h-full object-cover"/></button>
+<button onClick={()=>setTab("profile")} className={`w-10 h-10 rounded-full overflow-hidden border-2 active:scale-90 transition ${tab==="profile"?"border-white":"border-zinc-600"}`}><img src="https://i.pravatar.cc/100" className="w-full h-full object-cover"/></button>
 </div>
 </div>
 )
