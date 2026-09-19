@@ -95,7 +95,7 @@ export default function ChitPix(){
 
       {story&&<div onClick={()=>setStory(null)} className="fixed inset-0 z-50 bg-black flex items-center justify-center"><div className="relative w-full max-w-[470px] h-full flex items-center justify-center p-2"><img src={story} className="max-w-full max-h-full rounded"/><div className="absolute top-3 left-3 right-3 h-[2px] bg-zinc-700 rounded"><div className="h-full w-full bg-white rounded"></div></div><div className="absolute top-6 right-4 text-xl">✕</div></div></div>}
 
-            </div>
+                  </div>
 
       {/* Bottom Nav - Instagram 5 Icons */}
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-3 pb-6 z-50">
