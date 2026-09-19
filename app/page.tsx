@@ -66,7 +66,28 @@ return(
 <input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Write a caption... ✍️" className="w-full p-4 bg-zinc-800 rounded-xl text-base"/>
 <button onClick={postNow} className="w-full bg-white text-black p-4 rounded-xl font-bold text-lg">Share to ChitPix 🚀</button>
 </div>}
-{tab==="profile" && <div className="p-4"><div className="flex gap-8 items-center"><img src="https://i.pravatar.cc/100" className="w-20 h-20 rounded-full"/><div><h2 className="font-bold">{email}</h2><p className="text-sm text-zinc-400">{posts.length} posts</p></div></div></div>}
+{tab==="profile" && <div className="p-4 space-y-5">
+<div className="flex gap-5 items-center">
+<img src="https://i.pravatar.cc/150?u=me" className="w-24 h-24 rounded-full border-2 border-zinc-700"/>
+<div className="flex gap-6">
+<div className="text-center"><p className="text-2xl font-bold">{posts.length}</p><p className="text-base text-zinc-400">posts</p></div>
+<div className="text-center"><p className="text-2xl font-bold">3</p><p className="text-base text-zinc-400">followers</p></div>
+<div className="text-center"><p className="text-2xl font-bold">22</p><p className="text-base text-zinc-400">following</p></div>
+</div>
+</div>
+<h2 className="text-xl font-bold">Kn Mahesh</h2>
+<div className="flex gap-2">
+<button className="flex-1 bg-zinc-800 p-3 rounded-xl font-bold text-base">Edit profile</button>
+<button className="flex-1 bg-zinc-800 p-3 rounded-xl font-bold text-base">Share profile</button>
+</div>
+<div className="grid grid-cols-3 gap-1 pt-4 border-t border-zinc-800">
+{posts.map((p:any)=><img key={p.id} src={getImg(p)} className="aspect-square object-cover"/>)}
+</div>
+<div className="text-center pt-20">
+<p className="text-3xl font-bold">Create your first post</p>
+<p className="text-zinc-500 text-lg mt-2">Share a photo to see it here</p>
+</div>
+</div>}
 
 <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-700 flex justify-around items-center py-3 z-30">
 <button onClick={()=>setTab("home")}><svg style={{width:'40px',height:'40px'}} fill={tab==="home"?"white":"none"} stroke={tab==="home"?"white":"white"} strokeWidth="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
