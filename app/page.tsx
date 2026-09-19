@@ -95,20 +95,26 @@ export default function ChitPix(){
 
       {story&&<div onClick={()=>setStory(null)} className="fixed inset-0 z-50 bg-black flex items-center justify-center"><div className="relative w-full max-w-[470px] h-full flex items-center justify-center p-2"><img src={story} className="max-w-full max-h-full rounded"/><div className="absolute top-3 left-3 right-3 h-[2px] bg-zinc-700 rounded"><div className="h-full w-full bg-white rounded"></div></div><div className="absolute top-6 right-4 text-xl">✕</div></div></div>}
 
+            </div>
+
+      {/* Bottom Nav - Instagram 5 Icons */}
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-3 pb-6 z-50">
-<button onClick={()=>setTab("home")} className={`flex flex-col items-center gap-[2px] ${tab==="home"?"text-white":"text-zinc-500"}`}>
-<svg className="w-[24px] h-[24px]" fill={tab==="home"?"white":"none"} stroke="currentColor" strokeWidth={tab==="home"?"0":"1.7"} viewBox="0 0 24 24"><path d="M12 2.5L3 10.5V21h6v-6h6v6h6v-10.5l-9-8z"/></svg>
-</button>
-<button onClick={()=>setTab("reels")} className={`flex flex-col items-center ${tab==="reels"?"text-white":"text-zinc-500"}`}>
-<svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M10 8l6 4-6 4V8z" fill={tab==="reels"?"white":"none"} /></svg>
-</button>
-<button onClick={()=>setTab("create")} className="flex flex-col items-center text-zinc-400">
-<svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-</button>
-<button onClick={()=>setTab("search")} className={`flex flex-col items-center ${tab==="search"?"text-white":"text-zinc-500"}`}>
-<svg className="w-[24px] h-[24px]" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.35-4.35"/></svg>
-</button>
-<button onClick={()=>setTab("profile")} className={`w-[24px] h-[24px] rounded-full overflow-hidden border ${tab==="profile"?"border-white":"border-zinc-600"}`}>
-<img src={user?.user_metadata?.avatar_url || "https://i.pravatar.cc/100"} className="w-full h-full object-cover"/>
-</button>
-</div>
+        <button onClick={()=>setTab("home")} className={tab==="home"?"text-white":"text-zinc-500"}>
+          <svg className="w-6 h-6" fill={tab==="home"?"white":"none"} stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><path d="M12 2.5L3 10.5V21h6v-6h6v6h6v-10.5l-9-8z"/></svg>
+        </button>
+        <button onClick={()=>setTab("reels")} className={tab==="reels"?"text-white":"text-zinc-500"}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M10 8l6 4-6 4V8z" fill="currentColor"/></svg>
+        </button>
+        <button onClick={()=>setTab("create")} className="text-zinc-400">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+        <button onClick={()=>setTab("search")} className={tab==="search"?"text-white":"text-zinc-500"}>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.7" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+        <button onClick={()=>setTab("profile")} className={`w-6 h-6 rounded-full overflow-hidden border ${tab==="profile"?"border-white":"border-zinc-600"}`}>
+          <img src="https://i.pravatar.cc/100" className="w-full h-full object-cover" alt="profile"/>
+        </button>
+      </div>
+    </div>
+  );
+}
