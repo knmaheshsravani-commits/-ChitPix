@@ -55,7 +55,17 @@ return(
 </div>)}</div>}
 
 {tab==="search" && <div className="p-2"><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." className="w-full p-3 bg-zinc-800 rounded-full"/><div className="grid grid-cols-3 gap-1 mt-4">{filteredPosts.map((p:any)=><img key={p.id} src={getImg(p)} className="aspect-square object-cover"/>)}</div></div>}
-{tab==="create" && <div className="p-4"><h2 className="text-xl mb-4">New post</h2><input type="file" onChange={e=>setFile(e.target.files?.[0]||null)} className="mb-4"/><input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Caption..." className="w-full p-3 bg-zinc-800 rounded mb-4"/><button onClick={postNow} className="w-full bg-white text-black p-3 rounded font-bold">Share</button></div>}
+{tab==="create" && <div className="p-4 space-y-4">
+<h2 className="text-2xl font-bold">New post</h2>
+<div className="w-full p-4 bg-zinc-800 rounded-xl border border-dashed border-zinc-600 text-center">
+<input type="file" accept="image/*" id="fileInput" onChange={e=>setFile(e.target.files?.[0]||null)} className="hidden"/>
+<label htmlFor="fileInput" className="text-white font-bold text-lg block w-full py-3 cursor-pointer">📁 Choose Photo</label>
+{file && <p className="text-sm text-green-400 mt-2 truncate">{file.name}</p>}
+{!file && <p className="text-sm text-zinc-400 mt-2">No file chosen</p>}
+</div>
+<input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Write a caption... ✍️" className="w-full p-4 bg-zinc-800 rounded-xl text-base"/>
+<button onClick={postNow} className="w-full bg-white text-black p-4 rounded-xl font-bold text-lg">Share to ChitPix 🚀</button>
+</div>}
 {tab==="profile" && <div className="p-4"><div className="flex gap-8 items-center"><img src="https://i.pravatar.cc/100" className="w-20 h-20 rounded-full"/><div><h2 className="font-bold">{email}</h2><p className="text-sm text-zinc-400">{posts.length} posts</p></div></div></div>}
 
 <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-700 flex justify-around items-center py-3 z-30">
