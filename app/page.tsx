@@ -34,8 +34,8 @@ export default function Page(){
   };
 
   return(
-    <div className="min-h-screen bg-black text-white flex justify-center">
-      <div className="w-full max-w-[430px] bg-black min-h-screen pb-[70px] border-x border-zinc-800">
+    <div className="min-h-screen bg-black text-white">
+  <div className="w-full bg-black min-h-screen pb-[70px]">
 
         <div className="flex justify-between items-center p-4 sticky top-0 bg-black z-20 border-b border-zinc-800">
           <h1 className="text-[28px] font-black tracking-tight">ChitPix</h1>
