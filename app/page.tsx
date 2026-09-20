@@ -42,9 +42,9 @@ export default function Page() {
             ))}
           </div>
           {posts.map((p,i)=>(
-            <div key={i} className="border-b pb-2 max-w-[500px] mx-auto">
+            <div key={i} className="border-b pb-2 w-full">
               <div className="flex items-center gap-2 p-3"><img src={p.img} className="w-8 h-8 rounded-full"/><p className="font-bold text-[13px]">{p.user}</p></div>
-              <img src={p.img} className="w-full h-[400px] object-cover"/>
+              <img src={p.img} className="w-full aspect-[4/5] object-cover"/>
               <div className="flex gap-5 px-3 py-3 items-center">
                 <div className="flex items-center gap-1"><span onClick={()=>setLiked(!liked)} className="text-[26px] cursor-pointer">{liked?"❤️":"🤍"}</span><span className="text-[15px] font-bold">14.5K</span></div>
                 <div className="flex items-center gap-1"><span className="text-[24px]">💬</span><span className="text-[15px] font-bold">324</span></div>
