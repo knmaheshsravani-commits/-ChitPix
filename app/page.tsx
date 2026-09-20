@@ -62,9 +62,7 @@ export default function Page(){
             </div>
             <span className="text-[11px]">sravani</span>
           </div>
-        </div>
-
-        {tab==="home" && <>
+        </div>        {tab==="home" && <>
           <div className="m-3 p-3 rounded-2xl bg-zinc-900 border border-zinc-800">
             <input value={text} onChange={e=>setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3.5 text-[14px] outline-none placeholder:text-zinc-500"/>
             <div className="flex gap-3 mt-3">
@@ -101,4 +99,4 @@ export default function Page(){
       </div>
     </div>
   )
-            }
+}
