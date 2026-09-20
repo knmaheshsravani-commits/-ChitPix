@@ -1,134 +1,107 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 export default function Page() {
   const [tab, setTab] = useState("home");
   const [liked, setLiked] = useState<number[]>([]);
   const [search, setSearch] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [showEdit, setShowEdit] const [comments, setComments] = useState([{user:"rxtagur", text:"Mass bro 🔥"}]);
-const [newComment, setNewComment] = useState("");= useState(false);
+  const [showEdit, setShowEdit] = useState(false);
+  const [comments, setComments] = useState([{user:"rxtagur", text:"Mass bro 🔥"}]);
+  const [newComment, setNewComment] = useState("");
   const [currentUser, setCurrentUser] = useState("");
   const [profile, setProfile] = useState({
     name: "_sankar_001", fullName: "Sankar Mahesh",
     bio: "Devanhalli | ChitPix Creator 🚀 | Travel | Code",
-    link: "chitpix-p6.vercel.app", city: "Devanhalli, Karnataka",
+    link: "chitpix-p6.vercel.app", city: "Devanhalli, Karnataka"
   });
   const [temp, setTemp] = useState(profile);
   useEffect(()=>{
     const u = localStorage.getItem("chitpix_user");
     if(!u){ window.location.href="/login"; }
-    else{ setCurrentUser(u); setProfile(prev=>({...prev, name:u})); }
+    else{ setCurrentUser(u); setProfile(prev=>({...prev, name: u})); setTemp(prev=>({...prev, name: u})); }
   },[]);
   const stories = [
-    { name: "rxtagur", img: "https://picsum.photos/200/200?random=2" },
-    { name: "akhilesh", img: "https://picsum.photos/200/200?random=3" },
-    { name: "abhichar", img: "https://picsum.photos/200/200?random=4" },
-    { name: "your_story", img: "https://picsum.photos/200/200?random=5" },
-    { name: "mahesh", img: "https://picsum.photos/200/200?random=6" },
-    { name: "sankar", img: "https://picsum.photos/200/200?random=7" },
+    { name: "rxtagur", img: "https://picsum.photos/200/200?1" },
+    { name: "akhilesh", img: "https://picsum.photos/200/200?2" },
+    { name: "abhichar", img: "https://picsum.photos/200/200?3" },
+    { name: "your_story", img: "https://picsum.photos/200/200?4" },
+    { name: "mahesh", img: "https://picsum.photos/200/200?5" },
+    { name: "sankar", img: "https://picsum.photos/200/200?6" },
   ];
   const posts = [
-    { id: 1, user: "_sankar_001", img: "https://picsum.photos/800/1000?random=50" },
-    { id: 2, user: "rxtagur", img: "https://picsum.photos/800/1000?random=51" },
-    { id: 3, user: "akhilesh", img: "https://picsum.photos/800/1000?random=52" },
+    { id: 1, user: "_sankar_001", img: "https://picsum.photos/600/600?1" },
+    { id: 2, user: "rxtagur", img: "https://picsum.photos/600/600?2" },
+    { id: 3, user: "akhilesh", img: "https://picsum.photos/600/600?3" },
   ];
   const filtered = posts.filter(p => p.user.toLowerCase().includes(search.toLowerCase()));
   const toggleLike = (id:number)=> setLiked(prev=> prev.includes(id)? prev.filter(x=>x!==id) : [...prev, id]);
   const saveProfile = () => { setProfile(temp); setShowEdit(false); }
   const logout = () => { localStorage.removeItem("chitpix_user"); window.location.href="/login"; }
   const shareProfile = async () => {
-    const txt = `Check my ChitPix: ${profile.name} - ${window.location.href}`;
-    if(navigator.share){ try{ await navigator.share({title:"ChitPix", text:txt, url:window.location.href}); }catch(e){} }
-    else { await navigator.clipboard.writeText(txt); alert("✅ Copied! "+txt); }
-  };
+    const txt = `Check my ChitPix @${profile.name} - ${window.location.href}`;
+    if(navigator.share){ await navigator.share({title:"ChitPix", text:txt}); }
+    else{ await navigator.clipboard.writeText(txt); alert("Link copied!"); }
+  }
   return (
-    <div className="min-h-screen bg-white text-black pb-[90px]">
-      <div className="flex justify-between items-center px-4 py-3 sticky top-0 bg-white z-20 border-b">
-        <h1 className="text-[28px] font-black" style={{fontFamily:"cursive", background:"linear-gradient(45deg, #feda75, #fa7e1e, #d62976, #962fbf, #4f5bd5)", WebkitBackgroundClip:"text", color:"transparent"}}>ChitPix</h1>
-        <div className="flex gap-3 items-center"><span className="text-[12px] font-bold">{currentUser}</span><button onClick={logout} className="text-[12px] text-red-500 font-bold">Logout</button></div>
-      </div>
-      {tab==="home" && (
-        <>
-          <div className="flex gap-4 p-3 overflow-x-auto border-b">
-            {stories.map((s,i)=>(
-              <div key={i} className="flex-col items-center min-w-[75px] flex">
-                <div className="w-[75px] h-[75px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
-                  <div className="w-full h-full rounded-full bg-white p-[3px]"><img src={s.img} className="w-full h-full rounded-full object-cover"/></div>
-                </div>
-                <p className="text-[12px] mt-1">{s.name}</p>
-              </div>
-            ))}
-          </div>
-          {filtered.map((p)=>(
-            <div key={p.id} className="border-b pb-2 w-full">
-              <div className="flex items-center gap-2 px-3 py-2"><img src={p.img} className="w-8 h-8 rounded-full"/><p className="font-bold text-[14px]">{p.user}</p></div>
-              <img src={p.img} className="w-full aspect-[4/5] object-cover"/>
-              <div className="flex gap-5 px-3 py-3 items-center">
-                <button onClick={()=>toggleLike(p.id)} className="flex items-center gap-1"><span className="text-[26px]">{liked.includes(p.id)?"❤️":"🤍"}</span><span className="text-[13px] font-bold">14.5K</span></button>
-                <button onClick={()=>setShowComments(true)} className="flex items-center gap-1"><span className="text-[24px]">💬</span><span className="text-[13px] font-bold">324</span></button>
-                <span className="text-[24px] ml-auto">🔖</span>
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-      {tab==="search" && (
-        <div className="p-4">
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search user..." className="w-full border-2 p-3 rounded-full"/>
-          <div className="mt-4 grid grid-cols-2 gap-2">{filtered.map(p=><img key={p.id} src={p.img} className="w-full aspect-square object-cover rounded"/>)}</div>
+    <div className="min-h-screen bg-white max-w-[420px] mx-auto">
+      {tab==="home" && <div>
+        <div className="flex gap-3 p-3 overflow-x-auto border-b">
+          {stories.map((s,i)=><div key={i} className="text-center"><img src={s.img} className="w-[60px] h-[60px] rounded-full border-2 border-pink-500"/><p className="text-[11px]">{s.name}</p></div>)}
         </div>
-      )}
-      {tab==="reels" && <div className="bg-black h-[80vh] flex items-center justify-center"><video src="https://www.w3schools.com/html/mov_bbb.mp4" autoPlay loop muted playsInline className="h-full"/></div>}
-      {tab==="profile" && (
-        <div className="p-4">
-          <div className="flex gap-5 items-center">
-            <img src="https://picsum.photos/200/200?random=10" className="w-[85px] h-[85px] rounded-full border"/>
-            <div className="flex gap-7">
-              <div className="text-center"><p className="font-bold text-[18px]">12</p><p className="text-[13px]">Posts</p></div>
-              <div className="text-center"><p className="font-bold text-[18px]">1.2K</p><p className="text-[13px]">Followers</p></div>
-              <div className="text-center"><p className="font-bold text-[18px]">300</p><p className="text-[13px]">Following</p></div>
+        {filtered.map(post=>(
+          <div key={post.id} className="border-b pb-2">
+            <p className="font-bold p-3">{post.user}</p>
+            <img src={post.img} className="w-full"/>
+            <div className="flex gap-4 p-3">
+              <button onClick={()=>toggleLike(post.id)}>{liked.includes(post.id)? "❤️" : "🤍"}</button>
+              <button onClick={()=>setShowComments(true)}>💬</button>
             </div>
           </div>
-          <div className="mt-3">
-            <p className="font-bold">{profile.fullName}</p>
-            <p className="text-[14px]">@{profile.name}</p>
-            <p className="text-[14px] whitespace-pre-line">{profile.bio}</p>
-            <p className="text-[14px] text-blue-600">{profile.link}</p>
-            <p className="text-[13px] text-gray-500">{profile.city}</p>
+        ))}
+      </div>}
+      {tab==="profile" && <div className="p-4">
+        <h1 className="font-bold text-xl">{profile.name}</h1>
+        <p>{profile.fullName}</p>
+        <p className="text-[13px] text-gray-600">{profile.bio}</p>
+        <div className="flex gap-2 mt-3">
+          <button onClick={()=>setShowEdit(true)} className="flex-1 bg-gray-100 py-1.5 rounded">Edit Profile</button>
+          <button onClick={shareProfile} className="flex-1 bg-gray-100 py-1.5 rounded">Share Profile</button>
+          <button onClick={logout} className="bg-red-100 px-3 py-1.5 rounded">Logout</button>
+        </div>
+      </div>}
+
+      <div className="fixed bottom-0 w-full max-w-[420px] flex justify-around bg-white border-t py-3">
+        <button onClick={()=>setTab("home")}>🏠</button>
+        <button onClick={()=>setTab("search")}>🔍</button>
+        <button onClick={()=>setTab("profile")}>👤</button>
+      </div>
+
+      {showComments && (
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-end" onClick={()=>setShowComments(false)}>
+          <div onClick={e=>e.stopPropagation()} className="bg-white w-full rounded-t-[20px] h-[55vh] flex flex-col">
+            <p className="font-bold text-center border-b py-3">Comments</p>
+            <div className="flex-1 p-4 overflow-y-auto space-y-3">
+              {comments.map((c,i)=><p key={i} className="text-[14px]"><b>{c.user}</b> {c.text}</p>)}
+            </div>
+            <div className="p-3 border-t flex gap-2">
+              <input value={newComment} onChange={e=>setNewComment(e.target.value)} placeholder="Add a comment..." className="flex-1 border rounded-full px-4 py-2.5 text-[14px] outline-none"/>
+              <button onClick={()=>{
+                if(newComment.trim()){ setComments([...comments, {user: currentUser || "_sankar_001", text: newComment}]); setNewComment(""); }
+              }} className="text-blue-600 font-bold text-[14px] px-3">Post</button>
+            </div>
           </div>
-          <div className="flex gap-2 mt-4">
-            <button onClick={()=>{setTemp(profile); setShowEdit(true)}} className="flex-1 bg-gray-100 py-2 rounded-lg font-bold text-[14px]">Edit Profile</button>
-            <button onClick={shareProfile} className="flex-1 bg-gray-100 py-2 rounded-lg font-bold text-[14px]">Share Profile</button>
-          </div>
-          <div className="grid grid-cols-3 gap-1 mt-5">{posts.map(p=><img key={p.id} src={p.img} className="aspect-square object-cover"/>)}</div>
         </div>
       )}
       {showEdit && (
-        <div className="fixed inset-0 bg-white z-[70] p-4 overflow-y-auto">
-          <div className="flex justify-between items-center border-b pb-3">
-            <button onClick={()=>setShowEdit(false)}>Cancel</button><p className="font-bold">Edit Profile</p><button onClick={saveProfile} className="text-blue-600 font-bold">Done</button>
-          </div>
-          <div className="mt-6 space-y-4">
-            <div><p className="text-[13px] text-gray-500">Name</p><input value={temp.fullName} onChange={e=>setTemp({...temp, fullName:e.target.value})} className="w-full border-b py-2 outline-none"/></div>
-            <div><p className="text-[13px] text-gray-500">Username</p><input value={temp.name} onChange={e=>setTemp({...temp, name:e.target.value})} className="w-full border-b py-2 outline-none"/></div>
-            <div><p className="text-[13px] text-gray-500">Bio</p><textarea value={temp.bio} onChange={e=>setTemp({...temp, bio:e.target.value})} className="w-full border p-2 rounded mt-1 h-[80px]"/></div>
-            <div><p className="text-[13px] text-gray-500">Link</p><input value={temp.link} onChange={e=>setTemp({...temp, link:e.target.value})} className="w-full border-b py-2 outline-none"/></div>
-            <div><p className="text-[13px] text-gray-500">City</p><input value={temp.city} onChange={e=>setTemp({...temp, city:e.target.value})} className="w-full border-b py-2 outline-none"/></div>
+        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={()=>setShowEdit(false)}>
+          <div onClick={e=>e.stopPropagation()} className="bg-white w-full rounded-xl p-4">
+            <p className="font-bold mb-3">Edit Profile</p>
+            <input value={temp.fullName} onChange={e=>setTemp({...temp, fullName:e.target.value})} className="w-full border p-2 rounded mb-2"/>
+            <input value={temp.bio} onChange={e=>setTemp({...temp, bio:e.target.value})} className="w-full border p-2 rounded mb-2"/>
+            <button onClick={saveProfile} className="w-full bg-blue-600 text-white py-2 rounded">Save</button>
           </div>
         </div>
       )}
-      {showComments && (
-        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end" onClick={()=>setShowComments(false)}>
-          <div className="bg-white w-full rounded-t-[20px] p-4 h-[50vh]"><p className="font-bold text-center border-b pb-2">Comments</p><p className="mt-3"><b>rxtagur</b> Mass bro 🔥</p></div>
-        </div>
-      )}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-[1.5px] border-gray-300 flex justify-around items-center h-[75px] z-50 pb-2">
-        <button onClick={()=>setTab("home")} className="p-3"><svg width="40" height="40" viewBox="0 0 24 24" fill={tab==="home"?"black":"none"} stroke="black" strokeWidth="2.5"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-4v-6H8v6H4a1 1 0 0 1-1-1v-9.5z"/></svg></button>
-        <button onClick={()=>setTab("reels")} className="p-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.2"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill="black"/></svg></button>
-        <button onClick={()=>alert("Create Post Coming Soon!")} className="p-3"><div className="w-[40px] h-[40px] border-[2.5px] border-black rounded-xl flex items-center justify-center text-[24px]">+</div></button>
-        <button onClick={()=>setTab("search")} className="p-3"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5l5 5" strokeWidth="2.5"/></svg></button>
-        <button onClick={()=>setTab("profile")} className="p-3"><img src="https://picsum.photos/200/200?random=10" className={`w-[40px] h-[40px] rounded-full ${tab==="profile"?"ring-[2.5px] ring-black":""}`}/></button>
-      </div>
     </div>
-  );
-      }
+  )
+}
