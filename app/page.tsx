@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 
 export default function Page() {
+  const [user, setUser] = useState<string|null>(null);
+  const [loginName, setLoginName] = useState("");
   const [tab, setTab] = useState("home");
   const stories = [
     { id:1, name:"nani", img:"https://picsum.photos/200/200?1", storyImg:"https://picsum.photos/400/700?1" },
@@ -10,8 +12,8 @@ export default function Page() {
     { id:4, name:"chaitu", img:"https://picsum.photos/200/200?4", storyImg:"https://picsum.photos/400/700?4" },
   ];
   const [posts, setPosts] = useState([
-    { id: 1, img: "https://picsum.photos/500/600?10", likes: 120, liked: false, comments: ["Nice!", "Super"] },
-    { id: 2, img: "https://picsum.photos/500/600?11", likes: 89, liked: false, comments: [] },
+    { id: 1, user:"mahesh", img: "https://picsum.photos/500/600?10", likes: 120, liked: false, comments: ["Nice!", "Super"] },
+    { id: 2, user:"sravani", img: "https://picsum.photos/500/600?11", likes: 89, liked: false, comments: [] },
   ]);
   const [showComments, setShowComments] = useState<number|null>(null);
   const [text, setText] = useState("");
@@ -21,6 +23,11 @@ export default function Page() {
   const [newImg, setNewImg] = useState("");
 
   useEffect(()=>{
+    const saved = localStorage.getItem("chitpix_user");
+    if(saved) setUser(saved);
+  },[]);
+
+  useEffect(()=>{
     if(!activeStory) return;
     setProgress(0);
     const id = setInterval(()=>setProgress(p=>p+2),100);
@@ -28,14 +35,44 @@ export default function Page() {
     return ()=>{clearInterval(id); clearTimeout(t);}
   },[activeStory]);
 
+  const handleLogin = () => {
+    if(!loginName) return;
+    setUser(loginName);
+    localStorage.setItem("chitpix_user", loginName);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("chitpix_user");
+  };
+
   const addPost = () => {
     if(!newImg) return;
-    setPosts([{ id: Date.now(), img: newImg, likes:0, liked:false, comments:[] },...posts]);
+    setPosts([{ id: Date.now(), user: user||"you", img: newImg, likes:0, liked:false, comments:[] },...posts]);
     setNewImg(""); setShowAdd(false); setTab("home");
   };
 
+  // LOGIN SCREEN
+  if(!user){
+    return (
+      <div className="max-w-[400px] mx-auto min-h-screen bg-white flex flex-col items-center justify-center p-6">
+        <h1 className="text-4xl font-black mb-2" style={{fontFamily:"cursive"}}>ChitPix</h1>
+        <p className="text-gray-500 mb-8 text-sm">Login to see photos from friends</p>
+        <input value={loginName} onChange={e=>setLoginName(e.target.value)} placeholder="Your name" className="w-full border rounded-lg p-3 mb-3"/>
+        <input type="password" placeholder="Password (any)" className="w-full border rounded-lg p-3 mb-4"/>
+        <button onClick={handleLogin} className="w-full bg-blue-500 text-white rounded-lg py-3 font-bold">Log In</button>
+        <p className="text-xs mt-6 text-gray-400">Demo login - any name works bro</p>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-[400px] mx-auto bg-white min-h-screen pb-16 relative">
+      <div className="flex justify-between p-3 border-b sticky top-0 bg-white z-10">
+        <h1 className="font-black text-xl" style={{fontFamily:"cursive"}}>ChitPix</h1>
+        <div className="flex gap-3 items-center"><span className="text-sm">Hi, {user}</span><button onClick={handleLogout} className="text-xs text-red-500">Logout</button></div>
+      </div>
+
       {tab==="home" && <>
         <div className="flex gap-3 p-3 overflow-x-auto border-b">
           {stories.map(s=>(
@@ -47,6 +84,7 @@ export default function Page() {
         </div>
         {posts.map(p=>(
           <div key={p.id} className="border-b">
+            <div className="p-2 flex gap-2 items-center"><img src={`https://picsum.photos/30/30?${p.id}`} className="w-6 h-6 rounded-full"/><span className="text-sm font-bold">{p.user}</span></div>
             <img src={p.img} className="w-full" alt="post"/>
             <div className="p-2 flex gap-4">
               <button onClick={()=>setPosts(posts.map(x=>x.id===p.id?{...x,liked:!x.liked,likes:x.liked?x.likes-1:x.likes+1}:x))} className={p.liked?"text-red-500":""}>❤️ {p.likes}</button>
@@ -57,7 +95,7 @@ export default function Page() {
                 {p.comments.map((c,i)=><p key={i} className="text-sm">• {c}</p>)}
                 <div className="flex gap-2 mt-2">
                   <input value={text} onChange={e=>setText(e.target.value)} placeholder="Add comment" className="flex-1 border rounded-full px-3 py-1 text-sm"/>
-                  <button onClick={()=>{if(!text)return; setPosts(posts.map(x=>x.id===p.id?{...x,comments:[...x.comments,text]}:x)); setText("");}} className="text-blue-500 text-sm font-bold">Post</button>
+                  <button onClick={()=>{if(!text)return; setPosts(posts.map(x=>x.id===p.id?{...x,comments:[...x.comments,`${user}: ${text}`]}:x)); setText("");}} className="text-blue-500 text-sm font-bold">Post</button>
                 </div>
                 <button onClick={()=>setShowComments(null)} className="text-xs mt-2">Close</button>
               </div>
@@ -66,13 +104,14 @@ export default function Page() {
         ))}
       </>}
 
-      {tab==="profile" && <div className="p-4 pt-12">
+      {tab==="profile" && <div className="p-4">
         <div className="flex gap-4 items-center">
           <img src="https://picsum.photos/200/200?9" className="w-20 h-20 rounded-full"/>
-          <div className="flex gap-6"><p><b>{posts.length}</b><br/>Posts</p><p><b>1.2k</b><br/>Followers</p></div>
+          <div className="flex gap-6"><p><b>{posts.filter(p=>p.user===user).length}</b><br/>Posts</p><p><b>1.2k</b><br/>Followers</p></div>
         </div>
-        <h1 className="font-bold mt-3">Mahesh Sravani</h1>
-        <div className="grid grid-cols-3 gap-1 mt-6">{posts.map(p=><img key={p.id} src={p.img} className="h-28 object-cover" alt="post"/> )}</div>
+        <h1 className="font-bold mt-3">{user}</h1>
+        <div className="grid grid-cols-3 gap-1 mt-6">{posts.filter(p=>p.user===user).map(p=><img key={p.id} src={p.img} className="h-28 object-cover" alt="post"/> )}</div>
+        {posts.filter(p=>p.user===user).length===0 && <p className="text-sm text-gray-400 mt-4">No posts yet - click ＋ to add!</p>}
       </div>}
 
       {activeStory && (
@@ -86,10 +125,9 @@ export default function Page() {
       {showAdd && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 max-w-[400px] mx-auto">
           <div className="bg-white rounded-xl p-4 w-full">
-            <h2 className="font-bold mb-2">New Post 📸</h2>
-            <input value={newImg} onChange={e=>setNewImg(e.target.value)} placeholder="Paste image URL (picsum.photos...)" className="w-full border rounded p-2 text-sm mb-3"/>
+            <h2 className="font-bold mb-2">New Post 📸 {user}</h2>
+            <input value={newImg} onChange={e=>setNewImg(e.target.value)} placeholder="Paste image URL" className="w-full border rounded p-2 text-sm mb-3"/>
             <div className="flex gap-2"><button onClick={addPost} className="flex-1 bg-black text-white rounded-full py-2 text-sm">Share</button><button onClick={()=>setShowAdd(false)} className="flex-1 border rounded-full py-2 text-sm">Cancel</button></div>
-            <p className="text-[10px] mt-2 text-gray-500">Tip: picsum.photos/500/600?20 la URL use chey</p>
           </div>
         </div>
       )}
@@ -101,4 +139,4 @@ export default function Page() {
       </div>
     </div>
   );
-}
+                                                   }
