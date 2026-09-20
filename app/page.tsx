@@ -65,12 +65,12 @@ export default function Page() {
       {tab==="shop" && (<div className="p-10 text-center"><div className="text-[50px]">🛍️</div><p className="font-bold mt-2">Shop</p></div>)}
       {tab==="profile" && (<div className="p-4"><div className="flex gap-5 items-center"><img src="https://picsum.photos/200/200?random=10" className="w-[80px] h-[80px] rounded-full"/><div className="flex gap-5 text-center"><div><p className="font-bold">3</p><p className="text-[12px]">Posts</p></div><div><p className="font-bold">1.2k</p><p className="text-[12px]">Followers</p></div><div><p className="font-bold">180</p><p className="text-[12px]">Following</p></div></div></div><div className="grid grid-cols-3 gap-1 mt-4">{posts.map((p,i)=><img key={i} src={p.img} className="h-[120px] w-full object-cover"/>)}</div></div>)}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center h-[65px] z-30">
-        <button onClick={()=>setTab("home")} className={`text-[30px] ${tab==="home"?"":"opacity-60"}`}>⌂</button>
-        <button onClick={()=>setTab("search")} className={`text-[26px] ${tab==="search"?"":"opacity-60"}`}>⌕</button>
-        <button onClick={()=>setTab("reels")} className={`text-[24px] ${tab==="reels"?"":"opacity-60"}`}>▶</button>
-        <button onClick={()=>setTab("shop")} className={`text-[24px] ${tab==="shop"?"":"opacity-60"}`}>🛒</button>
-        <button onClick={()=>setTab("profile")}><div className={`w-[30px] h-[30px] rounded-full p-[2px] ${tab==="profile"?"bg-black":"bg-gray-300"}`}><img src="https://picsum.photos/200/200?random=10" className="w-full h-full rounded-full border-2 border-white"/></div></button>
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t-2 flex justify-around items-center h-[70px] z-50 shadow-lg">
+        <button onClick={()=>setTab("home")} className={`text-[32px] ${tab==="home"?"text-black":"text-black opacity-30"}`}>⌂</button>
+        <button onClick={()=>setTab("search")} className={`text-[28px] ${tab==="search"?"text-black":"text-black opacity-30"}`}>⌕</button>
+        <button onClick={()=>setTab("reels")} className={`text-[26px] ${tab==="reels"?"text-black":"text-black opacity-30"}`}>▶</button>
+        <button onClick={()=>setTab("shop")} className={`text-[26px] ${tab==="shop"?"text-black":"text-black opacity-30"}`}>🛒</button>
+        <button onClick={()=>setTab("profile")}><div className={`w-[32px] h-[32px] rounded-full p-[2px] ${tab==="profile"?"bg-black":"bg-gray-400"}`}><img src="https://picsum.photos/200/200?random=10" className="w-full h-full rounded-full border-2 border-white"/></div></button>
       </div>
     </div>
   );
