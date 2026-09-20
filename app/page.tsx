@@ -69,13 +69,11 @@ export default function Page() {
           <button onClick={logout} className="bg-red-100 px-3 py-1.5 rounded">Logout</button>
         </div>
       </div>}
-
       <div className="fixed bottom-0 w-full max-w-[420px] flex justify-around bg-white border-t py-3">
         <button onClick={()=>setTab("home")}>🏠</button>
         <button onClick={()=>setTab("search")}>🔍</button>
         <button onClick={()=>setTab("profile")}>👤</button>
       </div>
-
       {showComments && (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-end" onClick={()=>setShowComments(false)}>
           <div onClick={e=>e.stopPropagation()} className="bg-white w-full rounded-t-[20px] h-[55vh] flex flex-col">
