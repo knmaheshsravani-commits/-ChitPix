@@ -80,7 +80,7 @@ export default function Page() {
 
       {tab==="search" && (
         <div className="p-4">
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search ChitPix..." className="w-full bg-gray-100 rounded-full px-4 py-3 text-[15px] outline-none" autoFocus />
+          <input autoComplete="off" value={search} onChange={e=>setSearch(e.target.value
           <div className="mt-4 space-y-3">
             {filteredStories.map((s,i)=><div key={i} className="flex gap-3 items-center"><img src={s.img} className="w-[45px] h-[45px] rounded-full"/><p className="font-bold">{s.name}</p></div>)}
             {filteredStories.length===0 && search && <p className="text-gray-500 text-center mt-10">No results for "{search}"</p>}
