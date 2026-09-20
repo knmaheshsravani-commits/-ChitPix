@@ -18,7 +18,7 @@ export default function Page() {
       {/* TOP - Insta style */}
       <div className="flex justify-between items-center px-4 py-3 bg-white sticky top-0 z-10 border-b border-zinc-200">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        <h1 className="text-[28px] font-bold" style={{fontFamily:"cursive"}}>Instagram</h1>
+        <h1 className="text-[28px] font-black" style={{fontFamily:"cursive", background:"linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent"}}>ChitPix</h1>
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.35l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       </div>
 
