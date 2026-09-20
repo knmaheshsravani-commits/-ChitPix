@@ -63,24 +63,23 @@ export default function Page() {
       {tab==="shop" && <div className="p-10 text-center"><div className="text-[50px]">🛒</div><p>Shop coming soon</p></div>}
       {tab==="profile" && <div className="p-4"><div className="flex gap-5 items-center"><img src="https://picsum.photos/200/200?random=10" className="w-20 h-20 rounded-full"/><div><p className="font-bold">_sankar_001</p><p>Devanhalli</p></div></div></div>}
 
-      {/* REAL INSTAGRAM STYLE BOTTOM NAV - BIG BOLD */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-300 flex justify-around items-center h-[62px] z-50">
-        <button onClick={()=>setTab("home")} className="p-2">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill={tab==="home"?"black":"none"} stroke="black" strokeWidth={tab==="home"?"0":"2"}><path d="M12 2.5L2 12v9h6v-6h8v6h6v-9L12 2.5z"/></svg>
+            {/* MEGA BIG BOLD BOTTOM NAV */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t-[1.5px] border-gray-300 flex justify-around items-center h-[75px] z-50 pb-2">
+        <button onClick={()=>setTab("home")} className="p-3">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill={tab==="home"?"black":"white"} stroke="black" strokeWidth="2.5"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-4v-6H8v6H4a1 1 0 0 1-1-1v-9.5z"/></svg>
         </button>
-        <button onClick={()=>setTab("reels")} className="p-2">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="5"/><path d="M10 9l6 3-6 3V9z" fill="black"/></svg>
+        <button onClick={()=>setTab("reels")} className="p-3">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.2"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill="black" stroke="black" strokeWidth="1.5"/></svg>
         </button>
-        <button onClick={()=>setTab("search")} className="p-2">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><path d="M12 2l-2 8H2l6 4-2 8 6-5 6 5-2-8 6-4h-8l-2-8z"/></svg>
+        <button onClick={()=>setTab("search")} className="p-3">
+          <div className="w-[36px] h-[36px] border-[2.5px] border-black rounded-xl flex items-center justify-center text-[26px] font-light">+</div>
         </button>
-        <button onClick={()=>setTab("search")} className="p-2">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><circle cx="11" cy="11" r="6"/><line x1="16" y1="16" x2="21" y2="21"/></svg>
+        <button onClick={()=>setTab("search")} className="p-3">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5l5 5" strokeWidth="2.5"/></svg>
         </button>
-        <button onClick={()=>setTab("profile")} className="p-2">
-          <img src="https://picsum.photos/200/200?random=10" className={`w-[30px] h-[30px] rounded-full ${tab==="profile"?"ring-2 ring-black":""}`}/>
+        <button onClick={()=>setTab("profile")} className="p-3">
+          <img src="https://picsum.photos/200/200?random=10" className={`w-[36px] h-[36px] rounded-full object-cover ${tab==="profile"?"ring-[2.5px] ring-black":""}`}/>
         </button>
       </div>
-    </div>
   );
 }
