@@ -45,7 +45,7 @@ export default function Page() {
               {stories.map(s=>(
                 <div key={s.id} onClick={()=>setActiveStory(s)} className="flex flex-col items-center min-w-[60px] cursor-pointer">
                   <div className="w-[62px] h-[62px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-600 to-purple-600">
-                    <img src={s.img} className="w-full h-full rounded-full border-2 border-white object-cover bg-white"/>
+                    <img src={s.img}  // idi kuda
                   </div>
                   <span className="text-[11px] mt-1">{s.name}</span>
                 </div>
@@ -57,7 +57,7 @@ export default function Page() {
               {posts.map(p=>(
                 <div key={p.id} className="bg-white mb-2 border-b">
                   <div className="flex items-center gap-2 p-3">
-                    <img src={`https://picsum.photos/100/100?${p.id+20}`} className="w-8 h-8 rounded-full"/>
+                    <img src={`https://i.pravatar.cc/100?img=${p.id+2}`} className="w-8 h-8 rounded-full"/>
                     <span className="text-sm font-semibold">{p.user}</span>
                   </div>
                   <img src={p.img} className="w-full aspect-square object-cover" alt="post"/>
