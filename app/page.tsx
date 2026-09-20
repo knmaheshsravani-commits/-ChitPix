@@ -5,7 +5,8 @@ export default function Page() {
   const [liked, setLiked] = useState<number[]>([]);
   const [search, setSearch] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
+  const [showEdit, setShowEdit] const [comments, setComments] = useState([{user:"rxtagur", text:"Mass bro 🔥"}]);
+const [newComment, setNewComment] = useState("");= useState(false);
   const [currentUser, setCurrentUser] = useState("");
   const [profile, setProfile] = useState({
     name: "_sankar_001", fullName: "Sankar Mahesh",
@@ -122,11 +123,11 @@ export default function Page() {
         </div>
       )}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t-[1.5px] border-gray-300 flex justify-around items-center h-[75px] z-50 pb-2">
-        <button onClick={()=>setTab("home")} className="p-3"><svg width="34" height="34" viewBox="0 0 24 24" fill={tab==="home"?"black":"none"} stroke="black" strokeWidth="2.5"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-4v-6H8v6H4a1 1 0 0 1-1-1v-9.5z"/></svg></button>
-        <button onClick={()=>setTab("reels")} className="p-3"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.2"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill="black"/></svg></button>
-        <button onClick={()=>alert("Create Post Coming Soon!")} className="p-3"><div className="w-[34px] h-[34px] border-[2.5px] border-black rounded-xl flex items-center justify-center text-[24px]">+</div></button>
-        <button onClick={()=>setTab("search")} className="p-3"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5l5 5" strokeWidth="2.5"/></svg></button>
-        <button onClick={()=>setTab("profile")} className="p-3"><img src="https://picsum.photos/200/200?random=10" className={`w-[34px] h-[34px] rounded-full ${tab==="profile"?"ring-[2.5px] ring-black":""}`}/></button>
+        <button onClick={()=>setTab("home")} className="p-3"><svg width="40" height="40" viewBox="0 0 24 24" fill={tab==="home"?"black":"none"} stroke="black" strokeWidth="2.5"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-4v-6H8v6H4a1 1 0 0 1-1-1v-9.5z"/></svg></button>
+        <button onClick={()=>setTab("reels")} className="p-3"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.2"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill="black"/></svg></button>
+        <button onClick={()=>alert("Create Post Coming Soon!")} className="p-3"><div className="w-[40px] h-[40px] border-[2.5px] border-black rounded-xl flex items-center justify-center text-[24px]">+</div></button>
+        <button onClick={()=>setTab("search")} className="p-3"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5l5 5" strokeWidth="2.5"/></svg></button>
+        <button onClick={()=>setTab("profile")} className="p-3"><img src="https://picsum.photos/200/200?random=10" className={`w-[40px] h-[40px] rounded-full ${tab==="profile"?"ring-[2.5px] ring-black":""}`}/></button>
       </div>
     </div>
   );
