@@ -40,13 +40,13 @@ export default function Page() {
         <>
           <div className="flex gap-5 p-4 overflow-x-auto bg-white border-b">
             {stories.map((s,i)=>(
-              <div key={i} className="flex flex-col items-center min-w-[75px]">
-                <div className="w-[75px] h-[75px] rounded-full p-[3.5px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+                            <div key={i} className="flex flex-col items-center min-w-[86px]">
+                <div className="w-[86px] h-[86px] rounded-full p-[4px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
                   <div className="w-full h-full rounded-full bg-white p-[3px]">
                     <img src={s.img} className="w-full h-full rounded-full object-cover" />
                   </div>
                 </div>
-                <p className="text-[12px] mt-2 truncate w-[75px] text-center">{s.name}</p>
+                <p className="text-[13px] mt-2 truncate w-[86px] text-center font-medium">{s.name}</p>
               </div>
             ))}
           </div>
@@ -56,7 +56,7 @@ export default function Page() {
               <p className="font-bold text-[13px]">_sankar_001</p>
             </div>
             <div onDoubleClick={()=>{setLiked(true); setShowHeart(true); setTimeout(()=>setShowHeart(false),1000);}} className="relative bg-gray-100">
-              <img src="https://picsum.photos/500/500?random=50" className="w-full h-[380px] object-cover" />
+              <img src="https://picsum.photos/500/500?random=50" className="w-full h-[480px] object-cover" />
               {showHeart && <div className="absolute inset-0 flex items-center justify-center text-[80px]">❤️</div>}
             </div>
             <div className="px-3 py-2 flex gap-3 text-[20px]">
