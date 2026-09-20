@@ -8,8 +8,6 @@ export default function Page() {
     { id:2, name:"sravani", img:"https://picsum.photos/200/200?2", storyImg:"https://picsum.photos/400/700?2" },
     { id:3, name:"mahesh", img:"https://picsum.photos/200/200?3", storyImg:"https://picsum.photos/400/700?3" },
     { id:4, name:"chaitu", img:"https://picsum.photos/200/200?4", storyImg:"https://picsum.photos/400/700?4" },
-    { id:5, name:"geetha", img:"https://picsum.photos/200/200?5", storyImg:"https://picsum.photos/400/700?5" },
-    { id:6, name:"bunny", img:"https://picsum.photos/200/200?6", storyImg:"https://picsum.photos/400/700?6" },
   ];
   const [posts, setPosts] = useState([
     { id: 1, img: "https://picsum.photos/500/600?10", likes: 120, liked: false, comments: ["Nice!", "Super"] },
@@ -19,6 +17,8 @@ export default function Page() {
   const [text, setText] = useState("");
   const [activeStory, setActiveStory] = useState<any>(null);
   const [progress, setProgress] = useState(0);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newImg, setNewImg] = useState("");
 
   useEffect(()=>{
     if(!activeStory) return;
@@ -27,6 +27,12 @@ export default function Page() {
     const t = setTimeout(()=>setActiveStory(null),5000);
     return ()=>{clearInterval(id); clearTimeout(t);}
   },[activeStory]);
+
+  const addPost = () => {
+    if(!newImg) return;
+    setPosts([{ id: Date.now(), img: newImg, likes:0, liked:false, comments:[] },...posts]);
+    setNewImg(""); setShowAdd(false); setTab("home");
+  };
 
   return (
     <div className="max-w-[400px] mx-auto bg-white min-h-screen pb-16 relative">
@@ -62,29 +68,37 @@ export default function Page() {
 
       {tab==="profile" && <div className="p-4 pt-12">
         <div className="flex gap-4 items-center">
-          <img src="https://picsum.photos/200/200?9" className="w-20 h-20 rounded-full" alt="profile"/>
-          <div className="flex gap-6"><p><b>2</b><br/>Posts</p><p><b>1.2k</b><br/>Followers</p></div>
+          <img src="https://picsum.photos/200/200?9" className="w-20 h-20 rounded-full"/>
+          <div className="flex gap-6"><p><b>{posts.length}</b><br/>Posts</p><p><b>1.2k</b><br/>Followers</p></div>
         </div>
         <h1 className="font-bold mt-3">Mahesh Sravani</h1>
         <div className="grid grid-cols-3 gap-1 mt-6">{posts.map(p=><img key={p.id} src={p.img} className="h-28 object-cover" alt="post"/> )}</div>
       </div>}
 
-      {/* STORY VIEWER */}
       {activeStory && (
         <div className="fixed inset-0 z-50 bg-black max-w-[400px] mx-auto">
-          <div className="h-1 bg-gray-600 w-full"><div className="h-1 bg-white transition-all" style={{width:`${progress}%`}}></div></div>
-          <div className="flex justify-between p-3 text-white items-center">
-            <div className="flex gap-2 items-center"><img src={activeStory.img} className="w-8 h-8 rounded-full"/><span className="text-sm font-bold">{activeStory.name}</span></div>
-            <button onClick={()=>setActiveStory(null)} className="text-2xl">×</button>
-          </div>
+          <div className="h-1 bg-gray-600 w-full"><div className="h-1 bg-white" style={{width:`${progress}%`}}></div></div>
+          <div className="flex justify-between p-3 text-white"><div className="flex gap-2 items-center"><img src={activeStory.img} className="w-8 h-8 rounded-full"/><span className="text-sm font-bold">{activeStory.name}</span></div><button onClick={()=>setActiveStory(null)} className="text-2xl">×</button></div>
           <img src={activeStory.storyImg} className="w-full h-[85vh] object-cover"/>
+        </div>
+      )}
+
+      {showAdd && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 max-w-[400px] mx-auto">
+          <div className="bg-white rounded-xl p-4 w-full">
+            <h2 className="font-bold mb-2">New Post 📸</h2>
+            <input value={newImg} onChange={e=>setNewImg(e.target.value)} placeholder="Paste image URL (picsum.photos...)" className="w-full border rounded p-2 text-sm mb-3"/>
+            <div className="flex gap-2"><button onClick={addPost} className="flex-1 bg-black text-white rounded-full py-2 text-sm">Share</button><button onClick={()=>setShowAdd(false)} className="flex-1 border rounded-full py-2 text-sm">Cancel</button></div>
+            <p className="text-[10px] mt-2 text-gray-500">Tip: picsum.photos/500/600?20 la URL use chey</p>
+          </div>
         </div>
       )}
 
       <div className="fixed bottom-0 w-full max-w-[400px] bg-white border-t flex justify-around py-3">
         <button onClick={()=>setTab("home")}>🏠</button>
+        <button onClick={()=>setShowAdd(true)} className="text-xl font-bold">＋</button>
         <button onClick={()=>setTab("profile")}>👤</button>
       </div>
     </div>
   );
-}https://picsum.photos/500/600?11
+}
