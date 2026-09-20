@@ -35,7 +35,7 @@ export default function Page(){
 
   return(
     <div className="min-h-screen bg-black text-white">
-  <div className="w-full bg-black min-h-screen pb-[70px]">
+      <div className="w-full bg-black min-h-screen pb-[70px]">
 
         <div className="flex justify-between items-center p-4 sticky top-0 bg-black z-20 border-b border-zinc-800">
           <h1 className="text-[28px] font-black tracking-tight">ChitPix</h1>
@@ -77,7 +77,7 @@ export default function Page(){
           {posts.map(p=>(
             <div key={p.id} className="border-b border-zinc-800">
               <div className="p-3 flex items-center gap-2 font-bold text-[14px]">M <span className="text-[13px]">Mahesh-07</span></div>
-              <img src={p.image_url} className="w-full bg-zinc-900"/>
+              <img src={p.image_url} className="w-full aspect-[4/5] object-cover bg-zinc-900"/>
               <div className="flex justify-between items-center p-3 text-[26px]">
                 <div className="flex gap-4"><span>♡</span><span>💬</span><span>✈</span></div>
                 <span>🔖</span>
@@ -85,13 +85,13 @@ export default function Page(){
               <div className="px-3 pb-4 text-[14px]"><span className="font-bold mr-2">You</span>{p.caption}</div>
             </div>
           ))}
-        <img src={p.image_url} className="w-full aspect-[4/5] object-cover bg-zinc-900"/>
+        </>}
 
         {tab==="search" && <div className="p-1 grid grid-cols-3 gap-[2px]">{posts.map(p=><img key={p.id} src={p.image_url} className="aspect-square object-cover"/>)}</div>}
         {tab==="reels" && <div className="p-20 text-center text-zinc-500">🎬 Reels coming soon beo!</div>}
         {tab==="profile" && <div className="p-10 text-center"><div className="w-20 h-20 rounded-full bg-zinc-800 mx-auto flex items-center justify-center text-2xl font-bold">M</div><h2 className="mt-3 font-bold">@Mahesh-07</h2><p className="text-zinc-500 text-[13px] mt-1">{posts.length} Posts</p></div>}
 
-        <div className="fixed bottom-0 w-full max-w-[430px] bg-black border-t border-zinc-800 flex justify-around py-3.5 text-[24px] z-30">
+        <div className="fixed bottom-0 w-full bg-black border-t border-zinc-800 flex justify-around py-3.5 text-[24px] z-30">
           <button onClick={()=>setTab("home")} className={tab==="home"?"":"opacity-50"}>🏠</button>
           <button onClick={()=>setTab("search")} className={tab==="search"?"":"opacity-50"}>🔍</button>
           <button onClick={()=>setTab("reels")} className={tab==="reels"?"":"opacity-50"}>🎬</button>
@@ -101,4 +101,4 @@ export default function Page(){
       </div>
     </div>
   )
-}
+            }
