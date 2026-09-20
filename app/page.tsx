@@ -71,7 +71,7 @@ export default function Page(){
               <label className="flex-1 bg-zinc-800 border border-zinc-700 rounded-xl p-3.5 text-center text-[13px] cursor-pointer">📸 Choose Photo<input type="file" className="hidden" onChange={upload}/></label>
               <button onClick={addPost} className="flex-1 bg-blue-600 rounded-xl font-bold text-[14px]">Post</button>
             </div>
-            {url && <img src={url} className="mt-3 rounded-xl w-full h-44 object-cover border border-zinc-700"/>}
+            {url && <img src={url} className="mt-3 w-full aspect-[4/5] object-cover bg-black"/>}
           </div>
 
           {posts.map(p=>(
@@ -85,7 +85,7 @@ export default function Page(){
               <div className="px-3 pb-4 text-[14px]"><span className="font-bold mr-2">You</span>{p.caption}</div>
             </div>
           ))}
-        </>}
+        <img src={p.image_url} className="w-full aspect-[4/5] object-cover bg-zinc-900"/>
 
         {tab==="search" && <div className="p-1 grid grid-cols-3 gap-[2px]">{posts.map(p=><img key={p.id} src={p.image_url} className="aspect-square object-cover"/>)}</div>}
         {tab==="reels" && <div className="p-20 text-center text-zinc-500">🎬 Reels coming soon beo!</div>}
