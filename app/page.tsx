@@ -86,7 +86,7 @@ export default function Page() {
   }
 
   const myName = session.user.email?.split("@")[0] || "mahesh";
-  const displayName = myName || myName;
+  const displayName = newName || myName;
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
