@@ -167,7 +167,64 @@ export default function Page() {
           )}
         </div>
       )}
-            {tab === "reels" && (
+            {tab === "reels" && (  
+        <div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory bg-black">
+          {posts.map(p => (
+            <div key={p.id} className="h-[calc(100vh-96px)] snap-start relative w-full flex items-center justify-center bg-black">
+              <img src={p.image_url} className="h-full w-full object-cover max-w-[470px] mx-auto" alt="" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80 pointer-events-none max-w-[470px] mx-auto" />
+
+              {/* RIGHT BUTTONS */}
+              <div className="absolute right-3 bottom-28 flex flex-col items-center gap-5 max-w-[470px]">
+                <button onClick={() => toggleLike(p.id)} className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-[26px]">{p.liked? "❤️" : "🤍"}</div>
+                  <span className="text-[11px] font-bold mt-1">{p.likes}</span>
+                </button>
+                <button onClick={() => setShowComments({...showComments, [p.id]:!showComments[p.id]})} className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-[22px]">💬</div>
+                  <span className="text-[11px] font-bold mt-1">{p.comments?.length || 0}</span>
+                </button>
+                <button className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-[20px]">↗️</div>
+                  <span className="text-[10px] mt-1">Share</span>
+                </button>
+                <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-zinc-700">
+                  {profilePic && <img src={profilePic} className="w-full h-full object-cover" alt="" />}
+                </div>
+              </div>
+
+              {/* BOTTOM CAPTION */}
+              <div className="absolute bottom-5 left-3 right-20 max-w-[70%]">
+                <div className="font-bold text-[15px]">@{displayName}</div>
+                <div className="text-[14px] mt-1">{p.caption}</div>
+                <div className="flex items-center gap-2 mt-2 text-[12px]">🎵 <span className="truncate">Original audio • ChitPix Vibes beo ❤️</span></div>
+              </div>
+
+              {/* COMMENT BOTTOM SHEET - NEW! */}
+              {showComments[p.id] && (
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col justify-end max-w-[470px] mx-auto w-full">
+                  <div className="bg-[#121212] rounded-t-[20px] max-h-[55%] flex flex-col border-t border-zinc-800">
+                    <div className="p-4 flex justify-between items-center border-b border-zinc-800">
+                      <span className="font-bold">Comments</span>
+                      <button onClick={() => setShowComments({...showComments, [p.id]: false})} className="w-7 h-7 bg-zinc-800 rounded-full flex items-center justify-center">✕</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {p.comments?.length === 0 && <div className="text-center text-zinc-500 text-sm py-6">No comments yet. Be first beo! 👇</div>}
+                      {p.comments?.map((c:any, i:number) => (
+                        <div key={i} className="flex gap-2 text-[13px]"><div className="w-7 h-7 bg-zinc-700 rounded-full flex-shrink-0"></div><div><b>{c.user}</b> {c.text}</div></div>
+                      ))}
+                    </div>
+                    <div className="p-3 border-t border-zinc-800 flex gap-2 bg-black rounded-t-none">
+                      <input value={commentInputs[p.id] || ""} onChange={e => setCommentInputs({...commentInputs, [p.id]: e.target.value})} placeholder="Add a comment..." className="flex-1 bg-zinc-900 rounded-full px-4 py-2.5 text-[13px] outline-none border border-zinc-800" onKeyDown={e => { if(e.key==='Enter') addComment(p.id)}} />
+                      <button onClick={() => addComment(p.id)} className="bg-white text-black px-5 rounded-full font-bold text-[13px]">Post</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
         <div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory bg-black">
           {posts.map(p => (
             <div key={p.id} className="h-[calc(100vh-96px)] snap-start relative w-full flex items-center justify-center bg-black">
