@@ -64,5 +64,5 @@ export default function Page() {
   if (!session) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
-        <div className="w-full max-w-[500px]">
-          <div className="text-center mb-8"><h1 className="text-[52px] font-black">ChitPix
+        <div className="w-full max-w-[400px]">
+          <div className="text-center mb-8"><h1 className="text-[48px] font-black">ChitPix
