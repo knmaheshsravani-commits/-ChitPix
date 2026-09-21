@@ -66,7 +66,7 @@ export default function Page() {
 
   const filtered = posts.filter(p => p.caption.toLowerCase().includes(search.toLowerCase()));
 
-  if (!session) {
+  
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
         <div className="w-full max-w-[600px]">
@@ -83,7 +83,7 @@ export default function Page() {
         </div>
       </div>
     );
-  }
+  
 
   const myName = session.user.email?.split("@")[0] || "mahesh";
   const displayName = newName || myName;
