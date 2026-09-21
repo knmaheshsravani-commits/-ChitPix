@@ -21,7 +21,6 @@
             </div>
             {url && <img src={url} className="mt-3 w-full aspect-[4/5] object-cover bg-black rounded-xl"/>}
           </div>
-
           {posts.map(p=>(
             <div key={p.id} className="border-b border-zinc-800">
               <div className="p-3 flex items-center gap-2 font-bold text-[14px]">M <span className="text-[13px]">Mahesh-07</span></div>
