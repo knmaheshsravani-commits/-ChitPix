@@ -142,7 +142,7 @@ export default function Page() {
 
               {/* COMMENT BOX - MATRAM EDI MUKHYAM */}
               {showComments[p.id] && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col justify-end max-w-[470px] mx-auto z-20">
+                <div className="absolute inset-0 bg-black/60 flex flex-col justify-end max-w-[500px] mx-auto z-20">
                   <div className="bg-[#121212] rounded-t-[20px] max-h-[55%] flex flex-col">
                     <div className="p-4 flex justify-between border-b border-zinc-800"><b>Comments</b><button onClick={() => setShowComments({})} className="bg-zinc-800 w-7 h-7 rounded-full">✕</button></div>
                     <div className="flex-1 overflow-auto p-4 space-y-3 text-[13px]">
@@ -162,7 +162,7 @@ export default function Page() {
       )}
 
       {tab === "profile" && (
-        <div className="max-w-[470px] mx-auto p-6 text-center">
+        <div className="max-w-[500px] mx-auto p-6 text-center">
           <div className="w-24 h-24 mx-auto bg-zinc-800 rounded-full overflow-hidden">{profilePic && <img src={profilePic} className="w-full h-full object-cover"/>}</div>
           <div className="font-bold text-xl mt-3">{displayName}</div>
           <div className="text-sm text-zinc-400 mt-1">{bio}</div>
