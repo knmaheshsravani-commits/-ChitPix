@@ -1,4 +1,18 @@
-        {tab==="home" && <>
+        {/* STORIES BAR */}
+<div className="flex gap-3 p-3 overflow-x-auto border-b border-zinc-800">
+  <div className="flex flex-col items-center min-w-[60px]">
+    <div className="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center text-xl border-2 border-dashed border-zinc-600">+</div>
+    <span className="text-[10px] mt-1">Your Story</span>
+  </div>
+  {posts.slice(0,10).map((p:any)=>(
+    <div key={p.id} className="flex flex-col items-center min-w-[60px]">
+      <div className="w-14 h-14 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-pink-600">
+        <img src={p.image_url} className="w-full h-full rounded-full border-2 border-black object-cover" />
+      </div>
+      <span className="text-[10px] mt-1">User</span>
+    </div>
+  ))}
+</div>
           <div className="m-3 p-3 rounded-2xl bg-zinc-900 border border-zinc-800">
             <input value={text} onChange={e=>setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-800 border border-zinc-700 rounded-xl p-3.5 text-[14px] outline-none placeholder:text-zinc-500"/>
             <div className="flex gap-3 mt-3">
