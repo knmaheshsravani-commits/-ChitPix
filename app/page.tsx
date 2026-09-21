@@ -128,7 +128,7 @@ export default function Page() {
         </div>
       )}
             {tab === "search" && (
-        <div className="max-w-[600px] mx-auto">
+        <div className="max-w-[500px] mx-auto">
           <div className="sticky top-0 bg-black z-20 p-3">
             <div className="relative">
               <span className="absolute left-3 top-2/4 -translate-y-2/4 text-zinc-600">🔍</span>
@@ -140,7 +140,7 @@ export default function Page() {
           {search === ""? (
             <>
               <div className="flex gap-2 px-3 py-2 overflow-x-auto">
-                <span className="bg-white text-black px-4 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap">For you</span>
+                <span className="bg-white text-black px-4 py-1.5 rounded-full text-[32px] font-semibold whitespace-nowrap">For you</span>
                 <span className="bg-zinc-800 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Trending 🔥</span>
                 <span className="bg-zinc-800 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Nature 🌿</span>
                 <span className="bg-zinc-800 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Bridges 🌉</span>
