@@ -105,7 +105,12 @@ export default function Page() {
 
       {tab === "profile" && <div className="p-5"><div className="flex gap-5 items-center"><div className="w-20 h-20 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-[3px]"><img src={posts[0]?.image_url} className="w-full h-full rounded-full object-cover" /></div><div><p className="font-bold">{myName}</p><p className="text-sm text-zinc-400">{posts.length} posts</p></div></div><h2 className="font-bold mt-4">{myName}</h2><p className="text-sm text-zinc-300 mt-1">{myBio}</p><button onClick={() => setEditOpen(true)} className="w-full mt-4 bg-zinc-800 border border-zinc-700 rounded-lg py-2 font-semibold text-sm">Edit Profile</button><div className="grid grid-cols-3 gap-[2px] mt-5">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover w-full" />)}</div></div>}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around py-3 text-[22px] z-20"><span onClick={() => setTab("home")} className={tab === "home" ? "" : "opacity-50"}>🏠</span><span onClick={() => setTab("search")} className={tab === "search" ? "" : "opacity-50"}>🔍</span><span onClick={() => setTab("reels")} className={tab === "reels" ? "" : "opacity-50"}>🎬</span><span onClick={() => setTab("profile")} className={tab === "profile" ? "" : "opacity-50"}>👤</span></div>
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-4 pb-8 z-50">
+        <button onClick={()=>setTab("home")} className="p-2 text-[32px] leading-none">🏠</button>
+        <button onClick={()=>setTab("search")} className="p-2 text-[32px] leading-none">🔍</button>
+        <button onClick={()=>setTab("reels")} className="p-2 text-[32px] leading-none">🎬</button>
+        <button onClick={()=>setTab("profile")} className="p-2 text-[32px] leading-none">👤</button>
+      </div>
 
       {commentPost && <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"><div className="bg-zinc-900 w-full max-h-[70vh] rounded-t-2xl p-4"><div className="flex justify-between font-bold mb-4"><span>Comments</span><button onClick={() => setCommentPost(null)}>✕</button></div>{commentPost.comments.map((c: any, i: number) => <p key={i} className="text-sm mb-2"><b>{c.user}</b> {c.text}</p>)}<div className="flex gap-2 mt-4"><input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-zinc-800 rounded-lg p-2 outline-none" /><button onClick={doComment} className="bg-blue-600 rounded-lg px-4">Post</button></div></div></div>}
 
