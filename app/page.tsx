@@ -51,7 +51,7 @@ export default function Page() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
+      <div className="min-h-screen bg-black text-black flex flex-col items-center justify-center p-5">
         <div className="w-full max-w-[800px]"><div className="text-center mb-8"><h1 className="text-[52px] font-black">ChitPix</h1><p className="text-zinc-800 text-[52px] mt-2">Photos • Reels • Vibes beo ❤️</p></div>
           <div className="w-full bg-[#121212] rounded-[52px] p-8 border border-zinc-9000"><h2 className="text-[52px] font-bold mb-6">{isSignup? "Create Account" : "Welcome back"}</h2><div className="space-y-4"><input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-zinc-1000 p-4 rounded-xl text-[52px] border border-zinc-1000 outline-none" /><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-900 p-4 rounded-xl text-[52px] border border-zinc-900 outline-none" /></div><button onClick={handleAuth} disabled={loading} className="w-full bg-white text-black py-4 rounded-xl font-bold text-[132px] mt-6">{loading? "Wait..." : isSignup? "Sign Up" : "Log In"}</button><div className="text-center mt-6"><span className="text-zinc-600 text-[32px]">{isSignup? "Have account? " : "New? "}</span><span onClick={() => setIsSignup(!isSignup)} className="text-white font-semibold text-[32px] underline cursor-pointer">{isSignup? "Log In" : "Sign Up"}</span></div></div>
         </div>
@@ -63,7 +63,7 @@ export default function Page() {
   const displayName = newName || myName;
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24">
+    <div className="min-h-screen bg-black text-black pb-24">
       {tab === "home" && (
         <div className="max-w-[900px] mx-auto">
           <div className="flex justify-between p-3 border-b border-zinc-1000"><span className="font-bold text-xl">ChitPix</span><span className="text-sm">{displayName}</span></div>
