@@ -19,10 +19,8 @@ export default function Page() {
   const [url, setUrl] = useState("");
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [commentPost, setCommentPost] = useState<any>(null);
-  const [commentText, setCommentText] = useState("");
   const [posts, setPosts] = useState<any[]>([
-    { id: 1, image_url: "https://picsum.photos/seed/1/600/800", caption: "First post beo!", likes: 12, liked: false, comments: [] },
+    { id: 1, image_url: "https://picsum.photos/seed/1/600/800", caption: "First post beo!", likes: 12, liked: false },
   ]);
 
   useEffect(() => {
@@ -38,7 +36,7 @@ export default function Page() {
       if (isSignup) {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        alert("Signup ayindi bro! Ippudu Login chey!");
+        alert("Signup ayindi! Ippudu Login chey!");
         setIsSignup(false);
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -48,71 +46,90 @@ export default function Page() {
     finally { setLoading(false); }
   };
 
-  const handleLogout = async () => { await supabase.auth.signOut(); };
+  const addPost = () => {
+    if (!url) { alert("Photo URL pettu!"); return; }
+    setPosts([{ id: Date.now(), image_url: url, caption: text, likes: 0, liked: false },...posts]);
+    setText(""); setUrl("");
+  };
 
-  // LOGIN SCREEN - BIG & CLEAR
+  const handleFileUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fileName = `${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("chitpix").upload(fileName, file);
+      if (error) throw error;
+      const { data } = supabase.storage.from("chitpix").getPublicUrl(fileName);
+      setUrl(data.publicUrl);
+    } catch { alert("Upload fail!"); }
+    finally { setUploading(false); }
+  };
+
+  const toggleLike = (id: number) => {
+    setPosts(posts.map(p => p.id === id? {...p, liked:!p.liked, likes: p.liked? p.likes - 1 : p.likes + 1 } : p));
+  };
+
+  const filtered = posts.filter(p => p.caption.toLowerCase().includes(search.toLowerCase()));
+
   if (!session) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
         <div className="w-full max-w-[380px]">
-          {/* Logo */}
           <div className="text-center mb-8">
             <h1 className="text-[48px] font-black tracking-tighter">ChitPix</h1>
             <p className="text-zinc-400 text-[15px] mt-2">Photos • Reels • Vibes beo ❤️</p>
           </div>
-
-          {/* BIG LOGIN BOX */}
-          <div className="w-full bg-[#121212] rounded-[28px] p-8 border border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-            <h2 className="text-[24px] font-bold mb-6">{isSignup? "Create Account":"Welcome back"}</h2>
-
+          <div className="w-full bg-[#121212] rounded-[28px] p-8 border border-zinc-800">
+            <h2 className="text-[24px] font-bold mb-6">{isSignup? "Create Account" : "Welcome back"}</h2>
             <div className="space-y-4">
-              <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" className="w-full bg-zinc-800/80 p-4 rounded-xl text-[16px] border border-zinc-700 focus:border-white outline-none" />
-              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800/80 p-4 rounded-xl text-[16px] border border-zinc-700 focus:border-white outline-none" />
+              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full bg-zinc-800 p-4 rounded-xl text-[16px] border border-zinc-700 outline-none" />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800 p-4 rounded-xl text-[16px] border border-zinc-700 outline-none" />
             </div>
-
-            <button onClick={handleAuth} disabled={loading} className="w-full bg-white text-black py-4 rounded-xl font-bold text-[17px] mt-6 active:scale-[0.98] transition">
-              {loading?"Wait beo...": isSignup? "Sign Up":"Log In"}
-            </button>
-
+            <button onClick={handleAuth} disabled={loading} className="w-full bg-white text-black py-4 rounded-xl font-bold text-[17px] mt-6">{loading? "Wait beo..." : isSignup? "Sign Up" : "Log In"}</button>
             <div className="text-center mt-6">
-              <span className="text-zinc-500 text-[14px]">{isSignup?"Already have account?":"Don't have account?" } </span>
-              <span onClick={()=>setIsSignup(!isSignup)} className="text-white font-semibold text-[14px] cursor-pointer underline underline-offset-4">
-                {isSignup?"Log In":"Sign Up"}
-              </span>
+              <span className="text-zinc-500 text-[14px]">{isSignup? "Already have?" : "New user?"} </span>
+              <span onClick={() => setIsSignup(!isSignup)} className="text-white font-semibold text-[14px] cursor-pointer underline">{isSignup? "Log In" : "Sign Up"}</span>
             </div>
           </div>
-
-          <p className="text-center text-zinc-600 text-[12px] mt-6">Secure login by Supabase • Made for Bangalore ❤️</p>
         </div>
       </div>
     );
   }
 
-  // LOGGED IN APP (your same code + perfect icon size 26px)
   const myName = session.user.email?.split("@")[0] || "Mahesh";
-  const addPost = () => { if (!url) { alert("Photo pettu!"); return; } setPosts([{ id: Date.now(), image_url: url, caption: text, likes: 0, liked: false, comments: [] },...posts]); setText(""); setUrl(""); };
-  const handleFileUpload = async (file: File) => { setUploading(true); try { const fileName = `${Date.now()}-${file.name}`; const { error } = await supabase.storage.from("chitpix").upload(fileName, file); if (error) throw error; const { data } = supabase.storage.from("chitpix").getPublicUrl(fileName); setUrl(data.publicUrl); } catch { alert("Upload fail!"); } finally { setUploading(false); } };
-  const toggleLike = (id: number) => { setPosts(posts.map(p => p.id === id? {...p, liked:!p.liked, likes: p.liked? p.likes-1 : p.likes+1 } : p)); };
-  const filtered = posts.filter(p => p.caption.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-black text-white pb-20">
-      {tab === "home" && <>
-        <div className="flex justify-between p-3 border-b border-zinc-800"><span className="font-bold text-xl">ChitPix</span><span className="text-sm">{myName} ❤️</span></div>
+    <div className="min-h-screen bg-black text-white pb-24">
+      {tab === "home" && (
         <div className="max-w-[470px] mx-auto">
-          <div className="p-3"><input value={text} onChange={e => setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm" /><input value={url} onChange={e => setUrl(e.target.value)} placeholder="Paste image URL..." className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm mt-2" /><label className="mt-2 flex items-center justify-center rounded-lg border border-dashed border-zinc-700 p-3 text-sm cursor-pointer">{uploading? "Uploading..." : "📷 Gallery nundi Photo Select Chey"}<input type="file" accept="image/*" disabled={uploading} className="hidden" onChange={e => { const f = e.target.files?.[0]; if(f) handleFileUpload(f); }} /></label><button onClick={addPost} className="w-full bg-blue-600 py-2.5 rounded-lg font-semibold text-sm mt-3">Post</button></div>
-          {posts.map(p => <div key={p.id} className="border-b border-zinc-800"><div className="p-3 flex gap-2 font-bold text-sm">{myName}</div><img src={p.image_url} className="w-full aspect-[4/5] object-cover bg-zinc-900" /><div className="flex justify-between p-3 text-[22px]"><div className="flex gap-4"><span onClick={() => toggleLike(p.id)} className="cursor-pointer">{p.liked? "❤️" : "🤍"}</span><span>💬</span><span>↗️</span></div><span>🔖</span></div><div className="px-3 text-sm font-semibold">{p.likes} likes</div><div className="px-3 pb-3 text-[14px]"><b>{myName}</b> {p.caption}</div></div>)}
+          <div className="flex justify-between p-3 border-b border-zinc-800"><span className="font-bold text-xl">ChitPix</span><span className="text-sm">{myName}</span></div>
+          <div className="p-3">
+            <input value={text} onChange={e => setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm" />
+            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="Paste image URL..." className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm mt-2" />
+            <label className="mt-2 flex items-center justify-center rounded-lg border border-dashed border-zinc-700 p-3 text-sm cursor-pointer">{uploading? "Uploading..." : "📷 Gallery nundi Photo"}<input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} /></label>
+            <button onClick={addPost} className="w-full bg-blue-600 py-2.5 rounded-lg font-semibold text-sm mt-3">Post</button>
+          </div>
+          {posts.map(p => (
+            <div key={p.id} className="border-b border-zinc-800">
+              <div className="p-3 font-bold text-sm">{myName}</div>
+              <img src={p.image_url} className="w-full aspect-[4/5] object-cover bg-zinc-900" alt="" />
+              <div className="flex justify-between p-3 text-[22px]"><div className="flex gap-4"><span onClick={() => toggleLike(p.id)} className="cursor-pointer">{p.liked? "❤️" : "🤍"}</span><span>💬</span><span>↗️</span></div><span>🔖</span></div>
+              <div className="px-3 text-sm font-semibold">{p.likes} likes</div>
+              <div className="px-3 pb-3 text-[14px]"><b>{myName}</b> {p.caption}</div>
+            </div>
+          ))}
         </div>
-      </>}
-      {tab === "search" && <><div className="p-3 sticky top-0 bg-black z-10"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full bg-zinc-900 p-2.5 rounded-lg" /></div><div className="grid grid-cols-3 gap-[2px]">{filtered.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" />)}</div></>}
-      {tab === "reels" && <div className="h-[calc(100vh-80px)] overflow-y-scroll snap-y snap-mandatory no-scrollbar">{filtered.map(p => <div key={p.id} className="h-[calc(100vh-80px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" /><div className="absolute bottom-20 left-3 text-sm"><b>{myName}</b><div>{p.caption}</div></div></div>)}</div>}
-      {tab === "profile" && <div className="p-5 text-center"><div className="w-20 h-20 rounded-full bg-zinc-700 mx-auto mb-3"></div><div className="font-bold text-xl">{myName}</div><div className="text-sm text-zinc-400 mb-4">{session.user.email}</div><button onClick={handleLogout} className="border border-zinc-700 px-6 py-2 rounded-lg text-sm">Log Out</button><div className="grid grid-cols-3 gap-1 mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" />)}</div></div>}
+      )}
+      {tab === "search" && (<><div className="p-3 sticky top-0 bg-black"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full bg-zinc-900 p-2.5 rounded-lg" /></div><div className="grid grid-cols-3 gap-[2px]">{filtered.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></>)}
+      {tab === "reels" && (<div className="h-[calc(100vh-100px)] overflow-y-scroll snap-y snap-mandatory"><>{filtered.map(p => (<div key={p.id} className="h-[calc(100vh-96px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" alt="" /><div className="absolute bottom-20 left-3 text-sm"><b>{myName}</b><div>{p.caption}</div></div></div>))}</></div>)}
+      {tab === "profile" && (<div className="p-5 text-center"><div className="w-20 h-20 rounded-full bg-zinc-700 mx-auto mb-3"></div><div className="font-bold text-xl">{myName}</div><div className="text-sm text-zinc-400 mb-4">{session.user.email}</div><button onClick={() => supabase.auth.signOut()} className="border border-zinc-700 px-6 py-2 rounded-lg text-sm">Log Out</button><div className="grid grid-cols-3 gap-1 mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></div>)}
 
-      {/* BOTTOM NAV - 5 ICONS WITH PLUS */}
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-3 pb-7 z-50">
-        <button onClick={()=>setTab("home")} className="text-[46px] leading-none p-2">{tab==="home"?"🏠":"🏠"}</button>
-        <button onClick={()=>setTab("search")} className="text-[46px] leading-none p-2">🔍</button>
-        <button onClick={()=>setTab("home")} className="w-9 h-9 bg-white text-black rounded-lg flex items-center justify-center text-[32px] font-bold leading-none">+</button>
-        <button onClick={()=>setTab("reels")} className="text-[46px] leading-none p-2">🎬</button>
-        <button onClick={()=>setTab("profile")} className="text-[46px] leading-none p-2">👤</button>
+        <button onClick={() => setTab("home")} className="text-[46px] p-2">🏠</button>
+        <button onClick={() => setTab("search")} className="text-[46px] p-2">🔍</button>
+        <button onClick={() => setTab("home")} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center text-[28px] font-bold">+</button>
+        <button onClick={() => setTab("reels")} className="text-[46px] p-2">🎬</button>
+        <button onClick={() => setTab("profile")} className="text-[46px] p-2">👤</button>
       </div>
+    </div>
+  );
+                           }
