@@ -86,12 +86,12 @@ export default function Page() {
   }
 
   const myName = session.user.email?.split("@")[0] || "mahesh";
-  const displayName = newName || myName;
+  const displayName = myName || myName;
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       {tab === "home" && (
-        <div className="max-w-[1000px] mx-auto">
+        <div className="max-w-[800px] mx-auto">
           <div className="flex justify-between p-3 border-b border-zinc-800"><span className="font-bold text-xl">ChitPix</span><span className="text-sm">{displayName}</span></div>
           <div className="p-3">
             <input value={text} onChange={e => setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm" />
