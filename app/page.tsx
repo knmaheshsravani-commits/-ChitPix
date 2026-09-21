@@ -167,7 +167,56 @@ export default function Page() {
           )}
         </div>
       )}
-      {tab === "reels" && (<div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory">{filtered.map(p => (<div key={p.id} className="h-[calc(100vh-96px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" alt="" /><div className="absolute bottom-24 left-3 right-3"><div className="flex justify-between items-end"><div className="text-sm"><b>{displayName}</b><div>{p.caption}</div><div className="mt-2 text-[32px]">{p.comments?.length || 0} comments • {p.likes} likes</div></div><div className="flex flex-col gap-4 text-[32px]"><span onClick={() => toggleLike(p.id)}>{p.liked? "❤️":"🤍"}</span><span onClick={() => setTab("home")}>💬</span></div></div></div></div>))}</div>)}
+            {tab === "reels" && (
+        <div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory bg-black">
+          {posts.map(p => (
+            <div key={p.id} className="h-[calc(100vh-96px)] snap-start relative w-full flex items-center justify-center bg-black">
+              <img src={p.image_url} className="h-full w-full object-cover max-w-[470px] mx-auto" alt="" />
+
+              {/* GRADIENT OVERLAY */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent via-transparent to-black/80 pointer-events-none max-w-[470px] mx-auto" />
+
+              {/* RIGHT SIDE BUTTONS - TIKTOK STYLE */}
+              <div className="absolute right-3 bottom-28 flex flex-col items-center gap-6">
+                <button onClick={() => toggleLike(p.id)} className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-[26px]">
+                    {p.liked? "❤️" : "🤍"}
+                  </div>
+                  <span className="text-[12px] font-bold mt-1">{p.likes}</span>
+                </button>
+
+                <button onClick={() => { setTab("home"); setShowComments({[p.id]: true}) }} className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-[32px]">💬</div>
+                  <span className="text-[18px] font-bold mt-1">{p.comments?.length || 0}</span>
+                </button>
+
+                <button className="flex flex-col items-center">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-[20px]">↗️</div>
+                  <span className="text-[12px] font-bold mt-1">Share</span>
+                </button>
+
+                <button className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-zinc-700">
+                    {profilePic && <img src={profilePic} className="w-full h-full object-cover" alt="" />}
+                  </div>
+                </button>
+              </div>
+
+              {/* BOTTOM CAPTION */}
+              <div className="absolute bottom-5 left-3 right-20 max-w-[70%]">
+                <div className="font-bold text-[32px]">@{displayName}</div>
+                <div className="text-[32px] mt-1 leading-[32px]">{p.caption}</div>
+                <div className="flex items-center gap-2 mt-2 text-[18px]">
+                  <span>🎵</span><span className="truncate">Original audio • ChitPix Vibes beo ❤️</span>
+                </div>
+                <div className="w-full h-[3px] bg-white/30 mt-3 rounded-full">
+                  <div className="h-full w-[40%] bg-white rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {tab === "profile" && (
         <div className="p-5">
           <div className="text-center">
