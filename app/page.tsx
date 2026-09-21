@@ -95,7 +95,7 @@ export default function Page() {
     );
   }
 
-  const myname = session.user.email?.split("@")[0] || "knmahesh";
+  const myname = session.user.email?.split("@")[0] || "mahesh";
 
   return (
     <div className="min-h-screen bg-black text-white pb-24">
