@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { Home, Search, Clapperboard, User, Heart, MessageCircle, Send, Share2 } from "lucide-react";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
