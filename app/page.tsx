@@ -112,7 +112,7 @@ export default function Page() {
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-3 pb-7 z-50">
         <button onClick={()=>setTab("home")} className="text-[46px] leading-none p-2">{tab==="home"?"🏠":"🏠"}</button>
         <button onClick={()=>setTab("search")} className="text-[46px] leading-none p-2">🔍</button>
-        <button onClick={()=>setTab("home")} className="w-9 h-9 bg-white text-black rounded-lg flex items-center justify-center text-[36px] font-bold leading-none">+</button>
+        <button onClick={()=>setTab("home")} className="w-9 h-9 bg-white text-black rounded-lg flex items-center justify-center text-[32px] font-bold leading-none">+</button>
         <button onClick={()=>setTab("reels")} className="text-[46px] leading-none p-2">🎬</button>
         <button onClick={()=>setTab("profile")} className="text-[46px] leading-none p-2">👤</button>
       </div>
