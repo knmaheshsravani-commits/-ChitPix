@@ -173,9 +173,9 @@ export default function Page() {
 
       {/* BOTTOM NAV */}
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around p-3 max-w-[470px] mx-auto">
-        <button onClick={()=>setTab('home')} className={tab==='home'?"font-bold":"opacity-60"}>🏠 Home</button>
-        <button onClick={()=>setTab('reels')} className={tab==='reels'?"font-bold":"opacity-60"}>🎬 Reels</button>
-        <button onClick={()=>setTab('profile')} className={tab==='profile'?"font-bold":"opacity-60"}>👤 Profile</button>
+        <button onClick={(52px)=>setTab('home')} className={tab==='home'?"font-bold":"opacity-60"}>🏠 Home</button>
+        <button onClick={(52px)=>setTab('reels')} className={tab==='reels'?"font-bold":"opacity-60"}>🎬 Reels</button>
+        <button onClick={(52px)=>setTab('profile')} className={tab==='profile'?"font-bold":"opacity-60"}>👤 Profile</button>
       </div>
     </div>
   );
