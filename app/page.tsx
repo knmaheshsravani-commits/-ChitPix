@@ -50,17 +50,39 @@ export default function Page() {
 
   const handleLogout = async () => { await supabase.auth.signOut(); };
 
-  // LOGIN SCREEN
+  // LOGIN SCREEN - BIG & CLEAR
   if (!session) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
-        <div className="w-full max-w-sm bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
-          <h1 className="text-3xl font-bold text-center mb-2">ChitPix</h1>
-          <p className="text-zinc-500 text-center text-sm mb-6">Login chesi start chey beo!</p>
-          <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email" className="w-full bg-zinc-800 p-3 rounded-lg mb-3 text-sm border border-zinc-700" />
-          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password (6+ chars)" className="w-full bg-zinc-800 p-3 rounded-lg mb-4 text-sm border border-zinc-700" />
-          <button onClick={handleAuth} disabled={loading} className="w-full bg-blue-600 py-3 rounded-lg font-semibold text-sm">{loading?"Wait...": isSignup? "Sign Up":"Log In"}</button>
-          <div className="text-center mt-4 text-sm text-zinc-400"><span onClick={()=>setIsSignup(!isSignup)} className="text-blue-400 cursor-pointer">{isSignup?"Already have account? Log In":"New? Create account"}</span></div>
+      <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
+        <div className="w-full max-w-[380px]">
+          {/* Logo */}
+          <div className="text-center mb-8">
+            <h1 className="text-[48px] font-black tracking-tighter">ChitPix</h1>
+            <p className="text-zinc-400 text-[15px] mt-2">Photos • Reels • Vibes beo ❤️</p>
+          </div>
+
+          {/* BIG LOGIN BOX */}
+          <div className="w-full bg-[#121212] rounded-[28px] p-8 border border-zinc-800 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+            <h2 className="text-[24px] font-bold mb-6">{isSignup? "Create Account":"Welcome back"}</h2>
+
+            <div className="space-y-4">
+              <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email address" className="w-full bg-zinc-800/80 p-4 rounded-xl text-[16px] border border-zinc-700 focus:border-white outline-none" />
+              <input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800/80 p-4 rounded-xl text-[16px] border border-zinc-700 focus:border-white outline-none" />
+            </div>
+
+            <button onClick={handleAuth} disabled={loading} className="w-full bg-white text-black py-4 rounded-xl font-bold text-[17px] mt-6 active:scale-[0.98] transition">
+              {loading?"Wait beo...": isSignup? "Sign Up":"Log In"}
+            </button>
+
+            <div className="text-center mt-6">
+              <span className="text-zinc-500 text-[14px]">{isSignup?"Already have account?":"Don't have account?" } </span>
+              <span onClick={()=>setIsSignup(!isSignup)} className="text-white font-semibold text-[14px] cursor-pointer underline underline-offset-4">
+                {isSignup?"Log In":"Sign Up"}
+              </span>
+            </div>
+          </div>
+
+          <p className="text-center text-zinc-600 text-[12px] mt-6">Secure login by Supabase • Made for Bangalore ❤️</p>
         </div>
       </div>
     );
@@ -86,12 +108,12 @@ export default function Page() {
       {tab === "reels" && <div className="h-[calc(100vh-80px)] overflow-y-scroll snap-y snap-mandatory no-scrollbar">{filtered.map(p => <div key={p.id} className="h-[calc(100vh-80px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" /><div className="absolute bottom-20 left-3 text-sm"><b>{myName}</b><div>{p.caption}</div></div></div>)}</div>}
       {tab === "profile" && <div className="p-5 text-center"><div className="w-20 h-20 rounded-full bg-zinc-700 mx-auto mb-3"></div><div className="font-bold text-xl">{myName}</div><div className="text-sm text-zinc-400 mb-4">{session.user.email}</div><button onClick={handleLogout} className="border border-zinc-700 px-6 py-2 rounded-lg text-sm">Log Out</button><div className="grid grid-cols-3 gap-1 mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" />)}</div></div>}
 
-      {/* BOTTOM NAV - PERFECT 42PX */}
+      {/* BOTTOM NAV - PERFECT 46PX */}
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-4 pb-8 z-50">
-        <button onClick={()=>setTab("home")} className="text-[42px] leading-none p-2">🏠</button>
-        <button onClick={()=>setTab("search")} className="text-[42px] leading-none p-2">🔍</button>
-        <button onClick={()=>setTab("reels")} className="text-[42px] leading-none p-2">🎬</button>
-        <button onClick={()=>setTab("profile")} className="text-[42px] leading-none p-2">👤</button>
+        <button onClick={()=>setTab("home")} className="text-[46px] leading-none p-2">🏠</button>
+        <button onClick={()=>setTab("search")} className="text-[46px] leading-none p-2">🔍</button>
+        <button onClick={()=>setTab("reels")} className="text-[46px] leading-none p-2">🎬</button>
+        <button onClick={()=>setTab("profile")} className="text-[46px] leading-none p-2">👤</button>
       </div>
     </div>
   );
