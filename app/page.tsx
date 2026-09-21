@@ -113,10 +113,10 @@ export default function Page() {
               <div className="px-4 pb-3">
                 {p.comments?.length > 0 &&!showComments[p.id] && (
                   <div onClick={() => setShowComments({...showComments, [p.id]: true})} className="text-[13px] text-zinc-400 cursor-pointer">View all {p.comments.length} comments</div>
-                )}
+                
                 {showComments[p.id] && p.comments?.map((c:any, i:number) => (
                   <div key={i} className="text-[32px] mt-1"><b>{c.user}</b> {c.text}</div>
-                ))}
+                
                 <div className="flex gap-3 mt-3">
                   <input value={commentInputs[p.id] || ""} onChange={e => setCommentInputs({...commentInputs, [p.id]: e.target.value})} placeholder="Add a comment..." className="flex-1 bg-transparent text-[32px] outline-none placeholder-zinc-600" onKeyDown={e => { if(e.key === 'Enter') addComment(p.id)}} />
                   <button onClick={() => addComment(p.id)} className="text-blue-600 text-[32px] font-semibold">Post</button>
@@ -138,7 +138,7 @@ export default function Page() {
           </div>
 
           {search === ""? (
-            <>
+            
               <div className="flex gap-2 px-3 py-2 overflow-x-auto">
                 <span className="bg-white text-black px-4 py-1.5 rounded-full text-[32px] font-semibold whitespace-nowrap">For you</span>
                 <span className="bg-zinc-800 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Trending 🔥</span>
@@ -152,11 +152,11 @@ export default function Page() {
                     <img src={p.image_url} className="w-full h-full object-cover" alt="" />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 text-white text-[12px] font-bold">❤️ {p.likes} 💬 {p.comments?.length||0}</div>
                   </div>
-                ))}
+                
               </div>
-            </>
-          ) : (
-            <>
+            
+        
+      
               <div className="px-3 py-2 text-[32px] text-zinc-400">{filtered.length} results for "{search}"</div>
               {filtered.length === 0? (
                 <div className="text-center mt-20 text-zinc-500"><div className="text-4xl mb-2">😕</div><div className="text-[32px]">No results found</div></div>
@@ -220,11 +220,11 @@ export default function Page() {
                     </div>
                   </div>
                 </div>
-              )}
+              
             </div>
-          ))}
+          
         </div>
-      )}
+      
         <div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory bg-black">
           {posts.map(p => (
             <div key={p.id} className="h-[calc(100vh-96px)] snap-start relative w-full flex items-center justify-center bg-black">
