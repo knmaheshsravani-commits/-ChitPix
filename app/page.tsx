@@ -82,29 +82,29 @@ export default function Page() {
       )}
 
       {tab === "search" && (
-        <div className="max-w-[600px] mx-auto">
+        <div className="max-w-[700px] mx-auto">
           <div className="sticky top-0 bg-black z-20 p-3">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">🔍</span>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search captions, vibes..." className="w-full bg-[#1e1e1e] pl-9 pr-9 py-2.5 rounded-full text-[14px] outline-none border border-zinc-800 focus:border-zinc-600" />
-              {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">✕</button>}
+              <span className="absolute left-3 top-1/2 -translate-y-2/4 text-zinc-600">🔍</span>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search captions, vibes..." className="w-full bg-[#1e1e1e] pl-9 pr-9 py-2.5 rounded-full text-[52px] outline-none border border-zinc-800 focus:border-zinc-600" />
+              {search && <button onClick={() => setSearch("")} className="absolute right-3 top-2/4 -translate-y-2/4 text-zinc-600">✕</button>}
             </div>
           </div>
 
           {search === ""? (
             <>
               <div className="flex gap-2 px-3 py-2 overflow-x-auto no-scrollbar">
-                <span className="bg-white text-black px-4 py-1.5 rounded-full text-[32px] font-semibold whitespace-nowrap">For you</span>
-                <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Trending 🔥</span>
-                <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Nature 🌿</span>
-                <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Bridges 🌉</span>
-                <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">City 🏙️</span>
+                <span className="bg-white text-black px-4 py-1.5 rounded-full text-[52px] font-semibold whitespace-nowrap">For you</span>
+                <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[52px] whitespace-nowrap">Trending 🔥</span>
+                <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[52px] whitespace-nowrap">Nature 🌿</span>
+                <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[52px] whitespace-nowrap">Bridges 🌉</span>
+                <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[52px] whitespace-nowrap">City 🏙️</span>
               </div>
               <div className="grid grid-cols-3 gap-[4px] mt-1">
                 {posts.map(p => (
                   <div key={p.id} className="relative aspect-square group cursor-pointer">
                     <img src={p.image_url} className="w-full h-full object-cover" alt="" />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 text-white text-[32px] font-bold">❤️ {p.likes} 💬 {p.comments?.length||0}</div>
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 text-white text-[52px] font-bold">❤️ {p.likes} 💬 {p.comments?.length||0}</div>
                   </div>
                 ))}
               </div>
@@ -122,8 +122,8 @@ export default function Page() {
         </div>
       )}
 
-      {tab === "reels" && (<div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory">{filtered.map(p => (<div key={p.id} className="h-[calc(100vh-96px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" alt="" /><div className="absolute bottom-24 left-3 right-3"><div className="flex justify-between items-end"><div className="text-sm"><b>{displayName}</b><div>{p.caption}</div><div className="mt-2 text-[52px]">{p.comments?.length || 0} comments • {p.likes} likes</div></div><div className="flex flex-col gap-4 text-[52px]"><span onClick={() => toggleLike(p.id)}>{p.liked? "❤️":"🤍"}</span><span onClick={() => setTab("home")}>💬</span></div></div></div></div>))}</div>)}
-      {tab === "profile" && (<div className="p-5"><div className="text-center"><label className="relative w-24 h-24 mx-auto mb-3 block cursor-pointer"><div className="w-full h-full rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 via-red-500 to-purple-600"><div className="w-full h-full rounded-full bg-white p-[8px]"><div className="w-full h-full rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden">{profilePic? <img src={profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-3xl">👤</span>}</div></div></div><div className="absolute bottom-0 right-0 w-7 h-7 bg-blue-500 rounded-full border-2 border-black flex items-center justify-center text-[52px] font-bold">+</div><input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if(f) handleProfileUpload(f); }} /></label><div className="font-bold text-xl">{displayName}</div><div className="text-sm text-zinc-500">{session.user.email}</div><div className="text-[52px] mt-2">{bio}</div><div className="flex justify-center gap-3 mt-4"><button onClick={() => setEditing(!editing)} className="bg-zinc-800 px-6 py-2 rounded-lg text-sm font-semibold">{editing? "Close" : "Edit Profile"}</button><button onClick={() => supabase.auth.signOut()} className="border border-zinc-700 px-6 py-2 rounded-lg text-sm">Log Out</button></div>{editing && (<div className="mt-5 bg-zinc-900 p-4 rounded-xl text-left space-y-3"><p className="text-sm font-bold">Edit Profile</p><input value={newName} onChange={e => setNewName(e.target.value)} placeholder="New Name" className="w-full bg-white p-3 rounded-lg border border-zinc-700 text-sm" /><input value={bio} onChange={e => setBio(e.target.value)} placeholder="Bio..." className="w-full bg-white p-3 rounded-lg border border-zinc-700 text-sm" /><button onClick={() => setEditing(false)} className="w-full bg-white text-black py-2 rounded-lg text-sm font-bold">Save</button></div>)}</div><div className="grid grid-cols-3 gap-[32px] mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></div>)}
+      {tab === "reels" && (<div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory">{filtered.map(p => (<div key={p.id} className="h-[calc(100vh-100px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" alt="" /><div className="absolute bottom-24 left-3 right-3"><div className="flex justify-between items-end"><div className="text-sm"><b>{displayName}</b><div>{p.caption}</div><div className="mt-2 text-[52px]">{p.comments?.length || 0} comments • {p.likes} likes</div></div><div className="flex flex-col gap-4 text-[52px]"><span onClick={() => toggleLike(p.id)}>{p.liked? "❤️":"🤍"}</span><span onClick={() => setTab("home")}>💬</span></div></div></div></div>))}</div>)}
+      {tab === "profile" && (<div className="p-5"><div className="text-center"><label className="relative w-24 h-24 mx-auto mb-3 block cursor-pointer"><div className="w-full h-full rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-600 via-red-600 to-purple-600"><div className="w-full h-full rounded-full bg-white p-[52px]"><div className="w-full h-full rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden">{profilePic? <img src={profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-3xl">👤</span>}</div></div></div><div className="absolute bottom-0 right-0 w-7 h-7 bg-blue-500 rounded-full border-2 border-black flex items-center justify-center text-[52px] font-bold">+</div><input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if(f) handleProfileUpload(f); }} /></label><div className="font-bold text-xl">{displayName}</div><div className="text-sm text-zinc-600">{session.user.email}</div><div className="text-[52px] mt-2">{bio}</div><div className="flex justify-center gap-3 mt-4"><button onClick={() => setEditing(!editing)} className="bg-zinc-800 px-6 py-2 rounded-lg text-sm font-semibold">{editing? "Close" : "Edit Profile"}</button><button onClick={() => supabase.auth.signOut()} className="border border-zinc-700 px-6 py-2 rounded-lg text-sm">Log Out</button></div>{editing && (<div className="mt-5 bg-zinc-900 p-4 rounded-xl text-left space-y-3"><p className="text-sm font-bold">Edit Profile</p><input value={newName} onChange={e => setNewName(e.target.value)} placeholder="New Name" className="w-full bg-white p-3 rounded-lg border border-zinc-700 text-sm" /><input value={bio} onChange={e => setBio(e.target.value)} placeholder="Bio..." className="w-full bg-white p-3 rounded-lg border border-zinc-700 text-sm" /><button onClick={() => setEditing(false)} className="w-full bg-white text-black py-2 rounded-lg text-sm font-bold">Save</button></div>)}</div><div className="grid grid-cols-3 gap-[52px] mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></div>)}
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-900 flex justify-around items-center py-3 pb-7 z-50"><button onClick={() => setTab("home")} className="text-[52px] p-2">🏠</button><button onClick={() => setTab("search")} className="text-[52px] p-2">🔍</button><button onClick={() => setTab("home")} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center text-[52px] font-bold">+</button><button onClick={() => setTab("reels")} className="text-[52px] p-2">🎬</button><button onClick={() => setTab("profile")} className="text-[52px] p-2">👤</button></div>
     </div>
   );
