@@ -108,13 +108,11 @@ export default function Page() {
       {tab === "reels" && <div className="h-[calc(100vh-80px)] overflow-y-scroll snap-y snap-mandatory no-scrollbar">{filtered.map(p => <div key={p.id} className="h-[calc(100vh-80px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" /><div className="absolute bottom-20 left-3 text-sm"><b>{myName}</b><div>{p.caption}</div></div></div>)}</div>}
       {tab === "profile" && <div className="p-5 text-center"><div className="w-20 h-20 rounded-full bg-zinc-700 mx-auto mb-3"></div><div className="font-bold text-xl">{myName}</div><div className="text-sm text-zinc-400 mb-4">{session.user.email}</div><button onClick={handleLogout} className="border border-zinc-700 px-6 py-2 rounded-lg text-sm">Log Out</button><div className="grid grid-cols-3 gap-1 mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" />)}</div></div>}
 
-      {/* BOTTOM NAV - PERFECT 46PX */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-4 pb-8 z-50">
-        <button onClick={()=>setTab("home")} className="text-[46px] leading-none p-2">🏠</button>
+      {/* BOTTOM NAV - 5 ICONS WITH PLUS */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-3 pb-7 z-50">
+        <button onClick={()=>setTab("home")} className="text-[46px] leading-none p-2">{tab==="home"?"🏠":"🏠"}</button>
         <button onClick={()=>setTab("search")} className="text-[46px] leading-none p-2">🔍</button>
+        <button onClick={()=>setTab("home")} className="w-9 h-9 bg-white text-black rounded-lg flex items-center justify-center text-[36px] font-bold leading-none">+</button>
         <button onClick={()=>setTab("reels")} className="text-[46px] leading-none p-2">🎬</button>
         <button onClick={()=>setTab("profile")} className="text-[46px] leading-none p-2">👤</button>
       </div>
-    </div>
-  );
-}
