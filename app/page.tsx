@@ -69,13 +69,13 @@ export default function Page() {
   if (!session) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
-        <div className="w-full max-w-[380px]">
-          <div className="text-center mb-8"><h1 className="text-[48px] font-black">ChitPix</h1><p className="text-zinc-400 text-[15px] mt-2">Photos • Reels • Vibes beo ❤️</p></div>
-          <div className="w-full bg-[#121212] rounded-[28px] p-8 border border-zinc-800">
+        <div className="w-full max-w-[600px]">
+          <div className="text-center mb-8"><h1 className="text-[48px] font-black">ChitPix</h1><p className="text-zinc-500 text-[32px] mt-2">Photos • Reels • Vibes beo ❤️</p></div>
+          <div className="w-full bg-[#121212] rounded-[32px] p-8 border border-zinc-1000">
             <h2 className="text-[32px] font-bold mb-6">{isSignup? "Create Account" : "Welcome back"}</h2>
             <div className="space-y-4">
               <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-zinc-800 p-4 rounded-xl text-[32px] border border-zinc-700 outline-none" />
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800 p-4 rounded-xl text-[32px] border border-zinc-700 outline-none" />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800 p-4 rounded-xl text-[32px] border border-zinc-1000 outline-none" />
             </div>
             <button onClick={handleAuth} disabled={loading} className="w-full bg-white text-black py-4 rounded-xl font-bold text-[17px] mt-6">{loading? "Wait..." : isSignup? "Sign Up" : "Log In"}</button>
             <div className="text-center mt-6"><span className="text-zinc-500 text-[32px]">{isSignup? "Have account? " : "New? "}</span><span onClick={() => setIsSignup(!isSignup)} className="text-white font-semibold text-[32px] underline cursor-pointer">{isSignup? "Log In" : "Sign Up"}</span></div>
@@ -91,7 +91,7 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       {tab === "home" && (
-        <div className="max-w-[470px] mx-auto">
+        <div className="max-w-[1000px] mx-auto">
           <div className="flex justify-between p-3 border-b border-zinc-800"><span className="font-bold text-xl">ChitPix</span><span className="text-sm">{displayName}</span></div>
           <div className="p-3">
             <input value={text} onChange={e => setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm" />
@@ -110,16 +110,16 @@ export default function Page() {
               <div className="px-3 pb-1 text-[32px]"><b>{displayName}</b> {p.caption}</div>
 
               {/* COMMENT SECTION */}
-              <div className="px-3 pb-2">
+              <div className="px-4 pb-3">
                 {p.comments?.length > 0 &&!showComments[p.id] && (
                   <div onClick={() => setShowComments({...showComments, [p.id]: true})} className="text-[13px] text-zinc-400 cursor-pointer">View all {p.comments.length} comments</div>
                 )}
                 {showComments[p.id] && p.comments?.map((c:any, i:number) => (
-                  <div key={i} className="text-[13px] mt-1"><b>{c.user}</b> {c.text}</div>
+                  <div key={i} className="text-[32px] mt-1"><b>{c.user}</b> {c.text}</div>
                 ))}
-                <div className="flex gap-2 mt-2">
-                  <input value={commentInputs[p.id] || ""} onChange={e => setCommentInputs({...commentInputs, [p.id]: e.target.value})} placeholder="Add a comment..." className="flex-1 bg-transparent text-[13px] outline-none placeholder-zinc-500" onKeyDown={e => { if(e.key === 'Enter') addComment(p.id)}} />
-                  <button onClick={() => addComment(p.id)} className="text-blue-500 text-[13px] font-semibold">Post</button>
+                <div className="flex gap-3 mt-3">
+                  <input value={commentInputs[p.id] || ""} onChange={e => setCommentInputs({...commentInputs, [p.id]: e.target.value})} placeholder="Add a comment..." className="flex-1 bg-transparent text-[32px] outline-none placeholder-zinc-600" onKeyDown={e => { if(e.key === 'Enter') addComment(p.id)}} />
+                  <button onClick={() => addComment(p.id)} className="text-blue-600 text-[32px] font-semibold">Post</button>
                 </div>
               </div>
 
