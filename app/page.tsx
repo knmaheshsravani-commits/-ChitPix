@@ -14,12 +14,15 @@ export default function Page() {
   const [url, setUrl] = useState("");
   const [search, setSearch] = useState("");
   const [uploading, setUploading] = useState(false);
-  const [posts, setPosts] = useState<any[]>([{ id: 1, image_url: "https://picsum.photos/seed/1/600/800", caption: "First post beo!", likes: 12, liked: false }]);
-
+  const [posts, setPosts] = useState<any[]>([
+    { id: 1, image_url: "https://picsum.photos/seed/1/600/800", caption: "First post beo!", likes: 12, liked: false, comments: [{user:"mahesh", text:"keka bro!"}] }
+  ]);
   const [profilePic, setProfilePic] = useState("");
   const [bio, setBio] = useState("ChitPix beo ❤️");
   const [editing, setEditing] = useState(false);
   const [newName, setNewName] = useState("");
+  const [commentInputs, setCommentInputs] = useState<{[key:number]:string}>({});
+  const [showComments, setShowComments] = useState<{[key:number]:boolean}>({});
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
@@ -31,61 +34,51 @@ export default function Page() {
     if (!email ||!password) { alert("Email & Password pettu!"); return; }
     setLoading(true);
     try {
-      if (isSignup) {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error; alert("Signup done! Login chey"); setIsSignup(false);
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
+      if (isSignup) { const { error } = await supabase.auth.signUp({ email, password }); if (error) throw error; alert("Signup done! Login chey"); setIsSignup(false); }
+      else { const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; }
     } catch (e: any) { alert(e.message); } finally { setLoading(false); }
   };
 
   const addPost = () => {
     if (!url) { alert("URL pettu!"); return; }
-    setPosts([{ id: Date.now(), image_url: url, caption: text, likes: 0, liked: false },...posts]);
+    setPosts([{ id: Date.now(), image_url: url, caption: text, likes: 0, liked: false, comments: [] },...posts]);
     setText(""); setUrl("");
   };
 
   const handleFileUpload = async (file: File) => {
     setUploading(true);
-    try {
-      const n = `${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("chitpix").upload(n, file);
-      if (error) throw error;
-      const { data } = supabase.storage.from("chitpix").getPublicUrl(n);
-      setUrl(data.publicUrl);
-    } catch { alert("Upload fail"); } finally { setUploading(false); }
+    try { const n = `${Date.now()}-${file.name}`; const { error } = await supabase.storage.from("chitpix").upload(n, file); if (error) throw error; const { data } = supabase.storage.from("chitpix").getPublicUrl(n); setUrl(data.publicUrl); } catch { alert("Upload fail"); } finally { setUploading(false); }
   };
 
   const handleProfileUpload = async (file: File) => {
     setUploading(true);
-    try {
-      const n = `profile-${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("chitpix").upload(n, file);
-      if (error) throw error;
-      const { data } = supabase.storage.from("chitpix").getPublicUrl(n);
-      setProfilePic(data.publicUrl);
-      alert("Profile photo update ayindi bro! 🔥");
-    } catch { alert("Profile upload fail"); } finally { setUploading(false); }
+    try { const n = `profile-${Date.now()}-${file.name}`; const { error } = await supabase.storage.from("chitpix").upload(n, file); if (error) throw error; const { data } = supabase.storage.from("chitpix").getPublicUrl(n); setProfilePic(data.publicUrl); } catch { alert("Profile upload fail"); } finally { setUploading(false); }
   };
 
   const toggleLike = (id: number) => setPosts(posts.map(p => p.id === id? {...p, liked:!p.liked, likes: p.liked? p.likes - 1 : p.likes + 1 } : p));
+
+  const addComment = (postId: number) => {
+    const txt = commentInputs[postId];
+    if(!txt ||!txt.trim()) return;
+    setPosts(posts.map(p => p.id === postId? {...p, comments: [...(p.comments||[]), {user: myName, text: txt}] } : p));
+    setCommentInputs({...commentInputs, [postId]: ""});
+  };
+
   const filtered = posts.filter(p => p.caption.toLowerCase().includes(search.toLowerCase()));
 
   if (!session) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
         <div className="w-full max-w-[380px]">
-          <div className="text-center mb-8"><h1 className="text-[48px] font-black">ChitPix</h1><p className="text-zinc-400 text-[32px] mt-2">Photos • Reels • Vibes beo ❤️</p></div>
+          <div className="text-center mb-8"><h1 className="text-[48px] font-black">ChitPix</h1><p className="text-zinc-400 text-[15px] mt-2">Photos • Reels • Vibes beo ❤️</p></div>
           <div className="w-full bg-[#121212] rounded-[28px] p-8 border border-zinc-800">
             <h2 className="text-[32px] font-bold mb-6">{isSignup? "Create Account" : "Welcome back"}</h2>
             <div className="space-y-4">
-              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-zinc-800 p-4 rounded-xl text-[16px] border border-zinc-700 outline-none" />
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800 p-4 rounded-xl text-[16px] border border-zinc-700 outline-none" />
+              <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-zinc-800 p-4 rounded-xl text-[32px] border border-zinc-700 outline-none" />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800 p-4 rounded-xl text-[32px] border border-zinc-700 outline-none" />
             </div>
             <button onClick={handleAuth} disabled={loading} className="w-full bg-white text-black py-4 rounded-xl font-bold text-[17px] mt-6">{loading? "Wait..." : isSignup? "Sign Up" : "Log In"}</button>
-            <div className="text-center mt-6"><span className="text-zinc-500 text-[14px]">{isSignup? "Have account? " : "New? "}</span><span onClick={() => setIsSignup(!isSignup)} className="text-white font-semibold text-[14px] underline cursor-pointer">{isSignup? "Log In" : "Sign Up"}</span></div>
+            <div className="text-center mt-6"><span className="text-zinc-500 text-[32px]">{isSignup? "Have account? " : "New? "}</span><span onClick={() => setIsSignup(!isSignup)} className="text-white font-semibold text-[32px] underline cursor-pointer">{isSignup? "Log In" : "Sign Up"}</span></div>
           </div>
         </div>
       </div>
@@ -109,54 +102,57 @@ export default function Page() {
           {posts.map(p => (
             <div key={p.id} className="border-b border-zinc-800">
               <div className="p-3 font-bold text-sm flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"><div className="w-full h-full rounded-full bg-zinc-700 border-2 border-black overflow-hidden">{profilePic && <img src={profilePic} className="w-full h-full object-cover" alt="" />}</div></div>{displayName}
+                <div className="w-8 h-8 rounded-full p-[32px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"><div className="w-full h-full rounded-full bg-zinc-700 border-2 border-black overflow-hidden">{profilePic && <img src={profilePic} className="w-full h-full object-cover" alt="" />}</div></div>{displayName}
               </div>
-              <img src={p.image_url} className="w-full aspect-[4/5] object-cover bg-zinc-900" alt="" />
-              <div className="flex justify-between p-3 text-[32px]"><div className="flex gap-4"><span onClick={() => toggleLike(p.id)} className="cursor-pointer">{p.liked? "❤️" : "🤍"}</span><span>💬</span><span>↗️</span></div><span>🔖</span></div>
+              <img src={p.image_url} onDoubleClick={() => { if(!p.liked) toggleLike(p.id)}} className="w-full aspect-[4/5] object-cover bg-zinc-900" alt="" />
+              <div className="flex justify-between p-3 text-[32px]"><div className="flex gap-4"><span onClick={() => toggleLike(p.id)} className="cursor-pointer">{p.liked? "❤️" : "🤍"}</span><span onClick={() => setShowComments({...showComments, [p.id]:!showComments[p.id]})} className="cursor-pointer">💬</span><span>↗️</span></div><span>🔖</span></div>
               <div className="px-3 text-sm font-semibold">{p.likes} likes</div>
-              <div className="px-3 pb-3 text-[32px]"><b>{displayName}</b> {p.caption}</div>
+              <div className="px-3 pb-1 text-[32px]"><b>{displayName}</b> {p.caption}</div>
+
+              {/* COMMENT SECTION */}
+              <div className="px-3 pb-2">
+                {p.comments?.length > 0 &&!showComments[p.id] && (
+                  <div onClick={() => setShowComments({...showComments, [p.id]: true})} className="text-[13px] text-zinc-400 cursor-pointer">View all {p.comments.length} comments</div>
+                )}
+                {showComments[p.id] && p.comments?.map((c:any, i:number) => (
+                  <div key={i} className="text-[13px] mt-1"><b>{c.user}</b> {c.text}</div>
+                ))}
+                <div className="flex gap-2 mt-2">
+                  <input value={commentInputs[p.id] || ""} onChange={e => setCommentInputs({...commentInputs, [p.id]: e.target.value})} placeholder="Add a comment..." className="flex-1 bg-transparent text-[13px] outline-none placeholder-zinc-500" onKeyDown={e => { if(e.key === 'Enter') addComment(p.id)}} />
+                  <button onClick={() => addComment(p.id)} className="text-blue-500 text-[13px] font-semibold">Post</button>
+                </div>
+              </div>
+
             </div>
           ))}
         </div>
       )}
-      {tab === "search" && (<><div className="p-3 sticky top-0 bg-black"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full bg-zinc-900 p-2.5 rounded-lg" /></div><div className="grid grid-cols-3 gap-[2px]">{filtered.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></>)}
-      {tab === "reels" && (<div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory">{filtered.map(p => (<div key={p.id} className="h-[calc(100vh-96px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" alt="" /><div className="absolute bottom-20 left-3 text-sm"><b>{displayName}</b><div>{p.caption}</div></div></div>))}</div>)}
-
+      {tab === "search" && (<><div className="p-3 sticky top-0 bg-black"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full bg-zinc-900 p-2.5 rounded-lg" /></div><div className="grid grid-cols-3 gap-[32px]">{filtered.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></>)}
+      {tab === "reels" && (<div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory">{filtered.map(p => (<div key={p.id} className="h-[calc(100vh-96px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" alt="" /><div className="absolute bottom-24 left-3 right-3"><div className="flex justify-between items-end"><div className="text-sm"><b>{displayName}</b><div>{p.caption}</div><div className="mt-2 text-[32px]">{p.comments?.length || 0} comments • {p.likes} likes</div></div><div className="flex flex-col gap-4 text-[32px]"><span onClick={() => toggleLike(p.id)}>{p.liked? "❤️":"🤍"}</span><span onClick={() => setTab("home")}>💬</span></div></div></div></div>))}</div>)}
       {tab === "profile" && (
         <div className="p-5">
           <div className="text-center">
             <label className="relative w-24 h-24 mx-auto mb-3 block cursor-pointer">
-              <div className="w-full h-full rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-pink-500 via-red-500 to-purple-600">
-                <div className="w-full h-full rounded-full bg-black p-[3px]">
-                  <div className="w-full h-full rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden">
-                    {profilePic? <img src={profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-3xl">👤</span>}
-                  </div>
+              <div className="w-full h-full rounded-full p-[32px] bg-gradient-to-tr from-yellow-400 via-pink-500 via-red-500 to-purple-600">
+                <div className="w-full h-full rounded-full bg-black p-[32px]">
+                  <div className="w-full h-full rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden">{profilePic? <img src={profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-3xl">👤</span>}</div>
                 </div>
               </div>
-              <div className="absolute bottom-0 right-0 w-7 h-7 bg-blue-500 rounded-full border-2 border-black flex items-center justify-center text-[18px] font-bold">+</div>
+              <div className="absolute bottom-0 right-0 w-7 h-7 bg-blue-500 rounded-full border-2 border-black flex items-center justify-center text-[32px] font-bold">+</div>
               <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if(f) handleProfileUpload(f); }} />
             </label>
             <div className="font-bold text-xl">{displayName}</div>
             <div className="text-sm text-zinc-400">{session.user.email}</div>
-            <div className="text-[13px] mt-2">{bio}</div>
+            <div className="text-[32px] mt-2">{bio}</div>
             <div className="flex justify-center gap-3 mt-4">
               <button onClick={() => setEditing(!editing)} className="bg-zinc-800 px-6 py-2 rounded-lg text-sm font-semibold">{editing? "Close" : "Edit Profile"}</button>
               <button onClick={() => supabase.auth.signOut()} className="border border-zinc-700 px-6 py-2 rounded-lg text-sm">Log Out</button>
             </div>
-            {editing && (
-              <div className="mt-5 bg-zinc-900 p-4 rounded-xl text-left space-y-3">
-                <p className="text-sm font-bold">Edit Profile</p>
-                <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="New Name (mahesh)" className="w-full bg-black p-3 rounded-lg border border-zinc-700 text-sm" />
-                <input value={bio} onChange={e => setBio(e.target.value)} placeholder="Bio..." className="w-full bg-black p-3 rounded-lg border border-zinc-700 text-sm" />
-                <p className="text-[11px] text-zinc-500">Tip: Profile photo meedha click chesi photo pettu bro! 📷</p>
-                <button onClick={() => setEditing(false)} className="w-full bg-white text-black py-2 rounded-lg text-sm font-bold">Save</button>
-              </div>
-            )}
+            {editing && (<div className="mt-5 bg-zinc-900 p-4 rounded-xl text-left space-y-3"><p className="text-sm font-bold">Edit Profile</p><input value={newName} onChange={e => setNewName(e.target.value)} placeholder="New Name" className="w-full bg-black p-3 rounded-lg border border-zinc-700 text-sm" /><input value={bio} onChange={e => setBio(e.target.value)} placeholder="Bio..." className="w-full bg-black p-3 rounded-lg border border-zinc-700 text-sm" /><button onClick={() => setEditing(false)} className="w-full bg-white text-black py-2 rounded-lg text-sm font-bold">Save</button></div>)}
           </div>
           <div className="grid grid-cols-3 gap-[2px] mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div>
         </div>
       )}
-
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-3 pb-7 z-50">
         <button onClick={() => setTab("home")} className="text-[52px] p-2">🏠</button>
         <button onClick={() => setTab("search")} className="text-[52px] p-2">🔍</button>
@@ -166,4 +162,4 @@ export default function Page() {
       </div>
     </div>
   );
-              }
+            }
