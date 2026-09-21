@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Home, Search, Clapperboard, User, Heart, MessageCircle, Send, Share2 } from "lucide-react";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -104,31 +103,13 @@ export default function Page() {
 
       {tab === "reels" && <div className="h-[calc(100vh-80px)] overflow-y-scroll snap-y snap-mandatory no-scrollbar">{posts.map(p => <div key={p.id} className="h-[calc(100vh-80px)] snap-start relative bg-black flex items-center justify-center border-b border-zinc-900"><img src={p.image_url} className="h-full w-full object-contain bg-zinc-950" /><div className="absolute bottom-5 left-3 right-12"><p className="font-bold text-sm">@{myName}</p><p className="text-[13px] mt-1">{p.caption}</p></div><div className="absolute right-3 bottom-20 flex flex-col gap-6 text-2xl"><span onClick={() => toggleLike(p.id)}>{p.liked ? "❤️" : "♡"}</span><span onClick={() => setCommentPost(p)}>💬</span><span onClick={() => doShare(p)}>↗</span></div></div>)}</div>}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-4">
+      {tab === "profile" && <div className="p-5"><div className="flex gap-5 items-center"><div className="w-20 h-20 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-[3px]"><img src={posts[0]?.image_url} className="w-full h-full rounded-full object-cover" /></div><div><p className="font-bold">{myName}</p><p className="text-sm text-zinc-400">{posts.length} posts</p></div></div><h2 className="font-bold mt-4">{myName}</h2><p className="text-sm text-zinc-300 mt-1">{myBio}</p><button onClick={() => setEditOpen(true)} className="w-full mt-4 bg-zinc-800 border border-zinc-700 rounded-lg py-2 font-semibold text-sm">Edit Profile</button><div className="grid grid-cols-3 gap-[2px] mt-5">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover w-full" />)}</div></div>}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around p-3 pb-5">
-
-  <button onClick={()=>setTab("home")} className="p-2">
-    <Home size={30} strokeWidth={tab==="home"?2.5:2} className={tab==="home"?"text-white":"text-zinc-500"} />
-  </button>
-
-  <button onClick={()=>setTab("search")} className="p-2">
-    <Search size={30} strokeWidth={tab==="search"?2.5:2} className={tab==="search"?"text-white":"text-zinc-500"} />
-  </button>
-
-  <button onClick={()=>setTab("reels")} className="p-2">
-    <Clapperboard size={30} strokeWidth={tab==="reels"?2.5:2} className={tab==="reels"?"text-white":"text-zinc-500"} />
-  </button>
-
-  <button onClick={()=>setTab("profile")} className="p-2">
-    <User size={30} strokeWidth={tab==="profile"?2.5:2} className={tab==="profile"?"text-white":"text-zinc-500"} />
-  </button>
-
-</div>
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around py-3 text-[22px] z-20"><span onClick={() => setTab("home")} className={tab === "home" ? "" : "opacity-50"}>🏠</span><span onClick={() => setTab("search")} className={tab === "search" ? "" : "opacity-50"}>🔍</span><span onClick={() => setTab("reels")} className={tab === "reels" ? "" : "opacity-50"}>🎬</span><span onClick={() => setTab("profile")} className={tab === "profile" ? "" : "opacity-50"}>👤</span></div>
 
       {commentPost && <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center"><div className="bg-zinc-900 w-full max-h-[70vh] rounded-t-2xl p-4"><div className="flex justify-between font-bold mb-4"><span>Comments</span><button onClick={() => setCommentPost(null)}>✕</button></div>{commentPost.comments.map((c: any, i: number) => <p key={i} className="text-sm mb-2"><b>{c.user}</b> {c.text}</p>)}<div className="flex gap-2 mt-4"><input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-zinc-800 rounded-lg p-2 outline-none" /><button onClick={doComment} className="bg-blue-600 rounded-lg px-4">Post</button></div></div></div>}
 
       {editOpen && <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6"><div className="bg-zinc-900 w-full rounded-2xl p-5 border border-zinc-800"><h3 className="font-bold text-lg">Edit Profile</h3><input value={myName} onChange={e => setMyName(e.target.value)} className="w-full bg-zinc-800 rounded-lg p-3 mt-4 outline-none" /><textarea value={myBio} onChange={e => setMyBio(e.target.value)} className="w-full bg-zinc-800 rounded-lg p-3 mt-3 outline-none" /><button onClick={() => setEditOpen(false)} className="w-full bg-blue-600 rounded-lg py-3 mt-4 font-bold">Save</button></div></div>}
     </div>
   );
-}
+      }
