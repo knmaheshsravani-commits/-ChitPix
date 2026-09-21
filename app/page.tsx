@@ -71,7 +71,7 @@ export default function Page() {
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
         <div className="w-full max-w-[600px]">
           <div className="text-center mb-8"><h1 className="text-[48px] font-black">ChitPix</h1><p className="text-zinc-500 text-[32px] mt-2">Photos • Reels • Vibes beo ❤️</p></div>
-          <div className="w-full bg-[#121212] rounded-[32px] p-8 border border-zinc-1000">
+          <div className="w-full bg-[#121212] rounded-[32px] p-8 border border-zinc-800">
             <h2 className="text-[32px] font-bold mb-6">{isSignup? "Create Account" : "Welcome back"}</h2>
             <div className="space-y-4">
               <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-zinc-800 p-4 rounded-xl text-[32px] border border-zinc-700 outline-none" />
