@@ -124,9 +124,9 @@ export default function Page() {
               </div>
 
             </div>
-          ))}
+          
         </div>
-      )}
+      
             {tab === "search" && (
         <div className="max-w-[500px] mx-auto">
           <div className="sticky top-0 bg-black z-20 p-3">
@@ -162,11 +162,11 @@ export default function Page() {
                 <div className="text-center mt-20 text-zinc-500"><div className="text-4xl mb-2">😕</div><div className="text-[32px]">No results found</div></div>
               ) : (
                 <div className="grid grid-cols-3 gap-[2px]">{filtered.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div>
-              )}
+              
             </>
-          )}
+          
         </div>
-      )}
+      
             {tab === "reels" && (  
         <div className="h-[calc(100vh-96px)] overflow-y-scroll snap-y snap-mandatory bg-black">
           {posts.map(p => (
