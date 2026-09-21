@@ -128,12 +128,12 @@ export default function Page() {
         </div>
       )}
             {tab === "search" && (
-        <div className="max-w-[470px] mx-auto">
+        <div className="max-w-[600px] mx-auto">
           <div className="sticky top-0 bg-black z-20 p-3">
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">🔍</span>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search captions, vibes..." className="w-full bg-[#1e1e1e] pl-9 pr-9 py-2.5 rounded-full text-[14px] outline-none border border-zinc-800 focus:border-zinc-600" />
-              {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">✕</button>}
+              <span className="absolute left-3 top-2/4 -translate-y-2/4 text-zinc-600">🔍</span>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search captions, vibes..." className="w-full bg-[#1e1e1e] pl-9 pr-9 py-2.5 rounded-full text-[32px] outline-none border border-zinc-1000 focus:border-zinc-800" />
+              {search && <button onClick={() => setSearch("")} className="absolute right-3 top-2/4 -translate-y-2/4 text-zinc-600">✕</button>}
             </div>
           </div>
 
