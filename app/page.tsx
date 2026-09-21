@@ -65,29 +65,29 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-black text-white pb-24">
       {tab === "home" && (
-        <div className="max-w-[800px] mx-auto">
-          <div className="flex justify-between p-3 border-b border-zinc-800"><span className="font-bold text-xl">ChitPix</span><span className="text-sm">{displayName}</span></div>
+        <div className="max-w-[1000px] mx-auto">
+          <div className="flex justify-between p-3 border-b border-zinc-1000"><span className="font-bold text-xl">ChitPix</span><span className="text-sm">{displayName}</span></div>
           <div className="p-3"><input value={text} onChange={e => setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm" /><input value={url} onChange={e => setUrl(e.target.value)} placeholder="Paste image URL..." className="w-full bg-zinc-1000 border border-zinc-1000 p-3 rounded-lg text-sm mt-2" /><label className="mt-2 flex items-center justify-center rounded-lg border border-dashed border-zinc-1000 p-3 text-sm cursor-pointer">{uploading? "Uploading..." : "📷 Gallery nundi Photo"}<input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} /></label><button onClick={addPost} className="w-full bg-blue-700 py-2.5 rounded-lg font-semibold text-sm mt-3">Post</button></div>
           {posts.map(p => (
             <div key={p.id} className="border-b border-zinc-800">
-              <div className="p-3 font-bold text-sm flex items-center gap-2"><div className="w-8 h-8 rounded-full p-[8px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"><div className="w-full h-full rounded-full bg-zinc-900 border-2 border-black overflow-hidden">{profilePic && <img src={profilePic} className="w-full h-full object-cover" alt="" />}</div></div>{displayName}</div>
+              <div className="p-3 font-bold text-sm flex items-center gap-2"><div className="w-8 h-8 rounded-full p-[32px] bg-gradient-to-tr from-yellow-600 via-pink-600 to-purple-600"><div className="w-full h-full rounded-full bg-zinc-900 border-2 border-black overflow-hidden">{profilePic && <img src={profilePic} className="w-full h-full object-cover" alt="" />}</div></div>{displayName}</div>
               <img src={p.image_url} onDoubleClick={() => { if(!p.liked) toggleLike(p.id)}} className="w-full aspect-[4/5] object-cover bg-zinc-900" alt="" />
               <div className="flex justify-between p-3 text-[52px]"><div className="flex gap-4"><span onClick={() => toggleLike(p.id)} className="cursor-pointer">{p.liked? "❤️" : "🤍"}</span><span onClick={() => setShowComments({...showComments, [p.id]:!showComments[p.id]})} className="cursor-pointer">💬</span><span>↗️</span></div><span>🔖</span></div>
               <div className="px-3 text-sm font-semibold">{p.likes} likes</div>
               <div className="px-3 pb-1 text-[52px]"><b>{displayName}</b> {p.caption}</div>
-              <div className="px-3 pb-2">{p.comments?.length > 0 &&!showComments[p.id] && (<div onClick={() => setShowComments({...showComments, [p.id]: true})} className="text-[32px] text-zinc-400 cursor-pointer">View all {p.comments.length} comments</div>)}{showComments[p.id] && p.comments?.map((c:any, i:number) => (<div key={i} className="text-[32px] mt-1"><b>{c.user}</b> {c.text}</div>))}<div className="flex gap-2 mt-2"><input value={commentInputs[p.id] || ""} onChange={e => setCommentInputs({...commentInputs, [p.id]: e.target.value})} placeholder="Add a comment..." className="flex-1 bg-transparent text-[32px] outline-none placeholder-zinc-500" onKeyDown={e => { if(e.key === 'Enter') addComment(p.id)}} /><button onClick={() => addComment(p.id)} className="text-blue-700 text-[52px] font-semibold">Post</button></div></div>
+              <div className="px-3 pb-2">{p.comments?.length > 0 &&!showComments[p.id] && (<div onClick={() => setShowComments({...showComments, [p.id]: true})} className="text-[52px] text-zinc-500 cursor-pointer">View all {p.comments.length} comments</div>)}{showComments[p.id] && p.comments?.map((c:any, i:number) => (<div key={i} className="text-[32px] mt-1"><b>{c.user}</b> {c.text}</div>))}<div className="flex gap-2 mt-2"><input value={commentInputs[p.id] || ""} onChange={e => setCommentInputs({...commentInputs, [p.id]: e.target.value})} placeholder="Add a comment..." className="flex-1 bg-transparent text-[32px] outline-none placeholder-zinc-500" onKeyDown={e => { if(e.key === 'Enter') addComment(p.id)}} /><button onClick={() => addComment(p.id)} className="text-blue-700 text-[52px] font-semibold">Post</button></div></div>
             </div>
           ))}
         </div>
       )}
 
       {tab === "search" && (
-        <div className="max-w-[800px] mx-auto">
+        <div className="max-w-[900px] mx-auto">
           <div className="sticky top-0 bg-black z-20 p-3">
             <div className="relative">
               <span className="absolute left-3 top-2/4 -translate-y-2/4 text-zinc-800">🔍</span>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search captions, vibes..." className="w-full bg-[#1e1e1e] pl-9 pr-9 py-2.5 rounded-full text-[52px] outline-none border border-zinc-800 focus:border-zinc-600" />
-              {search && <button onClick={() => setSearch("")} className="absolute right-3 top-2/4 -translate-y-2/4 text-zinc-800">✕</button>}
+              {search && <button onClick={() => setSearch("")} className="absolute right-3 top-2/4 -translate-y-2/4 text-zinc-900">✕</button>}
             </div>
           </div>
 
