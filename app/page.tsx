@@ -124,11 +124,11 @@ export default function Page() {
       {tab === "profile" && (<div className="p-5 text-center"><div className="w-20 h-20 rounded-full bg-zinc-700 mx-auto mb-3"></div><div className="font-bold text-xl">{myName}</div><div className="text-sm text-zinc-400 mb-4">{session.user.email}</div><button onClick={() => supabase.auth.signOut()} className="border border-zinc-700 px-6 py-2 rounded-lg text-sm">Log Out</button><div className="grid grid-cols-3 gap-1 mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></div>)}
 
       <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 flex justify-around items-center py-3 pb-7 z-50">
-        <button onClick={() => setTab("home")} className="text-[46px] p-2">🏠</button>
-        <button onClick={() => setTab("search")} className="text-[46px] p-2">🔍</button>
+        <button onClick={() => setTab("home")} className="text-[52px] p-2">🏠</button>
+        <button onClick={() => setTab("search")} className="text-[52px] p-2">🔍</button>
         <button onClick={() => setTab("home")} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center text-[28px] font-bold">+</button>
-        <button onClick={() => setTab("reels")} className="text-[46px] p-2">🎬</button>
-        <button onClick={() => setTab("profile")} className="text-[46px] p-2">👤</button>
+        <button onClick={() => setTab("reels")} className="text-[52px] p-2">🎬</button>
+        <button onClick={() => setTab("profile")} className="text-[52px] p-2">👤</button>
       </div>
     </div>
   );
