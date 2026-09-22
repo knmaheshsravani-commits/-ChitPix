@@ -73,10 +73,10 @@ export default function Page() {
   if (!session) {
     return (
       <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center p-5">
-        <div className="w-full max-w-[700px]">
+        <div className="w-full max-w-[800px]">
           <div className="text-center mb-8">
             <h1 className="text-[52px] font-black tracking-tighter">ChitPix</h1>
-            <p className="text-zinc-600 text-[52px] mt-2">Photos • Reels • Vibes beo ❤️</p>
+            <p className="text-zinc-800 text-[52px] mt-2">Photos • Reels • Vibes beo ❤️</p>
           </div>
           <div className="w-full bg-[#121212] rounded-[52px] p-8 border border-zinc-800">
             <h2 className="text-[52px] font-bold mb-6">{isSignup? "Create Account" : "Welcome back"}</h2>
@@ -84,9 +84,9 @@ export default function Page() {
               <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full bg-zinc-800 p-4 rounded-xl text-[16px] border border-zinc-800 outline-none" />
               <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800 p-4 rounded-xl text-[32px] border border-zinc-800 outline-none" />
             </div>
-            <button onClick={handleAuth} disabled={loading} className="w-full bg-white text-black py-4 rounded-xl font-bold text-[32px] mt-6">{loading? "Wait beo..." : isSignup? "Sign Up" : "Log In"}</button>
+            <button onClick={handleAuth} disabled={loading} className="w-full bg-white text-black py-4 rounded-xl font-bold text-[52px] mt-6">{loading? "Wait beo..." : isSignup? "Sign Up" : "Log In"}</button>
             <div className="text-center mt-6">
-              <span className="text-zinc-600 text-[52px]">{isSignup? "Already have?" : "New user?"} </span>
+              <span className="text-zinc-800 text-[52px]">{isSignup? "Already have?" : "New user?"} </span>
               <span onClick={() => setIsSignup(!isSignup)} className="text-white font-semibold text-[52px] cursor-pointer underline">{isSignup? "Log In" : "Sign Up"}</span>
             </div>
           </div>
@@ -106,7 +106,7 @@ export default function Page() {
             <input value={text} onChange={e => setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm" />
             <input value={url} onChange={e => setUrl(e.target.value)} placeholder="Paste image URL..." className="w-full bg-zinc-900 border border-zinc-800 p-3 rounded-lg text-sm mt-2" />
             <label className="mt-2 flex items-center justify-center rounded-lg border border-dashed border-zinc-800 p-3 text-sm cursor-pointer">{uploading? "Uploading..." : "📷 Gallery nundi Photo"}<input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} /></label>
-            <button onClick={addPost} className="w-full bg-blue-700 py-2.5 rounded-lg font-semibold text-sm mt-3">Post</button>
+            <button onClick={addPost} className="w-full bg-blue-800 py-2.5 rounded-lg font-semibold text-sm mt-3">Post</button>
           </div>
           {posts.map(p => (
             <div key={p.id} className="border-b border-zinc-800">
@@ -119,13 +119,13 @@ export default function Page() {
           ))}
         </div>
       )}
-      {tab === "search" && (<><div className="p-3 sticky top-0 bg-black"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full bg-zinc-900 p-2.5 rounded-lg" /></div><div className="grid grid-cols-3 gap-[2px]">{filtered.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></>)}
+      {tab === "search" && (<><div className="p-3 sticky top-0 bg-black"><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search..." className="w-full bg-zinc-900 p-2.5 rounded-lg" /></div><div className="grid grid-cols-3 gap-[8px]">{filtered.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></>)}
       {tab === "reels" && (<div className="h-[calc(100vh-100px)] overflow-y-scroll snap-y snap-mandatory"><>{filtered.map(p => (<div key={p.id} className="h-[calc(100vh-96px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" alt="" /><div className="absolute bottom-20 left-3 text-sm"><b>{myName}</b><div>{p.caption}</div></div></div>))}</></div>)}
             {tab === "profile" && (
         <div className="p-5 text-center">
-          <div className="relative w-24 h-24 mx-auto mb-3">
-            <div className="w-full h-full rounded-full p-[12px] bg-gradient-to-tr from-yellow-500 via-pink-600 via-red-600 to-purple-700">
-              <div className="w-full h-full rounded-full bg-black p-[16px]">
+          <div className="relative w-32 h-32 mx-auto mb-3">
+            <div className="w-full h-full rounded-full p-[32px] bg-gradient-to-tr from-yellow-600 via-pink-700 via-red-700 to-purple-700">
+              <div className="w-full h-full rounded-full bg-black p-[32px]">
                 <div className="w-full h-full rounded-full bg-zinc-800 flex items-center justify-center text-3xl">👤</div>
               </div>
             </div>
