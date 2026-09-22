@@ -124,35 +124,6 @@ export default function Page() {
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search captions, vibes..." className="w-full bg-[#1e1e1e] pl-9 pr-9 py-2.5 rounded-full text-[14px] outline-none border border-zinc-800 focus:border-zinc-600" />
               {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500">✕</button>}
             </div>
-          </div>
-
-          {search === ""? (
-            <>
-              <div className="flex gap-2 px-3 py-2 overflow-x-auto">
-                <span className="bg-white text-black px-4 py-1.5 rounded-full text-[32px] font-semibold whitespace-nowrap">For you</span>
-                <span className="bg-zinc-800 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Trending 🔥</span>
-                <span className="bg-zinc-800 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Nature 🌿</span>
-                <span className="bg-zinc-800 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">Bridges 🌉</span>
-                <span className="bg-zinc-800 px-4 py-1.5 rounded-full text-[32px] whitespace-nowrap">City 🏙️</span>
-              </div>
-              <div className="grid grid-cols-3 gap-[2px] mt-1">
-                {posts.map(p => (
-                  <div key={p.id} className="relative aspect-square group cursor-pointer">
-                    <img src={p.image_url} className="w-full h-full object-cover" alt="" />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 text-white text-[32px] font-bold">❤️ {p.likes} 💬 {p.comments?.length||0}</div>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="px-3 py-2 text-[32px] text-zinc-500">{filtered.length} results for "{search}"</div>
-              {filtered.length === 0? (
-                <div className="text-center mt-20 text-zinc-600"><div className="text-4xl mb-2">😕</div><div className="text-[32px]">No results found</div></div>
-              ) : (
-                <div className="grid grid-cols-3 gap-[8px]">{filtered.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div>
-              )}
-            </>
           )}
         </div>
       )}
