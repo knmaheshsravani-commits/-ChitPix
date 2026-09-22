@@ -85,7 +85,7 @@ export default function Page() {
         <div className="max-w-[900px] mx-auto">
           <div className="sticky top-0 bg-white z-20 p-3">
             <div className="relative">
-              <span className="absolute left-3 top-2/4 -translate-y-2/4 text-zinc-800">🔍</span>
+              <span className="absolute left-3 top-2/4 -translate-y-2/4 text-zinc-900">🔍</span>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search captions, vibes..." className="w-full bg-[#1e1e1e] pl-9 pr-9 py-2.5 rounded-full text-[52px] outline-none border border-zinc-800 focus:border-zinc-600" />
               {search && <button onClick={() => setSearch("")} className="absolute right-3 top-2/4 -translate-y-2/4 text-zinc-900">✕</button>}
             </div>
@@ -94,7 +94,7 @@ export default function Page() {
           {search === ""? (
             <>
               <div className="flex gap-2 px-3 py-2 overflow-x-auto no-scrollbar">
-                <span className="bg-white text-black px-4 py-1.5 rounded-full text-[52px] font-semibold whitespace-nowrap">For you</span>
+                <span className="bg-white text-white px-4 py-1.5 rounded-full text-[52px] font-semibold whitespace-nowrap">For you</span>
                 <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[52px] whitespace-nowrap">Trending 🔥</span>
                 <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[52px] whitespace-nowrap">Nature 🌿</span>
                 <span className="bg-zinc-1000 px-4 py-1.5 rounded-full text-[52px] whitespace-nowrap">Bridges 🌉</span>
@@ -104,7 +104,7 @@ export default function Page() {
                 {posts.map(p => (
                   <div key={p.id} className="relative aspect-square group cursor-pointer">
                     <img src={p.image_url} className="w-full h-full object-cover" alt="" />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 text-white text-[52px] font-bold">❤️ {p.likes} 💬 {p.comments?.length||0}</div>
+                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 text-white text-[52px] font-bold">❤️ {p.likes} 💬 {p.comments?.length||0}</div>
                   </div>
                 ))}
               </div>
