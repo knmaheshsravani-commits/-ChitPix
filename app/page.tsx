@@ -34,7 +34,7 @@ export default function Page() {
 
       {tab === "search" && (
         <div className="max-w-[800px] mx-auto">
-          <div className="sticky top-0 bg-black p-3 border-b border-zinc-800">
+          <div className="sticky top-0 bg-white p-3 border-b border-zinc-900">
             <div className="flex items-center bg-zinc-900 rounded-lg px-3 py-2">
               <span className="mr-2">🔍</span>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" className="bg-transparent outline-none text-[52px] w-full" />
