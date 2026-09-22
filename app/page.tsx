@@ -8,9 +8,9 @@ export default function Page() {
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [loading, setLoading] = useState(false); const [isSignup, setIsSignup] = useState(false);
   const [tab, setTab] = useState("home"); const [text, setText] = useState(""); const [url, setUrl] = useState(""); const [search, setSearch] = useState(""); const [uploading, setUploading] = useState(false);
   const [posts, setPosts] = useState<any[]>([
-    { id: 1, image_url: "https://picsum.photos/seed/1/600/800", caption: "First post beo!", likes: 12, liked: false, comments: [] },
-    { id: 2, image_url: "https://picsum.photos/seed/2/600/800", caption: "Bridge vibes", likes: 45, liked: false, comments: [] },
-    { id: 3, image_url: "https://picsum.photos/seed/3/600/800", caption: "Nature love", likes: 22, liked: false, comments: [] },
+    { id: 1, image_url: "https://picsum.photos/seed/1/800/1000", caption: "First post beo!", likes: 12, liked: false, comments: [] },
+    { id: 2, image_url: "https://picsum.photos/seed/2/800/1000", caption: "Bridge vibes", likes: 45, liked: false, comments: [] },
+    { id: 3, image_url: "https://picsum.photos/seed/3/800/1000", caption: "Nature love", likes: 22, liked: false, comments: [] },
   ]);
   const [profilePic, setProfilePic] = useState(""); const [bio, setBio] = useState("ChitPix beo ❤️"); const [editing, setEditing] = useState(false); const [newName, setNewName] = useState("");
   const [commentInputs, setCommentInputs] = useState<{[key:number]:string}>({}); const [showComments, setShowComments] = useState<{[key:number]:boolean}>({});
@@ -37,7 +37,7 @@ export default function Page() {
           <div className="sticky top-0 bg-black p-3 border-b border-zinc-800">
             <div className="flex items-center bg-zinc-900 rounded-lg px-3 py-2">
               <span className="mr-2">🔍</span>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" className="bg-transparent outline-none text-[15px] w-full" />
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" className="bg-transparent outline-none text-[32px] w-full" />
               {search && <button onClick={() => setSearch("")} className="text-zinc-500 ml-2">✕</button>}
             </div>
           </div>
