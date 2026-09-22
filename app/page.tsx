@@ -63,7 +63,7 @@ export default function Page() {
   const displayName = newName || myName;
 
   return (
-    <div className="min-h-screen bg-black text-black pb-24">
+    <div className="min-h-screen bg-white text-black pb-24">
       {tab === "home" && (
         <div className="max-w-[800px] mx-auto">
           <div className="flex justify-between p-3 border-b border-zinc-800"><span className="font-bold text-xl">ChitPix</span><span className="text-sm">{displayName}</span></div>
@@ -83,7 +83,7 @@ export default function Page() {
 
       {tab === "search" && (
         <div className="max-w-[900px] mx-auto">
-          <div className="sticky top-0 bg-black z-20 p-3">
+          <div className="sticky top-0 bg-white z-20 p-3">
             <div className="relative">
               <span className="absolute left-3 top-2/4 -translate-y-2/4 text-zinc-800">🔍</span>
               <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search captions, vibes..." className="w-full bg-[#1e1e1e] pl-9 pr-9 py-2.5 rounded-full text-[52px] outline-none border border-zinc-800 focus:border-zinc-600" />
