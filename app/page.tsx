@@ -1,19 +1,27 @@
-// paina import lo idi add chey
-import { Heart, MessageCircle, Send, Bookmark, Home, Search, PlusSquare, Clapperboard, User } from 'lucide-react';
+// Profile pic section lo - ila marchu
+<div style={{display:'flex', flexDirection:'column', alignItems:'center', marginTop:'26px'}}>
+  
+  <div style={{
+    width:'100px', 
+    height:'100px', 
+    borderRadius:'50%',
+    padding:'5px',
+    background:'linear-gradient(45deg, #feda75, #d62976, #962fbf, #4f5bd5)',
+  }}>
+    <img 
+      src={user?.photoURL || user?.profilePic || "https://i.pravatar.cc/150?img=3"} 
+      alt="profile"
+      style={{
+        width:'100%',
+        height:'100%',
+        borderRadius:'50%',
+        objectFit:'cover',
+        background:'white',
+        border:'5px solid white'
+      }}
+      onError={(e)=> e.target.src="https://i.pravatar.cc/150?img=3"}
+    />
+  </div>
 
-// Post kinda icons daggara - old emoji div ki badulu
-<div style={{display:'flex', gap:'26px', padding:'26px', alignItems:'center', background:'white'}}>
-  <Heart size={52} strokeWidth={1.8} />
-  <MessageCircle size={52} strokeWidth={1.8} />
-  <Send size={52} strokeWidth={1.8} />
-  <Bookmark size={52} strokeWidth={1.8} style={{marginLeft:'auto'}} />
-</div>
-
-// Chala kinda - Bottom Navbar
-<div style={{display:'flex', justifyContent:'space-around', padding:'26px 0', background:'black', borderTop:'1px solid #333'}}>
-  <Home size={52} color="white" />
-  <Search size={52} color="gray" />
-  <PlusSquare size={52} color="gray" />
-  <Clapperboard size={52} color="gray" />
-  <User size={52} color="gray" />
+  <p style={{marginTop:'12px', fontSize:'15px'}}>{user?.email}</p>
 </div>
