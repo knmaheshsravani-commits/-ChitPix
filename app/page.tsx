@@ -1,9 +1,9 @@
-import { House, Search, SquarePlus, Clapperboard, User } from 'lucide-react';
+import { Heart, MessageCircle, Send, Bookmark } from 'lucide-react';
 
-<div style={{display:'flex', justifyContent:'space-around', padding:'52px 0', background:'black', position:'fixed', bottom:0, width:'100%'}}>
-  <House size={52} strokeWidth={1.8} color="white" />
-  <Search size={52} strokeWidth={1.8} color="gray" />
-  <SquarePlus size={52} strokeWidth={1.8} color="gray" />
-  <Clapperboard size={52} strokeWidth={1.8} color="gray" />
-  <User size={52} strokeWidth={1.8} color="gray" />
+// old emoji div ni teesi, idi pettu
+<div style={{display:'flex', gap:'32px', padding:'52px 32px', alignItems:'center'}}>
+  <Heart size={52} strokeWidth={1.7} style={{cursor:'pointer'}} />
+  <MessageCircle size={52} strokeWidth={1.7} style={{cursor:'pointer'}} />
+  <Send size={52} strokeWidth={1.7} style={{cursor:'pointer', transform:'rotate(-15deg)'}} />
+  <Bookmark size={52} strokeWidth={1.7} style={{marginLeft:'auto', cursor:'pointer'}} />
 </div>
