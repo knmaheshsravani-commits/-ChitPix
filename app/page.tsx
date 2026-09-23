@@ -17,9 +17,9 @@ export default function Page(){
         <h1 className="text-3xl font-black">Kn Threads</h1>
         <p className="text-sm text-gray-500 mt-2">Login to continue</p>
         <div className="w-full max-w-sm mt-8">
-          <input value={user} onChange={e=>setUser(e.target.value)} placeholder="Username" className="w-full border border-zinc-500 rounded-2xl p-4 outline-none text-[32px]"/>
-          <input value={pass} onChange={e=>setPass(e.target.value)} type="password" placeholder="Password" className="w-full border border-zinc-300 rounded-2xl p-4 outline-none mt-3 text-[16px]"/>
-          <button onClick={()=>{if(user){setIsLogin(true)}}} className="bg-black text-white w-full rounded-2xl py-4 mt-5 font-bold text-[32px]">Log in</button>
+          <input value={user} onChange={e=>setUser(e.target.value)} placeholder="Username" className="w-full border border-zinc-600 rounded-2xl p-4 outline-none text-[52px]"/>
+          <input value={pass} onChange={e=>setPass(e.target.value)} type="password" placeholder="Password" className="w-full border border-zinc-500 rounded-2xl p-4 outline-none mt-3 text-[32px]"/>
+          <button onClick={()=>{if(user){setIsLogin(true)}}} className="bg-black text-white w-full rounded-2xl py-4 mt-5 font-bold text-[52px]">Log in</button>
           <p className="text-xs text-center text-gray-400 mt-3">Type any username & click login</p>
         </div>
       </div>
@@ -34,7 +34,7 @@ export default function Page(){
         <button onClick={()=>setIsLogin(false)} className="text-white text-xs border border-white/30 px-3 py-1 rounded-full">Logout</button>
       </div>
 
-      <div className="max-w-[600px] mx-auto p-4">
+      <div className="max-w-[800px] mx-auto p-4">
         <h1 className="font-bold text-center text-xl">Kn Threads - Working ✅</h1>
         <p className="text-center text-sm text-gray-500 mt-2">Tab: {tab}</p>
         {threads.map(t=>(
@@ -46,7 +46,7 @@ export default function Page(){
       </div>
 
       {/* BIG ICONS - 200% SIZE SAFE */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-400 h-[10px] flex justify-around items-center px-4 pb-2">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-400 h-[32px] flex justify-around items-center px-4 pb-2">
         <button onClick={()=>setTab("home")} className={`text-[52px] ${tab==="home"?"text-black":"text-zinc-400"}`}>⌂</button>
         <button onClick={()=>setTab("search")} className={`text-[52px] ${tab==="search"?"text-black":"text-zinc-400"}`}>⌕</button>
         <button onClick={()=>setShow(true)} className="bg-black text-white w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-[52px] font-bold shadow-lg">+</button>
