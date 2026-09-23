@@ -22,15 +22,7 @@ export default function Page() {
   const handleProfileUpload = async (file: File) => { setUploading(true); try { const n = `profile-${Date.now()}-${file.name}`; const { error } = await supabase.storage.from("chitpix").upload(n, file); if (error) throw error; const { data } = supabase.storage.from("chitpix").getPublicUrl(n); setProfilePic(data.publicUrl); } catch { alert("Profile upload fail"); } finally { setUploading(false); } };
   const toggleLike = (id: number) => setPosts(posts.map(p => p.id === id? {...p, liked:!p.liked, likes: p.liked? p.likes - 1 : p.likes + 1 } : p));
   const addComment = (postId: number) => { const txt = commentInputs[postId]; if(!txt?.trim()) return; setPosts(posts.map(p => p.id === postId? {...p, comments: [...(p.comments||[]), {user: displayName, text: txt}] } : p)); setCommentInputs({...commentInputs, [postId]: ""}); };
-  if (!session) {
-  return (
-    <div className="min-h-screen bg-white flex items-center justify-center">
-      <p>Please login bro</p>
-    </div>
-  );
-}
-
-const myName = session.user.email?.split("@")[0] || "mahesh";
+ const myName = session.user.email?.split("@")[0] || "mahesh";
 const displayName = myName;
 
 return (
