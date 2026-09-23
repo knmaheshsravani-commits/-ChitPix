@@ -81,14 +81,21 @@ export default function Page() {
 </div>
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl w-full max-w-[400px] p-5">
-            <h2 className="font-bold mb-3">New Thread</h2>
-            <textarea value={newThread} onChange={e=>setNewThread(e.target.value)} placeholder="What's new?" className="border rounded-xl w-full p-3 h-24"></textarea>
-            <button onClick={addThread} className="bg-black text-white w-full rounded-xl py-3 mt-3">Post</button>
-          </div>
-        </div>
-      )}
+  <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4" onClick={()=>setShowCreate(false)}>
+    <div className="bg-white rounded-t-[24px] sm:rounded-2xl w-full max-w-[600px] p-5" onClick={e=>e.stopPropagation()}>
+      <div className="flex justify-between items-center mb-4">
+        <button onClick={()=>setShowCreate(false)} className="text-zinc-500">Cancel</button>
+        <h2 className="font-bold">Option 1 - New Thread</h2>
+        <button onClick={addThread} className="font-bold">Post</button>
+      </div>
+      <div className="flex gap-3">
+        <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center">M</div>
+        <textarea value={newThread} onChange={e=>setNewThread(e.target.value)} placeholder="What's new?" className="flex-1 text-[16px] outline-none min-h-[100px] resize-none" autoFocus></textarea>
+      </div>
+      <button onClick={addThread} className="bg-black text-white w-full rounded-full py-3 mt-5 font-bold">Post</button>
+    </div>
+  </div>
+)}
     </div>
   );
 }
