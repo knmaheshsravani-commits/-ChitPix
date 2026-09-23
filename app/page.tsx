@@ -23,13 +23,13 @@ export default function Page(){
         ))}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t h-[60px] flex justify-around items-center">
-        <button onClick={()=>setTab("home")}>⌂</button>
-        <button onClick={()=>setTab("search")}>⌕</button>
-        <button onClick={()=>setShow(true)} className="bg-black text-white w-9 h-9 rounded-lg">+</button>
-        <button onClick={()=>setTab("activity")}>♡</button>
-        <button onClick={()=>setTab("profile")}>◯</button>
-      </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 h-[75px] flex justify-around items-center px-2 pb-2">
+  <button onClick={()=>setTab("home")} className={`text-[52px] p-2 ${tab==="home"?"text-black":"text-zinc-500"}`}>⌂</button>
+  <button onClick={()=>setTab("search")} className={`text-[52px] p-2 ${tab==="search"?"text-black":"text-zinc-500"}`}>⌕</button>
+  <button onClick={()=>setShow(true)} className="bg-black text-white w-[52px] h-[52px] rounded-xl flex items-center justify-center text-[30px] font-bold shadow-lg">+</button>
+  <button onClick={()=>setTab("activity")} className={`text-[52px] p-2 ${tab==="activity"?"text-black":"text-zinc-500"}`}>♡</button>
+  <button onClick={()=>setTab("profile")} className={`text-[52px] p-2 ${tab==="profile"?"text-black":"text-zinc-500"}`}>◯</button>
+</div>
 
       {show && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
