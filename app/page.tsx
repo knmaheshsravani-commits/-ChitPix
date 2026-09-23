@@ -61,7 +61,24 @@ export default function Page() {
       {tab === "reels" && (<div className="h-[calc(100vh-100px)] overflow-y-scroll snap-y snap-mandatory bg-black">{filtered.map(p => (<div key={p.id} className="h-[calc(200vh-200px)] snap-start relative"><img src={p.image_url} className="w-full h-full object-cover" alt="" /><div className="absolute bottom-24 left-3 text-sm text-white"><b>{displayName}</b><div>{p.caption}</div></div></div>))}</div>)}
       {tab === "profile" && (<div className="p-5 bg-white min-h-screen"><div className="text-center"><label className="relative w-24 h-24 mx-auto mb-3 block cursor-pointer"><div className="w-full h-full rounded-full p-[48x] bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-200"><div className="w-full h-full rounded-full bg-white p-[48px]"><div className="w-full h-full rounded-full bg-zinc-1000 flex items-center justify-center overflow-hidden">{profilePic? <img src={profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-3xl">👤</span>}</div></div></div><div className="absolute bottom-0 right-0 w-7 h-7 bg-blue-6
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   1000 rounded-full border-2 border-white flex items-center justify-center text-sm font-bold text-white">+</div><input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if(f) handleProfileUpload(f); }} /></label><div className="font-bold text-xl">{displayName}</div><div className="text-sm text-zinc-800">{session.user.email}</div><div className="text-sm mt-2">{bio}</div><div className="flex justify-center gap-3 mt-4"><button onClick={() => setEditing(!editing)} className="bg-zinc-800 px-6 py-2 rounded-lg text-sm font-semibold">{editing? "Close" : "Edit Profile"}</button><button onClick={() => supabase.auth.signOut()} className="border border-zinc-800 px-6 py-2 rounded-lg text-sm">Log Out</button></div>{editing && (<div className="mt-5 bg-zinc-600 p-4 rounded-xl text-left space-y-3 border border-zinc-1000"><input value={newName} onChange={e => setNewName(e.target.value)} placeholder="New Name" className="w-full bg-white p-3 rounded-lg border border-zinc-1000 text-sm" /><input value={bio} onChange={e => setBio(e.target.value)} placeholder="Bio..." className="w-full bg-white p-3 rounded-lg border border-zinc-1000 text-sm" /><button onClick={() => setEditing(false)} className="w-full bg-black text-white py-2 rounded-lg text-sm font-bold">Save</button></div>)}</div><div className="grid grid-cols-3 gap-1 mt-6">{posts.map(p => <img key={p.id} src={p.image_url} className="aspect-square object-cover" alt="" />)}</div></div>)}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-1000 flex justify-around items-center py-2 pb-6 max-w-[900px] mx-auto"><button onClick={() => setTab("home")} className="text-[48px] p-2">🏠</button><button onClick={() => setTab("search")} className="text-[48px] p-2">🔍</button><button onClick={() => setTab("home")} className="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center text-[48px] font-bold">+</button><button onClick={() => setTab("reels")} className="text-[48px] p-2">🎬</button><button onClick={() => setTab("profile")} className="text-[48px] p-2">👤</button></div>
-    </div>
-  );
-        }
+      <div className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-zinc-400 flex justify-around items-center py-3 z-50">
+
+  <button onClick={()=>setTab("home")} className="w-7 h-7 flex items-center justify-center">
+    <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.5l-9 8.5V21h6v-6h6v6h6V11l-9-8.5z"/></svg>
+  </button>
+
+  <button onClick={()=>setTab("search")} className="w-7 h-7 flex items-center justify-center">
+    <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.3-4.3"/></svg>
+  </button>
+
+  <button onClick={()=>setTab("create")} className="w-7 h-7 flex items-center justify-center">
+    <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+  </button>
+
+  <button onClick={()=>setTab("reels")} className="w-7 h-7 flex items-center justify-center">
+    <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M10 9l5 3-5 3V9z"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+  </button>
+
+  <button onClick={()=>setTab("profile")} className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center text-white font-bold text-[32px]">M</button>
+
+</div>
