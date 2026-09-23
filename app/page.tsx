@@ -85,11 +85,12 @@ export default function Page() {
       )}
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-3 text-xl">
-        <button onClick={() => setTab("home")}>🏠</button>
-        <button onClick={() => setTab("search")}>🔍</button>
-        <button onClick={() => setTab("reels")}>🎬</button>
-        <button onClick={() => setTab("profile")} className="text-blue-600">👤</button>
-      </div>
+  <button onClick={() => setTab("home")}>🏠</button>
+  <button onClick={() => setTab("search")}>🔍</button>
+  <button onClick={() => alert("Create Thread coming soon!")} className="text-2xl">➕</button>
+  <button onClick={() => setTab("reels")}>❤️</button>
+  <button onClick={() => setTab("profile")} className="text-blue-600">👤</button>
+</div>
 
       {showEdit && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
