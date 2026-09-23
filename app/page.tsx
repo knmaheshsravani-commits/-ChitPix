@@ -22,14 +22,12 @@ export default function Page() {
   const handleProfileUpload = async (file: File) => { setUploading(true); try { const n = `profile-${Date.now()}-${file.name}`; const { error } = await supabase.storage.from("chitpix").upload(n, file); if (error) throw error; const { data } = supabase.storage.from("chitpix").getPublicUrl(n); setProfilePic(data.publicUrl); } catch { alert("Profile upload fail"); } finally { setUploading(false); } };
   const toggleLike = (id: number) => setPosts(posts.map(p => p.id === id? {...p, liked:!p.liked, likes: p.liked? p.likes - 1 : p.likes + 1 } : p));
   const addComment = (postId: number) => { const txt = commentInputs[postId]; if(!txt?.trim()) return; setPosts(posts.map(p => p.id === postId? {...p, comments: [...(p.comments||[]), {user: displayName, text: txt}] } : p)); setCommentInputs({...commentInputs, [postId]: ""}); };
-  const filtered = posts.filter(p => p.caption.toLowerCase().includes(search.toLowerCase()));
-
   if (!session) {
   return (
     <div className="min-h-screen bg-white flex items-center justify-center">
-      Login Page Here
+      <p>Please login bro</p>
     </div>
-  )
+  );
 }
 
 const myName = session.user.email?.split("@")[0] || "mahesh";
@@ -37,12 +35,8 @@ const displayName = myName;
 
 return (
   <div className="min-h-screen bg-white text-black pb-24">
-    
+    {tab === "home" && (
       <div className="max-w-[1000px] mx-auto">
-      {tab === "home" && (<div className="max-w-[1000px] mx-auto"><div className="flex justify-between items-center p-3 border-b border-zinc-1000 bg-white sticky top-0 z-10"><span className="font-bold text-xl">ChitPix</span><span className="text-sm font-medium">{displayName}</span></div><div className="p-3 bg-white"><input value={text} onChange={e => setText(e.target.value)} placeholder="What's on your mind?" className="w-full bg-zinc-400 border border-zinc-800 p-3 rounded-lg text-sm outline-none" /><input value={url} onChange={e => setUrl(e.target.value)} placeholder="Paste image URL..." className="w-full bg-zinc-800 border border-zinc-800 p-3 rounded-lg text-sm mt-2 outline-none" /><label className="mt-2 flex items-center justify-center rounded-lg border border-dashed border-zinc-800 p-3 text-sm cursor-pointer bg-zinc-50">{uploading? "Uploading..." : "📷 Gallery nundi Photo"}<input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} /></label><button onClick={addPost} className="w-full bg-blue-700 text-white py-2.5 rounded-lg font-semibold text-sm mt-3">Post</button></div>{posts.map(p => (<div key={p.id} className="border-b border-zinc-800 bg-white"><div className="p-3 font-bold text-sm flex items-center gap-2"><div className="w-8 h-8 rounded-full p-[48px] bg-gradient-to-tr from-yellow-500 via-pink-600 to-purple-600"><div className="w-full h-full rounded-full bg-white border-2 border-white overflow-hidden">{profilePic && <img src={profilePic} className="w-full h-full object-cover" alt="" />}</div></div>{displayName}</div><img src={p.image_url} onDoubleClick={() => { if(!p.liked) toggleLike(p.id)}} className="w-full aspect-[4/5] object-cover bg-zinc-100" alt="" />
-      {/* NEE ICONS - SAME TO SAME */}
-      <div className="flex justify-between p-3 text-[52px]"><div className="flex gap-4"><span onClick={() => toggleLike(p.id)} className="cursor-pointer">{p.liked? "❤️" : "🤍"}</span><span onClick={() => setShowComments({...showComments, [p.id]:!showComments[p.id]})} className="cursor-pointer">💬</span><span>↗️</span></div><span>🔖</span></div>
-      <div className="px-3 text-sm font-semibold">{p.likes} likes</div><div className="px-3 pb-1 text-sm"><b>{displayName}</b> {p.caption}</div><div className="px-3 pb-2">{p.comments?.length > 0 &&!showComments[p.id] && (<div onClick={() => setShowComments({...showComments, [p.id]: true})} className="text-sm text-zinc-600 cursor-pointer">View all {p.comments.length} comments</div>)}{showComments[p.id] && p.comments?.map((c:any, i:number) => (<div key={i} className="text-sm mt-1"><b>{c.user}</b> {c.text}</div>))}<div className="flex gap-2 mt-2 border-t border-zinc-800 pt-2"><input value={commentInputs[p.id] || ""} onChange={e => setCommentInputs({...commentInputs, [p.id]: e.target.value})} placeholder="Add a comment..." className="flex-1 bg-transparent text-sm outline-none placeholder-zinc-600" onKeyDown={e => { if(e.key === 'Enter') addComment(p.id)}} /><button onClick={() => addComment(p.id)} className="text-blue-700 text-sm font-semibold">Post</button></div></div></div>))}</div>)}
 
       {tab === "search" && (
         <div className="max-w-[800px] mx-auto">
