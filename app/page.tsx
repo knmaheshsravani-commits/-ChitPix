@@ -24,9 +24,19 @@ export default function Page() {
   const addComment = (postId: number) => { const txt = commentInputs[postId]; if(!txt?.trim()) return; setPosts(posts.map(p => p.id === postId? {...p, comments: [...(p.comments||[]), {user: displayName, text: txt}] } : p)); setCommentInputs({...commentInputs, [postId]: ""}); };
   const filtered = posts.filter(p => p.caption.toLowerCase().includes(search.toLowerCase()));
 
-  if (!session) { return (<div className="min-h-screen bg-white text-black flex flex-col items-center justify-center p-5"><div className="w-full max-w-[800px]"><div className="text-center mb-8"><h1 className="text-[52px] font-black">ChitPix</h1></div><div className="w-full bg-white rounded-[52px] p-8 border border-zinc-800 shadow-sm"><div className="space-y-4"><input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" className="w-full bg-zinc-400 p-4 rounded-xl border border-zinc-800 outline-none text-sm" /><input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" className="w-full bg-zinc-800 p-4 rounded-xl border border-zinc-800 outline-none text-sm" /></div><button onClick={handleAuth} disabled={loading} className="w-full bg-black text-white py-4 rounded-xl font-bold mt-6">{loading? "Wait..." : isSignup? "Sign Up" : "Log In"}</button><div className="text-center mt-6"><span className="text-zinc-600 text-sm">{isSignup? "Have account? " : "New? "}</span><span onClick={() => setIsSignup(!isSignup)} className="text-black font-semibold text-sm underline cursor-pointer">{isSignup? "Log In" : "Sign Up"}</span></div></div></div></div>); }
+  if (!session) {
+  return (
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      Login Page Here
+    </div>
+  )
+}
 
-  const myName = session.user.email?.split("@")[0] || "mahesh"; const displayName = newName || myName;
+const myName = session.user.email?.split("@")[0] || "mahesh";
+const displayName = myName;
+
+return (
+  <div className="min-h-screen bg-white text-black pb-24">
 
   return (
     <div className="min-h-screen bg-white text-black pb-24">
