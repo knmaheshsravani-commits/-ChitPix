@@ -24,12 +24,10 @@ export default function Page() {
   const addComment = (postId: number) => { const txt = commentInputs[postId]; if(!txt?.trim()) return; setPosts(posts.map(p => p.id === postId? {...p, comments: [...(p.comments||[]), {user: displayName, text: txt}] } : p)); setCommentInputs({...commentInputs, [postId]: ""}); };
  const myName = session.user.email?.split("@")[0] || "mahesh";
 const displayName = myName;
-
 return (
   <div className="min-h-screen bg-white text-black pb-24">
     {tab === "home" && (
       <div className="max-w-[1000px] mx-auto">
-
       {tab === "search" && (
         <div className="max-w-[800px] mx-auto">
           <div className="sticky top-0 bg-white p-3 border-b border-zinc-1000 z-10">
