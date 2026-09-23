@@ -33,7 +33,11 @@ export default function Page() {
         <div className="max-w-[600px] mx-auto p-5">
           <div className="flex justify-between">
             <span>📊</span>
-            <div className="flex gap-3"><span>🔍</span><span>📷</span><span>⚙️</span></div>
+            <div className="flex gap-3">
+  <button onClick={() => setTab("search")}>🔍</button>
+  <button onClick={() => alert("Camera coming soon!")}>📷</button>
+  <button onClick={() => alert("Settings coming soon!")}>⚙️</button>
+</div>
           </div>
 
           <div className="flex justify-between items-start mt-4">
@@ -51,7 +55,7 @@ export default function Page() {
 
           <div className="flex gap-3 mt-6">
             <button onClick={() => setShowEdit(true)} className="flex-1 border rounded-xl py-2.5 font-semibold">Edit profile</button>
-            <button className="flex-1 border rounded-xl py-2.5 font-semibold">Share profile</button>
+            <button onClick={() => { if(navigator.share){ navigator.share({title: name, text: `Check ${username}`, url: window.location.href}) } else { alert("Link copied: " + window.location.href) } }} className="flex-1 border rounded-xl py-2.5 font-semibold">Share profile</button>
           </div>
 
           <h3 className="font-bold mt-8 mb-3">Suggested for you</h3>
