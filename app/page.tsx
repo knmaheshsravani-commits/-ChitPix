@@ -1,101 +1,62 @@
 "use client";
 import { useState } from "react";
 
-export default function Page() {
-  const [tab, setTab] = useState("profile");
-  const [showCreate, setShowCreate] = useState(false);
-  const [photo, setPhoto] = useState("");
-  const [newThread, setNewThread] = useState("");
-  const [threads, setThreads] = useState<any[]>([]);
+const HomeIcon = ()=> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1h-5v-5H9v5H4a1 1 0 01-1-1V9.5z"/></svg>
+const SearchIcon = ()=> <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="6"/><path d="M20 20l-3.5-3.5"/></svg>
+const ShareIcon = ()=> <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M22 2L11 13M22 2l-7 20-4-9-4 20-7z"/></svg>
+const UserIcon = ()=> <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+const HeartIcon = ({liked}:{liked:boolean})=> <svg width="20" height="20" viewBox="0 0 24 24" fill={liked?"black":"none"} stroke="currentColor" strokeWidth="1.5"><path d="M12 20l-1.5-1.4C5 13.5 2 11.2 2 8.2A4.2 4.2 0 016.5 4c1.5 0 3.9 3.5 2.1C10.5 4.9 12 4 13.5 4A4.2 4.2 0 0118 8.2c0 3-3 5.3-8.5 10.4L12 20z"/></svg>
+const CommentIcon = ()=> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 11.5a8.5 8.5 0 01-12.5 7.5L3 21l2-5.5A8.5 8.5 0 0121 11.5z"/></svg>
 
-  const addThread = () => {
-    if(!newThread.trim()) return;
-    setThreads([{id: Date.now(), text: newThread, likes: 0, liked: false},...threads]);
-    setNewThread(""); setShowCreate(false);
-  }
-  const toggleLike = (id:number) => {
-    setThreads(threads.map(t => t.id===id? {...t, liked:!t.liked, likes: t.liked? t.likes-1 : t.likes+1} : t));
-  }
+export default function Page(){
+  const [showCreate,setShowCreate]=useState(false);
+  const [newThread,setNewThread]=useState("");
+  const [threads,setThreads]=useState<any[]>([{id:1,text:"Hi brother good morning",likes:0,liked:false,comments:[]}]);
+  const [activeComment,setActiveComment]=useState<number|null>(null);
+  const [commentText,setCommentText]=useState("");
 
-  return (
-    <div className="min-h-screen bg-white text-black pb-24">
-      {tab==="profile" && (
-        <div className="max-w-[600px] mx-auto p-5">
-          <div className="flex justify-between items-center">
-            <span className="font-bold">Stats</span>
-            <div className="flex gap-4">
-              <button onClick={()=>setTab("search")}>
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4-4"/></svg>
-              </button>
-              <button onClick={()=>document.getElementById("file")?.click()}>
-                <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-              </button>
-            </div>
-          </div>
-          <div className="flex justify-between mt-6">
-            <div><h1 className="text-3xl font-bold">Kn Mahesh</h1><p>knmahesh30</p><p className="mt-3 text-sm text-zinc-500">{threads.length} threads</p></div>
-            {photo? <img src={photo} className="w-20 h-20 rounded-full object-cover" /> : <div className="w-20 h-20 bg-black text-white rounded-full flex items-center justify-center">M</div>}
-          </div>
-          <div className="mt-6">
-            {threads.map(t=>(
-              <div key={t.id} className="border-b py-4 flex gap-3">
-                <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center text-sm">M</div>
-                <div className="flex-1">
-                  <p className="font-bold text-sm">knmahesh30</p>
-                  <p className="mt-1">{t.text}</p>
-                  <button onClick={()=>toggleLike(t.id)} className="mt-3 flex items-center gap-1">
-                    <svg width="20" height="20" fill={t.liked?"red":"none"} stroke={t.liked?"red":"currentColor"} viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                    <span className="text-sm">{t.likes>0?t.likes:""}</span>
-                  </button>
+  const addThread=()=>{ if(!newThread.trim()) return; setThreads([{id:Date.now(),text:newThread,likes:0,liked:false,comments:[]},...threads]); setNewThread(""); setShowCreate(false); }
+  const toggleLike=(id:number)=>{ setThreads(threads.map(t=>t.id===id?{...t,liked:!t.liked,likes:t.liked?t.likes-1:t.likes+1}:t)); }
+  const addComment=(id:number)=>{ if(!commentText.trim()) return; setThreads(threads.map(t=>t.id===id?{...t,comments:[...t.comments,{id:Date.now(),text:commentText}]}:t)); setCommentText(""); setActiveComment(null); }
+
+  return(
+    <div className="min-h-screen bg-white pb-20">
+      <div className="h-[48px] bg-[#8B5CF6] w-full"></div>
+      <div className="max-w-[700px] mx-auto p-5">
+        <div className="flex justify-between items-center"><span className="font-bold text-sm">Stats</span><div className="flex gap-4"><SearchIcon/><span className="text-lg">📷</span></div></div>
+        <div className="flex justify-between mt-4"><div><h1 className="text-2xl font-bold">Kn Mahesh</h1><p className="text-sm">knmahesh30</p><p className="text-xs text-zinc-500 mt-2">{threads.length} threads</p></div><div className="w-16 h-16 bg-black text-white rounded-full flex items-center justify-center">M</div></div>
+
+        <div className="mt-8">
+          {threads.map(t=>(
+            <div key={t.id} className="border-b border-zinc-200 py-4 flex gap-3">
+              <div className="w-9 h-9 bg-black text-white rounded-full flex items-center justify-center text-sm shrink-0">M</div>
+              <div className="flex-1">
+                <p className="font-bold text-[15px]">knmahesh30</p>
+                <p className="mt-1 text-[15px] leading-5">{t.text}</p>
+                <div className="flex gap-4 mt-3">
+                  <button onClick={()=>toggleLike(t.id)} className="flex items-center gap-1"><HeartIcon liked={t.liked}/>{t.likes>0 && <span className="text-xs">{t.likes}</span>}</button>
+                  <button onClick={()=>setActiveComment(activeComment===t.id?null:t.id)} className="flex items-center gap-1"><CommentIcon/>{t.comments.length>0 && <span className="text-xs">{t.comments.length}</span>}</button>
+                  <button onClick={()=>navigator.share?.({text:t.text})}><ShareIcon/></button>
                 </div>
+                {t.comments.length>0 && <div className="mt-3 bg-zinc-50 rounded-xl p-2">{t.comments.map((c:any)=><p key={c.id} className="text-sm py-1">💬 {c.text}</p>)}</div>}
+                {activeComment===t.id && <div className="mt-3 flex gap-2"><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 border rounded-full px-3 py-1.5 text-sm outline-none"/><button onClick={()=>addComment(t.id)} className="bg-black text-white rounded-full px-4 py-1 text-sm">Reply</button></div>}
               </div>
-            ))}
-            {threads.length===0 && <p className="text-center text-zinc-400 mt-16">No threads yet - Click + to post</p>}
-          </div>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
-      {tab==="home" && <div className="p-10 text-center mt-20 font-bold">Home Feed</div>}
-      {tab==="search" && <div className="p-10 text-center mt-20 font-bold">Search</div>}
-      {tab==="activity" && <div className="p-10 text-center mt-20"><h1 className="font-bold text-xl">Activity</h1><p className="text-zinc-500">{threads.reduce((a,b)=>a+b.likes,0)} total likes</p></div>}
-
-      <input id="file" type="file" accept="image/*" hidden onChange={e=>{const f=e.target.files?.[0]; if(f) setPhoto(URL.createObjectURL(f))}} />
-
-      {/* 5 REAL ICONS - LIKE LEKUNDA SHARE */}
-<div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center py-3 z-50">
-  <button onClick={()=>setTab("home")} className={tab==="home"?"text-black":"text-zinc-400"}>
-    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-  </button>
-  <button onClick={()=>setTab("search")} className={tab==="search"?"text-black":"text-zinc-400"}>
-    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4-4"/></svg>
-  </button>
-  <button onClick={()=>setShowCreate(true)} className="bg-black text-white w-10 h-10 rounded-xl flex items-center justify-center">
-    <svg width="20" height="20" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>
-  <button onClick={()=>{ if(navigator.share){ navigator.share({title:"Kn Mahesh Profile", url: window.location.href})} else { alert("Link Copied: "+window.location.href)} }} className="text-zinc-400">
-    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-  </button>
-  <button onClick={()=>setTab("profile")} className={tab==="profile"?"text-black":"text-zinc-400"}>
-    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-  </button>
-</div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 flex justify-around items-center py-2.5">
+        <button className="text-zinc-400"><HomeIcon/></button>
+        <button className="text-zinc-400"><SearchIcon/></button>
+        <button onClick={()=>setShowCreate(true)} className="bg-black text-white w-9 h-9 rounded-lg flex items-center justify-center text-xl font-bold">+</button>
+        <button className="text-zinc-400"><ShareIcon/></button>
+        <button className="text-zinc-400"><UserIcon/></button>
+      </div>
 
       {showCreate && (
-  <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-[100] p-0 sm:p-4" onClick={()=>setShowCreate(false)}>
-    <div className="bg-white rounded-t-[24px] sm:rounded-2xl w-full max-w-[600px] p-5" onClick={e=>e.stopPropagation()}>
-      <div className="flex justify-between items-center mb-4">
-        <button onClick={()=>setShowCreate(false)} className="text-zinc-500">Cancel</button>
-        <h2 className="font-bold">Option 1 - New Thread</h2>
-        <button onClick={addThread} className="font-bold">Post</button>
-      </div>
-      <div className="flex gap-3">
-        <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center">M</div>
-        <textarea value={newThread} onChange={e=>setNewThread(e.target.value)} placeholder="What's new?" className="flex-1 text-[16px] outline-none min-h-[100px] resize-none" autoFocus></textarea>
-      </div>
-      <button onClick={addThread} className="bg-black text-white w-full rounded-full py-3 mt-5 font-bold">Post</button>
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 p-4"><div className="bg-white rounded-2xl w-full max-w-[500px] p-5"><div className="flex justify-between mb-3"><button onClick={()=>setShowCreate(false)}>Cancel</button><b>New Thread</b><button onClick={addThread} className="font-bold">Post</button></div><textarea value={newThread} onChange={e=>setNewThread(e.target.value)} placeholder="What's new?" className="w-full h-24 border rounded-xl p-3 outline-none"></textarea><button onClick={addThread} className="bg-black text-white w-full rounded-xl py-3 mt-3">Post</button></div></div>
+      )}
     </div>
-  </div>
-)}
-    </div>
-  );
+  )
 }
