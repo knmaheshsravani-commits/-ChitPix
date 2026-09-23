@@ -61,24 +61,24 @@ export default function Page() {
 
       <input id="file" type="file" accept="image/*" hidden onChange={e=>{const f=e.target.files?.[0]; if(f) setPhoto(URL.createObjectURL(f))}} />
 
-      {/* 5 REAL ICONS BOTTOM NAV */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center py-3 z-50">
-        <button onClick={()=>setTab("home")} className={tab==="home"?"text-black":"text-zinc-400"}>
-          <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        </button>
-        <button onClick={()=>setTab("search")} className={tab==="search"?"text-black":"text-zinc-400"}>
-          <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4-4"/></svg>
-        </button>
-        <button onClick={()=>setShowCreate(true)} className="bg-black text-white w-10 h-10 rounded-xl flex items-center justify-center">
-          <svg width="20" height="20" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        </button>
-        <button onClick={()=>setTab("activity")} className={tab==="activity"?"text-black":"text-zinc-400"}>
-          <svg width="26" height="26" fill={tab==="activity"?"black":"none"} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </button>
-        <button onClick={()=>setTab("profile")} className={tab==="profile"?"text-black":"text-zinc-400"}>
-          <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </button>
-      </div>
+      {/* 5 REAL ICONS - LIKE LEKUNDA SHARE */}
+<div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center py-3 z-50">
+  <button onClick={()=>setTab("home")} className={tab==="home"?"text-black":"text-zinc-400"}>
+    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  </button>
+  <button onClick={()=>setTab("search")} className={tab==="search"?"text-black":"text-zinc-400"}>
+    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4-4"/></svg>
+  </button>
+  <button onClick={()=>setShowCreate(true)} className="bg-black text-white w-10 h-10 rounded-xl flex items-center justify-center">
+    <svg width="20" height="20" fill="none" stroke="white" strokeWidth="3" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  </button>
+  <button onClick={()=>{ if(navigator.share){ navigator.share({title:"Kn Mahesh Profile", url: window.location.href})} else { alert("Link Copied: "+window.location.href)} }} className="text-zinc-400">
+    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+  </button>
+  <button onClick={()=>setTab("profile")} className={tab==="profile"?"text-black":"text-zinc-400"}>
+    <svg width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  </button>
+</div>
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
