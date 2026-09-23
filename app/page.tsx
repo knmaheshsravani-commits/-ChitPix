@@ -4,7 +4,9 @@ import { useState } from "react";
 export default function Page() {
   const [tab, setTab] = useState("profile");
   const [search, setSearch] = useState("");
-
+  const [showEdit, setShowEdit] = useState(false);
+const [name, setName] = useState("Kn Mahesh");
+const [username, setUsername] = useState("knmahesh30");
   return (
     <div className="min-h-screen bg-white text-black pb-24">
 
@@ -44,12 +46,12 @@ export default function Page() {
           </div>
 
           <div className="flex justify-between items-start mt-2">
-            <div>
-              <h1 className="text-[32px] font-bold leading-tight">Kn Mahesh</h1>
-              <p>knmahesh30</p>
-              <div className="mt-3 border border-dashed rounded-full px-4 py-1 text-sm text-zinc-500 w-fit">+ Add interests</div>
-              <p className="mt-4 text-zinc-500 text-sm">0 followers</p>
-            </div>
+  <div>
+    <h1 className="text-[32px] font-bold leading-tight">{name}</h1>
+    <p>{username}</p>
+    <div className="mt-3 border border-dashed rounded-full px-4 py-1 text-sm text-zinc-500 w-fit">+ Add interests</div>
+    <p className="mt-4 text-zinc-500 text-sm">0 followers</p>
+  </div>
             <div className="relative">
               <div className="w-[80px] h-[80px] rounded-full bg-black text-white flex items-center justify-center text-3xl">M</div>
               <div className="absolute -left-2 bottom-0 bg-white border rounded-full w-8 h-8 flex items-center justify-center">+</div>
@@ -88,7 +90,7 @@ export default function Page() {
       )}
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-4 text-2xl">
-        <button onClick={() => setTab("home")} className={tab==="home"?"":"opacity-40"}>🏠</button>
+        <button onClick={() => setShowEdit(true)} className="flex-1 border rounded-xl py-2.5 font-semibold">Edit profile</button>
         <button onClick={() => setTab("search")} className={tab==="search"?"":"opacity-40"}>🔍</button>
         <button onClick={() => setTab("reels")} className={tab==="reels"?"":"opacity-40"}>🎬</button>
         <button onClick={() => setTab("profile")} className={tab==="profile"?"":"opacity-40"}>👤</button>
