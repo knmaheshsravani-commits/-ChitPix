@@ -27,10 +27,10 @@ export default function Page(){
     return(
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
         <h1 className="text-3xl font-black tracking-tight">Kn Threads</h1>
-        <p className="text-sm text-gray-500 mt-2">Login to continue</p>
+        <p className="text-sm text-gray-600 mt-2">Login to continue</p>
         <div className="w-full max-w-sm mt-8">
-          <input value={user} onChange={e=>setUser(e.target.value)} placeholder="Username" className="w-full border border-zinc-300 rounded-2xl p-4 text-[16px] outline-none"/>
-          <input value={pass} onChange={e=>setPass(e.target.value)} type="password" placeholder="Password" className="w-full border border-zinc-300 rounded-2xl p-4 mt-3 text-[16px] outline-none"/>
+          <input value={user} onChange={e=>setUser(e.target.value)} placeholder="Username" className="w-full border border-zinc-600 rounded-2xl p-4 text-[32px] outline-none"/>
+          <input value={pass} onChange={e=>setPass(e.target.value)} type="password" placeholder="Password" className="w-full border border-zinc-600 rounded-2xl p-4 mt-3 text-[32px] outline-none"/>
           <button onClick={()=>{if(user)setIsLogin(true)}} className="bg-black text-white w-full rounded-2xl py-4 mt-5 font-bold">Log in</button>
         </div>
       </div>
@@ -115,7 +115,7 @@ export default function Page(){
 
       {/* BIG ICONS - 200% SAFE */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 h-[80px] flex justify-around items-center px-4 pb-2">
-        <button onClick={()=>setTab("home")} className={`text-[2px] ${tab==="home"?"text-black":"text-zinc-600"}`}>⌂</button>
+        <button onClick={()=>setTab("home")} className={`text-[52px] ${tab==="home"?"text-black":"text-zinc-600"}`}>⌂</button>
         <button onClick={()=>setTab("search")} className={`text-[52px] ${tab==="search"?"text-black":"text-zinc-600"}`}>⌕</button>
         <button onClick={()=>setShow(true)} className="bg-black text-white w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-[52px] font-bold">+</button>
         <button onClick={()=>setTab("activity")} className={`text-[52px] ${tab==="activity"?"text-black":"text-zinc-600"}`}>♡</button>
