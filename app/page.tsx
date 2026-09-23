@@ -89,12 +89,9 @@ const [username, setUsername] = useState("knmahesh30");
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-4 text-2xl">
-        <button onClick={() => setShowEdit(true)} className="flex-1 border rounded-xl py-2.5 font-semibold">Edit profile</button>
-        <button onClick={() => setTab("search")} className={tab==="search"?"":"opacity-40"}>🔍</button>
-        <button onClick={() => setTab("reels")} className={tab==="reels"?"":"opacity-40"}>🎬</button>
-        <button onClick={() => setTab("profile")} className={tab==="profile"?"":"opacity-40"}>👤</button>
-      </div>
-    </div>
-  );
-}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-3 text-xl">
+  <button onClick={() => setTab("home")}>🏠</button>
+  <button onClick={() => setTab("search")}>🔍</button>
+  <button onClick={() => setTab("reels")}>🎬</button>
+  <button onClick={() => setTab("profile")}>👤</button>
+</div>
