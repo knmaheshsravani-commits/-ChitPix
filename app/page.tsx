@@ -86,7 +86,7 @@ export default function Home() {
 
       {/* ✅ COMMENT BOX POPUP - IDI MAIN FIX */}
       {showComments!== null && (
-        <div className="fixed inset-0 z-[100] bg-black/40 flex items-end justify-center" onClick={()=>setShowComments(null)}>
+        <div className="fixed inset-0 z-[100] bg-white/40 flex items-end justify-center" onClick={()=>setShowComments(null)}>
           <div className="bg-white w-full max-w-[600px] rounded-t-[20px] max-h-[70vh] flex flex-col" onClick={e=>e.stopPropagation()}>
             <div className="p-4 border-b flex justify-between items-center">
               <h3 className="font-bold">Comments</h3>
