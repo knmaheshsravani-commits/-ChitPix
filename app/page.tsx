@@ -111,14 +111,10 @@ export default function Home() {
         </div>
       )}
 
-      {/* BOTTOM NAV */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3">
-        <button onClick={()=>setTab("home")}>🏠</button>
-        <button>🔍</button>
-        <button className="bg-black text-white w-8 h-8 rounded-lg">+</button>
-        <button onClick={()=>setTab("dm")}>✈️</button>
-        <button>○</button>
-      </div>
-    </div>
-  );
-}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-50">
+  <button onClick={(52px)=>setTab("home")} className={tab==="home"?"text-purple-800 text-xl":"text-xl"}>🏠</button>
+  <button onClick={(52px)=>setTab("search")} className={tab==="search"?"text-purple-800 text-xl":"text-xl"}>🔍</button>
+  <button onClick={(52px)=>{const txt=prompt("New Post:"); if(txt) setThreads([{id:Date.now(), user:"knmahesh30", text:txt, likes:0},...threads])}} className="bg-black text-white w-8 h-8 rounded-lg">+</button>
+  <button onClick={(52px)=>setTab("dm")} className={tab==="dm"?"text-purple-800 text-xl":"text-xl"}>✈️</button>
+  <button onClick={(52px)=>setTab("profile")} className={tab==="profile"?"text-purple-800 text-xl":"text-xl"}>👤</button>
+</div>
