@@ -71,7 +71,7 @@ export default function Page(){
         <h1 className="text-3xl font-black">Kn Threads</h1>
         <div className="w-full max-w-sm mt-8">
           <input value={user} onChange={e=>setUser(e.target.value)} placeholder="Username" className="w-full border rounded-2xl p-4 outline-none"/>
-          <button onClick={()=>{if(user)setIsLogin(true)}} className="bg-black text-white w-full rounded-2xl py-4 mt-5 font-bold">Log in</button>
+          <button onClick={()=>{if(user)setIsLogin(true)}} className="bg-black text-black w-full rounded-2xl py-4 mt-5 font-bold">Log in</button>
         </div>
       </div>
     )
@@ -162,11 +162,11 @@ export default function Page(){
       )}
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t h-[80px] flex justify-around items-center px-4">
-        <button onClick={()=>setTab("home")} className={`text-[52px] ${tab==="home"?"text-black":"text-zinc-500"}`}>⌂</button>
-        <button onClick={()=>setTab("search")} className={`text-[52px] ${tab==="search"?"text-black":"text-zinc-500"}`}>⌕</button>
+        <button onClick={()=>setTab("home")} className={`text-[52px] ${tab==="home"?"text-black":"text-zinc-800"}`}>⌂</button>
+        <button onClick={()=>setTab("search")} className={`text-[52px] ${tab==="search"?"text-black":"text-zinc-800"}`}>⌕</button>
         <button onClick={()=>setShow(true)} className="bg-black text-white w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-[52px] font-bold">+</button>
-        <button onClick={()=>setTab("dm")} className={`text-[52px] ${tab==="dm"?"text-black":"text-zinc-500"}`}>✈️{chats.reduce((a,b)=>a+b.unread,0)>0 && <span className="absolute bg-red-500 text-white text-[32px] rounded-full w-4 h-4 flex items-center justify-center -mt-8 ml-4">{chats.reduce((a,b)=>a+b.unread,0)}</span>}</button>
-        <button onClick={()=>setTab("profile")} className={`text-[52px] ${tab==="profile"?"text-black":"text-zinc-500"}`}>◯</button>
+        <button onClick={()=>setTab("dm")} className={`text-[52px] ${tab==="dm"?"text-black":"text-zinc-800"}`}>✈️{chats.reduce((a,b)=>a+b.unread,0)>0 && <span className="absolute bg-red-800 text-white text-[52px] rounded-full w-4 h-4 flex items-center justify-center -mt-8 ml-4">{chats.reduce((a,b)=>a+b.unread,0)}</span>}</button>
+        <button onClick={()=>setTab("profile")} className={`text-[52px] ${tab==="profile"?"text-black":"text-zinc-800"}`}>◯</button>
       </div>
 
       {show && (<div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"><div className="bg-white rounded-2xl p-5 w-full max-w-sm"><textarea value={txt} onChange={e=>setTxt(e.target.value)} placeholder="What's new?" className="w-full border rounded-xl p-3 h-24 outline-none"></textarea><button onClick={()=>{if(txt){setThreads([{id:Date.now(),user:user,text:txt,likes:0,liked:false,time:"now",comments:[],isReel:txt.toLowerCase().includes("reel")},...threads]); setTxt(""); setShow(false)}} } className="bg-black text-white w-full py-3 rounded-xl mt-3 font-bold">Post</button><button onClick={()=>setShow(false)} className="w-full mt-2 text-sm text-zinc-500">Cancel</button></div></div>)}
