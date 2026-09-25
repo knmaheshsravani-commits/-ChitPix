@@ -21,25 +21,21 @@ export default function Home() {
     { id: 3, user: "friend_dev", text: "ChitPix is awesome app bro! Keep going 💯", likes: 8, isReel: false },
   ]);
 
-  // LIKE FUNCTION
+    // LIKE FUNCTION - FIXED
   const handleLike = (id: number) => {
     if (likedPosts[id]) {
       setLikedPosts({...likedPosts, [id]: false });
-      setThreads(threads.map(t => t.id === id? {...t, likes: t.likes - 1 } : t));
+      setThreads(threads.map((t:any) => t.id === id? {...t, likes: t.likes - 1 } : t));
     } else {
       setLikedPosts({...likedPosts, [id]: true });
-      setThreads(threads.map(t => t.id === id? {...t, likes: t.likes + 1 } : t));
+      setThreads(threads.map((t:any) => t.id === id? {...t, likes: t.likes + 1 } : t));
     }
   };
 
-  // SHARE FUNCTION
-  const handleShare = (text: string) => {
-    if (navigator.share) {
-      navigator.share({ title: "ChitPix", text: text, url: window.location.href });
-    } else {
-      navigator.clipboard.writeText(text);
-      alert("Link Copied! 📋 " + text);
-    }
+  // SHARE FUNCTION - 100% WORKING WITH POPUP
+  const [sharePost, setSharePost] = useState<any>(null);
+  const handleShare = (post: any) => {
+    setSharePost(post);
   };
 
   if (!isLogin) {
