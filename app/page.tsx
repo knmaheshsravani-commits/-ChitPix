@@ -99,7 +99,7 @@ export default function Home() {
               {(!allComments[showComments] || allComments[showComments].length===0) && <p className="text-gray-400 text-sm text-center mt-10">No comments yet. Be first! 💬</p>}
             </div>
             <div className="p-3 border-t flex gap-2">
-              <input value={commentInput} onChange={e=>setCommentInput(e.target.value)} placeholder="Add a comment..." className="flex-1 border rounded-full px-4 py-2.5 text-sm outline-none bg-gray-50"/>
+              <input value={commentInput} onChange={e=>setCommentInput(e.target.value)} placeholder="Add a comment..." className="flex-1 border-2 border-purple-200 rounded-full px-4 py-2.5 text-sm outline-none bg-white text-black placeholder:text-gray-400"/>
               <button onClick={()=>{
                 if(!commentInput.trim()) return;
                 const newC = {user: "knmahesh30", text: commentInput};
