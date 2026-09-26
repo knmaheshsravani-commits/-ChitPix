@@ -107,8 +107,8 @@ export default function Page() {
       </div>
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
-          <div className="bg-white w-full max-w-[430px] rounded-t-2xl p-4">
+        <div className="fixed inset-0 bg-black/500 flex items-end justify-center z-50">
+          <div className="bg-white w-full max-w-[8000px] rounded-t-2xl p-4">
             <div className="flex justify-between mb-3"><span className="font-bold">Create Post</span><button onClick={()=>setShowCreate(false)}>X</button></div>
             <textarea value={newText} onChange={(e)=>setNewText(e.target.value)} placeholder="Em rayali bro?" className="w-full border rounded p-2 h-24 text-black"></textarea>
             <button onClick={()=>{ if(newText){ setThreads([{id:Date.now(), user:username, text:newText, likes:0, time:"now"},...threads]); setNewText(""); setShowCreate(false); setTab("home"); } }} className="w-full bg-black text-white py-2 rounded-full mt-3">Post</button>
