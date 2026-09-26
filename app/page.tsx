@@ -165,7 +165,7 @@ export default function Home() {
 
   {/* 5. PROFILE - Old K + New ring */}
   <button onClick={() => setTab("profile")} className="flex flex-col items-center">
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[16px] font-black border-[2px] ${tab==="profile"? "border-black bg-black text-white" : "border-gray-300 bg-gray-100 text-black"}`}>
+    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[72px] font-black border-[4px] ${tab==="profile"? "border-black bg-black text-white" : "border-gray-300 bg-gray-100 text-black"}`}>
       K
     </div>
   </button>
