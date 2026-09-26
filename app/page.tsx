@@ -34,8 +34,8 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-pink-500 p-4">
         <div className="bg-white p-8 rounded-2xl w-full max-w-sm shadow-2xl">
           <h1 className="text-3xl font-black text-center mb-6 text-black">ChitPix 📸</h1>
-          <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" className="w-full border-2 border-gray-200 p-3 rounded-xl mb-3 outline-none text-black bg-white" />
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password" className="w-full border-2 border-gray-200 p-3 rounded-xl mb-4 outline-none text-black bg-white" />
+          <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" className="w-full border-2 border-gray-400 p-3 rounded-xl mb-3 outline-none text-black bg-white" />
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Password" className="w-full border-2 border-gray-400 p-3 rounded-xl mb-4 outline-none text-black bg-white" />
           <button onClick={() => setIsLogin(true)} className="w-full bg-black text-white py-3 rounded-xl font-bold">Login</button>
         </div>
       </div>
@@ -45,7 +45,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white pb-[100px]">
       <div className="sticky top-0 z-40 w-full h-[60px] flex items-center justify-between px-4 shadow-sm" style={{ background: "linear-gradient(90deg, #7B2FFF 0%, #FF3CAC 100%)" }}>
-  <h1 className="text-white text-[28px] font-black tracking-tight">ChitPix</h1>
+  <h1 className="text-white text-[32px] font-black tracking-tight">ChitPix</h1>
   <div className="flex gap-4 items-center">
     <button onClick={() => {
       const txt = prompt("New Post / Reel Text:");
@@ -53,9 +53,9 @@ export default function Home() {
         const isReel = confirm("Reel ga post cheyala? OK = Reel, Cancel = Normal Post");
         setThreads([{ id: Date.now(), user: username || "knmahesh30", text: txt, likes: 0, isReel },...threads]);
       }
-    }} className="text-white text-[32px] font-bold leading-none">+</button>
-    <button onClick={() => setTab("dm")} className="text-white text-[52px]">✈️</button>
-    <button onClick={() => setIsLogin(false)} className="border border-white text-white px-3 py-1 rounded-full text-[16px] font-bold">Logout</button>
+    }} className="text-white text-[72px] font-bold leading-none">+</button>
+    <button onClick={() => setTab("dm")} className="text-white text-[72px]">✈️</button>
+    <button onClick={() => setIsLogin(false)} className="border border-white text-white px-3 py-1 rounded-full text-[32px] font-bold">Logout</button>
   </div>
 </div>
 
@@ -107,7 +107,7 @@ export default function Home() {
         )}
       </div>
 
-      {viewStory && <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center" onClick={() => setViewStory(null)}><div className="bg-gradient-to-br from-purple-600 to-pink-500 w-[90%] max-w-[400px] h-[80vh] rounded-2xl flex flex-col items-center justify-center text-white"><div className="text-6xl">📸</div><div className="mt-4">{viewStory} Story</div></div></div>}
+      {viewStory && <div className="fixed inset-0 z-[400] bg-black flex items-center justify-center" onClick={() => setViewStory(null)}><div className="bg-gradient-to-br from-purple-700 to-pink-600 w-[90%] max-w-[500px] h-[80vh] rounded-2xl flex flex-col items-center justify-center text-white"><div className="text-6xl">📸</div><div className="mt-4">{viewStory} Story</div></div></div>}
 
       {showComments!== null && (
         <div className="fixed inset-0 z-[100] bg-black/40 flex items-end justify-center" onClick={() => setShowComments(null)}>
@@ -121,7 +121,7 @@ export default function Home() {
 
       {sharePost && (
         <div className="fixed inset-0 z-[200] bg-black/50 flex items-end justify-center" onClick={() => setSharePost(null)}>
-          <div className="bg-white w-full max-w-[600px] rounded-t-[25px] p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white w-full max-w-[600px] rounded-t-[72px] p-5" onClick={(e) => e.stopPropagation()}>
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
             <h3 className="font-bold text-black text-center mb-4">Share Post</h3>
             <div className="grid grid-cols-3 gap-4 mb-6">
@@ -145,21 +145,21 @@ export default function Home() {
 
   {/* 2. REELS - New design */}
   <button onClick={() => setTab("reels")} className="flex flex-col items-center">
-    <div className={`w-7 h-7 flex items-center justify-center text-[32px] border-[2px] rounded-[6px] ${tab==="reels"? "border-black text-black bg-black text-white" : "border-gray-400 text-gray-400"}`}>
+    <div className={`w-7 h-7 flex items-center justify-center text-[72px] border-[4px] rounded-[8px] ${tab==="reels"? "border-black text-black bg-black text-white" : "border-gray-500 text-gray-500"}`}>
       ▶
     </div>
   </button>
 
   {/* 3. SHARE - OLD gradient + NEW look - CENTER HERO */}
   <button onClick={() => setTab("share")} className="flex flex-col items-center -mt-3">
-    <div className={`w-[52px] h-[52px] rounded-[16px] flex items-center justify-center text-[26px] shadow-lg transition-all ${tab==="share"? "scale-110" : ""}`} style={{background: tab==="share"? "linear-gradient(135deg,#7B2FFF,#FF3CAC)" : "linear-gradient(135deg,#7B2FFF,#FF3CAC)", color:"white"}}>
+    <div className={`w-[72px] h-[72px] rounded-[32px] flex items-center justify-center text-[32px] shadow-lg transition-all ${tab==="share"? "scale-110" : ""}`} style={{background: tab==="share"? "linear-gradient(135deg,#7B2FFF,#FF3CAC)" : "linear-gradient(135deg,#7B2FFF,#FF3CAC)", color:"white"}}>
       ↗
     </div>
   </button>
 
   {/* 4. SEARCH */}
   <button onClick={() => setTab("search")} className="flex flex-col items-center">
-    <div className={`text-[34px] ${tab==="search"? "text-black" : "text-gray-400"}`}>⌕</div>
+    <div className={`text-[72px] ${tab==="search"? "text-black" : "text-gray-400"}`}>⌕</div>
     {tab==="search" && <div className="w-1 h-1 bg-black rounded-full mt-1"></div>}
   </button>
 
