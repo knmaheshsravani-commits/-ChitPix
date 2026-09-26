@@ -18,7 +18,7 @@ export default function Page() {
   };
 
   return (
-    <div className="max-w-[430px] mx-auto bg-white min-h-screen relative">
+    <div className="max-w-[800px] mx-auto bg-white min-h-screen relative">
       {tab === "home" && (
         <div className="bg-gray-50 min-h-screen pb-20">
           <div className="bg-white p-3 flex justify-between items-center border-b sticky top-0 z-10">
@@ -35,7 +35,7 @@ export default function Page() {
                   {profilePic? <img src={profilePic} className="w-full h-full object-cover" /> : <span className="text-xs font-bold">K</span>}
                 </div>
               </div>
-              <span className="text-[10px] mt-1">Your story</span>
+              <span className="text-[32px] mt-1">Your story</span>
             </div>
           </div>
           <div>
@@ -107,8 +107,8 @@ export default function Page() {
       </div>
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/500 flex items-end justify-center z-50">
-          <div className="bg-white w-full max-w-[8000px] rounded-t-2xl p-4">
+        <div className="fixed inset-0 bg-black/400 flex items-end justify-center z-50">
+          <div className="bg-white w-full max-w-[800px] rounded-t-2xl p-4">
             <div className="flex justify-between mb-3"><span className="font-bold">Create Post</span><button onClick={()=>setShowCreate(false)}>X</button></div>
             <textarea value={newText} onChange={(e)=>setNewText(e.target.value)} placeholder="Em rayali bro?" className="w-full border rounded p-2 h-24 text-black"></textarea>
             <button onClick={()=>{ if(newText){ setThreads([{id:Date.now(), user:username, text:newText, likes:0, time:"now"},...threads]); setNewText(""); setShowCreate(false); setTab("home"); } }} className="w-full bg-black text-white py-2 rounded-full mt-3">Post</button>
