@@ -151,25 +151,42 @@ export default function Home() {
 </button>
 
   {/* 3. SHARE - OLD gradient + NEW look - CENTER HERO */}
-  <button onClick={() => setTab("share")} className="flex flex-col items-center -mt-3">
-    <div className={`w-[72px] h-[72px] rounded-[32px] flex items-center justify-center text-[32px] shadow-lg transition-all ${tab==="share"? "scale-110" : ""}`} style={{background: tab==="share"? "linear-gradient(135deg,#7B2FFF,#FF3CAC)" : "linear-gradient(135deg,#7B2FFF,#FF3CAC)", color:"white"}}>
-      ↗
-    </div>
-  </button>
+        {/* 3. SHARE */}
+      <button onClick={() => setTab("share")} className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-white text-[24px] shadow-lg" style={{background:"linear-gradient(135deg,#7B2FFF,#FF3CAC)"}}>↗</button>
 
-  {/* 4. SEARCH */}
-  <button onClick={() => setTab("search")} className="flex flex-col items-center">
-    <div className={`text-[72px] ${tab==="search"? "text-black" : "text-gray-400"}`}>⌕</div>
-    {tab==="search" && <div className="w-1 h-1 bg-black rounded-full mt-1"></div>}
-  </button>
+      {/* 4. SEARCH */}
+      <button onClick={() => setTab("search")} className={`text-[26px] ${tab==="search"? "text-black" : "text-gray-400"}`}>⌕</button>
 
-  {/* 5. PROFILE - Old K + New ring */}
-  <button onClick={() => setTab("profile")} className="flex flex-col items-center">
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[72px] font-black border-[4px] ${tab==="profile"? "border-black bg-black text-white" : "border-gray-300 bg-gray-100 text-black"}`}>
-      K
+      {/* 5. PROFILE with Photo */}
+      <button onClick={() => setTab("profile")} className="w-8 h-8 rounded-full overflow-hidden border-2 border-black">
+        {profilePic? <img src={profilePic} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-black text-white flex items-center justify-center text-xs">K</div>}
+      </button>
     </div>
-  </button>
-</div>
-    </div>
-  );
-          }
+
+    {/* PROFILE PAGE - Bottom Nav bayata undali */}
+    {tab === "profile" && (
+      <div className="p-4 flex flex-col items-center bg-white min-h-screen">
+        <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-pink-500 mt-6">
+          {profilePic? <img src={profilePic} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gray-200 flex items-center justify-center text-3xl">K</div>}
+        </div>
+        <h2 className="font-bold text-lg mt-3">@{username || "knmahesh30"}</h2>
+
+        <label className="mt-4 bg-black text-white px-6 py-2 rounded-full text-sm cursor-pointer">
+          📷 Photo Marchu
+          <input type="file" accept="image/*" hidden onChange={(e)=>{
+            const file = e.target.files[0];
+            if(file){
+              const reader = new FileReader();
+              reader.onload = (ev)=> setProfilePic(ev.target.result);
+              reader.readAsDataURL(file);
+            }
+          }} />
+        </label>
+
+        <div className="grid grid-cols-3 gap-2 w-full mt-8">
+          {threads.filter((t:any)=>t.user===(username||"knmahesh30")).map((t:any)=>(
+            <div key={t.id} className="h-28 bg-gray-100 rounded-lg flex items-center justify-center text-xs p-2">{t.text.slice(0,30)}</div>
+          ))}
+        </div>
+      </div>
+    )}
