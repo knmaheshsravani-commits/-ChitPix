@@ -134,13 +134,27 @@ export default function Home() {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around p-3 z-50">
-        <button onClick={() => setTab("home")}>🏠</button>
-        <button onClick={() => setTab("search")}>🔍</button>
-        <button onClick={() => { const txt = prompt("New Post / Reel:"); if (txt) { const isReel = confirm("Reel? OK=Reel"); setThreads([{ id: Date.now(), user: username || "knmahesh30", text: txt, likes: 0, isReel },...threads]); } }} className="bg-black text-white w-9 h-9 rounded-xl">+</button>
-        <button onClick={() => setTab("dm")}>✈️</button>
-        <button onClick={() => setTab("profile")}>👤</button>
-      </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center py-3 z-50">
+  <button onClick={() => setTab("home")} className={`flex flex-col items-center ${tab==="home"? "text-black" : "text-gray-500"}`}>
+    <span className="text-[52px]">{tab==="home"? "⌂" : "⌂"}</span>
+  </button>
+
+  <button onClick={() => setTab("reels")} className={`flex flex-col items-center ${tab==="reels"? "text-black" : "text-gray-500"}`}>
+    <span className="text-[52px]">◫</span>
+  </button>
+
+  <button onClick={() => setTab("share")} className={`flex flex-col items-center ${tab==="share"? "text-black" : "text-gray-500"}`}>
+    <span className="text-[52px]">↗</span>
+  </button>
+
+  <button onClick={() => setTab("search")} className={`flex flex-col items-center ${tab==="search"? "text-black" : "text-gray-500"}`}>
+    <span className="text-[52px]">⌕</span>
+  </button>
+
+  <button onClick={() => setTab("profile")} className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold">
+    {(username||"K")[0].toUpperCase()}
+  </button>
+</div>
     </div>
   );
           }
