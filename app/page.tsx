@@ -150,7 +150,6 @@ export default function Home() {
   </div>
 </button>
 
-  {/* 3. SHARE - OLD gradient + NEW look - CENTER HERO */}
         {/* 3. SHARE */}
       <button onClick={() => setTab("share")} className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-white text-[24px] shadow-lg" style={{background:"linear-gradient(135deg,#7B2FFF,#FF3CAC)"}}>↗</button>
 
