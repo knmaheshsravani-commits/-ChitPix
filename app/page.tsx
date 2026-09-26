@@ -90,7 +90,7 @@ export default function Page() {
           </label>
           <div className="grid grid-cols-3 gap-1 w-full mt-8">
             {threads.filter(t=>t.user===username).map(t=>(
-              <div key={t.id} className="h-28 bg-gray-100 rounded flex items-center justify-center text-[10px] p-1 text-black font-bold text-center">{t.text.slice(0,40)}</div>
+              <div key={t.id} className="h-28 bg-gray-100 rounded flex items-center justify-center text-[20px] p-1 text-black font-bold text-center">{t.text.slice(0,40)}</div>
             ))}
           </div>
         </div>
@@ -100,14 +100,14 @@ export default function Page() {
         <button onClick={()=>setTab("home")} className={`text-2xl ${tab==="home"?"text-black":"text-gray-400"}`}>⌂</button>
         <button onClick={()=>setTab("search")} className={`text-2xl ${tab==="search"?"text-black":"text-gray-400"}`}>⌕</button>
         <button onClick={()=>setShowCreate(true)} className="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center">+</button>
-        <button className="text-2xl text-gray-400">♡</button>
+        <button className="text-2xl text-gray-800">♡</button>
         <button onClick={()=>setTab("profile")} className="w-8 h-8 rounded-full overflow-hidden border-2 border-black">
           {profilePic? <img src={profilePic} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-black text-white flex items-center justify-center text-xs">K</div>}
         </button>
       </div>
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/400 flex items-end justify-center z-50">
+        <div className="fixed inset-0 bg-black/300 flex items-end justify-center z-50">
           <div className="bg-white w-full max-w-[800px] rounded-t-2xl p-4">
             <div className="flex justify-between mb-3"><span className="font-bold">Create Post</span><button onClick={()=>setShowCreate(false)}>X</button></div>
             <textarea value={newText} onChange={(e)=>setNewText(e.target.value)} placeholder="Em rayali bro?" className="w-full border rounded p-2 h-24 text-black"></textarea>
