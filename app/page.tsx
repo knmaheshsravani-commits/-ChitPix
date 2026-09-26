@@ -143,12 +143,12 @@ export default function Home() {
     {tab==="home" && <div className="w-1 h-1 bg-black rounded-full mt-1"></div>}
   </button>
 
-  {/* 2. REELS - New design */}
-  <button onClick={() => setTab("reels")} className="flex flex-col items-center">
-    <div className={`w-7 h-7 flex items-center justify-center text-[72px] border-[4px] rounded-[8px] ${tab==="reels"? "border-black text-black bg-black text-white" : "border-gray-500 text-gray-500"}`}>
-      ▶
-    </div>
-  </button>
+  {/* 2. REELS - Fixed Icon */}
+<button onClick={() => setTab("reels")} className="flex flex-col items-center">
+  <div className={`w-8 h-8 flex items-center justify-center text-[32px] rounded-lg ${tab==="reels"? "bg-black text-white" : "text-gray-500"}`}>
+    🎬
+  </div>
+</button>
 
   {/* 3. SHARE - OLD gradient + NEW look - CENTER HERO */}
   <button onClick={() => setTab("share")} className="flex flex-col items-center -mt-3">
