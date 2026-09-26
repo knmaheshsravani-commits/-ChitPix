@@ -95,12 +95,11 @@ export default function Page() {
             📷 Photo Marchu
             <input type="file" accept="image/*" hidden onChange={(e)=>{
               const f=e.target.files[0];
-              if(f){ const r=new FileReader(); r.onload=(ev)=>setProfilePic(ev.target.result as string); r.readAsDataURL(f); }
-            }} />
+              if(f){ const r=new FileReader(); r.onload=(ev)=>setProfilePic(ev.target.result as string); r.readAsDataURL(f); }     
           </label>
           <div className="grid grid-cols-3 gap-1 w-full mt-8">
             {threads.filter(t=>t.user===username).map(t=>(
-              <div key={t.id} className="h-28 bg-gray-100 rounded flex items-center justify-center text-[10px] p-1">{t.text.slice(0,40)}</div>
+              <div key={t.id} className="h-28 bg-gray-100 rounded flex items-center justify-center text-[10px] p-1 text-black font-bold">
             ))}
           </div>
         </div>
