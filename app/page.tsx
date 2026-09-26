@@ -134,25 +134,40 @@ export default function Home() {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around items-center py-3 z-50">
-  <button onClick={() => setTab("home")} className={`flex flex-col items-center ${tab==="home"? "text-black" : "text-gray-500"}`}>
-    <span className="text-[72px]">{tab==="home"? "⌂" : "⌂"}</span>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around items-center h-[68px] z-50 px-2">
+  {/* 1. HOME - Old fill + New shape */}
+  <button onClick={() => setTab("home")} className="flex flex-col items-center">
+    <div className={`w-7 h-7 flex items-center justify-center text-[52px] ${tab==="home"? "text-black" : "text-gray-400"}`}>
+      {tab==="home"? "⌂" : "⌂"}
+    </div>
+    {tab==="home" && <div className="w-1 h-1 bg-black rounded-full mt-1"></div>}
   </button>
 
-  <button onClick={() => setTab("reels")} className={`flex flex-col items-center ${tab==="reels"? "text-black" : "text-gray-500"}`}>
-    <span className="text-[72px]">◫</span>
+  {/* 2. REELS - New design */}
+  <button onClick={() => setTab("reels")} className="flex flex-col items-center">
+    <div className={`w-7 h-7 flex items-center justify-center text-[32px] border-[2px] rounded-[6px] ${tab==="reels"? "border-black text-black bg-black text-white" : "border-gray-400 text-gray-400"}`}>
+      ▶
+    </div>
   </button>
 
-  <button onClick={() => setTab("share")} className={`flex flex-col items-center ${tab==="share"? "text-black" : "text-gray-500"}`}>
-    <span className="text-[72px]">↗</span>
+  {/* 3. SHARE - OLD gradient + NEW look - CENTER HERO */}
+  <button onClick={() => setTab("share")} className="flex flex-col items-center -mt-3">
+    <div className={`w-[52px] h-[52px] rounded-[16px] flex items-center justify-center text-[26px] shadow-lg transition-all ${tab==="share"? "scale-110" : ""}`} style={{background: tab==="share"? "linear-gradient(135deg,#7B2FFF,#FF3CAC)" : "linear-gradient(135deg,#7B2FFF,#FF3CAC)", color:"white"}}>
+      ↗
+    </div>
   </button>
 
-  <button onClick={() => setTab("search")} className={`flex flex-col items-center ${tab==="search"? "text-black" : "text-gray-500"}`}>
-    <span className="text-[72px]">⌕</span>
+  {/* 4. SEARCH */}
+  <button onClick={() => setTab("search")} className="flex flex-col items-center">
+    <div className={`text-[34px] ${tab==="search"? "text-black" : "text-gray-400"}`}>⌕</div>
+    {tab==="search" && <div className="w-1 h-1 bg-black rounded-full mt-1"></div>}
   </button>
 
-  <button onClick={() => setTab("profile")} className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center text-xs font-bold">
-    {(username||"K")[0].toUpperCase()}
+  {/* 5. PROFILE - Old K + New ring */}
+  <button onClick={() => setTab("profile")} className="flex flex-col items-center">
+    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[16px] font-black border-[2px] ${tab==="profile"? "border-black bg-black text-white" : "border-gray-300 bg-gray-100 text-black"}`}>
+      K
+    </div>
   </button>
 </div>
     </div>
