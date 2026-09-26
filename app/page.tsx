@@ -100,8 +100,7 @@ export default function Page() {
           <div className="grid grid-cols-3 gap-1 w-full mt-8">
             {threads.filter(t=>t.user===username).map(t=>(
               <div key={t.id} className="h-28 bg-gray-100 rounded flex items-center justify-center text-[10px] p-1 text-black font-bold text-center">{t.text.slice(0,40)}</div>
-            ))}
-          </div>
+          
         </div>
       )}
 
