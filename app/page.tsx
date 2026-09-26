@@ -43,14 +43,21 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-[80px]">
+    <div className="min-h-screen bg-white pb-[100px]">
       <div className="sticky top-0 z-40 w-full h-[60px] flex items-center justify-between px-4 shadow-sm" style={{ background: "linear-gradient(90deg, #7B2FFF 0%, #FF3CAC 100%)" }}>
-        <h1 className="text-white text-[28px] font-black">ChitPix</h1>
-        <div className="flex gap-3 items-center">
-          <button onClick={() => setTab("dm")} className="text-white text-xl">✈️</button>
-          <button onClick={() => setIsLogin(false)} className="border border-white text-white px-3 py-1 rounded-full text-xs">Logout</button>
-        </div>
-      </div>
+  <h1 className="text-white text-[28px] font-black tracking-tight">ChitPix</h1>
+  <div className="flex gap-4 items-center">
+    <button onClick={() => {
+      const txt = prompt("New Post / Reel Text:");
+      if (txt) {
+        const isReel = confirm("Reel ga post cheyala? OK = Reel, Cancel = Normal Post");
+        setThreads([{ id: Date.now(), user: username || "knmahesh30", text: txt, likes: 0, isReel },...threads]);
+      }
+    }} className="text-white text-[32px] font-bold leading-none">+</button>
+    <button onClick={() => setTab("dm")} className="text-white text-[52px]">✈️</button>
+    <button onClick={() => setIsLogin(false)} className="border border-white text-white px-3 py-1 rounded-full text-[16px] font-bold">Logout</button>
+  </div>
+</div>
 
       <div className="max-w-[600px] mx-auto bg-white">
         {tab === "home" && (
