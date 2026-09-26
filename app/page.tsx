@@ -5,6 +5,7 @@ export default function Page() {
   const [tab, setTab] = useState("home");
   const [threads, setThreads] = useState<any[]>([
     {id:1, user:"knmahesh30", text:"Welcome to ChitPix! 🔥", likes:5, time:"2h ago", image:""},
+    {id:2, user:"knmahesh30", text:"Hii friends", likes:2, time:"1h ago", image:""},
   ]);
   const [profilePic, setProfilePic] = useState("");
   const [searchQ, setSearchQ] = useState("");
@@ -18,7 +19,6 @@ export default function Page() {
 
   return (
     <div className="max-w-[430px] mx-auto bg-white min-h-screen relative">
-      {/* HOME TAB */}
       {tab === "home" && (
         <div className="bg-gray-50 min-h-screen pb-20">
           <div className="bg-white p-3 flex justify-between items-center border-b sticky top-0 z-10">
@@ -28,7 +28,6 @@ export default function Page() {
               <button className="text-xl">✈</button>
             </div>
           </div>
-
           <div className="bg-white p-3 flex gap-3 overflow-x-auto border-b">
             <div className="flex flex-col items-center">
               <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 p-[2px]">
@@ -38,14 +37,7 @@ export default function Page() {
               </div>
               <span className="text-[10px] mt-1">Your story</span>
             </div>
-            {["user1","user2","user3","user4"].map(u=>(
-              <div key={u} className="flex flex-col items-center">
-                <div className="w-14 h-14 rounded-full bg-gray-200"></div>
-                <span className="text-[10px] mt-1">{u}</span>
-              </div>
-            ))}
           </div>
-
           <div>
             {threads.map((t)=>(
               <div key={t.id} className="bg-white mb-2 border-b">
@@ -69,7 +61,6 @@ export default function Page() {
         </div>
       )}
 
-      {/* SEARCH TAB */}
       {tab === "search" && (
         <div className="p-4 bg-white min-h-screen pb-20">
           <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2">
@@ -84,7 +75,6 @@ export default function Page() {
         </div>
       )}
 
-      {/* PROFILE TAB */}
       {tab === "profile" && (
         <div className="p-4 bg-white min-h-screen pb-20 flex flex-col items-center">
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-pink-500 bg-gray-200 mt-6">
@@ -95,16 +85,17 @@ export default function Page() {
             📷 Photo Marchu
             <input type="file" accept="image/*" hidden onChange={(e)=>{
               const f=e.target.files[0];
-              if(f){ const r=new FileReader(); r.onload=(ev)=>setProfilePic(ev.target.result as string); r.readAsDataURL(f); }     
+              if(f){ const r=new FileReader(); r.onload=(ev)=>setProfilePic(ev.target.result as string); r.readAsDataURL(f); }
+            }} />
           </label>
           <div className="grid grid-cols-3 gap-1 w-full mt-8">
             {threads.filter(t=>t.user===username).map(t=>(
               <div key={t.id} className="h-28 bg-gray-100 rounded flex items-center justify-center text-[10px] p-1 text-black font-bold text-center">{t.text.slice(0,40)}</div>
-          
+            ))}
+          </div>
         </div>
       )}
 
-      {/* BOTTOM NAV - Idi marchipoku bro! */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t flex justify-around items-center py-3 z-20">
         <button onClick={()=>setTab("home")} className={`text-2xl ${tab==="home"?"text-black":"text-gray-400"}`}>⌂</button>
         <button onClick={()=>setTab("search")} className={`text-2xl ${tab==="search"?"text-black":"text-gray-400"}`}>⌕</button>
@@ -115,12 +106,11 @@ export default function Page() {
         </button>
       </div>
 
-      {/* CREATE MODAL */}
       {showCreate && (
         <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
           <div className="bg-white w-full max-w-[430px] rounded-t-2xl p-4">
             <div className="flex justify-between mb-3"><span className="font-bold">Create Post</span><button onClick={()=>setShowCreate(false)}>X</button></div>
-            <textarea value={newText} onChange={(e)=>setNewText(e.target.value)} placeholder="Em rayali bro?" className="w-full border rounded p-2 h-24"></textarea>
+            <textarea value={newText} onChange={(e)=>setNewText(e.target.value)} placeholder="Em rayali bro?" className="w-full border rounded p-2 h-24 text-black"></textarea>
             <button onClick={()=>{ if(newText){ setThreads([{id:Date.now(), user:username, text:newText, likes:0, time:"now"},...threads]); setNewText(""); setShowCreate(false); setTab("home"); } }} className="w-full bg-black text-white py-2 rounded-full mt-3">Post</button>
           </div>
         </div>
