@@ -54,12 +54,26 @@ export default function Page(){
     setText(""); load(); setTab("home")
   }
   async function addStory(e:any){
-    const file = e.target.files? e.target.files[0] : null
-    if(!file) return
-    const url = await uploadImage(file)
-    await supabase.from("stories").insert({image_url:url, username:username})
-    load()
-    alert("Story added bro! 🟣")
+  const file = e.target.files? e.target.files[0] : null
+  if(!file) return
+  const url = await uploadImage(file)
+
+  console.log("Uploaded URL:", url) // check avuthundo
+
+  const { error } = await supabase.from("stories").insert({
+    image_url: url,
+    username: username || "@mahesh123", // NUVVU ADD CHEYALSINA LINE IDI!
+    created_at: new Date().toISOString()
+  })
+
+  if(error){
+    console.log(error)
+    alert("Error bro: " + error.message)
+    return
+  }
+
+  load()
+  alert("Story added bro! 🟣")
   }
   async function saveProfile(){
     await supabase.from("profiles").upsert({id:"me", username:editData.username, name:editData.name, bio:editData.bio, avatar_url:editData.avatar})
