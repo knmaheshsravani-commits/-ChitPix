@@ -11,11 +11,10 @@ export default function Page(){
   const [searchText,setSearchText]=useState("")
   const [likedIds,setLikedIds]=useState<number[]>([])
   const [username,setUsername]=useState("@knmahesh30")
-  const [profile,setProfile]=useState({username:"@knmahesh30", name:"Mahesh", bio:"Creator ❤️", avatar:""})
-  const [showEdit,setShowEdit]=useState(false)
-  const [editData,setEditData]=useState(profile)
-  const [uploading,setUploading]=useState(false)
-  const [commentOpen,setCommentOpen]=useState<number|null>(null)
+  const [profile,setProfile]=useState<any>({username:"@knmahesh30", name:"Mahesh", avatar_url:"", bio:""})
+const [editData,setEditData]=useState<any>({username:"@knmahesh30", name:"Mahesh", avatar_url:"", bio:""})
+const [showEdit,setShowEdit]=useState(false)
+const [uploading,setUploading]=useState(false)
   const [commentText,setCommentText]=useState("")
   const [comments,setComments]=useState<any[]>([])
   const [viewStory,setViewStory]=useState<any>(null)
@@ -28,7 +27,7 @@ export default function Page(){
   if(d1.data) setPosts(d1.data)
 
   const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30").single()
-  if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
+if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
 
   const d3 = await supabase.from("comments").select("*").order("created_at",{ascending:false})
   if(d3.data) setComments(d3.data)
