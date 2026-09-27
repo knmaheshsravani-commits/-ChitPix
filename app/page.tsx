@@ -84,14 +84,14 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
     if((editData as any).avatar_url && (editData as any).avatar_url.startsWith("blob:")){
       const res = await fetch((editData as any).avatar_url)
       const blob = await res.blob()
-      const fileName = `avatar_${Date.now()}.jpg`
+      const fileName = 'avatar_${Date.now()}.jpg'
       const { error: upErr } = await supabase.storage.from("chitpix").upload(fileName, blob)
       if(upErr){ alert("Upload error: "+upErr.message); return }
       const { data } = supabase.storage.from("chitpix").getPublicUrl(fileName)
       finalData.avatar_url = data.publicUrl
     }
     await supabase.from("profiles").upsert({username:"@knmahesh30",...finalData})
-    await supabase.from("profiles").update(finalData).eq("username","@knmahesh30")
+    
     setProfile(finalData);
     setShowEdit(false);
     load();
