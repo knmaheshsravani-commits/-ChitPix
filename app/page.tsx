@@ -26,8 +26,8 @@ export default function Page(){
   async function load(){
     const d1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
     if(d1.data) setPosts(d1.data)
-    const d2 = await supabase.from("profiles").select("*").eq("id","me").single()
-    if(d2.data){ const p={username:d2.data.username, name:d2.data.name, bio:d2.data.bio, avatar:d2.data.avatar_url||""}; setProfile(p); setEditData(p); setUsername(d2.data.username) }
+    const d2 = await supabase.from("profiles").select("*").eq("username", "@knmahesh30").single()
+if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
     const d3 = await supabase.from("comments").select("*").order("created_at",{ascending:true})
     if(d3.data) setComments(d3.data)
     const d4 = await supabase.from("stories").select("*").order("created_at",{ascending:false})
