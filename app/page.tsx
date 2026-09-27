@@ -58,7 +58,7 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
 }
 async function addReel(e:any){
   const file = e.target.files?.[0]
-  if(!file) return
+if(!file) return
   alert("Reel uploading...")
   const url = await uploadImage(file)
   await supabase.from("posts").insert({
