@@ -80,23 +80,19 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
   }
   async function saveProfile(){
   try{
-    let finalData:any = {...editData}
-    if((editData as any).avatar_url && (editData as any).avatar_url.startsWith("blob:")){
-      const res = await fetch((editData as any).avatar_url)
-      const blob = await res.blob()
-      const fileName = 'avatar_${Date.now()}.jpg'
-      const { error: upErr } = await supabase.storage.from("chitpix").upload(fileName, blob)
-      if(upErr){ alert("Upload error: "+upErr.message); return }
-      const { data } = supabase.storage.from("chitpix").getPublicUrl(fileName)
-      finalData.avatar_url = data.publicUrl
+    let finalUrl = (editData as any).avatar_url
+    if(finalUrl && finalUrl.startsWith("blob:")){
+      const r = await fetch(finalUrl)
+      const b = await r.blob()
+            finalUrl = await uploadImage(new File([b], `avatar_${Date.now()}.jpg`, {type:b.type}))
     }
+    const finalData = {...editData, avatar_url: finalUrl}
     await supabase.from("profiles").upsert({username:"@knmahesh30",...finalData})
-    
-    setProfile(finalData);
-    setShowEdit(false);
-    load();
-    alert("Profile saved bro! ✅")
-  }catch(e){ console.log(e); }
+    setProfile(finalData as any)
+    setShowEdit(false)
+    alert("Saved bro! ✅")
+    load()
+  }catch(e:any){ alert("Error: "+e.message) }
   }
   async function handleLike(id:any, likes:any){
     const isLiked = likedIds.includes(id)
