@@ -24,18 +24,21 @@ export default function Page(){
   const [loginName,setLoginName]=useState("")
 
   async function load(){
-    const d1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
-    if(d1.data) setPosts(d1.data)
-    const d2 = await supabase.from("profiles").select("*").eq("username", "@knmahesh30").single()
-if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
-    const d3 = await supabase.from("comments").select("*").order("created_at",{ascending:true})
-    if(d3.data) setComments(d3.data)
-    const d4 = await supabase.from("stories").select("*").order("created_at",{ascending:false})
-    if(d4.data) setStories(d4.data)
-    const saved = localStorage.getItem("chitpix_user")
-    if(saved){ setUsername(saved) } else { setShowLogin(true) }
+  const d1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
+  if(d1.data) setPosts(d1.data)
+
+  const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30").single()
+  if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
+
+  const d3 = await supabase.from("comments").select("*").order("created_at",{ascending:false})
+  if(d3.data) setComments(d3.data)
+
+  const d4 = await supabase.from("stories").select("*").order("created_at",{ascending:false})
+  if(d4.data) setStories(d4.data)
+
+  const saved = localStorage.getItem("chitpix_user")
+  if(saved){ setUsername(saved) } else { setShowLogin(true) }
   }
-  useEffect(()=>{load()},[])
 
   async function uploadImage(file:any){
     setUploading(true)
@@ -76,8 +79,29 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
   alert("Story added bro! 🟣")
   }
   async function saveProfile(){
-    await supabase.from("profiles").upsert({id:"me", username:editData.username, name:editData.name, bio:editData.bio, avatar_url:editData.avatar})
-    setProfile(editData); setUsername(editData.username); localStorage.setItem("chitpix_user", editData.username); setShowEdit(false)
+  try{
+    let finalData = {...editData}
+    
+    // 1. new photo select cheste, upload me
+    if(editData.avatar_url && editData.avatar_url.startsWith("blob:")){
+      const res = await fetch(editData.avatar_url)
+      const blob = await res.blob()
+      const fileName = `avatar_${Date.now()}.jpg`
+      const { error: upErr } = await supabase.storage.from("chitpix").upload(fileName, blob)
+      if(upErr){ alert("Upload error: "+upErr.message); return }
+      const { data } = supabase.storage.from("chitpix").getPublicUrl(fileName)
+      finalData.avatar_url = data.publicUrl
+    }
+
+    // 2. Database lo save chey - CORRECT username tho
+    await supabase.from("profiles").upsert({username:"@knmahesh30", ...finalData})
+    await supabase.from("profiles").update(finalData).eq("username","@knmahesh30")
+    
+    setProfile(finalData);
+    setShowEdit(false);
+    load();
+    alert("Profile saved bro! ✅ Refresh kottina pode!")
+  }catch(e){ console.log(e); alert("Error bro: "+e) }
   }
   async function handleLike(id:any, likes:any){
     const isLiked = likedIds.includes(id)
