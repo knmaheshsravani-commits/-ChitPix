@@ -49,13 +49,28 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
     return res.data.publicUrl
   }
   async function addPost(e:any){
-    const file = e.target.files? e.target.files[0] : null
-    let url = ""
-    if(file){ url = await uploadImage(file) }
-    if(!text.trim() &&!url) return
-    await supabase.from("posts").insert({content:text, image_url:url, username:username, likes:0, flowers:0})
-    setText(""); load(); setTab("home")
-  }
+  const file = e.target.files? e.target.files[0] : null
+  let url = ""
+  if(file){ url = await uploadImage(file) }
+  if(!text.trim() &&!url) return
+  await supabase.from("posts").insert({content:text, image_url:url, username: username || "@knmahesh30", likes: 0})
+  setText(""); load(); setTab("home")
+}
+async function addReel(e:any){
+  const file = e.target.files?.[0]
+  if(!file) return
+  alert("Reel uploading bro... wait ⏳")
+  const url = await uploadImage(file)
+  await supabase.from("posts").insert({
+    content: "Reel 🎬",
+    image_url: url,
+    username: username || "@knmahesh30",
+    likes: 0
+  })
+  load()
+  alert("Reel added! 🔥")
+}
+async function addStory(e:any){
   async function addStory(e:any){
   const file = e.target.files? e.target.files[0] : null
   if(!file) return
