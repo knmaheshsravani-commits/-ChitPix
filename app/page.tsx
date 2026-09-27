@@ -59,19 +59,18 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
 async function addReel(e:any){
   const file = e.target.files?.[0]
   if(!file) return
-  alert("Reel uploading bro... wait ⏳")
+  alert("Reel uploading...")
   const url = await uploadImage(file)
   await supabase.from("posts").insert({
-    content: "Reel 🎬",
+    content: "Reel",
     image_url: url,
     username: username || "@knmahesh30",
     likes: 0
   })
   load()
-  alert("Reel added! 🔥")
+  alert("Reel added!")
 }
 async function addStory(e:any){
-  async function addStory(e:any){
   const file = e.target.files? e.target.files[0] : null
   if(!file) return
   const url = await uploadImage(file)
