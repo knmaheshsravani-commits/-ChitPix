@@ -42,7 +42,7 @@ export default function Page(){
 
   return(
     <div className="min-h-screen bg-white text-black pb-20">
-      <div className="p-3 border-b flex justify-between"><b className="text-purple-100">ChitPix</b><label className="bg-black text-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer">+<input type="file" hidden accept="image/*" onChange={addPost}/></label></div>
+      <div className="p-3 border-b flex justify-between"><b className="text-purple-600">ChitPix</b><label className="bg-black text-white w-8 h-8 rounded-full flex items-center justify-center cursor-pointer">+<input type="file" hidden accept="image/*" onChange={addPost}/></label></div>
       <div className="p-3 flex gap-2"><input value={text} onChange={e=>setText(e.target.value)} placeholder="Em undi bro? Photo 📷 kuda!" className="flex-1 bg-zinc-100 p-3 rounded-xl"/><label className="bg-zinc-100 px-3 rounded-xl flex items-center cursor-pointer">📷<input type="file" hidden accept="image/*" onChange={addPost}/></label><button onClick={()=>addPost({target:{files:[]}} as any)} className="bg-black text-white px-4 rounded-xl">Post</button></div>
 
       {tab==="home" && posts.map(p=><div key={p.id} className="p-4 border-b"><b className="text-sm">{p.username}</b><div className="my-2">{p.content}</div>{p.image_url && <img src={p.image_url} className="w-full rounded-2xl"/>}<div className="mt-2 text-sm">❤️ {p.likes||0} Likes • 💬 Comment • ↗️ Share</div></div>)}
