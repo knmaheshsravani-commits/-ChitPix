@@ -10,15 +10,15 @@ const supabase = createClient(
 export default function Page() {
   const [tab, setTab] = useState("home")
   const [posts, setPosts] = useState<any[]>([])
-  const [reels, setReels] = useState<any[]>([])
+  const [comments, setComments] = useState<any[]>([])
   const [text, setText] = useState("")
-  const [reelUrl, setReelUrl] = useState("")
+  const [search, setSearch] = useState("")
 
   async function load() {
     const { data: p } = await supabase.from("posts").select("*").order("created_at", { ascending: false })
-    const { data: r } = await supabase.from("reels").select("*").order("created_at", { ascending: false })
+    const { data: c } = await supabase.from("comments").select("*")
     if (p) setPosts(p)
-    if (r) setReels(r)
+    if (c) setComments(c)
   }
   useEffect(() => { load() }, [])
 
@@ -27,11 +27,6 @@ export default function Page() {
     await supabase.from("posts").insert({ content: text, username: "You", likes: 0 })
     setText(""); load()
   }
-  async function addReel() {
-    if (!reelUrl.trim()) return alert("Video URL pettu bro!")
-    await supabase.from("reels").insert({ video_url: reelUrl, caption: text, username: "You" })
-    setReelUrl(""); setText(""); load(); setTab("reels")
-  }
   async function likePost(p: any) {
     await supabase.from("posts").update({ likes: (p.likes||0)+1 }).eq("id", p.id)
     load()
@@ -39,66 +34,110 @@ export default function Page() {
   async function commentPost(p: any) {
     const t = prompt("Comment pettu bro 💬:")
     if (!t) return
-    const { error } = await supabase.from("comments").insert({ post_id: p.id, content: t, username: "You" })
-    if (error) alert(error.message)
-    else alert("Comment Added ✅")
+    await supabase.from("comments").insert({ post_id: p.id, content: t, username: "You" })
+    load()
   }
   function sharePost(p: any) {
     navigator.clipboard.writeText(p.content)
-    alert("Copied! Share chey bro!")
+    alert("Link Copied! Share chey bro ✅")
   }
 
+  const filtered = posts.filter(p=> p.content.toLowerCase().includes(search.toLowerCase()))
+
   return (
-    <div className="max-w-[430px] mx-auto bg-white text-black min-h-screen pb-[70px] relative">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b p-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold" style={{color: "#a855f7"}}>ChitPix</h1>
-        <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center">+</div>
+    <div className="min-h-screen w-full bg-white text-black">
+      {/* Header - FULL WHITE */}
+      <div className="sticky top-0 z-20 bg-white border-b px-4 py-3 flex justify-between items-center">
+        <h1 className="text-[22px] font-extrabold text-purple-500">ChitPix</h1>
+        <button onClick={()=>{const t=prompt("Post pettu bro"); if(t){setText(t); setTimeout(addPost,100)}}} className="w-8 h-8 bg-black text-white rounded-full font-bold">+</button>
       </div>
 
-      {/* Input */}
-      <div className="p-4 bg-white">
+      {/* Post Input */}
+      <div className="p-4 border-b bg-white">
         <div className="flex gap-2">
-          <input value={text} onChange={e=>setText(e.target.value)} placeholder="Em undi bro?" className="flex-1 p-3 rounded-xl bg-zinc-100 outline-none border" />
+          <input value={text} onChange={e=>setText(e.target.value)} placeholder="Em undi bro?" className="flex-1 p-3 rounded-xl bg-[#f2f2f2] outline-none text-[15px]" />
           <button onClick={addPost} className="bg-black text-white px-6 rounded-xl font-bold">Post</button>
         </div>
-        {tab==="reels" && (
-          <input value={reelUrl} onChange={e=>setReelUrl(e.target.value)} placeholder="Reel Video URL (mp4 link)" className="w-full mt-2 p-3 rounded-xl bg-zinc-100 outline-none border" />
+      </div>
+
+      {/* TABS CONTENT */}
+      <div className="pb-[80px]">
+        {tab==="home" && (
+          <div>
+            {filtered.length===0? <p className="text-center text-zinc-400 mt-20">No posts yet bro - nuvve first post pettu!</p> :
+            filtered.map(p=>(
+              <div key={p.id} className="px-4 py-4 border-b border-zinc-100">
+                <div className="flex gap-2 items-center">
+                  <div className="w-8 h-8 bg-purple-200 rounded-full flex items-center justify-center font-bold text-xs">Y</div>
+                  <div className="font-bold text-[14px]">{p.username}</div>
+                  <div className="text-[11px] text-zinc-400">{new Date(p.created_at).toLocaleDateString()}</div>
+                </div>
+                <div className="my-3 text-[15px] leading-6">{p.content}</div>
+                <div className="flex gap-6 text-[14px] mt-2">
+                  <button onClick={()=>likePost(p)} className="flex gap-1 items-center">❤️ <span className="font-bold">{p.likes||0}</span> <span className="text-zinc-500 text-xs">Likes</span></button>
+                  <button onClick={()=>commentPost(p)} className="flex gap-1 items-center">💬 <span className="font-bold">{comments.filter(c=>c.post_id===p.id).length}</span> <span className="text-zinc-500 text-xs">Comments</span></button>
+                  <button onClick={()=>sharePost(p)} className="flex gap-1 items-center">↗️ <span className="text-zinc-500 text-xs">Share</span></button>
+                </div>
+                {/* Show comments */}
+                {comments.filter(c=>c.post_id===p.id).map(c=>(
+                  <div key={c.id} className="mt-2 ml-2 p-2 bg-zinc-50 rounded-lg text-[13px]"><b>{c.username}:</b> {c.content}</div>
+                ))}
+              </div>
+            ))}
+          </div>
         )}
-        {tab==="reels" && <button onClick={addReel} className="w-full mt-2 bg-purple-600 text-white py-2 rounded-xl">Add Reel</button>}
-      </div>
 
-      {/* Content */}
-      <div className="p-4">
-        {tab==="home" && posts.map(p=>(
-          <div key={p.id} className="border-b py-4">
-            <div className="font-bold text-sm">@{p.username}</div>
-            <div className="my-2">{p.content}</div>
-            <div className="flex gap-5 text-[15px] mt-2">
-              <button onClick={()=>likePost(p)}>❤️ {p.likes||0}</button>
-              <button onClick={()=>commentPost(p)}>💬 Comment</button>
-              <button onClick={()=>sharePost(p)}>↗️ Share</button>
+        {tab==="search" && (
+          <div className="p-4">
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search posts..." className="w-full p-3 rounded-xl bg-[#f2f2f2] outline-none mb-4" />
+            {filtered.map(p=>(
+              <div key={p.id} className="border-b py-3">{p.content} - <span className="text-xs text-zinc-400">{p.username}</span></div>
+            ))}
+            {filtered.length===0 && <p className="text-center text-zinc-400 mt-10">No results bro</p>}
+          </div>
+        )}
+
+        {tab==="reels" && (
+          <div className="p-4">
+            <p className="text-center text-zinc-400 mt-20">🎬 Reels - Videos add cheddam next bro!<br/>Ippudu posts reels laga chudu</p>
+            {posts.map(p=>(
+              <div key={p.id} className="bg-black text-white rounded-2xl p-4 my-3">{p.content}</div>
+            ))}
+          </div>
+        )}
+
+        {tab==="likes" && (
+          <div className="p-4">
+            <h2 className="font-bold mb-4">Liked Posts ❤️</h2>
+            {posts.filter(p=>p.likes>0).map(p=>(
+              <div key={p.id} className="border-b py-3">❤️ {p.content} - {p.likes} likes</div>
+            ))}
+          </div>
+        )}
+
+        {tab==="profile" && (
+          <div className="p-6 text-center">
+            <div className="w-20 h-20 bg-purple-500 rounded-full mx-auto flex items-center justify-center text-white text-2xl font-bold">M</div>
+            <h2 className="font-bold text-lg mt-3">@knmahesh30</h2>
+            <p className="text-zinc-500 text-sm">Mahesh - ChitPix Creator</p>
+            <div className="flex justify-around mt-6 border-t border-b py-4">
+              <div><div className="font-bold">{posts.length}</div><div className="text-xs text-zinc-500">Posts</div></div>
+              <div><div className="font-bold">{comments.length}</div><div className="text-xs text-zinc-500">Comments</div></div>
+              <div><div className="font-bold">1.2k</div><div className="text-xs text-zinc-500">Followers</div></div>
             </div>
+            <button onClick={()=>alert("Edit Profile - Coming Soon!")} className="mt-6 w-full border rounded-xl py-2 font-bold">Edit Profile</button>
           </div>
-        ))}
-        {tab==="reels" && reels.map(r=>(
-          <div key={r.id} className="border rounded-2xl mb-4 overflow-hidden bg-black">
-            <video src={r.video_url} controls className="w-full" />
-            <div className="p-3 bg-white text-black">{r.caption}</div>
-          </div>
-        ))}
-        {tab==="search" && <p className="text-center text-zinc-500 mt-20">🔍 Search - Coming Soon!</p>}
-        {tab==="profile" && <p className="text-center text-zinc-500 mt-20">👤 Profile - @knmahesh30<br/>{posts.length} Posts | {reels.length} Reels</p>}
+        )}
       </div>
 
-      {/* BOTTOM NAV - Icons fix */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto bg-white border-t flex justify-around py-3 text-xl">
-        <button onClick={()=>setTab("home")} className={tab==="home"?"font-bold":"opacity-60"}>🏠<div className="text-[10px]">Home</div></button>
-        <button onClick={()=>setTab("search")} className={tab==="search"?"font-bold":"opacity-60"}>🔍<div className="text-[10px]">Search</div></button>
-        <button onClick={()=>setTab("reels")} className={tab==="reels"?"font-bold":"opacity-60"}>🎬<div className="text-[10px]">Reels</div></button>
-        <button onClick={()=>setTab("home")} className="opacity-60">❤️<div className="text-[10px]">Likes</div></button>
-        <button onClick={()=>setTab("profile")} className={tab==="profile"?"font-bold":"opacity-60"}>👤<div className="text-[10px]">Profile</div></button>
+      {/* Bottom Nav - FULL WHITE */}
+      <div className="fixed bottom-0 left-0 right-0 w-full bg-white border-t flex justify-around py-2 z-20">
+        <button onClick={()=>setTab("home")} className={`flex flex-col items-center ${tab==="home"?"text-black":"text-zinc-400"}`}><span className="text-[60px]">🏠</span><span className="text-[20px] font-bold mt-1">Home</span></button>
+        <button onClick={()=>setTab("search")} className={`flex flex-col items-center ${tab==="search"?"text-black":"text-zinc-400"}`}><span className="text-[60px]">🔍</span><span className="text-[20px] mt-1">Search</span></button>
+        <button onClick={()=>setTab("reels")} className={`flex flex-col items-center ${tab==="reels"?"text-black":"text-zinc-400"}`}><span className="text-[60px]">🎬</span><span className="text-[20px] mt-1">Reels</span></button>
+        <button onClick={()=>setTab("likes")} className={`flex flex-col items-center ${tab==="likes"?"text-black":"text-zinc-400"}`}><span className="text-[60px]">❤️</span><span className="text-[20px] mt-1">Likes</span></button>
+        <button onClick={()=>setTab("profile")} className={`flex flex-col items-center ${tab==="profile"?"text-black":"text-zinc-400"}`}><span className="text-[60px]">👤</span><span className="text-[20px] mt-1">Profile</span></button>
       </div>
     </div>
   )
-}
+      }
