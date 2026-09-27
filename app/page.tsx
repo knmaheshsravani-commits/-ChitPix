@@ -26,7 +26,7 @@ const [uploading,setUploading]=useState(false)
   async function load(){
   const d1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
   if(d1.data) setPosts(d1.data)
-   const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30").single()
+   
     const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30").single()
 if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
 
