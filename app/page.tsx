@@ -11,8 +11,8 @@ export default function Page(){
   const [searchText,setSearchText]=useState("")
   const [likedIds,setLikedIds]=useState<number[]>([])
   const [username,setUsername]=useState("@knmahesh30")
-  const [profile,setProfile]=useState<any>({username:"@knmahesh30", name:"Mahesh", avatar_url:"", bio:""})
-const [editData,setEditData]=useState<any>({username:"@knmahesh30", name:"Mahesh", avatar_url:"", bio:""})
+      const [profile,setProfile]=useState<any>({username:"@knmahesh30", name:"Mahesh", avatar_url:"", bio:""})
+  const [editData,setEditData]=useState<any>({username:"@knmahesh30", name:"Mahesh", avatar_url:"", bio:""})
 const [showEdit,setShowEdit]=useState(false)
 const [uploading,setUploading]=useState(false)
   const [commentText,setCommentText]=useState("")
@@ -26,7 +26,7 @@ const [uploading,setUploading]=useState(false)
   const d1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
   if(d1.data) setPosts(d1.data)
 
-  const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30").single()
+    const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30").single()
 if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
 
   const d3 = await supabase.from("comments").select("*").order("created_at",{ascending:false})
@@ -79,11 +79,9 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
   }
   async function saveProfile(){
   try{
-    let finalData = {...editData}
-    
-    // 1. new photo select cheste, upload me
-    if(editData.avatar_url && editData.avatar_url.startsWith("blob:")){
-      const res = await fetch(editData.avatar_url)
+    let finalData:any = {...editData}
+    if((editData as any).avatar_url && (editData as any).avatar_url.startsWith("blob:")){
+      const res = await fetch((editData as any).avatar_url)
       const blob = await res.blob()
       const fileName = `avatar_${Date.now()}.jpg`
       const { error: upErr } = await supabase.storage.from("chitpix").upload(fileName, blob)
@@ -91,16 +89,13 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
       const { data } = supabase.storage.from("chitpix").getPublicUrl(fileName)
       finalData.avatar_url = data.publicUrl
     }
-
-    // 2. Database lo save chey - CORRECT username tho
-    await supabase.from("profiles").upsert({username:"@knmahesh30", ...finalData})
+    await supabase.from("profiles").upsert({username:"@knmahesh30",...finalData})
     await supabase.from("profiles").update(finalData).eq("username","@knmahesh30")
-    
     setProfile(finalData);
     setShowEdit(false);
     load();
-    alert("Profile saved bro! ✅ Refresh kottina pode!")
-  }catch(e){ console.log(e); alert("Error bro: "+e) }
+    alert("Profile saved bro! ✅")
+  }catch(e){ console.log(e); }
   }
   async function handleLike(id:any, likes:any){
     const isLiked = likedIds.includes(id)
