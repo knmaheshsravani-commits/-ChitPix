@@ -44,12 +44,15 @@ useEffect(()=>{ load() }, [])
 
 
   async function uploadImage(file:any){
-    setUploading(true)
-    const name = Date.now()+"_"+file.name
-    await supabase.storage.from("chitpix").upload(name,file)
-    const res = supabase.storage.from("chitpix").getPublicUrl(name)
-    setUploading(false)
-    return res.data.publicUrl
+  setUploading(true)
+  const name = Date.now()+"_"+file.name.replace(/\s/g,"_")
+  await supabase.storage.from("chitpix").upload(name, file, {
+    contentType: file.type,
+    cacheControl: "3600"
+  })
+  const res = supabase.storage.from("chitpix").getPublicUrl(name)
+  setUploading(false)
+  return res.data.publicUrl
   }
   async function addPost(e:any){
   const file = e.target.files? e.target.files[0] : null
@@ -174,9 +177,9 @@ async function addStory(e:any){
     </label>
   </div>
 
-  {posts.filter((p:any)=>p.image_url?.includes("mp4")||p.image_url?.includes("video")||p.content==="Reel").map((p:any)=>
+  posts.filter((p:any)=>p.image_url?.includes("mp4")||p.image_url?.includes("video")||p.image_url?.includes("mov"))
     <div key={p.id} style={{border:"1px solid #eee", borderRadius:16, overflow:"hidden", marginBottom:16}}>
-      <video src={p.image_url} controls autoPlay muted loop playsInline style={{width:"100%", maxHeight:500, background:"black"}} />
+      <video src={p.image_url} controls autoPlay muted loop playsInline style={{width:"100%", height:"400px", background:"black"}} />
       <div style={{padding:10}}>
         <div style={{fontWeight:"bold"}}>{p.username}</div>
         <div style={{display:"flex", gap:15, marginTop:8, fontSize:18}}>
