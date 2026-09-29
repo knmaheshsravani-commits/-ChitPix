@@ -201,8 +201,7 @@ localStorage.setItem("saved",JSON.stringify(s))
 </div>
 )}
 </div>
-)}
-</div>
+
 
 {tab==="likes" && <div style={{padding:12}}><h3 style={{fontWeight:"bold", fontSize:14}}>Liked ❤️</h3></div>}
 
