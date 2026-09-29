@@ -169,37 +169,37 @@ async function addStory(e:any){
 
       {tab==="search" && <div style={{padding:12}}><input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="Search..." style={{width:"100%", background:"#f4f4f5", padding:10, borderRadius:12, border:"none", fontSize:13}}/><div style={{marginTop:12}}>{filtered.map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee", fontSize:13}}><b>{p.username}</b> - {p.content}</div>)}</div></div>}
       {tab==="reels" && <div style={{padding:12}}>
-  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
-    <h3 style={{fontWeight:"bold", fontSize:18}}>Reels 🎬</h3>
-    <label style={{background:"black", color:"white", padding:"6px 14px", borderRadius:20, cursor:"pointer", fontSize:14, fontWeight:"bold"}}>
-      + Reel
-      <input type="file" accept="video/*" hidden onChange={addReel} />
-    </label>
-  </div>
+<div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}}>
+<h3 style={{fontWeight:"bold", fontSize:18}}>Reels 🎬</h3>
+<label style={{background:"black", color:"white", padding:"6px 14px", borderRadius:20, cursor:"pointer"}}>
++ Reel
+<input type="file" accept="video/*" hidden onChange={addReel} />
+</label>
+</div>
 
-  {posts.filter((p:any)=>p.image_url?.includes("mp4")||p.image_url?.includes("video")).map((p:any)=>
-    <div key={p.id} style={{border:"1px solid #eee", borderRadius:16, overflow:"hidden", marginBottom:16}}>
-      <video src={p.image_url} controls autoPlay muted loop playsInline style={{width:"100%", height:"400px", background:"black"}} />
-      <div style={{padding:10}}>
-        <div style={{fontWeight:"bold"}}>{p.username}</div>
-        <div style={{display:"flex", gap:15, marginTop:8, fontSize:18}}>
-          <button onClick={()=>handleFlower(p.id,p.flowers)}>🌸 {p.flowers||0}</button>
-          <button onClick={()=>handleShare(p)}>💬</button>
-          <button onClick={()=>handleShare(p)}>🔗</button>
-          <button onClick={()=>{
-            let s=JSON.parse(localStorage.getItem("saved")||"[]");
-            if(s.includes(p.id)){ s=s.filter((x:any)=>x!==p.id); alert("Unsaved!") }
-            else{ s.push(p.id); alert("Saved! 🔖") }
-            localStorage.setItem("saved",JSON.stringify(s))
-          }}>🔖</button>
-        </div>
-        <div style={{display:"flex", gap:5, marginTop:8}}>
-          <input value={commentText} onChange={(e:any)=>setCommentText(e.target.value)} placeholder="Add a comment..." style={{flex:1, border:"1px solid #ddd", borderRadius:20, padding:"5px 10px"}} />
-          <button onClick={()=>addComment(p.id)} style={{fontWeight:"bold"}}>Post</button>
-        </div>
-      </div>
-    </div>
-  ))}
+{posts.filter((p:any)=>p.image_url?.includes("mp4")||p.image_url?.includes("video")).map((p:any)=>
+<div key={p.id} style={{border:"1px solid #eee", borderRadius:16, overflow:"hidden", marginBottom:16}}>
+<video src={p.image_url} controls autoPlay muted loop playsInline style={{width:"100%", height:"400px", background:"black"}} />
+<div style={{padding:10}}>
+<div style={{fontWeight:"bold"}}>{p.username}</div>
+<div style={{display:"flex", gap:15, marginTop:8, fontSize:18}}>
+<button onClick={()=>handleFlower(p.id,p.flowers)}>🌸 {p.flowers||0}</button>
+<button onClick={()=>handleShare(p)}>💬</button>
+<button onClick={()=>handleShare(p)}>🔗</button>
+<button onClick={()=>{
+let s=JSON.parse(localStorage.getItem("saved")||"[]");
+if(s.includes(p.id)){ s=s.filter((x:any)=>x!==p.id); alert("Unsaved!") }
+else{ s.push(p.id); alert("Saved! 🔖") }
+localStorage.setItem("saved",JSON.stringify(s))
+}}>🔖</button>
+</div>
+<div style={{display:"flex", gap:5, marginTop:8}}>
+<input value={commentText} onChange={(e:any)=>setCommentText(e.target.value)} placeholder="Add a comment" />
+<button onClick={()=>addComment(p.id)} style={{fontWeight:"bold"}}>Post</button>
+</div>
+</div>
+</div>
+)}
 </div>}
       {tab==="likes" && <div style={{padding:12}}><h3 style={{fontWeight:"bold", fontSize:14}}>Liked ❤️</h3>{posts.filter((p:any)=>likedIds.includes(p.id)).map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}>{p.content && <div style={{fontSize:13}}>{p.content}</div>}{p.image_url && <img src={p.image_url} style={{width:"100%", borderRadius:12, marginTop:6}}/>}</div>)}{likedIds.length===0 && <div style={{textAlign:"center", marginTop:20, fontSize:12, opacity:0.5}}>Inka like cheyaledu</div>}</div>}
       {tab==="profile" && <div style={{textAlign:"center", padding:20}}><div style={{width:70, height:70, margin:"0 auto", borderRadius:35, background:"#a855f7", color:"white", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", fontWeight:"bold"}}>{profile.avatar? <img src={profile.avatar} style={{width:"100%", height:"100%", objectFit:"cover"}}/> : "M"}</div><h2 style={{fontWeight:"bold", marginTop:8, fontSize:13}}>{profile.username}</h2><p style={{fontSize:11, color:"#71717a"}}>{profile.name}</p><button onClick={()=>{setEditData(profile); setShowEdit(true)}} style={{width:"100%", border:"1px solid #ddd", padding:8, borderRadius:12, fontWeight:"bold", fontSize:12, marginTop:12}}>Edit Profile</button><div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:4, marginTop:12}}>{posts.filter((p:any)=>p.image_url).map((p:any)=><img key={p.id} src={p.image_url} style={{height:80, objectFit:"cover", borderRadius:8}}/>)}</div></div>}
