@@ -200,10 +200,14 @@ localStorage.setItem("saved",JSON.stringify(s))
 </div>
 </div>
 )}
-</div>}
-      {tab==="likes" && <div style={{padding:12}}><h3 style={{fontWeight:"bold", fontSize:14}}>Liked ❤️</h3>{posts.filter((p:any)=>likedIds.includes(p.id)).map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}>{p.content && <div style={{fontSize:13}}>{p.content}</div>}{p.image_url && <img src={p.image_url} style={{width:"100%", borderRadius:12, marginTop:6}}/>}</div>)}{likedIds.length===0 && <div style={{textAlign:"center", marginTop:20, fontSize:12, opacity:0.5}}>Inka like cheyaledu</div>}
-      tab==="profile" && <div style={{padding:12}}>
-{username === "@knmahesh30" ? (
+</div>
+)}
+</div>
+
+{tab==="likes" && <div style={{padding:12}}><h3 style={{fontWeight:"bold", fontSize:14}}>Liked ❤️</h3></div>}
+
+{tab==="profile" && <div style={{padding:12}}>
+{username === "" ? (
 <div>
 <h2 style={{fontWeight:"bold", fontSize:20}}>👑 Admin Panel</h2>
 <p style={{color:"#888", fontSize:12}}>knmaheshsravani@gmail.com - Only you!</p>
