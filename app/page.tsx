@@ -27,8 +27,8 @@ const [uploading,setUploading]=useState(false)
   const d1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
   if(d1.data) setPosts(d1.data)
    
-    const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30").single()
-if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
+    const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30")
+if(d2.data && d2.data.length > 0){ setProfile(d2.data[0]); setEditData(d2.data[0]) }
 
   const d3 = await supabase.from("comments").select("*").order("created_at",{ascending:false})
   if(d3.data) setComments(d3.data)
@@ -39,6 +39,9 @@ if(d2.data){ setProfile(d2.data); setEditData(d2.data) }
   const saved = localStorage.getItem("chitpix_user")
   if(saved){ setUsername(saved) } else { setShowLogin(true) }
   }
+
+useEffect(()=>{ load() }, [])
+
 
   async function uploadImage(file:any){
     setUploading(true)
@@ -79,7 +82,7 @@ async function addStory(e:any){
 
   const { error } = await supabase.from("stories").insert({
     image_url: url,
-    username: username || "@mahesh123", // NUVVU ADD CHEYALSINA LINE IDI!
+    username: username || "@knmahesh30",
     created_at: new Date().toISOString()
   })
 
@@ -205,11 +208,11 @@ async function addStory(e:any){
       {showLogin && <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.8)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:20}}><div style={{background:"white", width:"100%", maxWidth:300, borderRadius:20, padding:20, textAlign:"center"}}><h2 style={{fontWeight:"bold", fontSize:18, color:"#9333ea"}}>ChitPix 🌸</h2><p style={{fontSize:12, opacity:0.6, margin:"6px 0 14px"}}>Nee username pettu bro!</p><input value={loginName} onChange={e=>setLoginName(e.target.value)} placeholder="mahesh30" style={{width:"100%", padding:12, background:"#f4f4f5", borderRadius:12, border:"none", fontSize:14}}/><button onClick={doLogin} style={{width:"100%", background:"black", color:"white", padding:12, borderRadius:12, marginTop:10, fontWeight:"bold", fontSize:14}}>Login - ChitPix Loki Ra!</button></div></div>}
 
       <div style={{position:"fixed", bottom:0, left:0, right:0, background:"white", borderTop:"1px solid #eee", display:"flex", justifyContent:"space-around", padding:"4px 0", zIndex:20}}>
-        <button onClick={()=>setTab("home")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="home"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:16}}>🏠</span><span style={{fontSize:8, marginTop:2}}>Home</span></button>
-        <button onClick={()=>setTab("search")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="search"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:16}}>🔍</span><span style={{fontSize:8, marginTop:2}}>Search</span></button>
-        <button onClick={()=>setTab("reels")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="reels"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:16}}>🎬</span><span style={{fontSize:8, marginTop:2}}>Reels</span></button>
-        <button onClick={()=>setTab("likes")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="likes"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:16}}>❤️</span><span style={{fontSize:8, marginTop:2}}>Likes</span></button>
-        <button onClick={()=>setTab("profile")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="profile"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:16}}>👤</span><span style={{fontSize:8, marginTop:2}}>Profile</span></button>
+        <button onClick={()=>setTab("home")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="home"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:32}}>🏠</span><span style={{fontSize:8, marginTop:2}}>Home</span></button>
+        <button onClick={()=>setTab("search")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="search"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:32}}>🔍</span><span style={{fontSize:8, marginTop:2}}>Search</span></button>
+        <button onClick={()=>setTab("reels")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="reels"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:32}}>🎬</span><span style={{fontSize:8, marginTop:2}}>Reels</span></button>
+        <button onClick={()=>setTab("likes")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="likes"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:32}}>❤️</span><span style={{fontSize:8, marginTop:2}}>Likes</span></button>
+        <button onClick={()=>setTab("profile")} style={{display:"flex", flexDirection:"column", alignItems:"center", opacity: tab==="profile"?1:0.35, border:"none", background:"none"}}><span style={{fontSize:32}}>👤</span><span style={{fontSize:8, marginTop:2}}>Profile</span></button>
       </div>
     </div>
   )
