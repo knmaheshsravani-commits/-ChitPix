@@ -177,7 +177,7 @@ async function addStory(e:any){
     </label>
   </div>
 
-  posts.filter((p:any)=>p.image_url?.includes("mp4")||p.image_url?.includes("video")||p.image_url?.includes("mov"))
+  {posts.filter((p:any)=>p.image_url?.includes("mp4")||p.image_url?.includes("video")).map((p:any)=>
     <div key={p.id} style={{border:"1px solid #eee", borderRadius:16, overflow:"hidden", marginBottom:16}}>
       <video src={p.image_url} controls autoPlay muted loop playsInline style={{width:"100%", height:"400px", background:"black"}} />
       <div style={{padding:10}}>
@@ -199,7 +199,7 @@ async function addStory(e:any){
         </div>
       </div>
     </div>
-  )}
+  ))}
 </div>}
       {tab==="likes" && <div style={{padding:12}}><h3 style={{fontWeight:"bold", fontSize:14}}>Liked ❤️</h3>{posts.filter((p:any)=>likedIds.includes(p.id)).map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}>{p.content && <div style={{fontSize:13}}>{p.content}</div>}{p.image_url && <img src={p.image_url} style={{width:"100%", borderRadius:12, marginTop:6}}/>}</div>)}{likedIds.length===0 && <div style={{textAlign:"center", marginTop:20, fontSize:12, opacity:0.5}}>Inka like cheyaledu</div>}</div>}
       {tab==="profile" && <div style={{textAlign:"center", padding:20}}><div style={{width:70, height:70, margin:"0 auto", borderRadius:35, background:"#a855f7", color:"white", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", fontWeight:"bold"}}>{profile.avatar? <img src={profile.avatar} style={{width:"100%", height:"100%", objectFit:"cover"}}/> : "M"}</div><h2 style={{fontWeight:"bold", marginTop:8, fontSize:13}}>{profile.username}</h2><p style={{fontSize:11, color:"#71717a"}}>{profile.name}</p><button onClick={()=>{setEditData(profile); setShowEdit(true)}} style={{width:"100%", border:"1px solid #ddd", padding:8, borderRadius:12, fontWeight:"bold", fontSize:12, marginTop:12}}>Edit Profile</button><div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:4, marginTop:12}}>{posts.filter((p:any)=>p.image_url).map((p:any)=><img key={p.id} src={p.image_url} style={{height:80, objectFit:"cover", borderRadius:8}}/>)}</div></div>}
