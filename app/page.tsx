@@ -12,7 +12,7 @@ export default function Page() {
   ]);
 
   const handleLogin = () => {
-    if (email === "knmaheshsrvani@gmail.com" && password === "Mahesh@9848#") {
+    if (email === "knmaheshsravani@gmail.com" && password === "Mahesh@9848#") {
       setIsAdmin(true);
       setShowLogin(false);
       alert("Admin Login Success 👑");
