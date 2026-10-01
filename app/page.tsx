@@ -202,8 +202,22 @@ localStorage.setItem("saved",JSON.stringify(s))
 )}
 </div>}
       {tab==="likes" && <div style={{padding:12}}><h3 style={{fontWeight:"bold", fontSize:14}}>Liked ❤️</h3>{posts.filter((p:any)=>likedIds.includes(p.id)).map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}>{p.content && <div style={{fontSize:13}}>{p.content}</div>}{p.image_url && <img src={p.image_url} style={{width:"100%", borderRadius:12, marginTop:6}}/>}</div>)}{likedIds.length===0 && <div style={{textAlign:"center", marginTop:20, fontSize:12, opacity:0.5}}>Inka like cheyaledu</div>}</div>}
-      {tab==="profile" && <div style={{textAlign:"center", padding:20}}><div style={{width:70, height:70, margin:"0 auto", borderRadius:35, background:"#a855f7", color:"white", display:"flex", alignItems:"center", justifyContent:"center", overflow:"hidden", fontWeight:"bold"}}>{profile.avatar? <img src={profile.avatar} style={{width:"100%", height:"100%", objectFit:"cover"}}/> : "M"}</div><h2 style={{fontWeight:"bold", marginTop:8, fontSize:13}}>{profile.username}</h2><p style={{fontSize:11, color:"#71717a"}}>{profile.name}</p><button onClick={()=>{setEditData(profile); setShowEdit(true)}} style={{width:"100%", border:"1px solid #ddd", padding:8, borderRadius:12, fontWeight:"bold", fontSize:12, marginTop:12}}>Edit Profile</button><div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:4, marginTop:12}}>{posts.filter((p:any)=>p.image_url).map((p:any)=><img key={p.id} src={p.image_url} style={{height:80, objectFit:"cover", borderRadius:8}}/>)}</div></div>}
+      
+       {tab==="profile"} && <div style={{textAlign:"center", padding:20}}>
+  <div style={{width:90, height:90, borderRadius:"50%", overflow:"hidden", margin:"0 auto", border:"3px solid #a855f7"}}>
+    <img 
+      src={currentUser?.profile_pic || "https://via.placeholder.com/90"} 
+      style={{width:"100%", height:"100%", objectFit:"cover"}} 
+      alt="profile"
+    />
+  </div>
+  <h3 style={{marginTop:10}}>@{currentUser?.username || localStorage.getItem("username") || "knmahesh30"}</h3>
+  <p>{currentUser?.name || "Mahesh"}</p>
 
+  <button onClick={()=>setShowEdit(true)} style={{marginTop:15, padding:"10px 20px", borderRadius:20, border:"1px solid #ccc", background:"white", fontWeight:"bold", width:"100%"}}>
+    Edit Profile
+  </button>
+</div>
       {viewStory && <div onClick={()=>setViewStory(null)} style={{position:"fixed", inset:0, background:"black", zIndex:40, display:"flex", alignItems:"center", justifyContent:"center"}}><div style={{position:"absolute", top:20, left:12, color:"white", fontSize:13}}><b>{viewStory.username}</b></div><img src={viewStory.image_url} style={{maxWidth:"100%", maxHeight:"90vh"}}/><button onClick={()=>setViewStory(null)} style={{position:"absolute", top:15, right:15, color:"white", background:"rgba(0,0,0,0.5)", borderRadius:20, width:30, height:30, border:"none"}}>X</button></div>}
 
       {showEdit && <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:30, display:"flex", alignItems:"flex-end"}}><div style={{background:"white", width:"100%", borderTopLeftRadius:24, borderTopRightRadius:24, padding:20}}><h3 style={{fontWeight:"bold", fontSize:13}}>Edit Profile</h3><div style={{display:"flex", justifyContent:"center", margin:"12px 0"}}><label>{editData.avatar? <img src={editData.avatar} style={{width:70, height:70, borderRadius:35, objectFit:"cover"}}/> : <div style={{width:70, height:70, background:"#e4e4e7", borderRadius:35, display:"flex", alignItems:"center", justifyContent:"center"}}>📷</div>}<input type="file" hidden accept="image/*" onChange={async(e:any)=>{const f=e.target.files[0]; if(f){const u=await uploadImage(f); setEditData({...editData, avatar:u})}}}/></label></div><input value={editData.username} onChange={e=>setEditData({...editData, username:e.target.value})} style={{width:"100%", padding:10, background:"#f4f4f5", borderRadius:12, marginBottom:8, border:"none", fontSize:12}}/><input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} style={{width:"100%", padding:10, background:"#f4f4f5", borderRadius:12, marginBottom:8, border:"none", fontSize:12}}/><input value={editData.bio} onChange={e=>setEditData({...editData, bio:e.target.value})} style={{width:"100%", padding:10, background:"#f4f4f5", borderRadius:12, marginBottom:12, border:"none", fontSize:12}}/><div style={{display:"flex", gap:8}}><button onClick={()=>setShowEdit(false)} style={{flex:1, border:"1px solid #ddd", padding:10, borderRadius:12, fontSize:12}}>Cancel</button><button onClick={saveProfile} style={{flex:1, background:"black", color:"white", padding:10, borderRadius:12, fontSize:12}}>{uploading?"Uploading...":"Save"}</button></div></div></div>}
