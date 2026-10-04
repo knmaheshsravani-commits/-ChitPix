@@ -153,17 +153,20 @@ function viewProfileOf(username:string){
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-    }catch{
-      window.open(url,"_blank")
-    }
+      }catch{
+    window.open(url,"_blank")
   }
-  const filtered = posts.filter((p:any)=>{
-    const s = searchText.toLowerCase()
-    return p.content?.toLowerCase().includes(s) || p.username?.toLowerCase().includes(s)
-  })
+}
+return(
+  <div style={{minHeight:"100vh", background:"white"...
+  
+    }
+}
 
-  return(
-    <div style={{minHeight:"100vh", background:"white", color:"black", paddingBottom:70, fontFamily:"system-ui"}}>
+return(
+  <div style={{minHeight:"100vh", background:"white"...
+
+    {tab==="home" && <div style={{display:"flex", gap:12, padding...
       <div style={{padding:12, borderBottom:"1px solid #eee", display:"flex", justifyContent:"space-between", position:"sticky", top:0, background:"white", zIndex:10}}><b style={{color:"#9333ea"}}>ChitPix 🌸</b><span style={{fontSize:10, opacity:0.6}}>{username}</span></div>
 
       {tab==="home" && <div style={{display:"flex", gap:12, padding:10, borderBottom:"1px solid #eee", overflowX:"auto"}}><label style={{display:"flex", flexDirection:"column", alignItems:"center", minWidth:50}}><div style={{width:48, height:48, borderRadius:24, background:"#f4f4f5", display:"flex", alignItems:"center", justifyContent:"center", border:"2px dashed #9333ea"}}>+</div><span style={{fontSize:8}}>Add Story</span><input type="file" hidden accept="image/*" onChange={addStory}/></label>{stories.map((s:any)=><div key={s.id} onClick={()=>setViewStory(s)} style={{display:"flex", flexDirection:"column", alignItems:"center", minWidth:50}}><img src={s.image_url} style={{width:48, height:48, borderRadius:24, border:"2px solid #9333ea"}}/><span style={{fontSize:8}}>{s.username.slice(0,8)}</span></div>)}</div>}
