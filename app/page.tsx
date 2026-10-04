@@ -46,12 +46,12 @@ export default function Page(){
     let finalAvatar = myAvatar
     if(editAvatarFile){
       const fileName = `${myUser}_${Date.now()}.jpg`
-      await supabase.storage.from("avatars").upload(fileName, editAvatarFile, { upsert: true })
-      const { data } = supabase.storage.from("avatars").getPublicUrl(fileName)
+      await supabase.storage.from("chitpix").upload(fileName, editAvatarFile, { upsert: true })
+      const { data } = supabase.storage.from("chitpix").getPublicUrl(fileName)
       finalAvatar = data.publicUrl
     }
-    await supabase.from("profiles").update({ username: editUsername, bio: editBio, avatar_url: finalAvatar }).eq("username", myUser)
-    setMyAvatar(finalAvatar); setEditOpen(false); loadAll()
+      await supabase.from("profiles").update({ username: editUsername, bio: editBio, avatar_url: finalAvatar }).eq("username", myUser)
+      setMyAvatar(finalAvatar); setEditOpen(false); loadAll()
   }
 
   async function toggleFollow(u:string){
