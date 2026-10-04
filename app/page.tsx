@@ -181,7 +181,43 @@ export default function Page(){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>{posts.concat(posts).slice(0,12).map((p:any,i:number)=><div key={i} style={{position:"relative",aspectRatio:"3/4",background:"#000"}} onClick={()=>setZoomImg(p.image_url)}><img src={p.image_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",bottom:4,left:4,color:"white",fontSize:11,fontWeight:600}}>👁 {["961K","2.5M","1M","19.7M","3M","1.1M"][i%6]}</div></div>)}</div>
         </div>
       )}
-                  {editOpen && (
+
+      {tab==="profile" && (
+        <div style={{background:"white",minHeight:"80vh"}}>
+          <div style={{padding:"18px 14px"}}>
+            <div style={{display:"flex",gap:20,alignItems:"center"}}>
+              <div onClick={()=>setEditOpen(true)} style={{cursor:"pointer",position:"relative"}}>
+                {myAvatar ? (
+                  <img src={myAvatar} style={{width:86,height:86,borderRadius:"50%",objectFit:"cover",border:"2px solid #efefef"}}/>
+                ) : (
+                  <div style={{width:86,height:86,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,fontFamily:"serif"}}>M</div>
+                )}
+                <div style={{position:"absolute",bottom:0,right:0,width:22,height:22,background:"#0095f6",color:"white",borderRadius:"50%",border:"2px solid white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>+</div>
+              </div>
+              <div style={{display:"flex",gap:0,flex:1,justifyContent:"space-around"}}>
+                <div style={{textAlign:"center"}}><b style={{display:"block",color:"black",fontSize:18}}>{posts.filter((x:any)=>x.username===myUser).length}</b><span style={{fontSize:13,color:"black"}}>posts</span></div>
+                <div style={{textAlign:"center"}}><b style={{display:"block",color:"black",fontSize:18}}>{following.length}</b><span style={{fontSize:13,color:"black"}}>followers</span></div>
+                <div style={{textAlign:"center"}}><b style={{display:"block",color:"black",fontSize:18}}>{allUsers.length}</b><span style={{fontSize:13,color:"black"}}>following</span></div>
+              </div>
+            </div>
+            <div style={{marginTop:14}}><b style={{color:"black",fontSize:15}}>{editUsername}</b><div style={{color:"black",fontSize:14,marginTop:2}}>{editBio}</div></div>
+            <div style={{display:"flex",gap:8,marginTop:14}}>
+              <button onClick={()=>setEditOpen(true)} style={{flex:1,padding:"10px 0",borderRadius:8,background:"#efefef",border:"none",fontWeight:600,color:"black",fontSize:14}}>Edit profile</button>
+              <button style={{flex:1,padding:"10px 0",borderRadius:8,background:"#efefef",border:"none",fontWeight:600,color:"black",fontSize:14}}>Share profile</button>
+            </div>
+          </div>
+          <div style={{display:"flex",borderTop:"1px solid #efefef",borderBottom:"1px solid #efefef"}}>
+            <div style={{flex:1,textAlign:"center",padding:"12px 0",borderBottom:"1.5px solid black",color:"black"}}>▦</div>
+            <div style={{flex:1,textAlign:"center",padding:"12px 0",opacity:0.4,color:"black"}}>▶</div>
+            <div style={{flex:1,textAlign:"center",padding:"12px 0",opacity:0.4,color:"black"}}>↻</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>
+            {posts.filter((x:any)=>x.username===myUser).map((p:any)=><img key={p.id} src={p.image_url} style={{width:"100%",aspectRatio:"1/1",objectFit:"cover"}} onClick={()=>setZoomImg(p.image_url)}/>)}
+          </div>
+        </div>
+      )}
+
+      {editOpen && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
           <div style={{background:"white",borderRadius:14,padding:20,width:"100%",maxWidth:360}}>
             <h3 style={{color:"black"}}>Edit Profile - Photo Life Long Save Avuthundi</h3>
