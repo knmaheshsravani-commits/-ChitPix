@@ -93,9 +93,13 @@ export default function Page(){
         </span>
       </div>
 
-      {tab==="home" && <div>
-        <div style={{display:"flex", gap:14, padding:"12px 10px", overflowX:"auto", borderBottom:"1px solid #efefef"}}>
-          <div style={{minWidth:66, textAlign:"center", position:"relative"}}><div style={{width:62, height:62, borderRadius:"50%", background:"black", margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontSize:26, fontFamily:"serif"}}>M</div><span style={{position:"absolute", bottom:22, right:4, width:20, height:20, background:"black", color:"white", borderRadius:"50%", border:"2px solid white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14}}>+</span><div style={{fontSize:12, marginTop:6}}>Your story</div></div>
+            {tab==="home" && <div>
+        <div style={{display:"flex", gap:14, padding:"12px 10px", overflowX:"auto", borderBottom:"1px solid #efefef", scrollbarWidth:"none"}}>
+          <div style={{minWidth:66, textAlign:"center", position:"relative"}}>
+            <div style={{width:62, height:62, borderRadius:"50%", background:"black", margin:"0 auto", display:"flex", alignItems:"center", justifyContent:"center", color:"white", fontSize:26}}>M</div>
+            <span style={{position:"absolute", bottom:22, right:4, width:20, height:20, background:"black", color:"white", borderRadius:"50%", border:"2px solid white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14}}>+</span>
+            <div style={{fontSize:12, marginTop:6}}>Your story</div>
+          </div>
           {allUsers.map((u:any)=><div key={u.username} style={{minWidth:66, textAlign:"center"}}><div style={{width:62, height:62, borderRadius:"50%", padding:2.5, background:"linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)", margin:"0 auto"}}><img src={u.avatar_url || `https://i.pravatar.cc/100?u=${u.username}`} style={{width:"100%", height:"100%", borderRadius:"50%", border:"2px solid white", objectFit:"cover"}}/></div><div style={{fontSize:12, marginTop:6, maxWidth:66, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{u.username}</div></div>)}
         </div>
 
@@ -107,27 +111,26 @@ export default function Page(){
             <div style={{display:"flex", alignItems:"center", padding:"10px 12px", gap:10}}>
               <div style={{width:34, height:34, borderRadius:"50%", padding:2, background:"linear-gradient(45deg,#feda75,#d62976,#4f5bd5)"}}><img src={user?.avatar_url || p.avatar_url || `https://i.pravatar.cc/100?u=${p.username}`} style={{width:"100%", height:"100%", borderRadius:"50%", border:"1.5px solid white", objectFit:"cover"}}/></div>
               <div style={{lineHeight:"15px"}}><div style={{fontWeight:700, fontSize:15}}>{p.username}</div><div style={{fontSize:12, color:"#666"}}>Suggested for you</div></div>
-              <button onClick={()=>toggleFollow(p.username)} style={{marginLeft:"auto", padding:"7px 18px", borderRadius:8, background: following.includes(p.username)? "#efefef" : "#0095f6", color: following.includes(p.username)? "black" : "white", border:"none", fontWeight:700, fontSize:14, cursor:"pointer"}}>{following.includes(p.username)? "Following" : "Follow"}</button>
+              <button onClick={()=>toggleFollow(p.username)} style={{marginLeft:"auto", padding:"7px 18px", borderRadius:8, background: following.includes(p.username)? "#efefef" : "#0095f6", color: following.includes(p.username)? "black" : "white", border:"none", fontWeight:700, fontSize:14}}>{following.includes(p.username)? "Following" : "Follow"}</button>
               <span style={{marginLeft:10, fontSize:20}}>≡</span>
             </div>
             <img src={p.image_url} style={{width:"100%", display:"block", background:"#000"}} onClick={()=>setZoomImg(p.image_url)}/>
 
-            {/* NEW 5 ICONS - WORKING */}
-            <div style={{display:"flex", alignItems:"center", padding:"12px 12px 6px", gap:16}}>
-              <span onClick={()=>toggleLike(p.id)} style={{display:"flex", alignItems:"center", gap:6, cursor:"pointer"}}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill={isLiked? "red" : "none"} stroke={isLiked? "red" : "black"} strokeWidth="1.8"><path d="M12 19l-1.5-1.4C5 13 2 10.2 2 6.7 2 3.5 4.5 1 7.7 1c1.8 0 3.5.8 4.3 2.1C12.8 1.8 14.5 1 16.3 1 19.5 1 22 3.5 22 6.7c0 3.5-3 6.3-8.5 10.9L12 19z"/></svg>
-                <b style={{fontSize:15}}>{isLiked? "62.0K" : "61.9K"}</b>
-              </span>
-              <span style={{display:"flex", alignItems:"center", gap:6, cursor:"pointer"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 21l2.1-5.3A8.5 8.5 0 0 1 21 11.5z"/></svg><b style={{fontSize:15}}>172</b></span>
-              <span style={{display:"flex", alignItems:"center", gap:6, cursor:"pointer"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg><b style={{fontSize:15}}>467</b></span>
-              <span style={{display:"flex", alignItems:"center", gap:6, cursor:"pointer"}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg><b style={{fontSize:15}}>6,889</b></span>
-              <span onClick={()=>toggleSave(p.id)} style={{marginLeft:"auto", cursor:"pointer"}}><svg width="26" height="26" viewBox="0 0 24 24" fill={isSaved? "black" : "none"} stroke="black" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
+            {/* NEW - SAME SIZE 4 ICONS - PERFECT */}
+            <div style={{display:"flex", alignItems:"center", padding:"12px 16px", gap:28}}>
+              <span onClick={()=>toggleLike(p.id)} style={{cursor:"pointer", width:26, height:26, display:"flex", alignItems:"center", justifyContent:"center"}}><svg width="26" height="26" viewBox="0 0 24 24" fill={isLiked? "red" : "none"} stroke={isLiked? "red" : "black"} strokeWidth="1.6"><path d="M12 19l-1.5-1.4C5 13 2 10.2 2 6.7 2 3.5 4.5 1 7.7 1c1.8 0 3.5.8 4.3 2.1C12.8 1.8 14.5 1 16.3 1 19.5 1 22 3.5 22 6.7c0 3.5-3 6.3-8.5 10.9L12 19z"/></svg></span>
+              <span style={{cursor:"pointer", width:26, height:26, display:"flex", alignItems:"center", justifyContent:"center"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 21l2.1-5.3A8.5 8.5 0 0 1 21 11.5z"/></svg></span>
+              <span style={{cursor:"pointer", width:26, height:26, display:"flex", alignItems:"center", justifyContent:"center"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>
+              <span style={{cursor:"pointer", width:26, height:26, display:"flex", alignItems:"center", justifyContent:"center"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span>
+              <span onClick={()=>toggleSave(p.id)} style={{cursor:"pointer", marginLeft:"auto", width:26, height:26, display:"flex", alignItems:"center", justifyContent:"center"}}><svg width="26" height="26" viewBox="0 0 24 24" fill={isSaved? "black" : "none"} stroke="black" strokeWidth="1.6"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span>
             </div>
 
-            <div style={{padding:"4px 12px 12px"}}>
-              <div style={{fontSize:15, lineHeight:"20px"}}><b>{p.username}</b> {p.content || "absolute peak 🔥😭"}</div>
+            <div style={{padding:"0 12px 12px"}}>
+              <div style={{fontSize:15}}><b>{p.username}</b> {p.content || "absolute peak 🔥😭"}</div>
               <div style={{fontSize:13, color:"#888", marginTop:4}}>3 days ago</div>
             </div>
+          </div>
+        })}
           </div>
         })}
       </div>}
