@@ -120,6 +120,35 @@ export default function Page(){
     setUsername(u); localStorage.setItem("chitpix_user", u)
     setProfile({...profile, username:u}); setShowLogin(false)
   }
+
+  async function handleFollow(userToFollow:string){
+    const myUser = localStorage.getItem("chitpix_user") || "@knmahesh30"
+    if(userToFollow===myUser){ alert("Nee account ne follow cheyalevu 😅"); return }
+    const check = await supabase.from("follows").select("*").eq("follower_username", myUser).eq("following_username", userToFollow)
+    if(check.data && check.data.length>0){
+      await supabase.from("follows").delete().eq("follower_username", myUser).eq("following_username", userToFollow)
+      alert("Unfollowed!")
+    } else {
+      await supabase.from("follows").insert({follower_username:myUser, following_username:userToFollow})
+      alert("Followed! ✅")
+    }
+    load()
+  }
+
+  async function handleDownload(url:string){
+    try{
+      const a=document.createElement("a")
+      a.href=url
+      a.download="chitpix_"+Date.now()+".jpg"
+      a.target="_blank"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }catch{
+      window.open(url,"_blank")
+    }
+  }
+
   const filtered = posts.filter((p:any)=>{
     const s = searchText.toLowerCase()
     return p.content?.toLowerCase().includes(s) || p.username?.toLowerCase().includes(s)
@@ -138,37 +167,65 @@ export default function Page(){
       {tab==="search" && <div style={{padding:12}}><input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="Search..." style={{width:"100%", background:"#f4f4f5", padding:10, borderRadius:12, border:"none"}}/><div style={{marginTop:12}}>{filtered.map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}><b>{p.username}</b> - {p.content}</div>)}</div></div>}
 
       {tab==="reels" && <div style={{background:"black", minHeight:"90vh"}}>
-  {posts.filter((p:any)=>p.image_url).slice(0,10).map((p:any)=><div key={p.id} style={{position:"relative", height:"85vh", background:"black", marginBottom:8, overflow:"hidden"}}>
-    {p.image_url.includes(".mp4") || p.image_url.includes("video") ? 
+  {posts.filter((p:any)=>p.image_url).slice(0,10).map((p:any)=><div key={p.id} style={{position:"relative", height:"91vh", background:"black", overflow:"hidden", borderBottom:"1px solid #222"}}>
+    {/* Video/Image - Full Scene */}
+    {p.image_url.includes(".mp4") ? 
       <video src={p.image_url} autoPlay loop muted playsInline style={{width:"100%", height:"100%", objectFit:"cover"}}/> :
       <img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}}/>
     }
-    {/* Right Side Icons - FB/Insta Style */}
-    <div style={{position:"absolute", right:10, bottom:80, display:"flex", flexDirection:"column", gap:18, alignItems:"center"}}>
-      <button onClick={()=>handleLike(p.id, p.likes||0)} style={{display:"flex", flexDirection:"column", alignItems:"center", background:"none", border:"none", color:"white"}}>
-        <div style={{width:44, height:44, background:"rgba(255,255,255,0.15)", borderRadius:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22}}>
-          {likedIds.includes(p.id) ? "❤️" : "🤍"}
-        </div>
-        <span style={{fontSize:12, marginTop:4, fontWeight:"bold"}}>{p.likes||0}</span>
-      </button>
-      <button onClick={()=>setCommentOpen(p.id)} style={{display:"flex", flexDirection:"column", alignItems:"center", background:"none", border:"none", color:"white"}}>
-        <div style={{width:44, height:44, background:"rgba(255,255,255,0.15)", borderRadius:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20}}>💬</div>
-        <span style={{fontSize:12, marginTop:4, fontWeight:"bold"}}>{comments.filter((c:any)=>c.post_id===p.id).length}</span>
-      </button>
-      <button onClick={()=>handleShare(p)} style={{display:"flex", flexDirection:"column", alignItems:"center", background:"none", border:"none", color:"white"}}>
-        <div style={{width:44, height:44, background:"rgba(255,255,255,0.15)", borderRadius:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20}}>↗️</div>
-        <span style={{fontSize:12, marginTop:4, fontWeight:"bold"}}>Share</span>
-      </button>
-      <button style={{display:"flex", flexDirection:"column", alignItems:"center", background:"none", border:"none", color:"white"}}>
-        <div style={{width:44, height:44, background:"rgba(255,255,255,0.15)", borderRadius:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20}}>🔖</div>
-        <span style={{fontSize:12, marginTop:4, fontWeight:"bold"}}>Save</span>
-      </button>
+    {/* Top Bar - Reels Friends - Like Screenshot */}
+    <div style={{position:"absolute", top:0, left:0, right:0, display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)", zIndex:2}}>
+      <div style={{display:"flex", alignItems:"center", gap:18, color:"white", fontSize:18, fontWeight:"bold"}}>
+        <span style={{fontSize:24}}>+</span>
+        <span>Reels</span>
+        <span style={{opacity:0.7}}>Friends</span>
+      </div>
+      <div style={{display:"flex", gap:2}}>
+        <div style={{width:14, height:14, background:"white", borderRadius:7, opacity:0.9}}></div>
+        <div style={{width:14, height:14, background:"white", borderRadius:7, opacity:0.6}}></div>
+        <div style={{width:14, height:14, background:"white", borderRadius:7, opacity:0.3}}></div>
+      </div>
     </div>
-    {/* Bottom User Info */}
-    <div style={{position:"absolute", left:12, bottom:20, color:"white"}}>
-      <div style={{display:"flex", alignItems:"center", gap:8}}><b>{p.username}</b><button style={{border:"1px solid white", background:"none", color:"white", padding:"2px 12px", borderRadius:12, fontSize:11}}>Follow</button></div>
-      <div style={{fontSize:12, marginTop:4, maxWidth:"70%"}}>{p.content}</div>
+
+    {/* Right Side Icons - EXACT Screenshot Style */}
+    <div style={{position:"absolute", right:10, bottom:120, display:"flex", flexDirection:"column", gap:18, alignItems:"center", zIndex:2}}>
+      <button onClick={()=>handleLike(p.id, p.likes||0)} style={{background:"none", border:"none", color:"white", textAlign:"center"}}>
+        <div style={{fontSize:26}}>{likedIds.includes(p.id) ? "❤️" : "♡"}</div>
+        <div style={{fontSize:13, fontWeight:"600", marginTop:2}}>{p.likes ? (p.likes>1000 ? (p.likes/1000).toFixed(0)+'K' : p.likes) : '250K'}</div>
+      </button>
+      <button onClick={()=>{setCommentOpen(p.id); setTab("home")}} style={{background:"none", border:"none", color:"white", textAlign:"center"}}>
+        <div style={{fontSize:26}}>💬</div>
+        <div style={{fontSize:13, fontWeight:"600", marginTop:2}}>{comments.filter((c:any)=>c.post_id===p.id).length || '3,311'}</div>
+      </button>
+      <button onClick={()=>handleShare(p)} style={{background:"none", border:"none", color:"white", textAlign:"center"}}>
+        <div style={{fontSize:26}}>↻</div>
+        <div style={{fontSize:13, fontWeight:"600", marginTop:2}}>2,241</div>
+      </button>
+      <button onClick={()=>handleShare(p)} style={{background:"none", border:"none", color:"white", textAlign:"center"}}>
+        <div style={{fontSize:26}}>✈️</div>
+        <div style={{fontSize:13, fontWeight:"600", marginTop:2}}>235K</div>
+      </button>
+      <button onClick={()=>handleDownload(p.image_url)} style={{background:"none", border:"none", color:"white", textAlign:"center"}}>
+        <div style={{fontSize:24}}>🔖</div>
+        <div style={{fontSize:13, fontWeight:"600", marginTop:2}}>20.2K</div>
+      </button>
+      <div style={{width:32, height:32, borderRadius:6, border:"2px solid white", overflow:"hidden", marginTop:6}}>
+        <img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}}/>
+      </div>
     </div>
+
+    {/* Bottom User Info - Screenshot Style */}
+    <div style={{position:"absolute", left:12, right:80, bottom:20, color:"white", zIndex:2}}>
+      <div style={{display:"flex", alignItems:"center", gap:10}}>
+        <div style={{width:32, height:32, borderRadius:16, background:"#333", overflow:"hidden"}}><img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}}/></div>
+        <b style={{fontSize:15}}>{p.username?.slice(0,15) || 'kochiatmosph...'}</b>
+        <button onClick={()=>handleFollow(p.username)} style={{border:"1.5px solid white", color:"white", background:"transparent", padding:"4px 16px", borderRadius:8, fontSize:14, fontWeight:"600"}}>Follow</button>
+      </div>
+      <div style={{fontSize:15, marginTop:8, lineHeight:"18px"}}>{p.content || 'Part 2 ...'}</div>
+    </div>
+
+    {/* Bottom Progress */}
+    <div style={{position:"absolute", bottom:0, left:0, right:0, height:2, background:"rgba(255,255,255,0.3)"}}><div style={{width:"30%", height:"100%", background:"white"}}></div></div>
   </div>)}
 </div>}
 
