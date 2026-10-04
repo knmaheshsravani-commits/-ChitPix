@@ -108,14 +108,25 @@ export default function Page(){
                   <span style={{marginLeft:10,fontSize:20}}>≡</span>
                 </div>
                 <img src={p.image_url} style={{width:"100%",display:"block",background:"#000"}} onClick={()=>setZoomImg(p.image_url)}/>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px"}}>
-                  <div style={{display:"flex",gap:22,alignItems:"center"}}>
-                    <span onClick={()=>toggleLike(p.id)} style={{cursor:"pointer",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill={isLiked? "black":"none"} stroke="black" strokeWidth="1.5"><path d="M12 19l-1.5-1.4C5 13 2 10.2 2 6.7 2 3.5 4.5 1 7.7 1c1.8 0 3.5.8 4.3 2.1C12.8 1.8 14.5 1 16.3 1 19.5 1 22 3.5 22 6.7c0 3.5-3 6.3-8.5 10.9L12 19z"/></svg>
+                                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px"}}>
+                  <div style={{display:"flex",gap:18,alignItems:"center"}}>
+                    <span onClick={()=>toggleLike(p.id)} style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill={isLiked? "black":"none"} stroke="black" strokeWidth="1.7"><path d="M12 19l-1.5-1.4C5 13 2 10.2 2 6.7 2 3.5 4.5 1 7.7 1c1.8 0 3.5.8 4.3 2.1C12.8 1.8 14.5 1 16.3 1 19.5 1 22 3.5 22 6.7c0 3.5-3 6.3-8.5 10.9L12 19z"/></svg>
                     </span>
-                    <span style={{cursor:"pointer",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.5"><path d="M21 5.5a8.5 8.5 0 0 1-12.7 7.4L3 21l2.1-5.3A8.5 8.5 0 0 1 21 5.5z" strokeLinejoin="round"/></svg>
+                    <span style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M21 5.5a8.5 8.5 0 0 1-12.7 7.4L3 21l2.1-5.3A8.5 8.5 0 0 1 21 5.5z"/></svg>
                     </span>
+                    <span style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                    </span>
+                    <span style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    </span>
+                  </div>
+                  <span onClick={()=>toggleSave(p.id)} style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill={isSaved? "black":"none"} stroke="black" strokeWidth="1.7"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </span>
+                </div>
                     <span style={{cursor:"pointer",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.5"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
                     </span>
