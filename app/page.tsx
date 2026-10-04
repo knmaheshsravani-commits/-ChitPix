@@ -90,8 +90,7 @@ export default function Page(){
           <span style={{position:"absolute",top:-2,right:-2,width:10,height:10,background:"red",borderRadius:"50%",border:"2px solid white"}}></span>
         </span>
       </div>
-
-      {tab==="home" && (
+            {tab==="home" && (
         <div>
           <div style={{display:"flex",gap:14,padding:"12px 10px",overflowX:"auto",borderBottom:"1px solid #efefef"}}>
             <div style={{minWidth:66,textAlign:"center",position:"relative"}}>
@@ -124,7 +123,8 @@ export default function Page(){
                   <span style={{marginLeft:10,fontSize:20}}>≡</span>
                 </div>
                 <img src={p.image_url} style={{width:"100%",display:"block",background:"#000"}} onClick={()=>setZoomImg(p.image_url)}/>
-                                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px"}}>
+                                {/* SUPER NEW DESIGN - SAME SIZE 28px */}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px 16px"}}>
                   <div style={{display:"flex",gap:22,alignItems:"center"}}>
                     <span onClick={()=>toggleLike(p.id)} style={{cursor:"pointer",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center"}}>
                       <svg width="28" height="28" viewBox="0 0 24 24" fill={isLiked? "black":"none"} stroke="black" strokeWidth="1.5"><path d="M12 19l-1.5-1.4C5 13 2 10.2 2 6.7 2 3.5 4.5 1 7.7 1c1.8 0 3.5.8 4.3 2.1C12.8 1.8 14.5 1 16.3 1 19.5 1 22 3.5 22 6.7c0 3.5-3 6.3-8.5 10.9L12 19z"/></svg>
@@ -141,22 +141,6 @@ export default function Page(){
                   </div>
                   <span onClick={()=>toggleSave(p.id)} style={{cursor:"pointer",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <svg width="28" height="28" viewBox="0 0 24 24" fill={isSaved? "black":"none"} stroke="black" strokeWidth="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                  </span>
-                </div>
-                  <span onClick={()=>toggleLike(p.id)} style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill={isLiked? "red":"none"} stroke={isLiked? "red":"black"} strokeWidth="1.6"><path d="M12 19l-1.5-1.4C5 13 2 10.2 2 6.7 2 3.5 4.5 1 7.7 1c1.8 0 3.5.8 4.3 2.1C12.8 1.8 14.5 1 16.3 1 19.5 1 22 3.5 22 6.7c0 3.5-3 6.3-8.5 10.9L12 19z"/></svg>
-                  </span>
-                  <span style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-12.7 7.4L3 21l2.1-5.3A8.5 8.5 0 0 1 21 11.5z"/></svg>
-                  </span>
-                  <span style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                  </span>
-                  <span style={{cursor:"pointer",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-                  </span>
-                  <span onClick={()=>toggleSave(p.id)} style={{cursor:"pointer",marginLeft:"auto",width:26,height:26,display:"flex",alignItems:"center",justifyContent:"center"}}>
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill={isSaved? "black":"none"} stroke="black" strokeWidth="1.6"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                   </span>
                 </div>
                 <div style={{padding:"0 12px 12px"}}>
@@ -189,8 +173,7 @@ export default function Page(){
       )}
 
       {tab==="search" && <div style={{padding:12}}><input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="Search" style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"none",background:"#efefef"}}/>{allUsers.filter((u:any)=>u.username.toLowerCase().includes(searchText.toLowerCase())).map((u:any)=><div key={u.username} style={{display:"flex",alignItems:"center",padding:"12px 0",gap:12}}><img src={u.avatar_url || `https://i.pravatar.cc/100?u=${u.username}`} style={{width:44,height:44,borderRadius:"50%"}}/><div><div style={{fontWeight:600}}>{u.username}</div><div style={{fontSize:12,color:"#888"}}>{u.bio || ""}</div></div><button onClick={()=>toggleFollow(u.username)} style={{marginLeft:"auto",padding:"6px 16px",borderRadius:8,background:following.includes(u.username)? "#efefef":"#0095f6",color:following.includes(u.username)? "black":"white",border:"none",fontWeight:700}}>{following.includes(u.username)? "Following":"Follow"}</button></div>)}</div>}
-
-      {tab==="profile" && <div style={{padding:14}}><div style={{display:"flex",gap:16,alignItems:"center"}}><img src={myAvatar || "https://i.pravatar.cc/100"} style={{width:80,height:80,borderRadius:"50%",border:"1px solid #ddd",objectFit:"cover"}}/><div><h3 style={{margin:0}}>@{myUser}</h3><p style={{fontSize:13,color:"#666",margin:"4px 0"}}>{editBio}</p><button onClick={()=>setEditOpen(true)} style={{border:"1px solid #dbdbdb",padding:"6px 14px",borderRadius:8,background:"white",fontWeight:600,marginTop:6}}>Edit Profile</button></div></div><div style={{marginTop:16,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>{posts.filter((p:any)=>p.username===myUser).map((p:any)=><img key={p.id} src={p.image_url} style={{width:"100%",aspectRatio:"1/1",objectFit:"cover"}} onClick={()=>setZoomImg(p.image_url)}/>)}</div></div>}
+            {tab==="profile" && <div style={{padding:14}}><div style={{display:"flex",gap:16,alignItems:"center"}}><img src={myAvatar || "https://i.pravatar.cc/100"} style={{width:80,height:80,borderRadius:"50%",border:"1px solid #ddd",objectFit:"cover"}}/><div><h3 style={{margin:0}}>@{myUser}</h3><p style={{fontSize:13,color:"#666",margin:"4px 0"}}>{editBio}</p><button onClick={()=>setEditOpen(true)} style={{border:"1px solid #dbdbdb",padding:"6px 14px",borderRadius:8,background:"white",fontWeight:600,marginTop:6}}>Edit Profile</button></div></div><div style={{marginTop:16,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>{posts.filter((p:any)=>p.username===myUser).map((p:any)=><img key={p.id} src={p.image_url} style={{width:"100%",aspectRatio:"1/1",objectFit:"cover"}} onClick={()=>setZoomImg(p.image_url)}/>)}</div></div>}
 
       {tab==="likes" && <div style={{padding:12}}><h3>Liked</h3><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>{posts.filter((p:any)=>liked.includes(p.id)).map((p:any)=><img key={p.id} src={p.image_url} style={{width:"100%",aspectRatio:"1/1",objectFit:"cover"}}/>)}</div></div>}
 
@@ -207,4 +190,4 @@ export default function Page(){
       {showAddPost && <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}><div style={{background:"white",borderRadius:14,padding:20,width:"100%",maxWidth:360}}><h3>New Post</h3><input value={newPostContent} onChange={e=>setNewPostContent(e.target.value)} placeholder="Caption..." style={{width:"100%",padding:10,marginBottom:10,borderRadius:8,border:"1px solid #ddd"}}/><input value={newPostImage} onChange={e=>setNewPostImage(e.target.value)} placeholder="Image URL" style={{width:"100%",padding:10,marginBottom:14,borderRadius:8,border:"1px solid #ddd"}}/><div style={{display:"flex",gap:10}}><button onClick={()=>setShowAddPost(false)} style={{flex:1,padding:10,borderRadius:8,border:"1px solid #ddd",background:"white"}}>Cancel</button><button onClick={handleAddPost} style={{flex:1,padding:10,borderRadius:8,background:"black",color:"white",border:"none"}}>Post</button></div></div></div>}
     </div>
   )
-                }
+      }
