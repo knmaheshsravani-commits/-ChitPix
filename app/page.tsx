@@ -254,7 +254,7 @@ function viewProfileOf(username:string){
 <div onClick={(e)=>e.stopPropagation()} style={{background:"white", width:"100%", maxHeight:"65vh", borderTopLeftRadius:20, borderTopRightRadius:20, padding:12, paddingBottom:20, marginBottom:60, overflowY:"auto"}}>
 <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10}}><b>Comments</b><button onClick={()=>setCommentOpen(null)} style={{border:"none", background:"none", fontSize:18, cursor:"pointer"}}>✕</button></div>
 <div style={{maxHeight:"35vh", overflowY:"auto", marginBottom:10}}>
-{comments.filter((c:any)=>c.post_id===commentOpen).map((c:any)=><div key={c.id} style={{display:"flex", gap:8, marginBottom:8, fontSize:13}}><b>{c.username}</b><span>{c.content}</span></div>)}
+<div onClick={(e)=>e.stopPropagation()} style={{background:"white", width:"100%", maxHeight:"65vh", borderTopLeftRadius:20, borderTopRightRadius:20, padding:12, paddingBottom:20, marginBottom:60, overflowY:"auto"}}>
 </div>
 <div style={{display:"flex", gap:8, borderTop:"1px solid #eee", paddingTop:8}}>
 <input value={commentText} onChange={(e)=>setCommentText(e.target.value)} placeholder="Add a comment..." style={{flex:1, border:"1px solid #ddd", borderRadius:20, padding:"8px 14px", outline:"none"}}/>
