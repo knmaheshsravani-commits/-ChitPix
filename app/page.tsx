@@ -181,17 +181,24 @@ export default function Page(){
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>{posts.concat(posts).slice(0,12).map((p:any,i:number)=><div key={i} style={{position:"relative",aspectRatio:"3/4",background:"#000"}} onClick={()=>setZoomImg(p.image_url)}><img src={p.image_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",bottom:4,left:4,color:"white",fontSize:11,fontWeight:600}}>👁 {["961K","2.5M","1M","19.7M","3M","1.1M"][i%6]}</div></div>)}</div>
         </div>
       )}
-            {tab==="profile" && (
-        <div style={{background:"white",minHeight:"100vh"}}>
-          <div style={{display:"flex",justifyContent:"space-between",padding:"12px 14px"}}><span>+</span><b>knmahesh30 ⌄</b><span>☰</span></div>
-          <div style={{display:"flex",gap:16,padding:"8px 14px"}}>
-            <div style={{width:80,height:80,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"serif",fontSize:30}}>M</div>
-            <div style={{flex:1}}><b>Kn Mahesh</b><div style={{display:"flex",gap:20,marginTop:8}}><div><b>{posts.filter((p:any)=>p.username===myUser).length}</b><div style={{fontSize:13}}>posts</div></div><div><b>3</b><div style={{fontSize:13}}>followers</div></div><div><b>22</b><div style={{fontSize:13}}>following</div></div></div></div>
+                  {editOpen && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div style={{background:"white",borderRadius:14,padding:20,width:"100%",maxWidth:360}}>
+            <h3 style={{color:"black"}}>Edit Profile - Photo Life Long Save Avuthundi</h3>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:14}}>
+              <label style={{cursor:"pointer",position:"relative"}}>
+                <img src={editAvatar || myAvatar || "https://i.pravatar.cc/100"} style={{width:90,height:90,borderRadius:"50%",objectFit:"cover",border:"2px solid #ddd"}}/>
+                <div style={{position:"absolute",bottom:0,right:0,background:"black",color:"white",borderRadius:"50%",width:28,height:28,display:"flex",alignItems:"center",justifyContent:"center"}}>📷</div>
+                <input type="file" hidden accept="image/*" onChange={handleAvatarChange}/>
+              </label>
+            </div>
+            <input value={editUsername} onChange={e=>setEditUsername(e.target.value)} placeholder="Username" style={{width:"100%",padding:"12px",marginBottom:10,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
+            <input value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Bio" style={{width:"100%",padding:"12px",marginBottom:14,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
+            <div style={{display:"flex",gap:10}}>
+              <button onClick={()=>setEditOpen(false)} style={{flex:1,padding:12,borderRadius:8,border:"1px solid #ddd",background:"white",color:"black"}}>Cancel</button>
+              <button onClick={handleSaveProfile} style={{flex:1,padding:12,borderRadius:8,background:"black",color:"white",border:"none"}}>Save - Life Long</button>
+            </div>
           </div>
-          <div style={{display:"flex",gap:8,padding:"14px"}}><button onClick={()=>setEditOpen(true)} style={{flex:1,padding:"8px 0",borderRadius:8,background:"#efefef",border:"none",fontWeight:600}}>Edit profile</button><button style={{flex:1,padding:"8px 0",borderRadius:8,background:"#efefef",border:"none",fontWeight:600}}>Share profile</button></div>
-          <div style={{display:"flex",gap:10,padding:"0 14px",overflowX:"auto"}}>{allUsers.slice(0,4).map((u:any)=><div key={u.username} style={{minWidth:130,border:"1px solid #dbdbdb",borderRadius:12,padding:10,textAlign:"center"}}><img src={u.avatar_url || `https://i.pravatar.cc/100?u=${u.username}`} style={{width:60,height:60,borderRadius:"50%",margin:"0 auto"}}/><div style={{fontWeight:600,fontSize:12,marginTop:6}}>{u.username}</div><button onClick={()=>toggleFollow(u.username)} style={{width:"100%",marginTop:8,padding:"6px 0",borderRadius:8,background:following.includes(u.username)?"#efefef":"#0095f6",color:following.includes(u.username)?"black":"white",border:"none",fontWeight:700,fontSize:12}}>{following.includes(u.username)?"Following":"Follow"}</button></div>)}</div>
-          <div style={{display:"flex",borderTop:"1px solid #efefef",marginTop:14}}><div style={{flex:1,textAlign:"center",padding:"12px 0",borderBottom:"1.5px solid black"}}>▦</div><div style={{flex:1,textAlign:"center",padding:"12px 0",opacity:0.4}}>▶</div><div style={{flex:1,textAlign:"center",padding:"12px 0",opacity:0.4}}>↻</div></div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>{posts.filter((p:any)=>p.username===myUser).map((p:any)=><img key={p.id} src={p.image_url} style={{width:"100%",aspectRatio:"1/1",objectFit:"cover"}} onClick={()=>setZoomImg(p.image_url)}/>)}</div>
         </div>
       )}
 
