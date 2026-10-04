@@ -13,8 +13,8 @@ export default function Page(){
   const [liked, setLiked] = useState<number[]>([])
   const [saved, setSaved] = useState<number[]>([])
   const [showComments, setShowComments] = useState<number|null>(null)
-  const [commentText, setCommentText] = useState<{[key:number]:string}>({})
-  const [comments, setComments] = useState<{[key:number]:string[]}>({})
+  const [commentText, setCommentText] = useState<any>({})
+  const [comments, setComments] = useState<any>({})
   const [editOpen, setEditOpen] = useState(false)
   const [showAddPost, setShowAddPost] = useState(false)
   const [newPostContent, setNewPostContent] = useState("")
@@ -28,16 +28,18 @@ export default function Page(){
 
   useEffect(()=>{ loadAll() },[])
   async function loadAll(){
-    const {data:prof}=await supabase.from("profiles").select("*").eq("username",myUser).single()
-    if(prof){ setMyAvatar(prof.avatar_url||""); setEditAvatar(prof.avatar_url||""); setEditBio(prof.bio||"My Bio"); setEditUsername(prof.username) }
-    const {data:p}=await supabase.from("posts").select("*").order("id",{ascending:false})
-    if(p) setPosts(p)
-    const {data:users}=await supabase.from("profiles").select("*")
-    if(users) setAllUsers(users)
-    const {data:f}=await supabase.from("follows").select("*").eq("follower_username",myUser)
-    if(f) setFollowing(f.map((x:any)=>x.following_username))
-    const {data:l}=await supabase.from("likes").select("*").eq("username",myUser)
-    if(l) setLiked(l.map((x:any)=>x.post_id))
+    try{
+      const {data:prof}=await supabase.from("profiles").select("*").eq("username",myUser).single()
+      if(prof){ setMyAvatar(prof.avatar_url||""); setEditAvatar(prof.avatar_url||""); setEditBio(prof.bio||"My Bio"); setEditUsername(prof.username) }
+      const {data:p}=await supabase.from("posts").select("*").order("id",{ascending:false})
+      if(p) setPosts(p)
+      const {data:users}=await supabase.from("profiles").select("*")
+      if(users) setAllUsers(users)
+      const {data:f}=await supabase.from("follows").select("*").eq("follower_username",myUser)
+      if(f) setFollowing(f.map((x:any)=>x.following_username))
+      const {data:l}=await supabase.from("likes").select("*").eq("username",myUser)
+      if(l) setLiked(l.map((x:any)=>x.post_id))
+    }catch(e){}
   }
   async function handleAvatarChange(e:any){ const file=e.target.files[0]; if(!file) return; setEditAvatarFile(file); setEditAvatar(URL.createObjectURL(file)) }
   async function handleSaveProfile(){
@@ -45,10 +47,13 @@ export default function Page(){
     if(editAvatarFile){
       const fileName=`${myUser}_${Date.now()}.jpg`
       await supabase.storage.from("chitpix").upload(fileName,editAvatarFile)
-      const {data}=supabase.storage.from("chitpix").getPublicUrl(fileName); finalAvatar=data.publicUrl
+      const {data}=supabase.storage.from("chitpix").getPublicUrl(fileName)
+      finalAvatar=data.publicUrl
     }
     await supabase.from("profiles").update({username:editUsername,bio:editBio,avatar_url:finalAvatar}).eq("username",myUser)
-    setMyAvatar(finalAvatar); setEditOpen(false); loadAll()
+    setMyAvatar(finalAvatar)
+    setEditOpen(false)
+    loadAll()
   }
   async function toggleFollow(u:string){
     if(following.includes(u)){ await supabase.from("follows").delete().eq("follower_username",myUser).eq("following_username",u); setFollowing(following.filter(f=>f!==u)) }
@@ -60,8 +65,11 @@ export default function Page(){
   }
   function toggleSave(id:number){ if(saved.includes(id)) setSaved(saved.filter(x=>x!==id)); else setSaved([...saved,id]) }
   function handleAddComment(postId:number){
-    const txt=commentText[postId]; if(!txt?.trim()) return
-    const prev=comments[postId]||[]; setComments({...comments,[postId]:[...prev,`${myUser}: ${txt}`]}); setCommentText({...commentText,[postId]:""})
+    const txt=commentText[postId]
+    if(!txt?.trim()) return
+    const prev=comments[postId]||[]
+    setComments({...comments,[postId]:[...prev,`${myUser}: ${txt}`]})
+    setCommentText({...commentText,[postId]:""})
   }
   async function handleAddPost(){
     if(!newPostImage.trim()){alert("Image URL pettu"); return}
@@ -76,75 +84,76 @@ export default function Page(){
   function handleDownload(url:string){ const a=document.createElement("a"); a.href=url; a.download="chitpix.jpg"; a.target="_blank"; a.click() }
   function handleRepost(p:any){ const newP={...p,id:Date.now(),content:"Reposted: "+p.content}; setPosts([newP,...posts]); alert("Reposted!") }
 
-  const iconStyle={width:26,height:26,cursor:"pointer",display:"inline-block"}
-
   return(
     <div style={{minHeight:"100vh",background:"white",maxWidth:480,margin:"0 auto",position:"relative",paddingBottom:80,fontFamily:"sans-serif"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px",position:"sticky",top:0,background:"white",zIndex:20,borderBottom:"1px solid #efefef"}}>
         <span onClick={()=>setShowAddPost(true)} style={{fontSize:28,cursor:"pointer",color:"black"}}>+</span>
         <b style={{fontFamily:"cursive",fontSize:28,color:"black"}}>Instagram</b>
-        <span style={{cursor:"pointer"}}>❤️</span>
+        <span>❤️</span>
       </div>
 
       {tab==="home" && (
         <div>
           <div style={{display:"flex",gap:14,padding:"12px 10px",overflowX:"auto",borderBottom:"1px solid #efefef"}}>
             <div style={{minWidth:66,textAlign:"center"}}><div style={{width:62,height:62,borderRadius:"50%",background:"black",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:24}}>M</div><div style={{fontSize:12,marginTop:6,color:"black"}}>Your story</div></div>
-            {allUsers.map((u:any)=><div key={u.username} style={{minWidth:66,textAlign:"center"}}><div style={{width:62,height:62,borderRadius:"50%",padding:2.5,background:"linear-gradient(45deg,#feda75,#d62976,#4f5bd5)",margin:"0 auto"}}><img src={u.avatar_url||`https://i.pravatar.cc/100?u=${u.username}`} style={{width:"100%",height:"100%",borderRadius:"50%",border:"2px solid white",objectFit:"cover"}}/></div><div style={{fontSize:11,color:"black",marginTop:4}}>{u.username.slice(0,8)}</div></div>)}
-          </div>
-          {posts.map((p:any)=>{
-            const isLiked=liked.includes(p.id); const isSaved=saved.includes(p.id)
-            return(
-              <div key={p.id} style={{borderBottom:"8px solid #fafafa"}}>
-                <div style={{display:"flex",alignItems:"center",padding:"10px 12px",gap:10}}><div style={{width:34,height:34,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>{p.username[0]}</div><b style={{fontSize:14,color:"black"}}>{p.username}</b><button onClick={()=>toggleFollow(p.username)} style={{marginLeft:"auto",padding:"6px 14px",borderRadius:8,background:following.includes(p.username)?"#efefef":"#0095f6",color:following.includes(p.username)?"black":"white",border:"none",fontWeight:700,fontSize:13}}>{following.includes(p.username)?"Following":"Follow"}</button></div>
-                <img src={p.image_url} style={{width:"100%",display:"block"}} onClick={()=>setZoomImg(p.image_url)}/>
-                {/* 5 ICONS SAME SIZE + ALL WORKING */}
-                <div style={{display:"flex",justifyContent:"space-between",padding:"12px 14px"}}>
-                  <div style={{display:"flex",gap:18,alignItems:"center"}}>
-                    <span style={iconStyle} onClick={()=>toggleLike(p.id)}>{isLiked?"❤️":"🤍"}</span>
-                    <span style={iconStyle} onClick={()=>setShowComments(showComments===p.id?null:p.id)}>💬</span>
-                    <span style={iconStyle} onClick={()=>handleRepost(p)}>🔁</span>
-                    <span style={iconStyle} onClick={()=>setShareOpen(p)}>✈️</span>
-                    <span style={iconStyle} onClick={()=>handleDownload(p.image_url)}>⬇️</span>
-                  </div>
-                  <span style={iconStyle} onClick={()=>toggleSave(p.id)}>{isSaved?"🔖":"📑"}</span>
+            {allUsers.map((u:any)=>(
+              <div key={u.username} style={{minWidth:66,textAlign:"center"}}>
+                <div style={{width:62,height:62,borderRadius:"50%",padding:2.5,background:"linear-gradient(45deg,#feda75,#d62976,#4f5bd5)",margin:"0 auto"}}>
+                  <img src={u.avatar_url||`https://i.pravatar.cc/100?u=${u.username}`} style={{width:"100%",height:"100%",borderRadius:"50%",border:"2px solid white",objectFit:"cover"}}/>
                 </div>
-                <div style={{padding:"0 12px 8px",color:"black",fontSize:14}}><b>{p.username}</b> {p.content}</div>
-                {(comments[p.id]||[]).map((c,i)=><div key={i} style={{padding:"2px 12px",fontSize:13,color:"black"}}>{c}</div>)}
-                {showComments===p.id && <div style={{display:"flex",gap:8,padding:"8px 12px"}}><input value={commentText[p.id]||""} onChange={e=>setCommentText({...commentText,[p.id]:e.target.value})} placeholder="Add comment..." style={{flex:1,padding:"8px",borderRadius:20,border:"1px solid #ddd",color:"black",background:"white"}}/><button onClick={()=>handleAddComment(p.id)} style={{color:"#0095f6",background:"none",border:"none",fontWeight:700}}>Post</button></div>}
+                <div style={{fontSize:11,color:"black",marginTop:4}}>{u.username.slice(0,8)}</div>
               </div>
-            )
-          })}
+            ))}
+          </div>
+          {posts.map((p:any)=>(
+            <div key={p.id} style={{borderBottom:"8px solid #fafafa"}}>
+              <div style={{display:"flex",alignItems:"center",padding:"10px 12px",gap:10}}>
+                <div style={{width:34,height:34,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>{p.username[0]}</div>
+                <b style={{fontSize:14,color:"black"}}>{p.username}</b>
+                <button onClick={()=>toggleFollow(p.username)} style={{marginLeft:"auto",padding:"6px 14px",borderRadius:8,background:following.includes(p.username)?"#efefef":"#0095f6",color:following.includes(p.username)?"black":"white",border:"none",fontWeight:700,fontSize:13}}>{following.includes(p.username)?"Following":"Follow"}</button>
+              </div>
+              <img src={p.image_url} style={{width:"100%",display:"block"}} onClick={()=>setZoomImg(p.image_url)}/>
+              <div style={{display:"flex",justifyContent:"space-between",padding:"12px 14px"}}>
+                <div style={{display:"flex",gap:18,alignItems:"center"}}>
+                  <span onClick={()=>toggleLike(p.id)} style={{fontSize:24,cursor:"pointer"}}>{liked.includes(p.id)?"❤️":"🤍"}</span>
+                  <span onClick={()=>setShowComments(showComments===p.id?null:p.id)} style={{fontSize:24,cursor:"pointer"}}>💬</span>
+                  <span onClick={()=>handleRepost(p)} style={{fontSize:24,cursor:"pointer"}}>🔁</span>
+                  <span onClick={()=>setShareOpen(p)} style={{fontSize:24,cursor:"pointer"}}>✈️</span>
+                  <span onClick={()=>handleDownload(p.image_url)} style={{fontSize:24,cursor:"pointer"}}>⬇️</span>
+                </div>
+                <span onClick={()=>toggleSave(p.id)} style={{fontSize:24,cursor:"pointer"}}>{saved.includes(p.id)?"🔖":"📑"}</span>
+              </div>
+              <div style={{padding:"0 12px 8px",color:"black",fontSize:14}}><b>{p.username}</b> {p.content}</div>
+              {(comments[p.id]||[]).map((c:any,i:number)=><div key={i} style={{padding:"2px 12px",fontSize:13,color:"black"}}>{c}</div>)}
+              {showComments===p.id && <div style={{display:"flex",gap:8,padding:"8px 12px"}}><input value={commentText[p.id]||""} onChange={(e)=>setCommentText({...commentText,[p.id]:e.target.value})} placeholder="Add comment..." style={{flex:1,padding:"8px",borderRadius:20,border:"1px solid #ddd",color:"black",background:"white"}}/><button onClick={()=>handleAddComment(p.id)} style={{color:"#0095f6",background:"none",border:"none",fontWeight:700}}>Post</button></div>}
+            </div>
+          ))}
         </div>
       )}
 
       {tab==="reels" && (
         <div style={{background:"black",minHeight:"100vh"}}>
           <div style={{display:"flex",gap:20,padding:"12px 14px",color:"white",fontSize:18}}><b>Reels</b><span style={{opacity:0.6}}>Friends</span></div>
-          {posts.map((p:any)=>{
-            const isLiked=liked.includes(p.id)
-            return(
-              <div key={p.id} style={{position:"relative",height:"75vh",marginBottom:10}}>
-                <img src={p.image_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-                <div style={{position:"absolute",right:12,bottom:80,display:"flex",flexDirection:"column",gap:20,alignItems:"center"}}>
-                  <div onClick={()=>toggleLike(p.id)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:28,color:"white"}}>{isLiked?"❤️":"🤍"}</div><div style={{color:"white",fontSize:12}}>55.9K</div></div>
-                  <div onClick={()=>setShowComments(showComments===p.id?null:p.id)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:26,color:"white"}}>💬</div><div style={{color:"white",fontSize:12}}>181</div></div>
-                  <div onClick={()=>setShareOpen(p)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:26,color:"white"}}>✈️</div><div style={{color:"white",fontSize:12}}>34K</div></div>
-                  <div onClick={()=>handleDownload(p.image_url)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:26,color:"white"}}>⬇️</div><div style={{color:"white",fontSize:12}}>Save</div></div>
-                  <div onClick={()=>toggleSave(p.id)} style={{fontSize:24}}>{saved.includes(p.id)?"🔖":"📑"}</div>
-                </div>
-                <div style={{position:"absolute",bottom:20,left:14,right:80,color:"white"}}><b>{p.username}</b> <span style={{fontSize:13}}>{p.content}</span></div>
-                {showComments===p.id && <div style={{position:"absolute",bottom:0,left:0,right:0,background:"white",padding:10,display:"flex",gap:8}}><input value={commentText[p.id]||""} onChange={e=>setCommentText({...commentText,[p.id]:e.target.value})} placeholder="Comment..." style={{flex:1,padding:8,borderRadius:20,border:"1px solid #ddd",color:"black"}}/><button onClick={()=>handleAddComment(p.id)} style={{color:"#0095f6",fontWeight:700,background:"none",border:"none"}}>Post</button></div>}
+          {posts.map((p:any)=>(
+            <div key={p.id} style={{position:"relative",height:"75vh",marginBottom:10}}>
+              <img src={p.image_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              <div style={{position:"absolute",right:12,bottom:80,display:"flex",flexDirection:"column",gap:20,alignItems:"center"}}>
+                <div onClick={()=>toggleLike(p.id)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:28,color:"white"}}>{liked.includes(p.id)?"❤️":"🤍"}</div><div style={{color:"white",fontSize:12}}>55.9K</div></div>
+                <div onClick={()=>setShowComments(showComments===p.id?null:p.id)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:26,color:"white"}}>💬</div><div style={{color:"white",fontSize:12}}>181</div></div>
+                <div onClick={()=>setShareOpen(p)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:26,color:"white"}}>✈️</div><div style={{color:"white",fontSize:12}}>34K</div></div>
+                <div onClick={()=>handleDownload(p.image_url)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:26,color:"white"}}>⬇️</div><div style={{color:"white",fontSize:12}}>Save</div></div>
               </div>
-            )
-          })}
+              <div style={{position:"absolute",bottom:20,left:14,right:80,color:"white"}}><b>{p.username}</b> <span style={{fontSize:13}}>{p.content}</span></div>
+            </div>
+          ))}
         </div>
       )}
 
       {tab==="messages" && (
         <div style={{background:"white",minHeight:"80vh",padding:14}}>
           <div style={{display:"flex",background:"#efefef",borderRadius:20,padding:"12px 14px",alignItems:"center",gap:10}}>
-            <span>🔍</span><input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="Search or ask Meta AI" style={{flex:1,background:"transparent",border:"none",outline:"none",color:"black"}}/>
+            <span>🔍</span>
+            <input value={searchText} onChange={(e)=>setSearchText(e.target.value)} placeholder="Search or ask Meta AI" style={{flex:1,background:"transparent",border:"none",outline:"none",color:"black"}}/>
           </div>
           <div style={{textAlign:"right",color:"#0095f6",marginTop:12,fontWeight:600}}>Requests</div>
           <div style={{marginTop:20}}>
@@ -152,15 +161,26 @@ export default function Page(){
               <div key={u.username} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:"1px solid #f0f0f0"}}>
                 <img src={u.avatar_url||`https://i.pravatar.cc/100?u=${u.username}`} style={{width:48,height:48,borderRadius:"50%"}}/>
                 <div><b style={{color:"black",fontSize:14}}>{u.username}</b><div style={{fontSize:12,color:"#666"}}>Active now</div></div>
-                <button onClick={()=>{alert("Message to "+u.username);}} style={{marginLeft:"auto",background:"#0095f6",color:"white",border:"none",borderRadius:20,padding:"8px 16px",fontWeight:600}}>Message</button>
-                <button onClick={()=>setShareOpen({username:u.username})} style={{background:"#efefef",border:"none",borderRadius:20,padding:"8px 12px"}}>Share</button>
+                <button onClick={()=>alert("Message to "+u.username)} style={{marginLeft:"auto",background:"#0095f6",color:"white",border:"none",borderRadius:20,padding:"8px 16px",fontWeight:600}}>Message</button>
+                <button onClick={()=>setShareOpen({username:u.username,image_url:u.avatar_url})} style={{background:"#efefef",border:"none",borderRadius:20,padding:"8px 12px",color:"black"}}>Share</button>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {tab==="search" && <div style={{padding:20}}><input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="Search" style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid #ddd",color:"black",background:"white"}}/>{allUsers.filter((u:any)=>u.username.includes(searchText)).map((u:any)=><div key={u.username} style={{display:"flex",gap:10,padding:"10px 0",color:"black"}}><img src={u.avatar_url||`https://i.pravatar.cc/100?u=${u.username}`} style={{width:40,height:40,borderRadius:"50%"}}/><b>{u.username}</b><button onClick={()=>toggleFollow(u.username)} style={{marginLeft:"auto",padding:"6px 12px",borderRadius:8,background:following.includes(u.username)?"#efefef":"#0095f6",color:following.includes(u.username)?"black":"white",border:"none"}}>{following.includes(u.username)?"Following":"Follow"}</button></div>)}</div>}
+      {tab==="search" && (
+        <div style={{padding:20}}>
+          <input value={searchText} onChange={(e)=>setSearchText(e.target.value)} placeholder="Search" style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid #ddd",color:"black",background:"white"}}/>
+          {allUsers.filter((u:any)=>u.username.includes(searchText)).map((u:any)=>(
+            <div key={u.username} style={{display:"flex",gap:10,padding:"10px 0",color:"black"}}>
+              <img src={u.avatar_url||`https://i.pravatar.cc/100?u=${u.username}`} style={{width:40,height:40,borderRadius:"50%"}}/>
+              <b>{u.username}</b>
+              <button onClick={()=>toggleFollow(u.username)} style={{marginLeft:"auto",padding:"6px 12px",borderRadius:8,background:following.includes(u.username)?"#efefef":"#0095f6",color:following.includes(u.username)?"black":"white",border:"none"}}>{following.includes(u.username)?"Following":"Follow"}</button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {tab==="profile" && (
         <div style={{background:"white",minHeight:"80vh"}}>
@@ -216,4 +236,10 @@ export default function Page(){
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
           <div style={{background:"white",borderRadius:16,padding:20,width:"100%",maxWidth:360}}>
             <h3 style={{color:"black"}}>Edit Profile - Life Long Save</h3>
-            <div style={{display:"flex",justifyContent:"
+            <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+              <label style={{cursor:"pointer"}}>
+                <img src={editAvatar||myAvatar||"https://i.pravatar.cc/100"} style={{width:90,height:90,borderRadius:"50%",objectFit:"cover"}}/>
+                <div style={{textAlign:"center",color:"#0095f6",fontSize:13,marginTop:6}}>Change Photo</div>
+                <input type="file" hidden accept="image/*" onChange={handleAvatarChange}/>
+              </label>
+            </div>
