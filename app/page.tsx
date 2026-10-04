@@ -42,27 +42,17 @@ export default function Page(){
     setEditAvatarFile(file); setEditAvatar(URL.createObjectURL(file))
   }
 
-  async function handleSaveProfile(){
+    async function handleSaveProfile(){
     let finalAvatar = myAvatar
     if(editAvatarFile){
       const fileName = `${myUser}_${Date.now()}.jpg`
-      await supabase.storage.from("chitpix").upload(fileName, editAvatarFile, { upsert: true })
+      await supabase.storage.from("chitpix").upload(fileName, editAvatarFile)
       const { data } = supabase.storage.from("chitpix").getPublicUrl(fileName)
       finalAvatar = data.publicUrl
     }
-      await supabase.from("profiles").update({ username: editUsername, bio: editBio, avatar_url: finalAvatar }).eq("username", myUser)
-      setMyAvatar(finalAvatar); setEditOpen(false); loadAll()
-  }
-
-  async function toggleFollow(u:string){
-    if(following.includes(u)){
-      await supabase.from("follows").delete().eq("follower_username",myUser).eq("following_username",u)
-      setFollowing(following.filter(f=>f!==u))
-    } else {
-      await supabase.from("follows").insert({follower_username:myUser, following_username:u})
-      setFollowing([...following, u])
+    await supabase.from("profiles").update({ username: editUsername, bio: editBio, avatar_url: finalAvatar }).eq("username", myUser)
+    setMyAvatar(finalAvatar); setEditOpen(false); loadAll()
     }
-  }
 
   async function toggleLike(postId:number){
     if(liked.includes(postId)){
