@@ -126,18 +126,24 @@ export default function Page(){
     setProfile({...profile, username:u}); setShowLogin(false)
   }
   async function handleFollow(userToFollow:string){
-    const myUser = localStorage.getItem("chitpix_user") || "@knmahesh30"
-    if(userToFollow===myUser){ alert("Nee account ne follow cheyalevu 😅"); return }
-    const check = await supabase.from("follows").select("*").eq("follower_username", myUser).eq("following_username", userToFollow)
-    if(check.data && check.data.length>0){
-      await supabase.from("follows").delete().eq("follower_username", myUser).eq("following_username", userToFollow)
-      alert("Unfollowed!")
-    } else {
-      await supabase.from("follows").insert({follower_username:myUser, following_username:userToFollow})
-      alert("Followed! ✅")
-    }
-    load()
+  const myUser = localStorage.getItem("chitpix_user") || "@knmahesh30"
+  if(userToFollow===myUser){ alert("Nee account ne follow cheyalevu bro 😅"); return }
+  const check = await supabase.from("follows").select("*").eq("follower_username", myUser).eq("following_username", userToFollow)
+  if(check.data && check.data.length>0){
+    await supabase.from("follows").delete().eq("follower_username", myUser).eq("following_username", userToFollow)
+    setFollowing(following.filter((f:any)=>f!==userToFollow))
+    alert("Unfollowed!")
+  } else {
+    await supabase.from("follows").insert({follower_username:myUser, following_username:userToFollow})
+    setFollowing([...following, userToFollow])
+    alert("Followed! ✅")
   }
+}
+function viewProfileOf(username:string){
+  setSearchText(username.replace("@",""))
+  setTab("search")
+}
+    
   async function handleDownload(url:string){
     try{
       const a=document.createElement("a")
