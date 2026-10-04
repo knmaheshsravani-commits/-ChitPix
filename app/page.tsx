@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import { supabase } from './lib/supabaseClient'
+import { supabase } from "../lib/supabase"
 
 export default function Page(){
   const [tab,setTab]=useState("home")
