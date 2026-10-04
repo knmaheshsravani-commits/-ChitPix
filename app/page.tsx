@@ -137,7 +137,40 @@ export default function Page(){
 
       {tab==="search" && <div style={{padding:12}}><input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="Search..." style={{width:"100%", background:"#f4f4f5", padding:10, borderRadius:12, border:"none"}}/><div style={{marginTop:12}}>{filtered.map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}><b>{p.username}</b> - {p.content}</div>)}</div></div>}
 
-      {tab==="reels" && <div style={{padding:12}}><h3 style={{fontWeight:"bold"}}>Reels 🎬</h3>{posts.filter((p:any)=>p.image_url?.includes("mp4")||p.image_url?.includes("video")).map((p:any)=><div key={p.id} style={{border:"1px solid #eee", borderRadius:16, marginBottom:12}}><video src={p.image_url} controls style={{width:"100%", height:400, background:"black"}}/><div style={{padding:10}}><b>{p.username}</b></div></div>)}</div>}
+      {tab==="reels" && <div style={{background:"black", minHeight:"90vh"}}>
+  {posts.filter((p:any)=>p.image_url).slice(0,10).map((p:any)=><div key={p.id} style={{position:"relative", height:"85vh", background:"black", marginBottom:8, overflow:"hidden"}}>
+    {p.image_url.includes(".mp4") || p.image_url.includes("video") ? 
+      <video src={p.image_url} autoPlay loop muted playsInline style={{width:"100%", height:"100%", objectFit:"cover"}}/> :
+      <img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}}/>
+    }
+    {/* Right Side Icons - FB/Insta Style */}
+    <div style={{position:"absolute", right:10, bottom:80, display:"flex", flexDirection:"column", gap:18, alignItems:"center"}}>
+      <button onClick={()=>handleLike(p.id, p.likes||0)} style={{display:"flex", flexDirection:"column", alignItems:"center", background:"none", border:"none", color:"white"}}>
+        <div style={{width:44, height:44, background:"rgba(255,255,255,0.15)", borderRadius:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:22}}>
+          {likedIds.includes(p.id) ? "❤️" : "🤍"}
+        </div>
+        <span style={{fontSize:12, marginTop:4, fontWeight:"bold"}}>{p.likes||0}</span>
+      </button>
+      <button onClick={()=>setCommentOpen(p.id)} style={{display:"flex", flexDirection:"column", alignItems:"center", background:"none", border:"none", color:"white"}}>
+        <div style={{width:44, height:44, background:"rgba(255,255,255,0.15)", borderRadius:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20}}>💬</div>
+        <span style={{fontSize:12, marginTop:4, fontWeight:"bold"}}>{comments.filter((c:any)=>c.post_id===p.id).length}</span>
+      </button>
+      <button onClick={()=>handleShare(p)} style={{display:"flex", flexDirection:"column", alignItems:"center", background:"none", border:"none", color:"white"}}>
+        <div style={{width:44, height:44, background:"rgba(255,255,255,0.15)", borderRadius:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20}}>↗️</div>
+        <span style={{fontSize:12, marginTop:4, fontWeight:"bold"}}>Share</span>
+      </button>
+      <button style={{display:"flex", flexDirection:"column", alignItems:"center", background:"none", border:"none", color:"white"}}>
+        <div style={{width:44, height:44, background:"rgba(255,255,255,0.15)", borderRadius:22, display:"flex", alignItems:"center", justifyContent:"center", fontSize:20}}>🔖</div>
+        <span style={{fontSize:12, marginTop:4, fontWeight:"bold"}}>Save</span>
+      </button>
+    </div>
+    {/* Bottom User Info */}
+    <div style={{position:"absolute", left:12, bottom:20, color:"white"}}>
+      <div style={{display:"flex", alignItems:"center", gap:8}}><b>{p.username}</b><button style={{border:"1px solid white", background:"none", color:"white", padding:"2px 12px", borderRadius:12, fontSize:11}}>Follow</button></div>
+      <div style={{fontSize:12, marginTop:4, maxWidth:"70%"}}>{p.content}</div>
+    </div>
+  </div>)}
+</div>}
 
       {tab==="likes" && <div style={{padding:12}}><h3 style={{fontWeight:"bold"}}>Liked ❤️</h3>{posts.filter((p:any)=>likedIds.includes(p.id)).map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}>{p.content}</div>)}</div>}
 
