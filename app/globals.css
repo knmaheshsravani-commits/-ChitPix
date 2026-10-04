@@ -9,6 +9,10 @@ html, body {
   color: white;
   height: 100%;
   width: 100%;
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 * {
