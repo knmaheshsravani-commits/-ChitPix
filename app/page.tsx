@@ -1,116 +1,211 @@
 "use client"
 import { useState, useEffect } from "react"
-import { supabase } from "../lib/supabase"
+import { createClient } from "@supabase/supabase-js"
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
 export default function Page(){
-  const myUser="mahesh"
-  const [myAvatar,setMyAvatar]=useState("")
-  const [posts,setPosts]=useState<any[]>([])
-  const [allUsers,setAllUsers]=useState<any[]>([])
   const [tab,setTab]=useState("home")
-  const [following,setFollowing]=useState<string[]>([])
-  const [liked,setLiked]=useState<number[]>([])
-  const [saved,setSaved]=useState<number[]>([])
-  const [comments,setComments]=useState<any>({})
+  const [posts,setPosts]=useState<any[]>([])
+  const [stories,setStories]=useState<any[]>([])
+  const [text,setText]=useState("")
+  const [searchText,setSearchText]=useState("")
+  const [likedIds,setLikedIds]=useState<number[]>([])
+  const [username,setUsername]=useState("@knmahesh30")
+  const [profile,setProfile]=useState<any>({username:"@knmahesh30", name:"Mahesh", avatar_url:"", bio:"I love ChitPix 🌸"})
+  const [editData,setEditData]=useState<any>({username:"@knmahesh30", name:"Mahesh", avatar_url:"", bio:""})
+  const [showEdit,setShowEdit]=useState(false)
+  const [uploading,setUploading]=useState(false)
   const [commentText,setCommentText]=useState("")
-  const [openComment,setOpenComment]=useState<number|null>(null)
-  const [showAdd,setShowAdd]=useState(false)
-  const [newCap,setNewCap]=useState("")
-  const [newImg,setNewImg]=useState("")
-  const [zoom,setZoom]=useState("")
-  const [search,setSearch]=useState("")
-  const [msgUser,setMsgUser]=useState<any>(null)
-  const [msgText,setMsgText]=useState("")
-  const [msgs,setMsgs]=useState<any[]>([])
-  const [editOpen,setEditOpen]=useState(false)
-  const [editBio,setEditBio]=useState("My Bio")
-  const [notifs,setNotifs]=useState<string[]>(["knmahesh30 liked your post","tom_ liked your story"])
+  const [commentOpen,setCommentOpen]=useState<any>(null)
+  const [comments,setComments]=useState<any[]>([])
+  const [viewStory,setViewStory]=useState<any>(null)
+  const [flowerAnim,setFlowerAnim]=useState<number|null>(null)
+  const [showLogin,setShowLogin]=useState(false)
+  const [loginName,setLoginName]=useState("")
+  const [followersCount,setFollowersCount]=useState(0)
+  const [followingCount,setFollowingCount]=useState(0)
+  const [following, setFollowing] = useState<string[]>([])
+  const [mutedReels, setMutedReels] = useState<{[k:string]:boolean}>({})
+  const [playingReels, setPlayingReels] = useState<{[k:string]:boolean}>({})
+  const [showHeart, setShowHeart] = useState<string|null>(null)
+  const [followersList, setFollowersList] = useState<any[]>([])
 
-  useEffect(()=>{ load() },[])
   async function load(){
-    const p=await supabase.from("profiles").select("*").eq("username",myUser).single()
-    if(p.data) setMyAvatar(p.data.avatar_url||"")
-    const postsData=await supabase.from("posts").select("*").order("id",{ascending:false})
-    if(postsData.data) setPosts(postsData.data.filter((x:any)=>x.image_url))
-    const users=await supabase.from("profiles").select("*")
-    if(users.data) setAllUsers(users.data)
-    const f=await supabase.from("follows").select("*").eq("follower_username",myUser)
-    if(f.data) setFollowing(f.data.map((a:any)=>a.following_username))
-    const l=await supabase.from("likes").select("*").eq("username",myUser)
-    if(l.data) setLiked(l.data.map((a:any)=>a.post_id))
+    const d1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
+    if(d1.data) setPosts(d1.data)
+    const d2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30")
+    if(d2.data && d2.data.length > 0){ setProfile(d2.data[0]); setEditData(d2.data[0]) }
+    const d3 = await supabase.from("comments").select("*").order("created_at",{ascending:false})
+    if(d3.data) setComments(d3.data)
+    const d4 = await supabase.from("stories").select("*").order("created_at",{ascending:false})
+    if(d4.data) setStories(d4.data)
+    const saved = localStorage.getItem("chitpix_user")
+    if(saved){ setUsername(saved) } else { setShowLogin(true) }
+    const myUser = localStorage.getItem("chitpix_user") || "@knmahesh30"
+    const f1 = await supabase.from("follows").select("*").eq("following_username", myUser)
+    if(f1.data) setFollowersCount(f1.data.length)
+    const f2 = await supabase.from("follows").select("*").eq("follower_username", myUser)
+    if(f2.data){ setFollowingCount(f2.data.length); setFollowing(f2.data.map((f:any)=>f.following_username)) }
   }
+  useEffect(()=>{ load() }, [])
 
-  const toggleFollow=async(un:string)=>{
-    if(following.includes(un)){
-      await supabase.from("follows").delete().eq("follower_username",myUser).eq("following_username",un)
-      setFollowing(following.filter(f=>f!==un))
-    }else{
-      await supabase.from("follows").insert({follower_username:myUser,following_username:un})
-      setFollowing([...following,un])
-      setNotifs([`You followed ${un}`,...notifs])
-    }
+  async function uploadImage(file:any){
+    setUploading(true)
+    const name = Date.now()+"_"+file.name.replace(/\s/g,"_")
+    await supabase.storage.from("chitpix").upload(name, file, { contentType: file.type, cacheControl: "3600" })
+    const res = supabase.storage.from("chitpix").getPublicUrl(name)
+    setUploading(false)
+    return res.data.publicUrl
   }
-  const toggleLike=async(id:number)=>{
-    if(liked.includes(id)){
-      await supabase.from("likes").delete().eq("username",myUser).eq("post_id",id)
-      setLiked(liked.filter(x=>x!==id))
-    }else{
-      await supabase.from("likes").insert({username:myUser,post_id:id})
-      setLiked([...liked,id])
-    }
+  async function addPost(e:any){
+    const file = e.target.files? e.target.files[0] : null
+    let url = ""
+    if(file){ url = await uploadImage(file) }
+    if(!text.trim() &&!url) return
+    await supabase.from("posts").insert({content:text, image_url:url, username: username || "@knmahesh30", likes: 0})
+    setText(""); load(); setTab("home")
   }
-  const addComment=(id:number)=>{
+  async function addReel(e:any){
+    const file = e.target.files?.[0]
+    if(!file) return
+    alert("Reel uploading...")
+    const url = await uploadImage(file)
+    await supabase.from("posts").insert({ content: "Reel", image_url: url, username: username || "@knmahesh30", likes: 0 })
+    load(); alert("Reel added!")
+  }
+  async function addStory(e:any){
+    const file = e.target.files? e.target.files[0] : null
+    if(!file) return
+    const url = await uploadImage(file)
+    const { error } = await supabase.from("stories").insert({ image_url: url, username: username || "@knmahesh30", created_at: new Date().toISOString() })
+    if(error){ alert("Error: "+error.message); return }
+    load(); alert("Story added! 🟣")
+  }
+  async function saveProfile(){
+    try{
+      let finalUrl = editData.avatar_url
+      if(finalUrl && finalUrl.startsWith("blob:")){
+        const r = await fetch(finalUrl)
+        const b = await r.blob()
+        finalUrl = await uploadImage(new File([b], `avatar_${Date.now()}.jpg`, {type:b.type}))
+      }
+      const finalData = {...editData, avatar_url: finalUrl}
+      await supabase.from("profiles").upsert({username:"@knmahesh30",...finalData})
+      setProfile(finalData as any); setShowEdit(false); alert("Saved! ✅"); load()
+    }catch(e:any){ alert("Error: "+e.message) }
+  }
+  async function handleProfileShare(){
+    const link = window.location.origin
+    const txt = `Chudu na ChitPix Profile! 🌸 ${profile.username} - ${link}`
+    if((navigator as any).share){ try{ await (navigator as any).share({title:"ChitPix", text:txt, url:link}) }catch{} }
+    else { await navigator.clipboard.writeText(txt); alert("Profile Link Copied! ✅") }
+  }
+  async function handleLike(id:any, likes:any){
+    const isLiked = likedIds.includes(id)
+    if(isLiked){ setLikedIds(likedIds.filter((i)=>i!==id)); await supabase.from("posts").update({likes: Math.max(0,likes-1)}).eq("id",id) }
+    else { setLikedIds([...likedIds, id]); await supabase.from("posts").update({likes: likes+1}).eq("id",id) }
+    load()
+  }
+  async function handleFlower(id:any, flowers:any){
+    setFlowerAnim(id); setTimeout(()=>setFlowerAnim(null),1000)
+    await supabase.from("posts").update({flowers: (flowers||0)+1}).eq("id",id); load()
+  }
+  async function handleShare(p:any){
+    if((navigator as any).share){ try{ await (navigator as any).share({title:"ChitPix", text:p.content, url:window.location.href}) }catch{} }
+    else { await navigator.clipboard.writeText(window.location.href); alert("Link Copied!") }
+  }
+  async function addComment(postId:number){
     if(!commentText.trim()) return
-    const c=comments[id]||[]
-    setComments({...comments,[id]:[...c,{user:myUser,text:commentText}]})
-    setCommentText("")
-    setNotifs([`You commented on post ${id}`,...notifs])
+    await supabase.from("comments").insert({post_id:postId, content:commentText, username:username})
+    setCommentText(""); load()
   }
+  function doLogin(){
+    if(!loginName.trim()) return
+    const u = "@"+loginName.replace("@","")
+    setUsername(u); localStorage.setItem("chitpix_user", u)
+    setProfile({...profile, username:u}); setShowLogin(false)
+  }
+  async function handleFollow(userToFollow:string){
+    const myUser = localStorage.getItem("chitpix_user") || "@knmahesh30"
+    if(userToFollow===myUser){ alert("Nee account ne follow cheyalevu 😅"); return }
+    const check = await supabase.from("follows").select("*").eq("follower_username", myUser).eq("following_username", userToFollow)
+    if(check.data && check.data.length>0){
+      await supabase.from("follows").delete().eq("follower_username", myUser).eq("following_username", userToFollow)
+      alert("Unfollowed!")
+    } else {
+      await supabase.from("follows").insert({follower_username:myUser, following_username:userToFollow})
+      alert("Followed! ✅")
+    }
+    load()
+  }
+  async function handleDownload(url:string){
+    try{
+      const a=document.createElement("a")
+      a.href=url
+      a.download="chitpix_"+Date.now()+".jpg"
+      a.target="_blank"
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }catch{
+      window.open(url,"_blank")
+    }
+  }
+  const filtered = posts.filter((p:any)=>{
+    const s = searchText.toLowerCase()
+    return p.content?.toLowerCase().includes(s) || p.username?.toLowerCase().includes(s)
+  })
 
-  return (
-    <div style={{minHeight:"100vh",background:"white",maxWidth:480,margin:"0 auto",paddingBottom:80,fontFamily:"sans-serif"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:12,borderBottom:"1px solid #eee",position:"sticky",top:0,background:"white",zIndex:10}}>
-        <span onClick={()=>setShowAdd(true)} style={{fontSize:26,cursor:"pointer"}}>＋</span>
-        <b style={{fontSize:22,fontWeight:900}}>chitpix<span style={{color:"#a020f0"}}>.com</span></b>
-        <span onClick={()=>setTab("notif")} style={{fontSize:22,cursor:"pointer"}}>❤️</span>
-      </div>
+  return(
+    <div style={{minHeight:"100vh", background:"white", color:"black", paddingBottom:70, fontFamily:"system-ui"}}>
+      <div style={{padding:12, borderBottom:"1px solid #eee", display:"flex", justifyContent:"space-between", position:"sticky", top:0, background:"white", zIndex:10}}><b style={{color:"#9333ea"}}>ChitPix 🌸</b><span style={{fontSize:10, opacity:0.6}}>{username}</span></div>
 
-      {tab==="home" && (
-        <div>
-          <div style={{display:"flex",gap:12,padding:"10px",overflowX:"auto",borderBottom:"1px solid #efefef"}}>
-            <div style={{minWidth:64,textAlign:"center"}}><div style={{width:60,height:60,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto"}}>M</div><div style={{fontSize:11,marginTop:4}}>Your story</div></div>
-            {allUsers.map((u:any)=><div key={u.username} style={{minWidth:64,textAlign:"center"}}><div style={{width:60,height:60,borderRadius:"50%",padding:2,background:"linear-gradient(45deg,#feda75,#d62976,#4f5bd5)",margin:"0 auto"}}><img src={u.avatar_url||"https://i.pravatar.cc/100?u="+u.username} style={{width:"100%",height:"100%",borderRadius:"50%",border:"2px solid white",objectFit:"cover"}}/></div><div style={{fontSize:11,marginTop:4}}>{u.username.slice(0,8)}</div></div>)}
-          </div>
-          {posts.map((p:any)=>(
-            <div key={p.id} style={{borderBottom:"8px solid #fafafa"}}>
-              <div style={{display:"flex",alignItems:"center",padding:10,gap:8}}><div style={{width:32,height:32,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>{p.username[0].toUpperCase()}</div><b style={{fontSize:13}}>{p.username}</b><button onClick={()=>toggleFollow(p.username)} style={{marginLeft:"auto",padding:"5px 12px",borderRadius:6,border:"none",background:following.includes(p.username)?"#efefef":"#0095f6",color:following.includes(p.username)?"black":"white",fontWeight:700,fontSize:12}}>{following.includes(p.username)?"Following":"Follow"}</button></div>
-              <img src={p.image_url} style={{width:"100%",display:"block"}} onClick={()=>setZoom(p.image_url)}/>
-              <div style={{display:"flex",justifyContent:"space-between",padding:"10px 12px"}}><div style={{display:"flex",gap:14}}><span onClick={()=>toggleLike(p.id)} style={{fontSize:22,cursor:"pointer"}}>{liked.includes(p.id)?"❤️":"🤍"}</span><span onClick={()=>setOpenComment(openComment===p.id?null:p.id)} style={{fontSize:20,cursor:"pointer"}}>💬</span><span onClick={()=>{const np:any={id:Date.now(),username:myUser,content:"Reposted: "+p.content,image_url:p.image_url}; setPosts([np,...posts])}} style={{fontSize:20,cursor:"pointer"}}>🔁</span><span onClick={()=>{navigator.clipboard.writeText(p.image_url); alert("Link copied!")}} style={{fontSize:18,cursor:"pointer"}}>✈️</span><span onClick={()=>{const a=document.createElement("a"); a.href=p.image_url; a.target="_blank"; a.click()}} style={{fontSize:16,cursor:"pointer"}}>⬇️</span></div><span onClick={()=>setSaved(saved.includes(p.id)?saved.filter(x=>x!==p.id):[...saved,p.id])} style={{fontSize:20,cursor:"pointer"}}>{saved.includes(p.id)?"🔖":"📑"}</span></div>
-              <div style={{padding:"0 12px",fontSize:13}}><b>{liked.length+12} likes</b></div>
-              <div style={{padding:"2px 12px 8px",fontSize:13}}><b>{p.username}</b> {p.content}</div>
-              {openComment===p.id && (<div style={{padding:"0 12px 10px"}}><div style={{maxHeight:100,overflowY:"auto"}}>{(comments[p.id]||[]).map((c:any,i:number)=><div key={i} style={{fontSize:12,marginBottom:4}}><b>{c.user}</b> {c.text}</div>)}</div><div style={{display:"flex",gap:6,marginTop:6}}><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add comment..." style={{flex:1,padding:8,borderRadius:20,border:"1px solid #ddd",fontSize:12}}/><button onClick={()=>addComment(p.id)} style={{padding:"6px 14px",borderRadius:20,border:"none",background:"#0095f6",color:"white",fontWeight:700}}>Post</button></div></div>)}
+      {tab==="home" && <div style={{display:"flex", gap:12, padding:10, borderBottom:"1px solid #eee", overflowX:"auto"}}><label style={{display:"flex", flexDirection:"column", alignItems:"center", minWidth:50}}><div style={{width:48, height:48, borderRadius:24, background:"#f4f4f5", display:"flex", alignItems:"center", justifyContent:"center", border:"2px dashed #9333ea"}}>+</div><span style={{fontSize:8}}>Add Story</span><input type="file" hidden accept="image/*" onChange={addStory}/></label>{stories.map((s:any)=><div key={s.id} onClick={()=>setViewStory(s)} style={{display:"flex", flexDirection:"column", alignItems:"center", minWidth:50}}><img src={s.image_url} style={{width:48, height:48, borderRadius:24, border:"2px solid #9333ea"}}/><span style={{fontSize:8}}>{s.username.slice(0,8)}</span></div>)}</div>}
+
+      {tab==="home" && <div style={{padding:12, display:"flex", gap:8}}><input value={text} onChange={e=>setText(e.target.value)} placeholder="Em undi bro?" style={{flex:1, background:"#f4f4f5", padding:10, borderRadius:12, border:"none"}}/><button onClick={()=>addPost({target:{files:[]}})} style={{background:"black", color:"white", padding:"0 14px", borderRadius:12}}>Post</button></div>}
+
+      {tab==="home" && posts.map((p:any)=><div key={p.id} style={{padding:12, borderBottom:"1px solid #eee"}}><b style={{fontSize:12}}>{p.username}</b><div style={{fontSize:13}}>{p.content}</div>{p.image_url && <img src={p.image_url} style={{width:"100%", borderRadius:14, marginTop:6}}/>}<div style={{display:"flex", gap:14, marginTop:8}}><button onClick={()=>handleLike(p.id, p.likes||0)} style={{border:"none", background:"none"}}>❤️ {p.likes||0}</button><button onClick={()=>handleFlower(p.id, p.flowers||0)} style={{border:"none", background:"none"}}>🌸 {p.flowers||0}</button><button onClick={()=>setCommentOpen(commentOpen===p.id?null:p.id)} style={{border:"none", background:"none"}}>💬</button><button onClick={()=>handleShare(p)} style={{border:"none", background:"none"}}>↗️</button></div></div>)}
+
+      {tab==="search" && <div style={{padding:12}}><input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="Search..." style={{width:"100%", background:"#f4f4f5", padding:10, borderRadius:12, border:"none"}}/><div style={{marginTop:12}}>{filtered.map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}><b>{p.username}</b> - {p.content}</div>)}</div></div>}
+
+      {tab==="likes" && <div style={{padding:12}}><h3 style={{fontWeight:"bold"}}>Liked ❤️</h3>{posts.filter((p:any)=>likedIds.includes(p.id)).map((p:any)=><div key={p.id} style={{padding:10, borderBottom:"1px solid #eee"}}>{p.content}</div>)}</div>}
+
+      {tab==="reels" && <div style={{background:"black", margin:"-16px"}}>
+        {posts.filter((p:any)=>p.image_url).map((p:any)=>{
+          const isMuted = mutedReels[p.id]?? true
+          const isPlaying = playingReels[p.id]?? true
+          return <div key={p.id} style={{position:"relative", height:"100vh", width:"100%", background:"black", overflow:"hidden"}}
+            onDoubleClick={()=>{ handleLike(p.id, p.likes||0); setShowHeart(p.id); setTimeout(()=>setShowHeart(null), 900) }}
+            onClick={(e:any)=>{ if(e.target.closest("button")) return; const v = document.getElementById("reel_"+p.id) as HTMLVideoElement; if(v){ if(isPlaying){ v.pause() } else { v.play() } setPlayingReels(s=>({...s, [p.id]:!isPlaying})) } }}
+          >
+            {p.image_url.toLowerCase().includes(".mp4")?
+              <video id={"reel_"+p.id} src={p.image_url} autoPlay={isPlaying} loop muted={isMuted} playsInline style={{width:"100%", height:"100%", objectFit:"cover"}} onTimeUpdate={(e:any)=>{ const pct = (e.target.currentTime / e.target.duration) * 100; const bar = document.getElementById("bar_"+p.id) as HTMLDivElement; if(bar) bar.style.width = pct+"%" }}/> :
+              <img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}}/>
+            }
+            {showHeart===p.id && <div style={{position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", fontSize:90, animation:"pop 0.9s ease", pointerEvents:"none"}}>❤️</div>}
+            {!isPlaying && <div style={{position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:70, height:70, background:"rgba(0,0,0,0.5)", borderRadius:35, display:"flex", alignItems:"center", justifyContent:"center", pointerEvents:"none"}}><div style={{width:0, height:0, borderLeft:"22px solid white", borderTop:"14px solid transparent", borderBottom:"14px solid transparent", marginLeft:6}} /></div>}
+            <button onClick={()=>{const v=document.getElementById("reel_"+p.id) as HTMLVideoElement; if(v){ v.muted=!v.muted; setMutedReels(s=>({...s, [p.id]:v.muted}))}}} style={{position:"absolute", top:14, right:14, background:"rgba(0,0,0,0.45)", border:"none", color:"white", width:32, height:32, borderRadius:16, display:"flex", alignItems:"center", justifyContent:"center"}}>{isMuted? "🔇" : "🔊"}</button>
+            <div style={{position:"absolute", right:10, bottom:110, display:"flex", flexDirection:"column", gap:22, alignItems:"center"}}>
+              <button onClick={()=>handleLike(p.id, p.likes||0)} style={{background:"none", border:"none", color:"white", display:"flex", flexDirection:"column", alignItems:"center"}}><svg width="28" height="28" viewBox="0 0 24 24" fill={likedIds.includes(p.id)?"white":"none"} stroke="white" strokeWidth="1.4"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg><span style={{fontSize:13, fontWeight:600, marginTop:4}}>{p.likes||"318K"}</span></button>
+              <button onClick={()=>{setCommentOpen(p.id); setTab("home")}} style={{background:"none", border:"none", color:"white", display:"flex", flexDirection:"column", alignItems:"center"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg><span style={{fontSize:13, fontWeight:600, marginTop:4}}>{comments.filter((c:any)=>c.post_id===p.id).length || "5,627"}</span></button>
+              <button onClick={()=>handleShare(p)} style={{background:"none", border:"none", color:"white", display:"flex", flexDirection:"column", alignItems:"center"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg><span style={{fontSize:13, fontWeight:600, marginTop:4}}>88.3K</span></button>
+              <button onClick={()=>handleDownload(p.image_url)} style={{background:"none", border:"none", color:"white", display:"flex", flexDirection:"column", alignItems:"center"}}><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg><span style={{fontSize:13, fontWeight:600, marginTop:4}}>17.7K</span></button>
             </div>
-          ))}
-        </div>
-      )}
+            <div style={{position:"absolute", left:12, bottom:24, right:70, color:"white"}}><div style={{display:"flex", alignItems:"center", gap:10}}><div style={{width:34, height:34, borderRadius:17, padding:2, background:"linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)"}}><div style={{width:"100%", height:"100%", borderRadius:17, background:"#222", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:700}}>{p.username?.[1]?.toUpperCase() || "R"}</div></div><b style={{fontSize:15, fontWeight:800}}>{p.username?.replace("@","") || "raja6467454"}</b><button onClick={()=>handleFollow(p.username)} style={{marginLeft:6, border:"1px solid rgba(255,255,255,0.9)", background: following?.includes(p.username)? "white":"transparent", color: following?.includes(p.username)? "black":"white", padding:"4px 14px", borderRadius:8, fontSize:13, fontWeight:700}}>{following?.includes(p.username)? "Following":"Follow"}</button></div><div style={{marginTop:8, fontSize:14, opacity:0.9}}>{p.content?.slice(0,60) || "See more"}</div></div>
+            <div style={{position:"absolute", bottom:0, left:0, right:0, height:2, background:"rgba(255,255,255,0.3)"}}><div id={"bar_"+p.id} style={{height:"100%", width:"0%", background:"white", transition:"width 0.1s linear"}}/></div>
+            <style>{`@keyframes pop{0%{transform:translate(-50%,-50%) scale(0)} 20%{transform:translate(-50%,-50%) scale(1.2)} 80%{transform:translate(-50%,-50%) scale(1)} 100%{transform:translate(-50%,-50%) scale(0)}}`}</style>
+          </div>
+        })}
+      </div>}
 
-      {tab==="reels" && (<div style={{height:"calc(100vh - 110px)",overflowY:"scroll",scrollSnapType:"y mandatory"}}>{posts.map((p:any)=>(<div key={p.id} style={{height:"calc(100vh - 110px)",scrollSnapAlign:"start",position:"relative",background:"black"}}><img src={p.image_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute",bottom:20,left:12,color:"white"}}><b>@{p.username}</b><div style={{fontSize:13,marginTop:4}}>{p.content}</div><div style={{marginTop:10,display:"flex",gap:16}}><span>❤️ {Math.floor(Math.random()*500)}</span><span>💬 {Math.floor(Math.random()*50)}</span><span>✈️</span></div></div></div>))}</div>)}
-      {tab==="search" && (<div style={{padding:10}}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search" style={{width:"100%",padding:10,borderRadius:8,border:"1px solid #ddd",background:"#efefef"}}/><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2,marginTop:10}}>{allUsers.filter(u=>u.username.toLowerCase().includes(search.toLowerCase())).map((u:any)=><div key={u.username} onClick={()=>{setMsgUser(u); setTab("messages")}} style={{textAlign:"center",padding:10,border:"1px solid #eee",borderRadius:8}}><img src={u.avatar_url} style={{width:50,height:50,borderRadius:"50%"}}/><div style={{fontSize:12,marginTop:4}}>{u.username}</div><button style={{marginTop:4,padding:"4px 10px",borderRadius:6,border:"none",background:"#0095f6",color:"white",fontSize:11}}>View</button></div>)}<>{posts.map((p:any)=><img key={p.id} src={p.image_url} style={{aspectRatio:"1/1",objectFit:"cover"}} onClick={()=>setZoom(p.image_url)}/>)}</></div></div>)}
-      {tab==="messages" && (<div style={{padding:10}}>{!msgUser?(<div>{allUsers.map((u:any)=><div key={u.username} onClick={()=>setMsgUser(u)} style={{display:"flex",alignItems:"center",gap:10,padding:10,borderBottom:"1px solid #eee",cursor:"pointer"}}><img src={u.avatar_url} style={{width:40,height:40,borderRadius:"50%"}}/><div><div style={{fontWeight:600,fontSize:13}}>{u.username}</div><div style={{fontSize:11,color:"gray"}}>Tap to chat</div></div></div>)}</div>):(<div><div style={{display:"flex",alignItems:"center",gap:10,padding:"0 0 10px",borderBottom:"1px solid #eee"}}><span onClick={()=>setMsgUser(null)} style={{fontSize:20,cursor:"pointer"}}>←</span><img src={msgUser.avatar_url} style={{width:32,height:32,borderRadius:"50%"}}/><b>{msgUser.username}</b></div><div style={{height:300,overflowY:"auto",padding:"10px 0"}}>{msgs.filter((m:any)=>m.to===msgUser.username||m.from===msgUser.username).map((m:any,i:number)=><div key={i} style={{textAlign:m.from===myUser?"right":"left",marginBottom:8}}><span style={{display:"inline-block",padding:"8px 12px",borderRadius:18,background:m.from===myUser?"#0095f6":"#efefef",color:m.from===myUser?"white":"black",fontSize:13}}>{m.text}</span></div>)}</div><div style={{display:"flex",gap:6,position:"sticky",bottom:0,background:"white",paddingTop:10}}><input value={msgText} onChange={e=>setMsgText(e.target.value)} placeholder="Message..." style={{flex:1,padding:10,borderRadius:20,border:"1px solid #ddd"}}/><button onClick={()=>{if(!msgText.trim()) return; setMsgs([...msgs,{from:myUser,to:msgUser.username,text:msgText}]); setMsgText("")}} style={{padding:"8px 16px",borderRadius:20,border:"none",background:"#0095f6",color:"white"}}>Send</button></div></div>)}</div>)}
-      {tab==="notif" && (<div style={{padding:12}}><h3 style={{margin:0}}>Notifications</h3>{notifs.map((n,i)=><div key={i} style={{padding:10,borderBottom:"1px solid #eee",fontSize:13}}>{n} • {i+1}h ago</div>)}<h3 style={{marginTop:20}}>Saved</h3><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>{posts.filter(p=>saved.includes(p.id)).map(p=><img key={p.id} src={p.image_url} style={{aspectRatio:"1/1",objectFit:"cover"}}/>)}</div></div>)}
-      {tab==="profile" && (<div style={{padding:14}}><div style={{display:"flex",gap:16,alignItems:"center"}}><div onClick={()=>setEditOpen(true)} style={{width:80,height:80,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,cursor:"pointer"}}>{myAvatar?<img src={myAvatar} style={{width:"100%",height:"100%",borderRadius:"50%"}}/>:"M"}</div><div style={{display:"flex",flex:1,justifyContent:"space-around",textAlign:"center"}}><div><b>{posts.filter((x:any)=>x.username===myUser).length}</b><div style={{fontSize:12}}>Posts</div></div><div><b>{following.length}</b><div style={{fontSize:12}}>Followers</div></div><div><b>{allUsers.length}</b><div style={{fontSize:12}}>Following</div></div></div></div><div style={{marginTop:10}}><b>mahesh</b><div style={{fontSize:13}}>{editBio}</div></div><button onClick={()=>setEditOpen(true)} style={{width:"100%",marginTop:10,padding:8,borderRadius:8,border:"1px solid #ddd",background:"#efefef",fontWeight:600}}>Edit profile</button><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2,marginTop:12}}>{posts.filter((x:any)=>x.username===myUser).map((p:any)=><img key={p.id} src={p.image_url} style={{aspectRatio:"1/1",objectFit:"cover"}} onClick={()=>setZoom(p.image_url)}/>)}</div></div>)}
+      {tab==="profile" && <div style={{textAlign:"center", padding:20}}>
+        <div style={{width:90, height:90, borderRadius:"50%", overflow:"hidden", margin:"0 auto", border:"3px solid #a855f7"}}><img src={profile?.avatar_url || "https://via.placeholder.com/90"} style={{width:"100%", height:"100%", objectFit:"cover"}} alt="profile"/></div>
+        <h3 style={{marginTop:10, fontWeight:"bold"}}>{profile?.username}</h3><p style={{fontSize:13}}>{profile?.name}</p><p style={{fontSize:12, opacity:0.6}}>{profile?.bio}</p>
+        <div style={{display:"flex", justifyContent:"center", gap:20, marginTop:14}}><div><b>{posts.filter((p:any)=>p.username===profile?.username).length}</b><div style={{fontSize:11, opacity:0.6}}>Posts</div></div><div><b>{followersCount}</b><div style={{fontSize:11, opacity:0.6}}>Followers</div></div><div><b>{followingCount}</b><div style={{fontSize:11, opacity:0.6}}>Following</div></div></div>
+        <div style={{display:"flex", gap:8, marginTop:15}}><button onClick={()=>setShowEdit(true)} style={{flex:1, padding:10, borderRadius:20, border:"1px solid #ccc", background:"white", fontWeight:"bold"}}>Edit Profile</button><button onClick={handleProfileShare} style={{flex:1, padding:10, borderRadius:20, background:"black", color:"white", fontWeight:"bold"}}>Share Profile ↗️</button></div>
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:4, marginTop:20}}>{posts.filter((p:any)=>p.username===profile?.username || p.username==="@knmahesh30").map((p:any)=><img key={p.id} src={p.image_url} style={{width:"100%", aspectRatio:"1", objectFit:"cover"}}/> )}</div>
+      </div>}
 
-      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"white",borderTop:"1px solid #ddd",display:"flex",justifyContent:"space-around",padding:"10px 0",zIndex:100}}>
-        <span onClick={()=>setTab("home")} style={{fontSize:22,cursor:"pointer",opacity:tab==="home"?1:0.4}}>🏠</span>
-        <span onClick={()=>setTab("reels")} style={{fontSize:22,cursor:"pointer",opacity:tab==="reels"?1:0.4}}>🎬</span>
-        <span onClick={()=>setTab("search")} style={{fontSize:22,cursor:"pointer",opacity:tab==="search"?1:0.4}}>🔍</span>
-        <span onClick={()=>setTab("messages")} style={{fontSize:22,cursor:"pointer",opacity:tab==="messages"?1:0.4}}>✈️</span>
-        <span onClick={()=>setTab("profile")} style={{width:26,height:26,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,opacity:tab==="profile"?1:0.5,cursor:"pointer"}}>M</span>
-      </div>
+      {viewStory && <div onClick={()=>setViewStory(null)} style={{position:"fixed", inset:0, background:"black", zIndex:40, display:"flex", alignItems:"center", justifyContent:"center"}}><img src={viewStory.image_url} style={{maxWidth:"100%", maxHeight:"90vh"}}/><button onClick={()=>setViewStory(null)} style={{position:"absolute", top:15, right:15, color:"white", background:"rgba(0,0,0,0.5)", borderRadius:20, width:30, height:30, border:"none"}}>X</button></div>}
 
-      {showAdd && (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}><div style={{background:"white",borderRadius:14,padding:16,width:"100%",maxWidth:360}}><h3 style={{margin:"0 0 10px"}}>New Post</h3><input value={newCap} onChange={e=>setNewCap(e.target.value)} placeholder="Caption" style={{width:"100%",padding:10,borderRadius:8,border:"1px solid #ddd",marginBottom:8}}/><input value={newImg} onChange={e=>setNewImg(e.target.value)} placeholder="Image URL https://..." style={{width:"100%",padding:10,borderRadius:8,border:"1px solid #ddd",marginBottom:10}}/><div style={{display:"flex",gap:8}}><button onClick={()=>setShowAdd(false)} style={{flex:1,padding:10,borderRadius:8,border:"1px solid #ddd",background:"white"}}>Cancel</button><button onClick={async()=>{if(!newImg.trim()){alert("Image URL petu bro!"); return} const r=await supabase.from("posts").insert({username:myUser,content:newCap,image_url:newImg,avatar_url:myAvatar}).select(); if(r.data){setPosts([r.data[0],...posts]); setNewImg(""); setNewCap(""); setShowAdd(false)}}} style={{flex:1,padding:10,borderRadius:8,background:"black",color:"white",border:"none"}}>Post</button></div></div></div>)}
-      {editOpen && (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}><div style={{background:"white",borderRadius:14,padding:16,width:"100%",maxWidth:360}}><h3>Edit Profile</h3><input value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Bio" style={{width:"100%",padding:10,borderRadius:8,border:"1px solid #ddd",marginBottom:10}}/><div style={{display:"flex",gap:8}}><button onClick={()=>setEditOpen(false)} style={{flex:1,padding:10,borderRadius:8,border:"1px solid #ddd",background:"white"}}>Cancel</button><button onClick={()=>{setEditOpen(false)}} style={{flex:1,padding:10,borderRadius:8,background:"black",color:"white",border:"none"}}>Save</button></div></div></div>)}
-      {zoom && <div onClick={()=>setZoom("")} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center"}}><img src={zoom} style={{maxWidth:"95%",maxHeight:"90%"}}/></div>}
-    </div>
-  )
-                                                                                                            }
+      {showEdit && <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.5)", zIndex:30, display:"flex", alignItems:"flex-end"}}><div style={{background:"white", width:"100%", borderTopLeftRadius:24, borderTopRightRadius:24, padding:20}}><h3 style={{fontWeight:"bold"}}>Edit Profile</h3><div style={{display:"flex", justifyContent:"center", margin:"12px 0"}}><label>{editData.avatar_url? <img src={editData.avatar_url} style={{width:70, height:70, borderRadius:35, objectFit:"cover"}}/> : <div style={{width:70, height:70, background:"#e4e4e7", borderRadius:35}}/>}<input type="file" hidden accept="image/*" onChange={async(e:any)=>{ const f=e.target.files?.[0]; if(f){ const url=URL.createObjectURL(f); setEditData({...editData, avatar_url:url}) } }}/></label></div><input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} placeholder="Name" style={{width:"10
