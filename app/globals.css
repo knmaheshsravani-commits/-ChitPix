@@ -2,19 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
+body {
+  background: white;
+  color: black;
   margin: 0;
   padding: 0;
-  background: #000;
-  color: white;
-  height: 100%;
-  width: 100%;
-  touch-action: manipulation;
-  overscroll-behavior: none;
-  -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;
 }
 
 * {
-  box-sizing: border-box;
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
 }
