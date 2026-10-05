@@ -138,11 +138,6 @@ export default function Page(){
   </div>
 </div>
 )}
-            <div style={{fontSize:12, color:"#9333ea", marginTop:2}}>{profile.username}</div>
-          </div>
-          <div style={{display:"flex", gap:8, marginTop:14}}>
-            <button onClick={()=>setShowEdit(true)} style={{flex:1, padding:"10px", borderRadius:10, border:"1px
-
       {tab==="search" && <div style={{padding:20, textAlign:"center", color:"#888", marginTop:40}}>Search Coming Soon 🔍</div>}
 
       {/* EDIT MODAL FIXED - WHITE BOX POINELEDHU */}
