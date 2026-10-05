@@ -90,35 +90,58 @@ export default function Page(){
         </>
       )}
 
-      {/* PROFILE 100% WORKING */}
-      {tab==="profile" && (
-        <div style={{padding:16}}>
-          <div style={{display:"flex", gap:16, alignItems:"center"}}>
-            <div style={{width:80,height:80,borderRadius:40,overflow:"hidden",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,fontWeight:"bold",border:"3px solid #9333ea"}}>
-              {profile.avatar_url? <img src={profile.avatar_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : "M"}
-            </div>
-            <div style={{display:"flex", gap:18, textAlign:"center"}}>
-              <div><b style={{display:"block"}}>{posts.length}</b><span style={{fontSize:12}}>Posts</span></div>
-              <div><b style={{display:"block"}}>1.2K</b><span style={{fontSize:12}}>Followers</span></div>
-              <div><b style={{display:"block"}}>98</b><span style={{fontSize:12}}>Following</span></div>
-            </div>
-          </div>
-          <div style={{marginTop:12}}>
-            <b style={{fontSize:14}}>{profile.name}</b>
-            <div style={{fontSize:13, color:"#444", whiteSpace:"pre-wrap"}}>{profile.bio}</div>
+      {/* PROFILE 100% WORKING - HIT DESIGN */}
+{tab=="profile" && (
+<div style={{padding:16}}>
+  <div style={{display:"flex", gap:16, alignItems:"center"}}>
+    <div style={{position:"relative"}}>
+      <div style={{width:80, height:80, borderRadius:40, overflow:"hidden", background:"black", color:"white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32, fontWeight:"bold"}}>
+        {profile.avatar_url? <img src={profile.avatar_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : "M"}
+      </div>
+      <div style={{position:"absolute", bottom:0, right:0, background:"#3b82f6", color:"white", borderRadius:"50%", width:20, height:20, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, border:"2px solid white"}}>✓</div>
+    </div>
+    <div style={{display:"flex", gap:18, textAlign:"center", flex:1, justifyContent:"space-around"}}>
+      <div><b style={{display:"block"}}>{posts.length}</b><span style={{fontSize:12}}>Posts</span></div>
+      <div><b style={{display:"block"}}>1.2K</b><span style={{fontSize:12}}>Followers</span></div>
+      <div><b style={{display:"block"}}>98</b><span style={{fontSize:12}}>Following</span></div>
+    </div>
+  </div>
+
+  <div style={{marginTop:12}}>
+    <b style={{fontSize:14}}>{profile.name || "M Creator"} 🌸</b>
+    <div style={{fontSize:13, color:"#444", whiteSpace:"pre-wrap", marginTop:2}}>{profile.bio || "I love ChitPix.com 🌸"}</div>
+    <div style={{fontSize:12, color:"#9333ea", marginTop:2}}>{profile.username || "@knmahesh30"}</div>
+  </div>
+
+  <div style={{display:"flex", gap:8, marginTop:14}}>
+    <button onClick={()=>setShowEdit(true)} style={{flex:1, padding:"10px", borderRadius:10, background:"black", color:"white", border:"none", fontWeight:"bold", cursor:"pointer"}}>Edit profile</button>
+    <button onClick={()=>{ navigator.clipboard.writeText(window.location.href); alert("Link copied! 🔥") }} style={{flex:1, padding:"10px", borderRadius:10, background:"#f3f4f6", color:"black", border:"1px solid #ddd", fontWeight:"bold", cursor:"pointer"}}>Share profile</button>
+  </div>
+
+  {/* HIGHLIGHTS */}
+  <div style={{display:"flex", gap:14, marginTop:18, overflowX:"auto"}}>
+    {[{n:"Travel",e:"✈️"},{n:"ChitPix",e:"🌸"},{n:"Reels",e:"🎬"},{n:"Life",e:"❤️"}].map((h,i)=>(
+      <div key={i} style={{textAlign:"center", minWidth:56}}>
+        <div style={{width:56, height:56, borderRadius:28, border:"1px solid #ddd", display:"flex", alignItems:"center", justifyContent:"center", fontSize:24, background:"#fafafa"}}>{h.e}</div>
+        <div style={{fontSize:11, marginTop:4}}>{h.n}</div>
+      </div>
+    ))}
+  </div>
+
+  {/* POSTS GRID - LIKES SHOW */}
+  <div style={{marginTop:18, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:2}}>
+    {posts.map((p:any)=><div key={p.id} style={{aspectRatio:"1", background:"#f4f4f5", position:"relative", overflow:"hidden"}}>
+      <img src={p.image_url || p.img} style={{width:"100%", height:"100%", objectFit:"cover"}}/>
+      <div style={{position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(transparent, rgba(0,0,0,0.7))", padding:"16px 4px 4px", color:"white", fontSize:11, display:"flex", gap:6}}><span>❤️ {Math.floor(Math.random()*500)+20}</span></div>
+    </div>)}
+    {posts.length==0 && <div style={{gridColumn:"1 / -1", textAlign:"center", marginTop:30, color:"#999"}}>No posts yet - Go post! 🚀</div>}
+  </div>
+</div>
+)}
             <div style={{fontSize:12, color:"#9333ea", marginTop:2}}>{profile.username}</div>
           </div>
           <div style={{display:"flex", gap:8, marginTop:14}}>
-            <button onClick={()=>setShowEdit(true)} style={{flex:1, padding:"10px", borderRadius:10, border:"1px solid #ddd", background:"#f5f5f5", fontWeight:"bold"}}>Edit profile</button>
-            <button onClick={()=>{ navigator.clipboard.writeText(window.location.href); alert("Link copied!") }} style={{flex:1, padding:"10px", borderRadius:10, border:"1px solid #ddd", background:"white", fontWeight:"bold"}}>Share profile</button>
-          </div>
-          {/* POSTS GRID */}
-          <div style={{marginTop:18, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:2}}>
-            {posts.map((p:any)=><div key={p.id} style={{aspectRatio:"1", background:"#f4f4f5", display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, padding:6, overflow:"hidden"}}>{p.content.slice(0,40)}</div>)}
-          </div>
-          {posts.length===0 && <div style={{textAlign:"center", marginTop:30, color:"#999"}}>No posts yet - Go to Home and Post!</div>}
-        </div>
-      )}
+            <button onClick={()=>setShowEdit(true)} style={{flex:1, padding:"10px", borderRadius:10, border:"1px
 
       {tab==="search" && <div style={{padding:20, textAlign:"center", color:"#888", marginTop:40}}>Search Coming Soon 🔍</div>}
 
