@@ -146,9 +146,9 @@ export default function Page(){
               </label>
             </div>
             <label style={{fontSize:12, fontWeight:"bold"}}>Name</label>
-            <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:12}}/>
+            <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} style={{width:"100%", padding:"14px", borderRadius:"16px", border:"2px solid black", color:"black", background:"white", fontSize:"14px"}}/>
             <label style={{fontSize:12, fontWeight:"bold"}}>Bio</label>
-            <input value={editData.bio} onChange={e=>setEditData({...editData, bio:e.target.value})} style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:16}}/>
+            <input value={editData.bio} onChange={e=>setEditData({...editData, bio:e.target.value})} style={{width:"100%", padding:"14px", borderRadius:"16px", border:"1.5px solid #e5e7eb", color:"black", background:"white", fontSize:"14px"}}/>
             <div style={{display:"flex", gap:10}}>
               <button onClick={()=>setShowEdit(false)} style={{flex:1, padding:12, borderRadius:12, border:"1px solid #ddd", background:"white"}}>Cancel</button>
               <button onClick={saveProfile} disabled={uploading} style={{flex:1, padding:12, borderRadius:12, background:"black", color:"white", border:"none", fontWeight:"bold"}}>{uploading?"Saving...":"Save ✅"}</button>
