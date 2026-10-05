@@ -1,16 +1,16 @@
-
 "use client"
 import { useState, useEffect } from "react"
 import { createClient } from "@supabase/supabase-js"
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+
 export default function Page(){
   const [tab,setTab]=useState("home")
   const [posts,setPosts]=useState<any[]>([])
   const [stories,setStories]=useState<any[]>([])
   const [text,setText]=useState("")
   const [likedIds,setLikedIds]=useState<number[]>([])
-  const [profile,setProfile]=useState<any>({username:"@knmahesh30", name:"Mahesh Reddy", avatar_url:"", bio:"I love ChitPix.com 🌸 | Creator"})
-  const [editData,setEditData]=useState<any>({name:"Mahesh Reddy", bio:"I love ChitPix.com 🌸 | Creator", avatar_url:""})
+  const [profile,setProfile]=useState<any>({username:"@knmahesh30", name:"Mahesh Reddy", avatar_url:"", bio:"I love ChitPix.com | Creator"})
+  const [editData,setEditData]=useState<any>({name:"Mahesh Reddy", bio:"I love ChitPix.com | Creator", avatar_url:""})
   const [showEdit,setShowEdit]=useState(false)
   const [uploading,setUploading]=useState(false)
   const [viewStory,setViewStory]=useState<any>(null)
@@ -18,10 +18,11 @@ export default function Page(){
   const [commentText,setCommentText]=useState("")
   const [comments,setComments]=useState<any[]>([])
   const [isFollowing,setIsFollowing]=useState(false)
-const [followerCount,setFollowerCount]=useState(1243)
-const [followingCount,setFollowingCount]=useState(98) // <-- FIXED ✅
-const isOwnProfile = profile?.username==="knmahesh" || profile?.username==="knmahesh30" || profile?.username==="@knmahesh30"
-const myId="knmahesh30"
+  const [followerCount,setFollowerCount]=useState(1243)
+  const [followingCount,setFollowingCount]=useState(98)
+  const isOwnProfile = profile?.username==="knmahesh" || profile?.username==="knmahesh30" || profile?.username==="@knmahesh30"
+  const myId="knmahesh30"
+
   async function load(){
     const p1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
     if(p1.data) setPosts(p1.data)
@@ -49,6 +50,7 @@ const myId="knmahesh30"
     await supabase.from("posts").insert({content:text, username:"@knmahesh30", likes:0})
     setText(""); load()
   }
+
   async function addStory(e:any){
     const file=e.target.files?.[0]; if(!file) return
     const url=await uploadImage(file)
@@ -56,6 +58,7 @@ const myId="knmahesh30"
     await supabase.from("stories").insert({image_url:url, username:"@knmahesh30"})
     load(); alert("Story Added ✅")
   }
+
   async function saveProfile(){
     let finalUrl = editData.avatar_url
     if(finalUrl && finalUrl.startsWith("blob:")){
@@ -73,9 +76,8 @@ const myId="knmahesh30"
 
   return(
     <div style={{minHeight:"100vh", background:"white", maxWidth:480, margin:"0 auto", paddingBottom:70, fontFamily:"-apple-system, system-ui"}}>
-      {/* HEADER FIXED */}
       <div style={{padding:"14px 16px", borderBottom:"1px solid #eee", display:"flex", justifyContent:"space-between", alignItems:"center", position:"sticky", top:0, background:"white", zIndex:20}}>
-        <b style={{color:"#9333ea", fontSize:20, letterSpacing:-0.5}}>ChitPix.com 🌸</b>
+        <b style={{color:"#9333ea", fontSize:20}}>ChitPix.com</b>
         <div style={{display:"flex", gap:12}}><span>🔔</span><span>❤️</span></div>
       </div>
 
@@ -93,75 +95,49 @@ const myId="knmahesh30"
           {posts.map((p:any)=><div key={p.id} style={{padding:"12px 16px", borderBottom:"1px solid #f0f0f0"}}><b style={{fontSize:13}}>{p.username}</b><div style={{fontSize:14, marginTop:2}}>{p.content}</div><div style={{display:"flex", gap:16, marginTop:10}}><span>🤍 {p.likes||0}</span><span onClick={()=>setCommentOpen(commentOpen===p.id?null:p.id)}>💬 {comments.filter((c:any)=>c.post_id===p.id).length}</span><span>✈️</span></div>{commentOpen===p.id && <div style={{marginTop:10, background:"#fafafa", padding:8, borderRadius:10}}>{comments.filter((c:any)=>c.post_id===p.id).map((c:any,i:number)=><div key={i} style={{fontSize:12, marginBottom:4}}><b>{c.username}</b> {c.content}</div>)}<div style={{display:"flex", gap:6, marginTop:6}}><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add comment..." style={{flex:1, padding:8, borderRadius:10, border:"1px solid #ddd"}}/><button onClick={async()=>{ if(!commentText.trim()) return; await supabase.from("comments").insert({post_id:p.id, content:commentText, username:"@knmahesh30"}); setCommentText(""); load()}} style={{background:"black", color:"white", border:"none", padding:"8px 12px", borderRadius:10}}>Post</button></div></div>}</div>)}
         </>
       )}
-      {/* PROFILE 100% WORKING - HIT DESIGN */}
-{tab=="profile" && (
-<div style={{padding:16}}>
-  {/* AVATAR + STATS */}
-  <div style={{display:"flex", gap:16, alignItems:"center"}}>
-    <div style={{position:"relative"}}>
-      <div style={{width:80, height:80, borderRadius:40, overflow:"hidden", background:"black", color:"white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32, fontWeight:"bold"}}>
-        {profile?.avatar_url ? <img src={profile.avatar_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : "M"}
-      </div>
-      <div style={{position:"absolute", bottom:0, right:0, background:"#3b82f6", color:"white", borderRadius:"50%", width:20, height:20, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, border:"2px solid white"}}>✓</div>
-    </div>
-    <div style={{display:"flex", gap:18, textAlign:"center", flex:1, justifyContent:"space-around"}}>
-      <div><b style={{display:"block"}}>{posts?.length || 0}</b><span style={{fontSize:12}}>Posts</span></div>
-      <div><b style={{display:"block"}}>{followerCount || 1243}</b><span style={{fontSize:12}}>Followers</span></div>
-      <div><b style={{display:"block"}}>{followingCount || 98}</b><span style={{fontSize:12}}>Following</span></div>
-    </div>
-  </div>
 
-  <div style={{marginTop:12}}>
-    <b style={{fontSize:14}}>{profile?.name || "M Creator"} 🌸</b>
-    <div style={{fontSize:13, color:"#444", whiteSpace:"pre-wrap", marginTop:2}}>{profile?.bio || "I love ChitPix.com 🌸 | Creator"}</div>
-    <div style={{fontSize:12, color:"#9333ea", marginTop:2}}>@{profile?.username || "knmahesh30"}</div>
-  </div>
+      {tab==="profile" && (
+        <div style={{padding:16}}>
+          <div style={{display:"flex", gap:16, alignItems:"center"}}>
+            <div style={{position:"relative"}}>
+              <div style={{width:80, height:80, borderRadius:40, overflow:"hidden", background:"black", color:"white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32, fontWeight:"bold"}}>
+                {profile?.avatar_url? <img src={profile.avatar_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : "M"}
+              </div>
+              <div style={{position:"absolute", bottom:0, right:0, background:"#3b82f6", color:"white", borderRadius:"50%", width:20, height:20, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, border:"2px solid white"}}>✓</div>
+            </div>
+            <div style={{display:"flex", gap:18, textAlign:"center", flex:1, justifyContent:"space-around"}}>
+              <div><b style={{display:"block"}}>{posts?.length || 0}</b><span style={{fontSize:12}}>Posts</span></div>
+              <div><b style={{display:"block"}}>{followerCount}</b><span style={{fontSize:12}}>Followers</span></div>
+              <div><b style={{display:"block"}}>{followingCount}</b><span style={{fontSize:12}}>Following</span></div>
+            </div>
+          </div>
+          <div style={{marginTop:12}}><b style={{fontSize:14}}>{profile?.name || "M Creator"} 🌸</b><div style={{fontSize:13, color:"#444", whiteSpace:"pre-wrap", marginTop:2}}>{profile?.bio || "I love ChitPix.com 🌸 | Creator"}</div><div style={{fontSize:12, color:"#9333ea", marginTop:2}}>@{profile?.username || "knmahesh30"}</div></div>
+          <div style={{display:"flex", gap:8, marginTop:14}}>
+            {isOwnProfile? (
+              <button onClick={()=>setShowEdit(true)} style={{flex:1, padding:"10px", borderRadius:10, background:"black", color:"white", border:"none", fontWeight:"bold"}}>Edit profile</button>
+            ) : (
+              <button onClick={async()=>{
+                const newState =!isFollowing;
+                setIsFollowing(newState);
+                setFollowerCount(newState? followerCount+1 : followerCount-1);
+              }} style={{flex:1, padding:"10px", borderRadius:10, background:isFollowing?"#fff":"black", color:isFollowing?"black":"white", border:"1px solid #ddd", fontWeight:"bold"}}>{isFollowing? "Following ✓" : "Follow"}</button>
+            )}
+            <button onClick={async()=>{ const url=`https://chitpix.com/@${profile?.username||"knmahesh30"}`; if(navigator.share){try{await navigator.share({title:`ChitPix`, url})}catch(e){}}else{window.open(`https://wa.me/?text=${encodeURIComponent(url)}`,"_blank")} }} style={{flex:1, padding:"10px", borderRadius:10, background:"#f3f4f6", color:"black", border:"1px solid #ddd", fontWeight:"bold"}}>Share profile</button>
+          </div>
+          <div style={{marginTop:18, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:2}}>
+            {posts?.filter((p:any)=>p.image_url).map((p:any)=>(
+              <div key={p.id} style={{aspectRatio:"1", background:"#f4f4f5", overflow:"hidden"}}><img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}} /></div>
+            ))}
+          </div>
+        </div>
+      )}
 
-  {/* BUTTONS - FIX 2,3,4 */}
-<div style={{display:"flex", gap:8, marginTop:14}}>
-  {isOwnProfile ? (
-    <button onClick={()=>setShowEdit(true)} style={{flex:1, padding:"10px", borderRadius:10, background:"black", color:"white", border:"none", fontWeight:"bold"}}>Edit profile</button>
-  ) : (
-    <button onClick={async()=>{
-  const newState = !isFollowing;
-  setIsFollowing(newState);
-  setFollowerCount(newState ? followerCount+1 : followerCount-1);
-  try{
-    if(newState){
-      await supabase.from("follows").insert({ follower_id: (await supabase.auth.getUser()).data.user?.id, following_id: profile?.id })
-    }else{
-      const uid = (await supabase.auth.getUser()).data.user?.id;
-      await supabase.from("follows").delete().eq("follower_id", uid).eq("following_id", profile?.id)
-    }
-  }catch(e){ console.log(e) }
-}} style={{flex:1, padding:"10px", borderRadius:10, background:isFollowing?"#fff":"black", color:isFollowing?"black":"white", border:"1px solid #ddd", fontWeight:"bold"}}>
-  {isFollowing ? "Following ✓" : "Follow"}
-</button>
-  )}
-    <button onClick={async()=>{
-    const url=`https://chitpix.com/@${profile?.username||"knmahesh30"}`;
-    if(navigator.share){try{await navigator.share({title:`ChitPix`, url})}catch(e){}}else{window.open(`https://wa.me/?text=${encodeURIComponent(url)}`,"_blank")}
-  }} style={{flex:1, padding:"10px", borderRadius:10, background:"#f3f4f6", color:"black", border:"1px solid #ddd", fontWeight:"bold"}}>Share profile</button>
-</div>
-{isOwnProfile && (profile?.username==="knmahesh" || profile?.username==="knmahesh30" || profile?.username==="@knmahesh30" || profile?.username==="knmaheshsravani") && (
-  <button onClick={()=>location.href="/admin"} style={{width:"100%", marginTop:8, padding:"12px", borderRadius:10, background:"#9333ea", color:"white", border:"none", fontWeight:"bold"}}>⚙️ Admin Panel</button>
-)}
-
-<div style={{marginTop:18, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:2}}>
-  {posts?.filter((p:any)=>p.image_url).map((p:any)=>(
-    <div key={p.id} style={{aspectRatio:"1", background:"#f4f4f5", overflow:"hidden"}}>
-      <img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}} />
-    </div>
-  ))}
-</div>
       {tab==="search" && <div style={{padding:20, textAlign:"center", color:"#888", marginTop:40}}>Search Coming Soon 🔍</div>}
 
-      {/* EDIT MODAL FIXED - WHITE BOX POINELEDHU */}
       {showEdit && (
         <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16}}>
           <div style={{background:"white", width:"100%", maxWidth:360, borderRadius:20, padding:20}}>
             <h3 style={{fontWeight:"bold", fontSize:16, marginBottom:14}}>Edit Profile ✅</h3>
-
             <div style={{textAlign:"center", marginBottom:16}}>
               <label style={{cursor:"pointer"}}>
                 <div style={{width:80,height:80,borderRadius:40,margin:"0 auto",overflow:"hidden",background:"#eee",display:"flex",alignItems:"center",justifyContent:"center"}}>
@@ -171,13 +147,10 @@ const myId="knmahesh30"
                 <input type="file" hidden accept="image/*" onChange={e=>{ const f=e.target.files?.[0]; if(f) setEditData({...editData, avatar_url: URL.createObjectURL(f)}) }}/>
               </label>
             </div>
-
             <label style={{fontSize:12, fontWeight:"bold"}}>Name</label>
-            <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} placeholder="Your name" style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:12, color:"black", background:"white", outline:"none", fontSize:14}}/>
-
+            <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} placeholder="Your name" style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:12}}/>
             <label style={{fontSize:12, fontWeight:"bold"}}>Bio</label>
-            <input value={editData.bio} onChange={e=>setEditData({...editData, bio:e.target.value})} placeholder="Your bio 🌸" style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:16, color:"black", background:"white", outline:"none", fontSize:14}}/>
-
+            <input value={editData.bio} onChange={e=>setEditData({...editData, bio:e.target.value})} placeholder="Your bio 🌸" style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:16}}/>
             <div style={{display:"flex", gap:10}}>
               <button onClick={()=>setShowEdit(false)} style={{flex:1, padding:12, borderRadius:12, border:"1px solid #ddd", background:"white"}}>Cancel</button>
               <button onClick={saveProfile} disabled={uploading} style={{flex:1, padding:12, borderRadius:12, background:"black", color:"white", border:"none", fontWeight:"bold"}}>{uploading?"Saving...":"Save ✅"}</button>
