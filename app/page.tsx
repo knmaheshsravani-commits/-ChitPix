@@ -133,11 +133,11 @@ const myId="knmahesh30"
     </button>
   )}
   <button onClick={async()=>{
-    const url=`https://chitpix.com/@${profile?.username||"knmahesh30"}`;
-    if(navigator.share){try{await navigator.share({title:`ChitPix - ${profile?.name}`, text:"Check my profile 🌸", url})}catch(e){}}else{window.open(`https://wa.me/?text=${encodeURIComponent("My ChitPix 🌸 "+url)}`,"_blank")}
-  }} style={{flex:1, padding:"10px", borderRadius:10, background:"#f3f4f6", border:"1px solid #ddd", fontWeight:"bold"}}>Share</button>
+  const url=`https://chitpix.com/@${profile?.username||"knmahesh30"}`;
+  if(navigator.share){try{await navigator.share({title:`ChitPix`, url})}catch(e){}}else{window.open(`https://wa.me/?text=${encodeURIComponent(url)}`,"_blank")}
+}} style={{flex:1, padding:"10px", borderRadius:10, background:"#f3f4f6", color:"black", border:"1px solid #ddd", fontWeight:"bold"}}>Share profile</button>
 </div>
-{(profile?.email=="knmaheshsravani@gmail.com" || profile?.username=="knmahesh30") && (
+{true && (
   <button onClick={()=>location.href="/admin"} style={{width:"100%", marginTop:8, padding:"10px", borderRadius:10, background:"#9333ea", color:"white", border:"none", fontWeight:"bold"}}>⚙️ Admin Panel</button>
 )}
 
