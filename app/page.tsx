@@ -39,7 +39,7 @@ export default function Page(){
     <div style={{minHeight:"100vh",background:"white",maxWidth:480,margin:"0 auto",paddingBottom:80,fontFamily:"sans-serif"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:14,borderBottom:"1px solid #eee",position:"sticky",top:0,background:"white",zIndex:10}}>
         <span onClick={()=>setShowAdd(true)} style={{fontSize:28,cursor:"pointer",color:"black"}}>+</span>
-        <b style={{fontFamily:"cursive",fontSize:28,color:"black"}}>Instagram</b>
+        <b style={{fontSize:24,fontWeight:900,color:"black"}}>chitpix<span style={{color:"#a020f0"}}>.com</span></b>
         <span>❤️</span>
       </div>
 
