@@ -137,7 +137,7 @@ const myId="knmahesh30"
     if(navigator.share){try{await navigator.share({title:`ChitPix`, url})}catch(e){}}else{window.open(`https://wa.me/?text=${encodeURIComponent(url)}`,"_blank")}
   }} style={{flex:1, padding:"10px", borderRadius:10, background:"#f3f4f6", color:"black", border:"1px solid #ddd", fontWeight:"bold"}}>Share profile</button>
 </div>
-{isOwnProfile && (
+{isOwnProfile && (profile?.username==="knmahesh" || profile?.username==="knmahesh30" || profile?.username==="@knmahesh30" || profile?.username==="knmaheshsravani") && (
   <button onClick={()=>location.href="/admin"} style={{width:"100%", marginTop:8, padding:"12px", borderRadius:10, background:"#9333ea", color:"white", border:"none", fontWeight:"bold"}}>⚙️ Admin Panel</button>
 )}
 
