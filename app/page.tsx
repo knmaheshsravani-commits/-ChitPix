@@ -93,7 +93,6 @@ const myId="knmahesh30"
           {posts.map((p:any)=><div key={p.id} style={{padding:"12px 16px", borderBottom:"1px solid #f0f0f0"}}><b style={{fontSize:13}}>{p.username}</b><div style={{fontSize:14, marginTop:2}}>{p.content}</div><div style={{display:"flex", gap:16, marginTop:10}}><span>🤍 {p.likes||0}</span><span onClick={()=>setCommentOpen(commentOpen===p.id?null:p.id)}>💬 {comments.filter((c:any)=>c.post_id===p.id).length}</span><span>✈️</span></div>{commentOpen===p.id && <div style={{marginTop:10, background:"#fafafa", padding:8, borderRadius:10}}>{comments.filter((c:any)=>c.post_id===p.id).map((c:any,i:number)=><div key={i} style={{fontSize:12, marginBottom:4}}><b>{c.username}</b> {c.content}</div>)}<div style={{display:"flex", gap:6, marginTop:6}}><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add comment..." style={{flex:1, padding:8, borderRadius:10, border:"1px solid #ddd"}}/><button onClick={async()=>{ if(!commentText.trim()) return; await supabase.from("comments").insert({post_id:p.id, content:commentText, username:"@knmahesh30"}); setCommentText(""); load()}} style={{background:"black", color:"white", border:"none", padding:"8px 12px", borderRadius:10}}>Post</button></div></div>}</div>)}
         </>
       )}
-
       {/* PROFILE 100% WORKING - HIT DESIGN */}
 {tab=="profile" && (
 <div style={{padding:16}}>
