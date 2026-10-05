@@ -123,12 +123,21 @@ const myId="knmahesh30"
   {isOwnProfile ? (
     <button onClick={()=>setShowEdit(true)} style={{flex:1, padding:"10px", borderRadius:10, background:"black", color:"white", border:"none", fontWeight:"bold"}}>Edit profile</button>
   ) : (
-    <button onClick={()=>{
-      setIsFollowing(!isFollowing);
-      setFollowerCount(isFollowing ? followerCount-1 : followerCount+1);
-    }} style={{flex:1, padding:"10px", borderRadius:10, background:isFollowing?"#fff":"#000", color:isFollowing?"#000":"#fff", border:isFollowing?"1px solid #ddd":"none", fontWeight:"bold"}}>
-      {isFollowing ? "Following ✓" : "Follow"}
-    </button>
+    <button onClick={async()=>{
+  const newState = !isFollowing;
+  setIsFollowing(newState);
+  setFollowerCount(newState ? followerCount+1 : followerCount-1);
+  try{
+    if(newState){
+      await supabase.from("follows").insert({ follower_id: (await supabase.auth.getUser()).data.user?.id, following_id: profile?.id })
+    }else{
+      const uid = (await supabase.auth.getUser()).data.user?.id;
+      await supabase.from("follows").delete().eq("follower_id", uid).eq("following_id", profile?.id)
+    }
+  }catch(e){ console.log(e) }
+}} style={{flex:1, padding:"10px", borderRadius:10, background:isFollowing?"#fff":"black", color:isFollowing?"black":"white", border:"1px solid #ddd", fontWeight:"bold"}}>
+  {isFollowing ? "Following ✓" : "Follow"}
+</button>
   )}
     <button onClick={async()=>{
     const url=`https://chitpix.com/@${profile?.username||"knmahesh30"}`;
@@ -139,12 +148,13 @@ const myId="knmahesh30"
   <button onClick={()=>location.href="/admin"} style={{width:"100%", marginTop:8, padding:"12px", borderRadius:10, background:"#9333ea", color:"white", border:"none", fontWeight:"bold"}}>⚙️ Admin Panel</button>
 )}
 
-{/* POSTS GRID - NO HIGHLIGHTS */}
-  <div style={{marginTop:18, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:2}}>
-    {posts?.map((p:any)=><div key={p.id} style={{aspectRatio:"1", background:"#f4f4f5", position:"relative"}}><img src={p.image_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/><div style={{position:"absolute", bottom:0, left:0, right:0, background:"linear-gradient(transparent, rgba(0,0,0,0.7))", padding:"14px 4px 4px", color:"white", fontSize:11}}>❤️ {p.likes||Math.floor(Math.random()*400)+20}</div></div>)}
-  </div>
+<div style={{marginTop:18, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:2}}>
+  {posts?.filter((p:any)=>p.image_url).map((p:any)=>(
+    <div key={p.id} style={{aspectRatio:"1", background:"#f4f4f5", overflow:"hidden"}}>
+      <img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}} />
+    </div>
+  ))}
 </div>
-)}
       {tab==="search" && <div style={{padding:20, textAlign:"center", color:"#888", marginTop:40}}>Search Coming Soon 🔍</div>}
 
       {/* EDIT MODAL FIXED - WHITE BOX POINELEDHU */}
