@@ -31,7 +31,11 @@ export default function Page(){
     const p4 = await supabase.from("comments").select("*").order("created_at",{ascending:false})
     if(p4.data) setComments(p4.data)
   }
-  useEffect(()=>{ load() }, [])
+  useEffect(()=>{
+  const u = localStorage.getItem("chitpix_user")
+  if(!u){ window.location.href="/login"; return }
+  load()
+},[])
 
   async function uploadImage(file: File){
     setUploading(true)
