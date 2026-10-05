@@ -3,312 +3,166 @@ import { useState, useEffect } from "react"
 import { supabase } from "../lib/supabase"
 
 export default function Page(){
-  const [myUser] = useState("mahesh")
-  const [myAvatar, setMyAvatar] = useState("")
-  const [posts, setPosts] = useState<any[]>([])
-  const [allUsers, setAllUsers] = useState<any[]>([])
-  const [tab, setTab] = useState("home")
-  const [searchText, setSearchText] = useState("")
-  const [following, setFollowing] = useState<string[]>([])
-  const [liked, setLiked] = useState<number[]>([])
-  const [saved, setSaved] = useState<number[]>([])
-  const [showComments, setShowComments] = useState<number|null>(null)
-  const [commentText, setCommentText] = useState<any>({})
-  const [comments, setComments] = useState<any>({})
-  const [editOpen, setEditOpen] = useState(false)
-  const [showAddPost, setShowAddPost] = useState(false)
-  const [newPostContent, setNewPostContent] = useState("")
-  const [newPostImage, setNewPostImage] = useState("")
-  const [editUsername, setEditUsername] = useState("mahesh")
-  const [editBio, setEditBio] = useState("My Bio")
-  const [editAvatar, setEditAvatar] = useState("")
-  const [editAvatarFile, setEditAvatarFile] = useState<any>(null)
-  const [zoomImg, setZoomImg] = useState("")
-  const [shareOpen, setShareOpen] = useState<any>(null)
+  const myUser="mahesh"
+  const [myAvatar,setMyAvatar]=useState("")
+  const [posts,setPosts]=useState<any[]>([])
+  const [allUsers,setAllUsers]=useState<any[]>([])
+  const [tab,setTab]=useState("home")
+  const [following,setFollowing]=useState<string[]>([])
+  const [liked,setLiked]=useState<number[]>([])
+  const [saved,setSaved]=useState<number[]>([])
+  const [editOpen,setEditOpen]=useState(false)
+  const [editBio,setEditBio]=useState("My Bio")
+  const [editName,setEditName]=useState("mahesh")
+  const [editAvatar,setEditAvatar]=useState("")
+  const [editFile,setEditFile]=useState<any>(null)
+  const [showAdd,setShowAdd]=useState(false)
+  const [newCap,setNewCap]=useState("")
+  const [newImg,setNewImg]=useState("")
+  const [zoom,setZoom]=useState("")
 
-  useEffect(()=>{ loadData() },[])
-  async function loadData(){
-    const prof = await supabase.from("profiles").select("*").eq("username",myUser).single()
-    if(prof.data){
-      setMyAvatar(prof.data.avatar_url||"")
-      setEditAvatar(prof.data.avatar_url||"")
-      setEditBio(prof.data.bio||"My Bio")
-      setEditUsername(prof.data.username)
-    }
-    const p = await supabase.from("posts").select("*").order("id",{ascending:false})
-    if(p.data) setPosts(p.data)
-    const users = await supabase.from("profiles").select("*")
+  useEffect(()=>{ load() },[])
+  async function load(){
+    const p=await supabase.from("profiles").select("*").eq("username",myUser).single()
+    if(p.data){ setMyAvatar(p.data.avatar_url||""); setEditAvatar(p.data.avatar_url||""); setEditBio(p.data.bio||"My Bio"); setEditName(p.data.username) }
+    const postsData=await supabase.from("posts").select("*").order("id",{ascending:false})
+    if(postsData.data) setPosts(postsData.data)
+    const users=await supabase.from("profiles").select("*")
     if(users.data) setAllUsers(users.data)
-    const f = await supabase.from("follows").select("*").eq("follower_username",myUser)
-    if(f.data) setFollowing(f.data.map((x:any)=>x.following_username))
-    const l = await supabase.from("likes").select("*").eq("username",myUser)
-    if(l.data) setLiked(l.data.map((x:any)=>x.post_id))
+    const f=await supabase.from("follows").select("*").eq("follower_username",myUser)
+    if(f.data) setFollowing(f.data.map((a:any)=>a.following_username))
+    const l=await supabase.from("likes").select("*").eq("username",myUser)
+    if(l.data) setLiked(l.data.map((a:any)=>a.post_id))
   }
 
-  async function handleAvatarChange(e:any){
-    const file=e.target.files[0]
-    if(!file) return
-    setEditAvatarFile(file)
-    setEditAvatar(URL.createObjectURL(file))
-  }
-
-  async function handleSaveProfile(){
-    let finalAvatar=myAvatar
-    if(editAvatarFile){
-      const fileName=myUser+"_"+Date.now()+".jpg"
-      const up=await supabase.storage.from("chitpix").upload(fileName,editAvatarFile)
-      if(!up.error){
-        const urlData=supabase.storage.from("chitpix").getPublicUrl(fileName)
-        finalAvatar=urlData.data.publicUrl
-      }
+  async function saveProfile(){
+    let finalUrl=myAvatar
+    if(editFile){
+      const fname=myUser+"_"+Date.now()+".jpg"
+      await supabase.storage.from("chitpix").upload(fname,editFile)
+      const u=supabase.storage.from("chitpix").getPublicUrl(fname)
+      finalUrl=u.data.publicUrl
     }
-    await supabase.from("profiles").update({username:editUsername,bio:editBio,avatar_url:finalAvatar}).eq("username",myUser)
-    setMyAvatar(finalAvatar)
+    await supabase.from("profiles").update({username:editName,bio:editBio,avatar_url:finalUrl}).eq("username",myUser)
+    setMyAvatar(finalUrl)
     setEditOpen(false)
-    loadData()
+    load()
   }
 
-  async function toggleFollow(u:string){
-    if(following.includes(u)){
-      await supabase.from("follows").delete().eq("follower_username",myUser).eq("following_username",u)
-      setFollowing(following.filter((f)=>f!==u))
-    }else{
-      await supabase.from("follows").insert({follower_username:myUser,following_username:u})
-      const arr=following.slice()
-      arr.push(u)
-      setFollowing(arr)
-    }
-  }
-
-  async function toggleLike(id:number){
-    if(liked.includes(id)){
-      await supabase.from("likes").delete().eq("username",myUser).eq("post_id",id)
-      setLiked(liked.filter((x)=>x!==id))
-    }else{
-      await supabase.from("likes").insert({username:myUser,post_id:id})
-      const arr=liked.slice()
-      arr.push(id)
-      setLiked(arr)
-    }
-  }
-
-  function toggleSave(id:number){
-    if(saved.includes(id)) setSaved(saved.filter((x)=>x!==id))
-    else{
-      const arr=saved.slice()
-      arr.push(id)
-      setSaved(arr)
-    }
-  }
-
-  function handleAddComment(postId:number){
-    const txt=commentText[postId]
-    if(!txt) return
-    if(txt.trim()==="") return
-    const prev=comments[postId]||[]
-    const newArr=prev.slice()
-    newArr.push(myUser+": "+txt)
-    const newObj:any={}
-    for(let k in comments){ newObj[k]=comments[k] }
-    newObj[postId]=newArr
-    setComments(newObj)
-    const newText:any={}
-    for(let k in commentText){ newText[k]=commentText[k] }
-    newText[postId]=""
-    setCommentText(newText)
-  }
-
-  async function handleAddPost(){
-    if(!newPostImage.trim()){ alert("Image URL pettu"); return }
-    const res=await supabase.from("posts").insert({username:myUser,content:newPostContent,image_url:newPostImage,avatar_url:myAvatar}).select()
-    if(res.data){
-      const arr=[res.data[0]].concat(posts)
-      setPosts(arr)
-      setNewPostImage("")
-      setNewPostContent("")
-      setShowAddPost(false)
-    }
-  }
-
-  function handleDownload(url:string){
-    const a=document.createElement("a")
-    a.href=url
-    a.download="chitpix.jpg"
-    a.target="_blank"
-    a.click()
-  }
-
-  function handleRepost(p:any){
-    const newP={id:Date.now(),username:p.username,content:"Reposted: "+p.content,image_url:p.image_url,avatar_url:p.avatar_url}
-    const arr=[newP].concat(posts)
-    setPosts(arr)
-    alert("Reposted!")
-  }
-
-  return(
-    <div style={{minHeight:"100vh",background:"white",maxWidth:480,margin:"0 auto",position:"relative",paddingBottom:80,fontFamily:"sans-serif"}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"14px",position:"sticky",top:0,background:"white",zIndex:20,borderBottom:"1px solid #efefef"}}>
-        <span onClick={()=>setShowAddPost(true)} style={{fontSize:28,cursor:"pointer",color:"black"}}>+</span>
+  return (
+    <div style={{minHeight:"100vh",background:"white",maxWidth:480,margin:"0 auto",paddingBottom:80,fontFamily:"sans-serif"}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:14,borderBottom:"1px solid #eee",position:"sticky",top:0,background:"white",zIndex:10}}>
+        <span onClick={()=>setShowAdd(true)} style={{fontSize:28,color:"black",cursor:"pointer"}}>+</span>
         <b style={{fontFamily:"cursive",fontSize:28,color:"black"}}>Instagram</b>
         <span>❤️</span>
       </div>
 
       {tab==="home" && (
         <div>
-          <div style={{display:"flex",gap:14,padding:"12px 10px",overflowX:"auto",borderBottom:"1px solid #efefef"}}>
-            <div style={{minWidth:66,textAlign:"center"}}>
-              <div style={{width:62,height:62,borderRadius:"50%",background:"black",margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:24}}>M</div>
-              <div style={{fontSize:12,marginTop:6,color:"black"}}>Your story</div>
-            </div>
-            {allUsers.map((u:any)=>(
-              <div key={u.username} style={{minWidth:66,textAlign:"center"}}>
-                <div style={{width:62,height:62,borderRadius:"50%",padding:2.5,background:"linear-gradient(45deg,#feda75,#d62976,#4f5bd5)",margin:"0 auto"}}>
-                  <img src={u.avatar_url||"https://i.pravatar.cc/100?u="+u.username} style={{width:"100%",height:"100%",borderRadius:"50%",border:"2px solid white",objectFit:"cover"}}/>
-                </div>
-                <div style={{fontSize:11,color:"black",marginTop:4}}>{u.username.slice(0,8)}</div>
-              </div>
-            ))}
-          </div>
-
           {posts.map((p:any)=>(
             <div key={p.id} style={{borderBottom:"8px solid #fafafa"}}>
               <div style={{display:"flex",alignItems:"center",padding:"10px 12px",gap:10}}>
                 <div style={{width:34,height:34,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>{p.username[0]}</div>
-                <b style={{fontSize:14,color:"black"}}>{p.username}</b>
-                <button onClick={()=>toggleFollow(p.username)} style={{marginLeft:"auto",padding:"6px 14px",borderRadius:8,background:following.includes(p.username)?"#efefef":"#0095f6",color:following.includes(p.username)?"black":"white",border:"none",fontWeight:700,fontSize:13}}>{following.includes(p.username)?"Following":"Follow"}</button>
+                <b style={{color:"black",fontSize:14}}>{p.username}</b>
+                <button onClick={async()=>{
+                  if(following.includes(p.username)){
+                    await supabase.from("follows").delete().eq("follower_username",myUser).eq("following_username",p.username)
+                    setFollowing(following.filter(f=>f!==p.username))
+                  }else{
+                    await supabase.from("follows").insert({follower_username:myUser,following_username:p.username})
+                    const a=following.slice(); a.push(p.username); setFollowing(a)
+                  }
+                }} style={{marginLeft:"auto",padding:"6px 14px",borderRadius:8,border:"none",background:following.includes(p.username)?"#efefef":"#0095f6",color:following.includes(p.username)?"black":"white",fontWeight:700}}>{following.includes(p.username)?"Following":"Follow"}</button>
               </div>
-              <img src={p.image_url} style={{width:"100%",display:"block"}} onClick={()=>setZoomImg(p.image_url)}/>
-              <div style={{display:"flex",justifyContent:"space-between",padding:"12px 14px",alignItems:"center"}}>
-                <div style={{display:"flex",gap:18,alignItems:"center"}}>
-                  <span onClick={()=>toggleLike(p.id)} style={{fontSize:24,cursor:"pointer"}}>{liked.includes(p.id)?"❤️":"🤍"}</span>
-                  <span onClick={()=>setShowComments(showComments===p.id?null:p.id)} style={{fontSize:24,cursor:"pointer"}}>💬</span>
-                  <span onClick={()=>handleRepost(p)} style={{fontSize:24,cursor:"pointer"}}>🔁</span>
-                  <span onClick={()=>setShareOpen(p)} style={{fontSize:24,cursor:"pointer"}}>✈️</span>
-                  <span onClick={()=>handleDownload(p.image_url)} style={{fontSize:24,cursor:"pointer"}}>⬇️</span>
+              <img src={p.image_url} style={{width:"100%"}} onClick={()=>setZoom(p.image_url)} />
+              <div style={{display:"flex",justifyContent:"space-between",padding:"12px 14px"}}>
+                <div style={{display:"flex",gap:18}}>
+                  <span onClick={async()=>{
+                    if(liked.includes(p.id)){
+                      await supabase.from("likes").delete().eq("username",myUser).eq("post_id",p.id)
+                      setLiked(liked.filter(x=>x!==p.id))
+                    }else{
+                      await supabase.from("likes").insert({username:myUser,post_id:p.id})
+                      const a=liked.slice(); a.push(p.id); setLiked(a)
+                    }
+                  }} style={{fontSize:24,cursor:"pointer"}}>{liked.includes(p.id)?"❤️":"🤍"}</span>
+                  <span style={{fontSize:24}}>💬</span>
+                  <span onClick={()=>{ const np={id:Date.now(),username:p.username,content:"Reposted: "+p.content,image_url:p.image_url}; const a=[np].concat(posts); setPosts(a); alert("Reposted!") }} style={{fontSize:24,cursor:"pointer"}}>🔁</span>
+                  <span onClick={()=>{ navigator.clipboard.writeText(p.image_url); alert("Link copied!") }} style={{fontSize:24,cursor:"pointer"}}>✈️</span>
+                  <span onClick={()=>{ const a=document.createElement("a"); a.href=p.image_url; a.target="_blank"; a.click() }} style={{fontSize:24,cursor:"pointer"}}>⬇️</span>
                 </div>
-                <span onClick={()=>toggleSave(p.id)} style={{fontSize:24,cursor:"pointer"}}>{saved.includes(p.id)?"🔖":"📑"}</span>
+                <span onClick={()=>{ if(saved.includes(p.id)) setSaved(saved.filter(x=>x!==p.id)); else { const a=saved.slice(); a.push(p.id); setSaved(a) } }} style={{fontSize:24,cursor:"pointer"}}>{saved.includes(p.id)?"🔖":"📑"}</span>
               </div>
-              <div style={{padding:"0 12px 8px",color:"black",fontSize:14}}><b>{p.username}</b> {p.content}</div>
-              {comments[p.id] && comments[p.id].map((c:any,i:number)=><div key={i} style={{padding:"2px 12px",fontSize:13,color:"black"}}>{c}</div>)}
-              {showComments===p.id && (
-                <div style={{display:"flex",gap:8,padding:"8px 12px"}}>
-                  <input value={commentText[p.id]||""} onChange={(e)=>{ const nt:any={}; for(let k in commentText){nt[k]=commentText[k]}; nt[p.id]=e.target.value; setCommentText(nt)}} placeholder="Add comment..." style={{flex:1,padding:"8px",borderRadius:20,border:"1px solid #ddd",color:"black",background:"white"}}/>
-                  <button onClick={()=>handleAddComment(p.id)} style={{color:"#0095f6",background:"none",border:"none",fontWeight:700}}>Post</button>
-                </div>
-              )}
+              <div style={{padding:"0 12px 10px",color:"black",fontSize:14}}><b>{p.username}</b> {p.content}</div>
             </div>
           ))}
         </div>
       )}
 
       {tab==="profile" && (
-        <div style={{background:"white",minHeight:"80vh"}}>
-          <div style={{padding:"18px 14px"}}>
-            <div style={{display:"flex",gap:20,alignItems:"center"}}>
-              <div onClick={()=>setEditOpen(true)} style={{cursor:"pointer",position:"relative"}}>
-                {myAvatar? <img src={myAvatar} style={{width:86,height:86,borderRadius:"50%",objectFit:"cover"}}/> : <div style={{width:86,height:86,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32}}>M</div>}
-                <div style={{position:"absolute",bottom:0,right:0,width:22,height:22,background:"#0095f6",color:"white",borderRadius:"50%",border:"2px solid white",display:"flex",alignItems:"center",justifyContent:"center"}}>+</div>
-              </div>
-              <div style={{display:"flex",flex:1,justifyContent:"space-around"}}>
-                <div style={{textAlign:"center"}}><b style={{display:"block",color:"black",fontSize:18}}>{posts.filter((x:any)=>x.username===myUser).length}</b><span style={{fontSize:13,color:"black"}}>posts</span></div>
-                <div style={{textAlign:"center"}}><b style={{display:"block",color:"black",fontSize:18}}>{following.length}</b><span style={{fontSize:13,color:"black"}}>followers</span></div>
-                <div style={{textAlign:"center"}}><b style={{display:"block",color:"black",fontSize:18}}>{allUsers.length}</b><span style={{fontSize:13,color:"black"}}>following</span></div>
-              </div>
+        <div style={{padding:14}}>
+          <div style={{display:"flex",gap:20,alignItems:"center"}}>
+            <div onClick={()=>setEditOpen(true)} style={{position:"relative",cursor:"pointer"}}>
+              {myAvatar? <img src={myAvatar} style={{width:86,height:86,borderRadius:"50%",objectFit:"cover"}}/> : <div style={{width:86,height:86,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:32}}>M</div>}
+              <div style={{position:"absolute",bottom:0,right:0,width:22,height:22,background:"#0095f6",color:"white",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",border:"2px solid white"}}>+</div>
             </div>
-            <div style={{marginTop:14}}><b style={{color:"black"}}>{editUsername}</b><div style={{color:"black",fontSize:14}}>{editBio}</div></div>
-            <div style={{display:"flex",gap:8,marginTop:14}}>
-              <button onClick={()=>setEditOpen(true)} style={{flex:1,padding:"10px 0",borderRadius:8,background:"#efefef",border:"none",fontWeight:600,color:"black"}}>Edit profile</button>
-              <button onClick={()=>{navigator.clipboard.writeText(window.location.href); alert("Profile link copied!")}} style={{flex:1,padding:"10px 0",borderRadius:8,background:"#efefef",border:"none",fontWeight:600,color:"black"}}>Share profile</button>
+            <div style={{display:"flex",flex:1,justifyContent:"space-around",textAlign:"center"}}>
+              <div><b style={{color:"black",display:"block"}}>{posts.filter((x:any)=>x.username===myUser).length}</b><span style={{color:"black",fontSize:13}}>posts</span></div>
+              <div><b style={{color:"black",display:"block"}}>{following.length}</b><span style={{color:"black",fontSize:13}}>followers</span></div>
+              <div><b style={{color:"black",display:"block"}}>{allUsers.length}</b><span style={{color:"black",fontSize:13}}>following</span></div>
             </div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2}}>
-            {posts.filter((x:any)=>x.username===myUser).map((p:any)=><img key={p.id} src={p.image_url} style={{width:"100%",aspectRatio:"1/1",objectFit:"cover"}} onClick={()=>setZoomImg(p.image_url)}/>)}
+          <div style={{marginTop:12}}><b style={{color:"black"}}>{editName}</b><div style={{color:"black"}}>{editBio}</div></div>
+          <button onClick={()=>setEditOpen(true)} style={{width:"100%",marginTop:12,padding:10,borderRadius:8,border:"none",background:"#efefef",color:"black",fontWeight:600}}>Edit profile</button>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:2,marginTop:14}}>
+            {posts.filter((x:any)=>x.username===myUser).map((p:any)=><img key={p.id} src={p.image_url} style={{aspectRatio:"1/1",objectFit:"cover",width:"100%"}} onClick={()=>setZoom(p.image_url)}/>)}
           </div>
         </div>
       )}
 
-      {tab==="reels" && (
-        <div style={{background:"black",minHeight:"100vh"}}>
-          <div style={{display:"flex",gap:20,padding:"12px 14px",color:"white",fontSize:18}}><b>Reels</b></div>
-          {posts.map((p:any)=>(
-            <div key={p.id} style={{position:"relative",height:"75vh",marginBottom:10}}>
-              <img src={p.image_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
-              <div style={{position:"absolute",right:12,bottom:80,display:"flex",flexDirection:"column",gap:20,alignItems:"center"}}>
-                <div onClick={()=>toggleLike(p.id)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:28,color:"white"}}>{liked.includes(p.id)?"❤️":"🤍"}</div></div>
-                <div onClick={()=>setShareOpen(p)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:26,color:"white"}}>✈️</div></div>
-                <div onClick={()=>handleDownload(p.image_url)} style={{textAlign:"center",cursor:"pointer"}}><div style={{fontSize:26,color:"white"}}>⬇️</div></div>
-              </div>
-              <div style={{position:"absolute",bottom:20,left:14,right:80,color:"white"}}><b>{p.username}</b> <span style={{fontSize:13}}>{p.content}</span></div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab==="messages" && (
-        <div style={{background:"white",minHeight:"80vh",padding:14}}>
-          <div style={{display:"flex",background:"#efefef",borderRadius:20,padding:"12px 14px",alignItems:"center",gap:10}}>
-            <span>🔍</span>
-            <input value={searchText} onChange={(e)=>setSearchText(e.target.value)} placeholder="Search" style={{flex:1,background:"transparent",border:"none",outline:"none",color:"black"}}/>
-          </div>
-          {allUsers.filter((u:any)=>u.username.toLowerCase().includes(searchText.toLowerCase())).map((u:any)=>(
-            <div key={u.username} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:"1px solid #f0f0f0"}}>
-              <img src={u.avatar_url||"https://i.pravatar.cc/100?u="+u.username} style={{width:48,height:48,borderRadius:"50%"}}/>
-              <div><b style={{color:"black",fontSize:14}}>{u.username}</b></div>
-              <button onClick={()=>setShareOpen(u)} style={{marginLeft:"auto",background:"#efefef",border:"none",borderRadius:20,padding:"8px 12px",color:"black"}}>Share</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab==="search" && (
-        <div style={{padding:20}}>
-          <input value={searchText} onChange={(e)=>setSearchText(e.target.value)} placeholder="Search" style={{width:"100%",padding:"12px",borderRadius:10,border:"1px solid #ddd",color:"black",background:"white"}}/>
-          {allUsers.filter((u:any)=>u.username.toLowerCase().includes(searchText.toLowerCase())).map((u:any)=>(
-            <div key={u.username} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 0"}}>
-              <img src={u.avatar_url||"https://i.pravatar.cc/100?u="+u.username} style={{width:40,height:40,borderRadius:"50%"}}/>
-              <b style={{color:"black"}}>{u.username}</b>
-              <button onClick={()=>toggleFollow(u.username)} style={{marginLeft:"auto",padding:"6px 12px",borderRadius:8,background:following.includes(u.username)?"#efefef":"#0095f6",color:following.includes(u.username)?"black":"white",border:"none"}}>{following.includes(u.username)?"Following":"Follow"}</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"white",borderTop:"1px solid #efefef",display:"flex",justifyContent:"space-around",padding:"10px 0",zIndex:100}}>
-        <span onClick={()=>setTab("home")} style={{cursor:"pointer",padding:"6px 18px",borderRadius:20,background:tab==="home"?"#efefef":"transparent"}}>🏠</span>
-        <span onClick={()=>setTab("reels")} style={{cursor:"pointer",padding:"6px 18px",borderRadius:20,background:tab==="reels"?"#efefef":"transparent"}}>🎬</span>
-        <span onClick={()=>setTab("messages")} style={{cursor:"pointer",padding:"6px 18px",borderRadius:20,background:tab==="messages"?"#efefef":"transparent"}}>✈️</span>
-        <span onClick={()=>setTab("search")} style={{cursor:"pointer",padding:"6px 18px",borderRadius:20,background:tab==="search"?"#efefef":"transparent"}}>🔍</span>
-        <span onClick={()=>setTab("profile")} style={{cursor:"pointer",padding:"6px 18px",borderRadius:20,background:tab==="profile"?"#efefef":"transparent"}}>{myAvatar? <img src={myAvatar} style={{width:28,height:28,borderRadius:"50%"}}/> : <div style={{width:28,height:28,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>M</div>}</span>
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"white",borderTop:"1px solid #eee",display:"flex",justifyContent:"space-around",padding:"10px 0",zIndex:100}}>
+        <span onClick={()=>setTab("home")} style={{padding:"6px 18px",borderRadius:20,background:tab==="home"?"#efefef":"transparent",cursor:"pointer"}}>🏠</span>
+        <span onClick={()=>setTab("profile")} style={{padding:"6px 18px",borderRadius:20,background:tab==="profile"?"#efefef":"transparent",cursor:"pointer"}}>{myAvatar? <img src={myAvatar} style={{width:28,height:28,borderRadius:"50%"}}/> : <div style={{width:28,height:28,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>M</div>}</span>
       </div>
 
       {editOpen && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
           <div style={{background:"white",borderRadius:16,padding:20,width:"100%",maxWidth:360}}>
             <h3 style={{color:"black"}}>Edit Profile</h3>
-            <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+            <div style={{textAlign:"center",marginBottom:10}}>
               <label style={{cursor:"pointer"}}>
                 <img src={editAvatar||myAvatar||"https://i.pravatar.cc/100"} style={{width:90,height:90,borderRadius:"50%",objectFit:"cover"}}/>
-                <div style={{textAlign:"center",color:"#0095f6",fontSize:13,marginTop:6}}>Change Photo</div>
-                <input type="file" hidden accept="image/*" onChange={handleAvatarChange}/>
+                <div style={{color:"#0095f6",fontSize:13,marginTop:6}}>Change Photo</div>
+                <input type="file" hidden accept="image/*" onChange={(e:any)=>{ const f=e.target.files[0]; if(!f) return; setEditFile(f); setEditAvatar(URL.createObjectURL(f)) }}/>
               </label>
             </div>
-            <div style={{fontSize:12,color:"black"}}>Username</div>
-            <input value={editUsername} onChange={(e)=>setEditUsername(e.target.value)} style={{width:"100%",padding:12,marginBottom:10,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
-            <div style={{fontSize:12,color:"black"}}>Bio</div>
-            <input value={editBio} onChange={(e)=>setEditBio(e.target.value)} style={{width:"100%",padding:12,marginBottom:12,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
+            <div style={{color:"black",fontSize:12}}>Username</div>
+            <input value={editName} onChange={e=>setEditName(e.target.value)} style={{width:"100%",padding:12,marginBottom:10,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
+            <div style={{color:"black",fontSize:12}}>Bio</div>
+            <input value={editBio} onChange={e=>setEditBio(e.target.value)} style={{width:"100%",padding:12,marginBottom:12,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
             <div style={{display:"flex",gap:10}}>
               <button onClick={()=>setEditOpen(false)} style={{flex:1,padding:12,borderRadius:8,border:"1px solid #ddd",background:"white",color:"black"}}>Cancel</button>
-              <button onClick={handleSaveProfile} style={{flex:1,padding:12,borderRadius:8,background:"black",color:"white",border:"none"}}>Save</button>
+              <button onClick={saveProfile} style={{flex:1,padding:12,borderRadius:8,background:"black",color:"white",border:"none"}}>Save</button>
             </div>
           </div>
         </div>
       )}
 
-      {showAddPost && (
+      {showAdd && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
           <div style={{background:"white",borderRadius:14,padding:20,width:"100%",maxWidth:360}}>
             <h3 style={{color:"black"}}>New Post</h3>
-            <input value={newPostContent} onChange={(e)=>setNewPostContent(e.target.value)} placeholder="Caption" style={{width:"100%",padding:10,marginBottom:8,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
-            <input value={newPostImage} onChange={(e)=>setNewPostImage(e.target.value)} placeholder="Image URL" style={{width:"100%",padding:10,marginBottom:12,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
+            <input value={newCap} onChange={e=>setNewCap(e.target.value)} placeholder="Caption" style={{width:"100%",padding:10,marginBottom:8,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
+            <input value={newImg} onChange={e=>setNewImg(e.target.value)} placeholder="Image URL" style={{width:"100%",padding:10,marginBottom:12,borderRadius:8,border:"1px solid #ddd",color:"black",background:"white"}}/>
             <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>setShowAddPost(false)} style={{flex:1,padding:10,borderRadius:8,background:"white",border:"1
+              <button onClick={()=>setShowAdd(false)} style={{flex:1,padding:10,borderRadius:8,background:"white",border:"1px solid #ddd",color:"black"}}>Cancel</button>
+              <button onClick={async()=>{ if(!newImg.trim()){alert("Image URL pettu"); return} const r=await supabase.from("posts").insert({username:myUser,content:newCap,image_url:newImg,avatar_url:myAvatar}).select(); if(r.data){ const a=[r.data[0]].concat(posts); setPosts(a); setNewImg(""); setNewCap(""); setShowAdd(false) } }} style={{flex:1,padding:10,borderRadius:8,background:"black",color:"white",border:"none"}}>Post</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {zoom && <div onClick={()=>setZoom("")} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center"}}><img src={zoom} style={{maxWidth:"95%",maxHeight:"90%"}}/></div>}
+    </div>
+  )
+              }
