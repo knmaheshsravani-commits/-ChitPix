@@ -9,8 +9,10 @@ export default function Page(){
     <div className="min-h-screen bg-white pb-20 max-w-[500px] mx-auto">
       <Header />
       <Stories />
-      <PostCard />
-      <PostCard />
+      <div className="mt-1">
+        <PostCard />
+        <PostCard />
+      </div>
       <BottomNav />
     </div>
   )
