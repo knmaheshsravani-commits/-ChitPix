@@ -139,10 +139,10 @@ export default function Page(){
             </div>
 
             <label style={{fontSize:12, fontWeight:"bold"}}>Name</label>
-            <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} placeholder="Your name" style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:12, outline:"none"}}/>
+            <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} placeholder="Your name" style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:12, color:"black", background:"white", outline:"none", fontSize:14}}/>
 
             <label style={{fontSize:12, fontWeight:"bold"}}>Bio</label>
-            <input value={editData.bio} onChange={e=>setEditData({...editData, bio:e.target.value})} placeholder="Your bio" style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:16, outline:"none"}}/>
+            <input value={editData.bio} onChange={e=>setEditData({...editData, bio:e.target.value})} placeholder="Your bio 🌸" style={{width:"100%", padding:12, borderRadius:12, border:"1px solid #ddd", marginTop:4, marginBottom:16, color:"black", background:"white", outline:"none", fontSize:14}}/>
 
             <div style={{display:"flex", gap:10}}>
               <button onClick={()=>setShowEdit(false)} style={{flex:1, padding:12, borderRadius:12, border:"1px solid #ddd", background:"white"}}>Cancel</button>
