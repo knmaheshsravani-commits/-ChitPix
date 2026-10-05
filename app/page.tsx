@@ -62,7 +62,7 @@ export default function Page(){
       const blob = await res.blob()
       finalUrl = await uploadImage(new File([blob], "avatar.jpg", {type: blob.type}))
     }
-    const { error } = await supabase.from("profiles").upsert({username:"@knmahesh30", name:editData.name, bio:editData.bio, avatar_url:finalUrl})
+        const { error } = await supabase.from("profiles").upsert({username:"@knmahesh30", name:editData.name, bio:editData.bio, avatar_url:finalUrl}, {onConflict:"username"})
     if(error){ alert(error.message); return }
     setProfile({...profile, name:editData.name, bio:editData.bio, avatar_url:finalUrl})
     setShowEdit(false)
