@@ -109,21 +109,13 @@ export default function Page(){
           </div>
           <div style={{marginTop:12}}><b style={{fontSize:14}}>{profile?.name || "Mahesh"} 🌸</b><div style={{fontSize:13, color:"#444"}}>{profile?.bio || "I love ChitPix.com 🌸 | Creator"}</div><div style={{fontSize:12, color:"#9333ea"}}>{profile?.username}</div></div>
 
-          <div style={{display:"flex", gap:8, marginTop:14}}>
-            <button onClick={()=>setShowEdit(true)} style={{flex:1, padding:"10px", borderRadius:10, background:"black", color:"white", border:"none", fontWeight:"bold"}}>Edit profile</button>
-            <button onClick={async()=>{ const url=`https://chitpix.com/@${profile?.username||"knmahesh30"}`; if(navigator.share){try{await navigator.share({title:`ChitPix`, url})}catch(e){}}else{window.open(`https://wa.me/?text=${encodeURIComponent(url)}`,"_blank")} }} style={{flex:1, padding:"10px", borderRadius:10, background:"#f3f4f6", color:"black", border:"1px solid #ddd", fontWeight:"bold"}}>Share profile</button>
+          {/* 4 BUTTONS - PRO DESIGN */}
+          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:14}}>
+            <button onClick={()=>setShowEdit(true)} style={{padding:"11px", borderRadius:10, background:"black", color:"white", border:"none", fontWeight:"bold", fontSize:13}}>Edit profile</button>
+            <button onClick={async()=>{ const url=`https://chitpix.com/@${profile?.username||"knmahesh30"}`; if(navigator.share){try{await navigator.share({title:`ChitPix`, url})}catch(e){}}else{window.open(`https://wa.me/?text=${encodeURIComponent(url)}`,"_blank")} }} style={{padding:"11px", borderRadius:10, background:"#f3f4f6", color:"black", border:"1px solid #ddd", fontWeight:"bold", fontSize:13}}>Share profile</button>
+            <button onClick={()=>{ const ns=!isFollowing; setIsFollowing(ns); setFollowerCount(ns? followerCount+1 : followerCount-1); }} style={{padding:"11px", borderRadius:10, background:isFollowing?"#e5e7eb":"black", color:isFollowing?"black":"white", border:"none", fontWeight:"bold", fontSize:13}}>{isFollowing? `Following ✓ ${followerCount}` : `Follow ${followerCount}`}</button>
+            <button onClick={()=>location.href="/admin"} style={{padding:"11px", borderRadius:10, background:"#9333ea", color:"white", border:"none", fontWeight:"bold", fontSize:13}}>⚙️ Admin Panel</button>
           </div>
-
-          {/* FOLLOW BUTTON TEST - vere vallaki kanipistundi */}
-          <div style={{display:"flex", gap:8, marginTop:8}}>
-            <button onClick={()=>{ const ns=!isFollowing; setIsFollowing(ns); setFollowerCount(ns? followerCount+1 : followerCount-1); }} style={{flex:1, padding:"10px", borderRadius:10, background:isFollowing?"#e5e7eb":"#9333ea", color:isFollowing?"black":"white", border:"none", fontWeight:"bold"}}>
-              {isFollowing? "Following ✓ ("+followerCount+")" : "Follow ("+followerCount+")"} - TEST
-            </button>
-          </div>
-
-          {/* ADMIN BUTTON 100% WORKING */}
-          <button onClick={()=>location.href="/admin"} style={{width:"100%", marginTop:8, padding:"12px", borderRadius:10, background:"#9333ea", color:"white", border:"none", fontWeight:"bold"}}>⚙️ Admin Panel - Working ✅</button>
-
           {/* PHOTOS GRID - BUG FIX */}
           <div style={{marginTop:18, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:2}}>
             {posts?.filter((p:any)=> p.image_url && p.image_url.startsWith("http")).map((p:any)=>(
