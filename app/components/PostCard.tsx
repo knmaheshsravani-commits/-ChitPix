@@ -8,11 +8,13 @@ export default function PostCard(){
         </div>
         <span className="font-bold">•••</span>
       </div>
-      <div className="w-full h-[380px] bg-gray-100 flex items-center justify-center">
+      <div className="w-full h-[420px] bg-gray-100 flex items-center justify-center">
         <span className="text-gray-400">Post Image</span>
       </div>
-      <div className="p-3 flex gap-4 text-xl">
-        <span>♡</span><span>💬</span><span>✈️</span>
+      <div className="p-3 flex gap-4">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 21s-6.5-4.35-8.5-8.15C2 9.5 3.5 5 8 5c2.1 0 3.2 1.1 4 2.2C12.8 6.1 14 5 16 5c4.5 0 6 4.5 4.5 7.85C18.5 16.65 12 21 12 21z"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-3.9 7.1L18 21l-3.2-1.9A8.5 8.5 0 1 1 21 11.5z"/></svg>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-4 20-7z"/></svg>
       </div>
       <div className="px-3 text-sm"><b>chitpix_user</b> Welcome to ChitPix 🚀</div>
     </div>
