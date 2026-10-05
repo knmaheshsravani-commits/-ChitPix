@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react"
 import { createClient } from "@supabase/supabase-js"
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-const ADMIN_EMAIL = "knmaheshsravani@gmail.com"
-const ADMIN_PASS = "Mahesh@123"
 export default function Page(){
   const [tab,setTab]=useState("home")
   const [posts,setPosts]=useState<any[]>([])
@@ -22,7 +20,7 @@ export default function Page(){
   const [isFollowing,setIsFollowing]=useState(false)
 const [followerCount,setFollowerCount]=useState(1243)
 const [followingCount,setFollowingCount]=useState(98) // <-- FIXED ✅
-const isOwnProfile=true
+const isOwnProfile = profile?.username==="knmahesh" || profile?.username==="knmahesh30" || profile?.username==="@knmahesh30"
 const myId="knmahesh30"
   async function load(){
     const p1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
