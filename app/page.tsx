@@ -133,12 +133,20 @@ export default function Page(){
       )}
 
       <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"white",borderTop:"1px solid #eee",display:"flex",justifyContent:"space-around",padding:"10px 0",zIndex:100}}>
-        <span onClick={()=>setTab("home")} style={{padding:"8px 18px",borderRadius:20,background:tab==="home"?"#efefef":"transparent",cursor:"pointer",fontSize:20}}>🏠</span>
-        <span onClick={()=>setTab("reels")} style={{padding:"8px 18px",borderRadius:20,background:tab==="reels"?"#efefef":"transparent",cursor:"pointer",fontSize:20}}>🎬</span>
-        <span onClick={()=>setTab("search")} style={{padding:"8px 18px",borderRadius:20,background:tab==="search"?"#efefef":"transparent",cursor:"pointer",fontSize:20}}>🔍</span>
-        <span onClick={()=>setTab("messages")} style={{padding:"8px 18px",borderRadius:20,background:tab==="messages"?"#efefef":"transparent",cursor:"pointer",fontSize:20}}>✈️</span>
-        <span onClick={()=>setTab("profile")} style={{padding:"6px 18px",borderRadius:20,background:tab==="profile"?"#efefef":"transparent",cursor:"pointer"}}>{myAvatar? <img src={myAvatar} style={{width:28,height:28,borderRadius:"50%"}}/> : <div style={{width:28,height:28,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center"}}>M</div>}</span>
-      </div>
+  <span onClick={()=>setTab("home")} style={{width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:"8px 18px",borderRadius:20,background:tab==="home"?"#efefef":"transparent"}}>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill={tab==="home"?"black":"none"} stroke="black" strokeWidth="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  </span>
+  <span onClick={()=>setTab("reels")} style={{width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:"8px 18px",borderRadius:20,background:tab==="reels"?"#efefef":"transparent"}}>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><polygon points="23 7 13.5 15.5 8.5 11.5 1 17.5 1 7 23 7"/><polygon points="23 7 13.5 15.5 8.5 11.5 1 17.5 1 7 23 7" transform="translate(0 -2)"/><rect x="2" y="2" width="20" height="20" rx="2"/></svg>
+  </span>
+  <span onClick={()=>setTab("search")} style={{width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:"8px 18px",borderRadius:20,background:tab==="search"?"#efefef":"transparent"}}>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </span>
+  <span onClick={()=>setTab("messages")} style={{width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:"8px 18px",borderRadius:20,background:tab==="messages"?"#efefef":"transparent"}}>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+  </span>
+  <span onClick={()=>setTab("profile")} style={{width:30,height:30,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:"6px 18px",borderRadius:20,background:tab==="profile"?"#efefef":"transparent"}}>{myAvatar? <img src={myAvatar} style={{width:26,height:26,borderRadius:"50%",objectFit:"cover"}}/> : <div style={{width:26,height:26,borderRadius:"50%",background:"black",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12}}>M</div>}</span>
+</div>
 
       {editOpen && (
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
