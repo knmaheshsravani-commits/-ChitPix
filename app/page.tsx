@@ -1,173 +1,18 @@
 "use client"
-import { useState, useEffect } from "react"
-import { createClient } from "@supabase/supabase-js"
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+import BottomNav from "./components/BottomNav"
 
 export default function Page(){
-  const [tab,setTab]=useState("profile")
-  const [posts,setPosts]=useState<any[]>([])
-  const [stories,setStories]=useState<any[]>([])
-  const [text,setText]=useState("")
-  const [profile,setProfile]=useState<any>({username:"@knmahesh30", name:"Mahesh Reddy", avatar_url:"", bio:"I love ChitPix.com 🌸 | Creator"})
-  const [editData,setEditData]=useState<any>({name:"Mahesh Reddy", bio:"I love ChitPix.com 🌸 | Creator", avatar_url:""})
-  const [showEdit,setShowEdit]=useState(false)
-  const [uploading,setUploading]=useState(false)
-  const [viewStory,setViewStory]=useState<any>(null)
-  const [commentOpen,setCommentOpen]=useState<any>(null)
-  const [commentText,setCommentText]=useState("")
-  const [comments,setComments]=useState<any[]>([])
-  const [isFollowing,setIsFollowing]=useState(false)
-  const [followerCount,setFollowerCount]=useState(1243)
-  const [followingCount,setFollowingCount]=useState(98)
-  const isOwnProfile = true // Nee profile kabatti true
-
-  async function load(){
-    const p1 = await supabase.from("posts").select("*").order("created_at",{ascending:false})
-    if(p1.data) setPosts(p1.data)
-    const p2 = await supabase.from("profiles").select("*").eq("username","@knmahesh30").limit(1)
-    if(p2.data && p2.data[0]){ setProfile(p2.data[0]); setEditData({name:p2.data[0].name, bio:p2.data[0].bio, avatar_url:p2.data[0].avatar_url}) }
-    const p3 = await supabase.from("stories").select("*").order("created_at",{ascending:false})
-    if(p3.data) setStories(p3.data)
-    const p4 = await supabase.from("comments").select("*").order("created_at",{ascending:false})
-    if(p4.data) setComments(p4.data)
-  }
-  useEffect(()=>{
-  const u = localStorage.getItem("chitpix_user")
-  if(!u){ window.location.href="/login"; return }
-  load()
-},[])
-
-  async function uploadImage(file: File){
-    setUploading(true)
-    const name = Date.now()+"_"+file.name.replace(/\s/g,"_")
-    const { error } = await supabase.storage.from("chitpix").upload(name, file)
-    if(error){ alert("Storage Public chey bro! "+error.message); setUploading(false); return "" }
-    const url = supabase.storage.from("chitpix").getPublicUrl(name).data.publicUrl
-    setUploading(false)
-    return url
-  }
-
-  async function addPost(){
-    if(!text.trim()) return
-    await supabase.from("posts").insert({content:text, username:"@knmahesh30", likes:0})
-    setText(""); load()
-  }
-  async function addStory(e:any){
-    const file=e.target.files?.[0]; if(!file) return
-    const url=await uploadImage(file)
-    if(!url) return
-    await supabase.from("stories").insert({image_url:url, username:"@knmahesh30"})
-    load(); alert("Story Added ✅")
-  }
-  async function saveProfile(){
-    let finalUrl = editData.avatar_url
-    if(finalUrl && finalUrl.startsWith("blob:")){
-      const res = await fetch(finalUrl)
-      const blob = await res.blob()
-      finalUrl = await uploadImage(new File([blob], "avatar.jpg", {type: blob.type}))
-    }
-        const { error } = await supabase.from("profiles").upsert({username:"@knmahesh30", name:editData.name, bio:editData.bio, avatar_url:finalUrl}, {onConflict:"username"})
-    if(error){ alert(error.message); return }
-    setProfile({...profile, name:editData.name, bio:editData.bio, avatar_url:finalUrl})
-    setShowEdit(false)
-    load()
-    alert("Profile Saved 100% ✅ Refresh chesina povadu!")
-  }
-
   return(
-    <div style={{minHeight:"100vh", background:"white", maxWidth:480, margin:"0 auto", paddingBottom:70, fontFamily:"-apple-system, system-ui"}}>
-      <div style={{padding:"14px 16px", borderBottom:"1px solid #eee", display:"flex", justifyContent:"space-between", alignItems:"center", position:"sticky", top:0, background:"white", zIndex:20}}>
-        <b style={{color:"#9333ea", fontSize:20}}>ChitPix.com 🌸</b>
-        <div style={{display:"flex", gap:12}}><span>🔔</span><span>❤️</span></div>
+    <div className="min-h-screen bg-white pb-20">
+      <div className="p-4 flex justify-between items-center border-b sticky top-0 bg-white">
+        <h1 className="font-black text-xl">ChitPix.com</h1>
+        <div className="w-8 h-8 rounded-full bg-black"></div>
       </div>
-
-      {tab==="home" && (
-        <>
-          <div style={{display:"flex", gap:12, padding:12, overflowX:"auto", borderBottom:"1px solid #eee"}}>
-            <label style={{minWidth:58, textAlign:"center"}}>
-              <div style={{width:56,height:56,borderRadius:28, background:"#f3e8ff", display:"flex", alignItems:"center", justifyContent:"center", border:"2px dashed #9333ea", fontSize:22}}>+</div>
-              <div style={{fontSize:10, marginTop:4}}>Add</div>
-              <input type="file" hidden accept="image/*" onChange={addStory}/>
-            </label>
-            {stories.map((s:any)=><div key={s.id} onClick={()=>setViewStory(s)} style={{minWidth:58, textAlign:"center"}}><img src={s.image_url} style={{width:56,height:56,borderRadius:28,border:"2px solid #9333ea",objectFit:"cover"}}/><div style={{fontSize:10, marginTop:4}}>{s.username.slice(0,7)}</div></div>)}
-          </div>
-          <div style={{padding:12, display:"flex", gap:8}}><input value={text} onChange={e=>setText(e.target.value)} placeholder="What's new bro?" style={{flex:1, background:"#f4f4f5", padding:"12px 14px", borderRadius:14, border:"none", outline:"none"}}/><button onClick={addPost} disabled={uploading} style={{background:"black", color:"white", padding:"0 18px", borderRadius:14, border:"none", fontWeight:"bold"}}>Post</button></div>
-          {posts.map((p:any)=><div key={p.id} style={{padding:"12px 16px", borderBottom:"1px solid #f0f0f0"}}><b style={{fontSize:13}}>{p.username}</b><div style={{fontSize:14, marginTop:2}}>{p.content}</div></div>)}
-        </>
-      )}
-
-      {tab==="profile" && (
-        <div style={{padding:16}}>
-          <div style={{display:"flex", gap:16, alignItems:"center"}}>
-            <div style={{position:"relative"}}>
-              <div style={{width:80, height:80, borderRadius:40, overflow:"hidden", background:"black", color:"white", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32, fontWeight:"bold"}}>
-                {profile?.avatar_url? <img src={profile.avatar_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : "M"}
-              </div>
-              <div style={{position:"absolute", bottom:0, right:0, background:"#3b82f6", color:"white", borderRadius:"50%", width:20, height:20, display:"flex", alignItems:"center", justifyContent:"center", fontSize:10, border:"2px solid white"}}>✓</div>
-            </div>
-            <div style={{display:"flex", gap:18, textAlign:"center", flex:1, justifyContent:"space-around"}}>
-              <div><b style={{display:"block"}}>{posts?.length || 0}</b><span style={{fontSize:12}}>Posts</span></div>
-              <div><b style={{display:"block"}}>{followerCount}</b><span style={{fontSize:12}}>Followers</span></div>
-              <div><b style={{display:"block"}}>{followingCount}</b><span style={{fontSize:12}}>Following</span></div>
-            </div>
-          </div>
-          <div style={{marginTop:12}}><b style={{fontSize:14}}>{profile?.name || "Mahesh"} 🌸</b><div style={{fontSize:13, color:"#444"}}>{profile?.bio || "I love ChitPix.com 🌸 | Creator"}</div><div style={{fontSize:12, color:"#9333ea"}}>{profile?.username}</div></div>
-
-          {/* 4 BUTTONS - PRO DESIGN */}
-          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginTop:14}}>
-            <button onClick={()=>setShowEdit(true)} style={{padding:"11px", borderRadius:10, background:"black", color:"white", border:"none", fontWeight:"bold", fontSize:13}}>Edit profile</button>
-            <button onClick={async()=>{ const url=`https://chitpix.com/@${profile?.username||"knmahesh30"}`; if(navigator.share){try{await navigator.share({title:`ChitPix`, url})}catch(e){}}else{window.open(`https://wa.me/?text=${encodeURIComponent(url)}`,"_blank")} }} style={{padding:"11px", borderRadius:10, background:"#f3f4f6", color:"black", border:"1px solid #ddd", fontWeight:"bold", fontSize:13}}>Share profile</button>
-            <button onClick={()=>{ const ns=!isFollowing; setIsFollowing(ns); setFollowerCount(ns? followerCount+1 : followerCount-1); }} style={{padding:"11px", borderRadius:10, background:isFollowing?"#e5e7eb":"black", color:isFollowing?"black":"white", border:"none", fontWeight:"bold", fontSize:13}}>{isFollowing? `Following ✓ ${followerCount}` : `Follow ${followerCount}`}</button>
-            <button onClick={()=>location.href="/admin"} style={{padding:"11px", borderRadius:10, background:"#9333ea", color:"white", border:"none", fontWeight:"bold", fontSize:13}}>⚙️ Admin Panel</button>
-          </div>
-          {/* PHOTOS GRID - BUG FIX */}
-          <div style={{marginTop:18, display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:2}}>
-            {posts?.filter((p:any)=> p.image_url && p.image_url.startsWith("http")).map((p:any)=>(
-              <div key={p.id} style={{aspectRatio:"1", background:"#f4f4f5", overflow:"hidden"}}>
-                <img src={p.image_url} style={{width:"100%", height:"100%", objectFit:"cover"}} onError={(e:any)=>e.target.style.display='none'} />
-              </div>
-            ))}
-          </div>
-          {posts?.filter((p:any)=> p.image_url && p.image_url.startsWith("http")).length===0 && (
-            <div style={{textAlign:"center", color:"#888", fontSize:12, marginTop:20}}>No photos yet - Add photo post from Home + icon 📸</div>
-          )}
-        </div>
-      )}
-
-      {tab==="search" && <div style={{padding:20, textAlign:"center", color:"#888", marginTop:40}}>Search Coming Soon 🔍</div>}
-
-      {showEdit && (
-        <div style={{position:"fixed", inset:0, background:"rgba(0,0,0,0.6)", zIndex:50, display:"flex", alignItems:"center", justifyContent:"center", padding:16}}>
-          <div style={{background:"white", width:"100%", maxWidth:360, borderRadius:20, padding:20}}>
-            <h3 style={{fontWeight:"bold", fontSize:16, marginBottom:14}}>Edit Profile ✅</h3>
-            <div style={{textAlign:"center", marginBottom:16}}>
-              <label style={{cursor:"pointer"}}>
-                <div style={{width:80,height:80,borderRadius:40,margin:"0 auto",overflow:"hidden",background:"#eee",display:"flex",alignItems:"center",justifyContent:"center"}}>
-                  {editData.avatar_url? <img src={editData.avatar_url} style={{width:"100%",height:"100%",objectFit:"cover"}}/> : <span style={{fontSize:28}}>📷</span>}
-                </div>
-                <div style={{fontSize:12, color:"#9333ea", marginTop:6, fontWeight:"bold"}}>{uploading?"Uploading...":"Change Photo"}</div>
-                <input type="file" hidden accept="image/*" onChange={e=>{ const f=e.target.files?.[0]; if(f) setEditData({...editData, avatar_url: URL.createObjectURL(f)}) }}/>
-              </label>
-            </div>
-            <label style={{fontSize:12, fontWeight:"bold"}}>Name</label>
-            <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} style={{width:"100%", padding:"14px", borderRadius:"16px", border:"2px solid black", color:"black", background:"white", fontSize:"14px"}}/>
-            <label style={{fontSize:12, fontWeight:"bold"}}>Bio</label>
-            <input value={editData.bio} onChange={e=>setEditData({...editData, bio:e.target.value})} style={{width:"100%", padding:"14px", borderRadius:"16px", border:"1.5px solid #e5e7eb", color:"black", background:"white", fontSize:"14px"}}/>
-            <div style={{display:"flex", gap:10}}>
-              <button onClick={()=>setShowEdit(false)} style={{flex:1, padding:12, borderRadius:12, border:"1px solid #ddd", background:"white"}}>Cancel</button>
-              <button onClick={saveProfile} disabled={uploading} style={{flex:1, padding:12, borderRadius:12, background:"black", color:"white", border:"none", fontWeight:"bold"}}>{uploading?"Saving...":"Save ✅"}</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {viewStory && <div onClick={()=>setViewStory(null)} style={{position:"fixed", inset:0, background:"black", zIndex:60, display:"flex", alignItems:"center", justifyContent:"center"}}><img src={viewStory.image_url} style={{maxWidth:"100%", maxHeight:"100%"}}/></div>}
-      <div style={{position:"fixed", bottom:0, left:"50%", transform:"translateX(-50%)", width:"100%", maxWidth:480, background:"white", borderTop:"1px solid #ddd", display:"flex", justifyContent:"space-around", padding:"12px 0", zIndex:10}}>
-        <button onClick={()=>setTab("home")} style={{border:"none", background:"none", fontSize:24}}>🏠</button>
-        <button onClick={()=>setTab("home")} style={{border:"none", background:"none", fontSize:24}}>🎬</button>
-        <button onClick={()=>setTab("search")} style={{border:"none", background:"none", fontSize:24}}>🔍</button>
-        <button onClick={()=>setTab("home")} style={{border:"none", background:"none", fontSize:24}}>✈️</button>
-        <button onClick={()=>setTab("profile")} style={{border:"none", background:"none", width:30,height:30,borderRadius:15,backgroundColor:"#9333ea",color:"white",fontWeight:"bold"}}>M</button>
+      <div className="p-10 text-center mt-20">
+        <h1 className="text-3xl font-bold">Welcome BRO 🚀</h1>
+        <p className="text-gray-500 mt-2">Fresh start success!</p>
       </div>
+      <BottomNav />
     </div>
   )
-                                        }
+}
