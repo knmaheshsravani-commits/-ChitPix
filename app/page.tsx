@@ -6,11 +6,9 @@ import BottomNav from "./components/BottomNav";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#fafafa] pb-28 max-w-[500px] mx-auto border-x border-gray-100">
+    <div className="min-h-screen bg-white pb-24 max-w-[500px] mx-auto border-x border-zinc-100">
       <Header />
       <Stories />
-      <PostCard />
-      <PostCard />
       <PostCard />
       <PostCard />
       <PostCard />
