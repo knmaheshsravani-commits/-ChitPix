@@ -1,13 +1,13 @@
 "use client";
 export default function BottomNav() {
   return (
-    <div className="fixed bottom-5 left-0 right-0 flex justify-center z-50">
-      <div className="bg-black text-white rounded-full px-6 py-3.5 flex items-center gap-7 shadow-2xl">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3z"/></svg>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
-        <div className="bg-white text-black w-7 h-7 rounded-full flex items-center justify-center font-bold text-[18px]">+</div>
+    <div style={{ position: "fixed", bottom: "20px", left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 50 }}>
+      <div style={{ background: "black", borderRadius: "999px", padding: "12px 24px", display: "flex", alignItems: "center", gap: "28px" }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2.1L2 12h3v8h6v-6h2v6h6v-8h3z"/></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.3-4.3"/></svg>
+        <div style={{ width: "28px", height: "28px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "18px" }}>+</div>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        <div className="w-6 h-6 rounded-full bg-white"></div>
+        <div style={{ width: "24px", height: "24px", background: "white", borderRadius: "50%" }}></div>
       </div>
     </div>
   );
