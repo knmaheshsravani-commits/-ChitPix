@@ -73,10 +73,11 @@ const [replyLikes, setReplyLikes] = useState([
   {id:2, user:"priya_22", text:"Super pic bro! 🔥", time:"3h", likes:5, liked:false, pic:"https://i.pravatar.cc/100?img=9"},
 ])
   const [replyingTo, setReplyingTo] = useState<number|null>(null)
-const [replyText, setReplyText] = useState("")
-const toggleReplyLike = (id:number)=>{
+ const toggleReplyLike = (id:number)=>{
   setReplyLikes(replyLikes.map((r:any)=> r.id===id? {...r, liked:!r.liked, likes: r.liked? r.likes-1 : r.likes+1} : r))
+}
 return(
+  <div className="max-w-[480px] mx-auto bg-white min-h-screen pb-20 relative">
     <div className="max-w-[480px] mx-auto bg-white min-h-screen pb-20 relative">
       <input ref={storyRef} type="file" accept="image/*" hidden onChange={uploadStory}/>
       <input ref={postRef} type="file" accept="image/*" hidden onChange={uploadPost}/>
