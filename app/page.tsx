@@ -56,14 +56,45 @@ export default function Page(){
     {user:"sneha_99", action:`liked your post`, time:"2h", pic:"https://i.pravatar.cc/100?img=5", count:posts[0]?.likes},
     {user:"arjun_77", action:`liked your fox photo • ${posts[0]?.likes} likes`, time:"5h", pic:"https://i.pravatar.cc/100?img=8", count:128},
   ]
-  const replyNotifs = [
-    {user:"sneha_99", action:"Nice fox! 🦊 Where is this?", time:"1h", pic:"https://i.pravatar.cc/100?img=5", likes:12},
-    {user:"priya_22", action:"Super pic bro! 🔥", time:"3h", pic:"https://i.pravatar.cc/100?img=9", likes:5},
-  ]
-  const msgData = [
-    {user:"sneha_99", msg:"Hey! Fox pic super undi 😍", time:"10m", pic:"https://i.pravatar.cc/100?img=5"},
-    {user:"arjun_77", msg:"Bro ChitPix bagundi!", time:"1h", pic:"https://i.pravatar.cc/100?img=8"},
-  ]
+  // REPLY STATE - ADD CHEY TOP LO
+const [replyLikes, setReplyLikes] = useState([
+  {id:1, user:"sneha_99", text:"Nice fox! 🦊 Where is this?", time:"1h", likes:12, liked:false, pic:"https://i.pravatar.cc/100?img=5"},
+  {id:2, user:"priya_22", text:"Super pic bro! 🔥", time:"3h", likes:5, liked:false, pic:"https://i.pravatar.cc/100?img=9"},
+])
+const [replyingTo, setReplyingTo] = useState<number|null>(null)
+const [replyText, setReplyText] = useState("")
+
+const toggleReplyLike = (id:number)=>{
+  setReplyLikes(replyLikes.map(r=> r.id===id? {...r, liked:!r.liked, likes: r.liked? r.likes-1 : r.likes+1} : r))
+}
+
+// UI LO - Reply Tab Section ni IDI tho marchu
+{tab==="reply" && (
+  <div>
+    {replyLikes.map((x)=>(
+      <div key={x.id} className="flex items-center gap-3 px-4 py-3 border-b">
+        <img src={x.pic} className="w-12 h-12 rounded-full"/>
+        <div className="flex-1">
+          <span className="font-bold text-[15px]">{x.user}</span>
+          <div className="text-[14px]">{x.text}</div>
+          <div className="text-[12px] text-gray-500 flex gap-2 items-center mt-1">
+            <span>{x.time}</span>
+            <button onClick={()=>toggleReplyLike(x.id)} className="flex items-center gap-1">
+              <span className={x.liked?"text-red-500":""}>❤️</span> {x.likes} likes
+            </button>
+            <button onClick={()=>setReplyingTo(x.id)} className="font-bold text-black bg-blue-100 px-2 py-0.5 rounded">Reply</button>
+          </div>
+          {replyingTo===x.id && (
+            <div className="flex gap-2 mt-2">
+              <input value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder={`Reply to ${x.user}...`} className="flex-1 border rounded-full px-3 py-1.5 text-[13px]"/>
+              <button onClick={()=>{if(!replyText) return; alert(`Replied to ${x.user}: ${replyText}`); setReplyText(""); setReplyingTo(null)}} className="bg-black text-white px-4 py-1.5 rounded-full text-[13px] font-bold">Send</button>
+            </div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
 
   return(
     <div className="max-w-[480px] mx-auto bg-white min-h-screen pb-20 relative">
