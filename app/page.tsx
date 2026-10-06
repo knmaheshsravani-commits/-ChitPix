@@ -68,17 +68,30 @@ export default function Page(){
       alert("Link Copied! Share to Gallery/WhatsApp ✈️")
     }
   }
-
-  const likesNotifs = [
+    const likesNotifs = [
     {user:"sneha_99", action:`liked your post`, time:"2h", pic:"https://i.pravatar.cc/100?img=5"},
     {user:"arjun_77", action:`liked your fox photo`, time:"5h", pic:"https://i.pravatar.cc/100?img=8"},
   ]
+
+  const [replyLikes, setReplyLikes] = useState([
+    {id:1, user:"sneha_99", text:"Nice fox! 🦊 Where is this?", time:"1h", likes:12, liked:false, pic:"https://i.pravatar.cc/100?img=5"},
+    {id:2, user:"priya_22", text:"Super pic bro! 🔥", time:"3h", likes:5, liked:false, pic:"https://i.pravatar.cc/100?img=9"},
+  ])
+  const [replyText,setReplyText] = useState("")
+  const [replyingTo, setReplyingTo] = useState<number|null>(null)
+  const [replies, setReplies] = useState<any[]>([])
 
   const toggleReplyLike = (id:number)=>{
     setReplyLikes(replyLikes.map((r:any)=> r.id===id? {...r, liked:!r.liked, likes: r.liked? r.likes-1 : r.likes+1} : r))
   }
 
-  return(
+  const sendReply = (toId:number, toUser:string)=>{
+    if(!replyText.trim()) return
+    const newReply = {id:Date.now(), parentId:toId, user:"you", text:replyText, to:toUser, time:"now"}
+    setReplies([...replies, newReply])
+    setReplyText("")
+    setReplyingTo(null)
+  }
     <div className="max-w-[480px] mx-auto bg-white min-h-screen pb-20 relative">
       <input ref={storyRef} type="file" accept="image/*" hidden onChange={uploadStory}/>
       <input ref={postRef} type="file" accept="image/*" hidden onChange={uploadPost}/>
@@ -118,33 +131,40 @@ export default function Page(){
                 <div className="flex-1"><span className="font-bold">{x.user}</span> {x.action}</div>
               </div>
             ))}
-            {tab==="reply" && replyLikes.map((x:any)=>(
-              <div key={x.id} className="flex items-center gap-3 px-4 py-3 border-b">
-                <img src={x.pic} className="w-12 h-12 rounded-full"/>
-                <div className="flex-1">
-                  <b>{x.user}</b> <div className="text-[14px]">{x.text}</div>
-                  <div className="text-xs text-gray-500 flex gap-2 mt-1">
-                    <span>{x.time}</span>
-                    <button onClick={()=>toggleReplyLike(x.id)}>❤️ {x.likes}</button>
-                    <button onClick={()=>setReplyingTo(x.id)} className="bg-blue-100 px-2 rounded font-bold">Reply</button>
-                  </div>
-                  {replyingTo===x.id && (
+                      {tab==="reply" && replyLikes.map((x:any)=>(
+            <div key={x.id} className="flex items-center gap-3 px-4 py-3 border-b">
+              <img src={x.pic} className="w-12 h-12 rounded-full"/>
+              <div className="flex-1">
+                <b>{x.user}</b> <div className="text-[14px]">{x.text}</div>
+                <div className="text-xs text-gray-500 flex gap-2 mt-1">
+                  <span>{x.time}</span>
+                  <button onClick={()=>toggleReplyLike(x.id)}>❤️ {x.likes}</button>
+                  <button onClick={()=>setReplyingTo(x.id)} className="bg-blue-100 px-2 rounded font-bold">Reply</button>
+                </div>
+                {replyingTo===x.id && (
+                  <div>
                     <div className="flex gap-2 mt-2">
                       <input value={replyText} onChange={(e:any)=>setReplyText(e.target.value)} className="flex-1 border rounded-full px-3 py-1.5 text-[13px]" placeholder={`Reply to ${x.user}...`}/>
-                      <button onClick={()=>{setReplyText(""); setReplyingTo(null)}} className="bg-black text-white px-3 rounded-full text-[13px]">Send</button>
+                      <button onClick={()=>sendReply(x.id, x.user)} className="bg-black text-white px-4 py-1.5 rounded-full text-[13px] font-bold">Send</button>
                     </div>
-                  )}
-                </div>
+                    {replies.filter((r:any)=>r.parentId===x.id).map((r:any)=>(
+                      <div key={r.id} className="mt-2 ml-2 pl-3 border-l-2 border-blue-300 text-[13px]">
+                        <b>you → {r.to}</b> {r.text} <span className="text-[11px] text-gray-400">{r.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-            {tab==="msgs" && (
-              <div className="p-4 text-center text-gray-500 text-[14px]">No messages yet!</div>
-            )}
-            {tab==="saved" && (
-              posts.filter((p:any)=>p.saved).length===0? <div className="p-10 text-center text-gray-500">No saved posts</div> : posts.filter((p:any)=>p.saved).map((p:any)=><img key={p.id} src={p.image} className="w-full"/>)
-            )}
-          </div>
+            </div>
+          ))}
+          {tab==="msgs" && (
+            <div className="p-4 text-center text-gray-500 text-[14px]">No messages yet!</div>
+          )}
+          {tab==="saved" && (
+            posts.filter((p:any)=>p.saved).length===0? <div className="p-10 text-center text-gray-500">No saved posts</div> : posts.filter((p:any)=>p.saved).map((p:any)=><img key={p.id} src={p.image} className="w-full"/>)
+          )}
         </div>
+      </div>
       )}
 
       <div className="flex gap-4 px-3 py-3 overflow-x-auto border-b">
