@@ -55,21 +55,21 @@ export default function Page(){
   const toggleSave = (id:number)=> setPosts(posts.map(p=>p.id===id?{...p,saved:!p.saved}:p))
   const toggleFollow = (id:number)=> setPosts(posts.map(p=>p.id===id?{...p,followed:!p.followed,followers:p.followed?p.followers-1:p.followers+1}:p))
   const addComment = (id:number)=> setPosts(posts.map(p=>p.id===id?{...p,comments:p.comments+1}:p))
-  const addRepost = (id:number)=> setPosts(posts.map(p=>p.id===id?{...p,reposts:p.reposts+1}:p))
-  const addShare = async (p:Post)=>{
-    setPosts(posts.map(x=>x.id===p.id?{...x,shares:x.shares+1}:x))
-    // DIRECT GALLERY / WHATSAPP SHARE
-    if(navigator.share){
-      try{ await navigator.share({title:"ChitPix",text:`Check ${p.user}'s photo on ChitPix.com`,url:window.location.href}) }catch{}
-    } else {
-      await navigator.clipboard.writeText(window.location.href)
-      alert("Link Copied! Share to Gallery/WhatsApp ✈️")
-        }
-
-  const likesNotifs = [
-    {user:"sneha_99", action:`liked your post`, time:"2h", pic:"https://i.pravatar.cc/100?img=5", count:posts[0]?.likes},
-    {user:"arjun_77", action:`liked your fox photo • ${posts[0]?.likes} likes`, time:"5h", pic:"https://i.pravatar.cc/100?img=8", count:128},
-  ]
+  const addShare = async (p: Post) => {
+  setPosts(posts.map(x=>x.id===p.id?{...x, shares:x.shares+1}:x))
+  if (navigator.share) {
+    try { 
+      await navigator.share({title:'ChitPix', text:`Check ${p.user}'s photo on ChitPix.com`, url:window.location.href}) 
+    } catch {}
+  } else {
+    await navigator.clipboard.writeText(window.location.href)
+    alert("Link Copied! Share to Gallery/WhatsApp 🎉")
+  }
+}
+const likesNotifs = [
+  {user:"sneha_99", action:`liked your post`, time:"2h", pic:"https://i.pravatar.cc/100?img=5", count:posts[0]?.likes},
+  {user:"arjun_77", action:`liked your fox photo - ${posts[0]?.likes} likes`, time:"5h", pic:"https://i.pravatar.cc/100?img=8"},
+]
 
   // --- REPLY WITH BOX FIX ---
   const [replyLikes, setReplyLikes] = useState([
