@@ -64,22 +64,36 @@ export default function Page(){
     } else {
       await navigator.clipboard.writeText(window.location.href)
       alert("Link Copied! Share to Gallery/WhatsApp ✈️")
-    }
-  }
+        }
 
   const likesNotifs = [
     {user:"sneha_99", action:`liked your post`, time:"2h", pic:"https://i.pravatar.cc/100?img=5", count:posts[0]?.likes},
     {user:"arjun_77", action:`liked your fox photo • ${posts[0]?.likes} likes`, time:"5h", pic:"https://i.pravatar.cc/100?img=8", count:128},
   ]
-  const replyNotifs = [
-    {user:"sneha_99", action:"Nice fox! 🦊 Where is this?", time:"1h", pic:"https://i.pravatar.cc/100?img=5", likes:12},
-    {user:"priya_22", action:"Super pic bro! 🔥", time:"3h", pic:"https://i.pravatar.cc/100?img=9", likes:5},
-  ]
+
+  // --- REPLY WITH BOX FIX ---
+  const [replyLikes, setReplyLikes] = useState([
+    {id:1,user:"sneha_99", action:"Nice fox! 🦊 Where is this?", time:"1h", pic:"https://i.pravatar.cc/100?img=5", likes:12, liked:false},
+    {id:2,user:"priya_22", action:"Super pic bro! 🔥", time:"3h", pic:"https://i.pravatar.cc/100?img=9", likes:5, liked:false},
+  ])
+  const [replyText,setReplyText] = useState("")
+  const [replyingTo,setReplyingTo] = useState<number|null>(null)
+  const [replies,setReplies] = useState<any[]>([])
+
+  const toggleReplyLike = (id:number)=>{
+    setReplyLikes(replyLikes.map(r=> r.id===id? {...r, liked:!r.liked, likes: r.liked? r.likes-1: r.likes+1} : r))
+  }
+  const sendReply = (toId:number, toUser:string)=>{
+    if(!replyText.trim()) return
+    setReplies([...replies,{id:Date.now(), parentId:toId, to:toUser, text:replyText, time:"now"}])
+    setReplyText("")
+    setReplyingTo(null)
+  }
+
   const msgData = [
     {user:"sneha_99", msg:"Hey! Fox pic super undi 😍", time:"10m", pic:"https://i.pravatar.cc/100?img=5"},
     {user:"arjun_77", msg:"Bro ChitPix bagundi!", time:"1h", pic:"https://i.pravatar.cc/100?img=8"},
   ]
-
   return(
     <div className="max-w-[480px] mx-auto bg-white min-h-screen pb-20 relative">
       <input ref={storyRef} type="file" accept="image/*" hidden onChange={uploadStory}/>
@@ -118,11 +132,46 @@ export default function Page(){
                 <img src={x.pic} className="w-12 h-12 rounded-full"/><div className="flex-1"><span className="font-bold text-[14px]">{x.user}</span><span className="text-[14px]"> {x.action}</span><div className="text-[12px] text-gray-500 flex gap-2"><span>{x.time}</span><span>❤️ {x.count} likes</span></div></div>
               </div>
             ))}
-            {tab==="reply" && replyNotifs.map((x,i)=>(
-              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b"><img src={x.pic} className="w-12 h-12 rounded-full"/><div className="flex-1"><span className="font-bold text-[14px]">{x.user}</span><div className="text-[14px]">{x.action}</div><div className="text-[12px] text-gray-500">{x.time} • ❤️ {x.likes} likes • Reply</div></div><button className="text-[18px]">♡</button></div>
+                        {tab==="reply" && replyLikes.map((x)=>(
+              <div key={x.id} className="px-4 py-3 border-b">
+                <div className="flex items-center gap-3">
+                  <img src={x.pic} className="w-12 h-12 rounded-full"/>
+                  <div className="flex-1">
+                    <span className="font-bold text-[14px]">{x.user}</span>
+                    <div className="text-[14px]">{x.action}</div>
+                    <div className="text-[12px] text-gray-500 flex gap-3 mt-1">
+                      <span>{x.time}</span>
+                      <button onClick={()=>toggleReplyLike(x.id)} className="font-bold">{x.liked?"❤️":"♡"} {x.likes} likes</button>
+                      <button onClick={()=>setReplyingTo(x.id)} className="bg-blue-100 px-2 py-0.5 rounded font-bold text-black">Reply</button>
+                    </div>
+                  </div>
+                  <button onClick={()=>toggleReplyLike(x.id)} className="text-xl">{x.liked?"❤️":"♡"}</button>
+                </div>
+                {replyingTo===x.id && (
+                  <div className="flex gap-2 mt-3">
+                    <input value={replyText} onChange={(e:any)=>setReplyText(e.target.value)} className="flex-1 border rounded-full px-3 py-1.5 text-[13px] outline-none" placeholder={`Reply to ${x.user}...`}/>
+                    <button onClick={()=>sendReply(x.id, x.user)} className="bg-black text-white px-4 py-1.5 rounded-full text-[13px] font-bold">Send</button>
+                  </div>
+                )}
+                {replies.filter(r=>r.parentId===x.id).map((r:any)=>(
+                  <div key={r.id} className="mt-2 ml-14 pl-3 border-l-2 border-blue-400 text-[13px] bg-blue-50 py-1.5 rounded">
+                    <b>you → {r.to}</b> {r.text} <span className="text-[11px] text-gray-400 ml-2">{r.time}</span>
+                  </div>
+                ))}
+              </div>
             ))}
-            {tab==="msgs" && msgData.map((x,i)=>(
-              <div key={i} onClick={()=>setViewProfile(x)} className="flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-50 cursor-pointer"><img src={x.pic} className="w-14 h-14 rounded-full"/><div className="flex-1"><div className="font-bold text-[15px]">{x.user}</div><div className="text-[14px] text-gray-600">{x.msg}</div></div><div className="text-[11px] text-gray-400">{x.time}</div></div>
+                        {tab==="msgs" && msgData.map((x,i)=>(
+              <div key={i} onClick={()=>setViewProfile(x)} className="flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-50 cursor-pointer">
+                <img src={x.pic} className="w-12 h-12 rounded-full"/>
+                <div className="flex-1">
+                  <div className="flex justify-between">
+                    <span className="font-bold text-[14px]">{x.user}</span>
+                    <span className="text-[11px] text-gray-400">{x.time}</span>
+                  </div>
+                  <div className="text-[13px] text-gray-600 truncate">{x.msg}</div>
+                </div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              </div>
             ))}
             {tab==="saved" && (posts.filter(p=>p.saved).length===0? <div className="p-10 text-center text-gray-500">No saved posts yet. Save chey BRO 💯</div> : posts.filter(p=>p.saved).map(p=><div key={p.id} className="p-2"><img src={p.image} className="w-full rounded-xl"/></div>))}
           </div>
