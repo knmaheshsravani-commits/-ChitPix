@@ -1,4 +1,4 @@
-"use client";
+use ";
 export default function PostCard() {
   return (
     <div className="bg-white border-b border-gray-100 mb-2">
