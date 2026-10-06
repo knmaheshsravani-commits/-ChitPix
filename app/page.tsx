@@ -13,12 +13,27 @@ export default function Page(){
   const [viewProfile,setViewProfile] = useState<any>(null)
   const [viewStory,setViewStory] = useState<Story|null>(null)
 
-  const [stories,setStories] = useState<Story[]>([])
+    const [stories,setStories] = useState<Story[]>(()=>{
+    if(typeof window!=="undefined"){
+      try{
+        const saved = localStorage.getItem("chitpix_stories")
+        if(saved){
+          const parsed = JSON.parse(saved)
+          return parsed.filter((st:any)=> Date.now() - st.time < 24*60*60*1000)
+        }
+      }catch{}
+    }
+    return []
+  })
   const [posts,setPosts] = useState<Post[]>([
     {id:1,user:"sneha_99",image:"https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=500",likes:20700,liked:false,comments:2020,reposts:558,shares:6710,saved:false,followed:false,followers:1200}
   ])
 
-  // 24 HOURS AUTO DELETE STORIES
+  // SAVE TO LOCAL + 24H AUTO DELETE
+  useEffect(()=>{
+    localStorage.setItem("chitpix_stories", JSON.stringify(stories))
+  },[stories])
+
   useEffect(()=>{
     const iv=setInterval(()=>{
       const now=Date.now()
@@ -115,16 +130,36 @@ export default function Page(){
         </div>
       )}
 
-      {/* STORIES - WITH 24H TIMER */}
-      <div className="flex gap-4 px-3 py-3 overflow-x-auto border-b">
-        <div onClick={()=>storyRef.current?.click()} className="flex flex-col items-center cursor-pointer"><div className="w-[62px] h-[62px] rounded-full bg-[#eee] flex items-center justify-center text-2xl border-2 border-dashed">+</div><span className="text-[11px] mt-1 font-bold">Add Story</span></div>
-        {stories.map(s=>(
-          <div key={s.id} onClick={()=>setViewStory(s)} className="flex flex-col items-center cursor-pointer">
-            <div className="w-[62px] h-[62px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 to-pink-600"><img src={s.url} className="w-full h-full rounded-full object-cover border-2 border-white"/></div>
-            <span className="text-[10px] mt-1">{Math.floor((Date.now()-s.time)/60000)}m</span>
-          </div>
-        ))}
+        {/* STORIES - INSTAGRAM RING + 24H TIMER */}
+  <div className="flex gap-4 px-3 py-3 overflow-x-auto border-b">
+    <div onClick={()=>storyRef.current?.click()} className="flex flex-col items-center cursor-pointer min-w-[62px]">
+      {stories.length>0? (
+        <div className="w-[62px] h-[62px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+          <img src={stories[0].url} className="w-full h-full rounded-full object-cover border-2 border-white"/>
+        </div>
+      ) : (
+        <div className="w-[62px] h-[62px] rounded-full bg-[#f0f0f0] flex items-center justify-center text-2xl border-2 border-dashed border-gray-400">+</div>
+      )}
+      <span className="text-[11px] mt-1 font-bold">{stories.length>0?"Your Story":"Add Story"}</span>
+      {stories.length>0 && <span className="text-[9px] text-gray-500">{24-Math.floor((Date.now()-stories[0].time)/3600000)}h left</span>}
+    </div>
+
+    {stories.slice(1).map(s=>(
+      <div key={s.id} onClick={()=>setViewStory(s)} className="flex flex-col items-center cursor-pointer min-w-[62px]">
+        <div className="w-[62px] h-[62px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+          <img src={s.url} className="w-full h-full rounded-full object-cover border-2 border-white"/>
+        </div>
+        <span className="text-[10px] mt-1">{Math.floor((Date.now()-s.time)/60000)}m</span>
       </div>
+    ))}
+
+    <div className="flex flex-col items-center cursor-pointer min-w-[62px]">
+      <div className="w-[62px] h-[62px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
+        <img src="https://i.pravatar.cc/100?img=5" className="w-full h-full rounded-full object-cover border-2 border-white"/>
+      </div>
+      <span className="text-[10px] mt-1">sneha_99</span>
+    </div>
+  </div>
 
       {posts.map(p=>(
         <div key={p.id} className="border-b">
