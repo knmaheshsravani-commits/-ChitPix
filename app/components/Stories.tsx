@@ -1,14 +1,14 @@
 "use client";
 export default function Stories() {
-  const users = ["You","arjun","sweety","rahul","priya","vizag","hyd"];
+  const users = ["You","arjun","sweety","rahul","priya","vizag","hyd","ani","tej"];
   return (
-    <div className="flex gap-4 p-3 border-b border-zinc-100 overflow-x-auto">
+    <div style={{ display: "flex", gap: "16px", padding: "12px", overflowX: "auto", borderBottom: "1px solid #f4f4f5", background: "white" }}>
       {users.map((u,i)=>(
-        <div key={i} className="flex flex-col items-center gap-1">
-          <div className="w-[58px] h-[58px] rounded-full bg-gradient-to-tr from-orange-500 to-pink-500 p-[2px]">
-            <div className="w-full h-full bg-white rounded-full flex items-center justify-center text-[12px] font-bold">{u[0].toUpperCase()}</div>
+        <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", minWidth: "58px" }}>
+          <div style={{ width: "58px", height: "58px", borderRadius: "50%", background: "linear-gradient(45deg,#FF8A00,#FF3A00,#C700B1)", padding: "2px" }}>
+            <div style={{ width: "100%", height: "100%", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>{u[0].toUpperCase()}</div>
           </div>
-          <span className="text-[10px]">{u}</span>
+          <span style={{ fontSize: "11px" }}>{u}</span>
         </div>
       ))}
     </div>
