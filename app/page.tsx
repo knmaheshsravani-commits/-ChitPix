@@ -28,13 +28,24 @@ export default function Page(){
   },[])
 
   const uploadStory = (e:any)=>{
-    const f=e.target.files[0]; if(!f) return
-    setStories([{id:Date.now(),url:URL.createObjectURL(f),time:Date.now()},...stories])
+  const file=e.target.files[0]; if(!file) return
+  const reader=new FileReader()
+  reader.onload=(ev)=>{
+    const newS={id:Date.now(), url:ev.target?.result as string, time:Date.now()}
+    const upd=[newS,...stories]
+    setStories(upd)
+    try{ localStorage.setItem("chitpix_stories", JSON.stringify(upd)) }catch{}
   }
-  const uploadPost = (e:any)=>{
-    const f=e.target.files[0]; if(!f) return
-    setPosts([{id:Date.now(),user:"you",image:URL.createObjectURL(f),likes:0,liked:false,comments:0,reposts:0,shares:0,saved:false,followed:false,followers:0},...posts])
+  reader.readAsDataURL(file)
+}
+const uploadPost = (e:any)=>{
+  const file=e.target.files[0]; if(!file) return
+  const reader=new FileReader()
+  reader.onload=(ev)=>{
+    setPosts([{id:Date.now(),user:"you",image:ev.target?.result as string,likes:0,liked:false,comments:0,reposts:0,shares:0,saved:false,followed:false,followers:0},...posts])
   }
+  reader.readAsDataURL(file)
+}
 
   const toggleLike = (id:number)=> setPosts(posts.map(p=>p.id===id?{...p,liked:!p.liked,likes:p.liked?p.likes-1:p.likes+1}:p))
   const toggleSave = (id:number)=> setPosts(posts.map(p=>p.id===id?{...p,saved:!p.saved}:p))
@@ -61,42 +72,13 @@ const [replyLikes, setReplyLikes] = useState([
   {id:1, user:"sneha_99", text:"Nice fox! 🦊 Where is this?", time:"1h", likes:12, liked:false, pic:"https://i.pravatar.cc/100?img=5"},
   {id:2, user:"priya_22", text:"Super pic bro! 🔥", time:"3h", likes:5, liked:false, pic:"https://i.pravatar.cc/100?img=9"},
 ])
-const [replyingTo, setReplyingTo] = useState<number|null>(null)
+  const [replyingTo, setReplyingTo] = useState<number|null>(null)
 const [replyText, setReplyText] = useState("")
-
 const toggleReplyLike = (id:number)=>{
-  setReplyLikes(replyLikes.map(r=> r.id===id? {...r, liked:!r.liked, likes: r.liked? r.likes-1 : r.likes+1} : r))
+  setReplyLikes(replyLikes.map((r:any)=> r.id===id? {...r, liked:!r.liked, likes: r.liked? r.likes-1 : r.likes+1} : r))
 }
 
-// UI LO - Reply Tab Section ni IDI tho marchu
-{tab==="reply" && (
-  <div>
-    {replyLikes.map((x)=>(
-      <div key={x.id} className="flex items-center gap-3 px-4 py-3 border-b">
-        <img src={x.pic} className="w-12 h-12 rounded-full"/>
-        <div className="flex-1">
-          <span className="font-bold text-[15px]">{x.user}</span>
-          <div className="text-[14px]">{x.text}</div>
-          <div className="text-[12px] text-gray-500 flex gap-2 items-center mt-1">
-            <span>{x.time}</span>
-            <button onClick={()=>toggleReplyLike(x.id)} className="flex items-center gap-1">
-              <span className={x.liked?"text-red-500":""}>❤️</span> {x.likes} likes
-            </button>
-            <button onClick={()=>setReplyingTo(x.id)} className="font-bold text-black bg-blue-100 px-2 py-0.5 rounded">Reply</button>
-          </div>
-          {replyingTo===x.id && (
-            <div className="flex gap-2 mt-2">
-              <input value={replyText} onChange={e=>setReplyText(e.target.value)} placeholder={`Reply to ${x.user}...`} className="flex-1 border rounded-full px-3 py-1.5 text-[13px]"/>
-              <button onClick={()=>{if(!replyText) return; alert(`Replied to ${x.user}: ${replyText}`); setReplyText(""); setReplyingTo(null)}} className="bg-black text-white px-4 py-1.5 rounded-full text-[13px] font-bold">Send</button>
-            </div>
-          )}
-        </div>
-      </div>
-    ))}
-  </div>
-)}
-
-  return(
+return(
     <div className="max-w-[480px] mx-auto bg-white min-h-screen pb-20 relative">
       <input ref={storyRef} type="file" accept="image/*" hidden onChange={uploadStory}/>
       <input ref={postRef} type="file" accept="image/*" hidden onChange={uploadPost}/>
@@ -134,10 +116,28 @@ const toggleReplyLike = (id:number)=>{
                 <img src={x.pic} className="w-12 h-12 rounded-full"/><div className="flex-1"><span className="font-bold text-[14px]">{x.user}</span><span className="text-[14px]"> {x.action}</span><div className="text-[12px] text-gray-500 flex gap-2"><span>{x.time}</span><span>❤️ {x.count} likes</span></div></div>
               </div>
             ))}
-            {tab==="reply" && replyNotifs.map((x,i)=>(
-              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b"><img src={x.pic} className="w-12 h-12 rounded-full"/><div className="flex-1"><span className="font-bold text-[14px]">{x.user}</span><div className="text-[14px]">{x.action}</div><div className="text-[12px] text-gray-500">{x.time} • ❤️ {x.likes} likes • Reply</div></div><button className="text-[18px]">♡</button></div>
-            ))}
-            {tab==="msgs" && msgData.map((x,i)=>(
+            {tab==="reply" && replyLikes.map((x:any)=>(
+  <div key={x.id} className="flex items-center gap-3 px-4 py-3 border-b">
+    <img src={x.pic} className="w-12 h-12 rounded-full"/>
+    <div className="flex-1">
+      <b>{x.user}</b> <div className="text-[14px]">{x.text}</div>
+      <div className="text-xs text-gray-500 flex gap-2 mt-1">
+        <span>{x.time}</span>
+        <button onClick={()=>toggleReplyLike(x.id)}>❤️ {x.likes}</button>
+        <button onClick={()=>setReplyingTo(x.id)} className="bg-blue-100 px-2 rounded font-bold">Reply</button>
+      </div>
+      {replyingTo===x.id && (
+        <div className="flex gap-2 mt-2">
+          <input value={replyText} onChange={(e:any)=>setReplyText(e.target.value)} className="flex-1 border rounded-full px-3 py-1.5 text-[13px]" placeholder={`Reply to ${x.user}...`}/>
+          <button onClick={()=>{setReplyText(""); setReplyingTo(null); alert("Replied!")}} className="bg-black text-white px-3 rounded-full text-[13px]">Send</button>
+        </div>
+      )}
+    </div>
+  </div>
+))}
+{tab==="msgs" && (
+  <div className="p-4 text-center text-gray-500 text-[14px]">No messages yet!</div>
+)}
               <div key={i} onClick={()=>setViewProfile(x)} className="flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-50 cursor-pointer"><img src={x.pic} className="w-14 h-14 rounded-full"/><div className="flex-1"><div className="font-bold text-[15px]">{x.user}</div><div className="text-[14px] text-gray-600">{x.msg}</div></div><div className="text-[11px] text-gray-400">{x.time}</div></div>
             ))}
             {tab==="saved" && (posts.filter(p=>p.saved).length===0? <div className="p-10 text-center text-gray-500">No saved posts yet. Save chey BRO 💯</div> : posts.filter(p=>p.saved).map(p=><div key={p.id} className="p-2"><img src={p.image} className="w-full rounded-xl"/></div>))}
