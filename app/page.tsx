@@ -103,49 +103,48 @@ return(
       {/* MESSAGES BOX - LIKES REPLY LIKES COUNT + SAVED */}
       {showMsg && (
         <div className="fixed inset-0 bg-white z-50 flex flex-col max-w-[480px] mx-auto">
-          <div className="flex justify-between items-center px-4 py-3 border-b"><button onClick={()=>setShowMsg(false)} className="text-[22px]">←</button><h2 className="font-bold text-[18px]">ChitPix</h2><span className="w-5"></span></div>
-          <div className="flex border-b overflow-x-auto">
-            <button onClick={()=>setTab("likes")} className={`px-4 py-3 font-semibold text-[13px] whitespace-nowrap ${tab==="likes"?"border-b-2 border-black":"text-gray-500"}`}>❤️ Likes ({posts.reduce((a,p)=>a+p.likes,0)})</button>
-            <button onClick={()=>setTab("reply")} className={`px-4 py-3 font-semibold text-[13px] whitespace-nowrap ${tab==="reply"?"border-b-2 border-black":"text-gray-500"}`}>💬 Reply</button>
-            <button onClick={()=>setTab("msgs")} className={`px-4 py-3 font-semibold text-[13px] whitespace-nowrap ${tab==="msgs"?"border-b-2 border-black":"text-gray-500"}`}>✉️ Messages</button>
-            <button onClick={()=>setTab("saved")} className={`px-4 py-3 font-semibold text-[13px] whitespace-nowrap ${tab==="saved"?"border-b-2 border-black":"text-gray-500"}`}>🔖 Saved ({posts.filter(p=>p.saved).length})</button>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {tab==="likes" && likesNotifs.map((x,i)=>(
-              <div key={i} onClick={()=>setViewProfile(x)} className="flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-50 cursor-pointer">
-                <img src={x.pic} className="w-12 h-12 rounded-full"/><div className="flex-1"><span className="font-bold text-[14px]">{x.user}</span><span className="text-[14px]"> {x.action}</span><div className="text-[12px] text-gray-500 flex gap-2"><span>{x.time}</span><span>❤️ {x.count} likes</span></div></div>
-              </div>
-            ))}
-            {tab==="reply" && replyLikes.map((x:any)=>(
-  <div key={x.id} className="flex items-center gap-3 px-4 py-3 border-b">
-    <img src={x.pic} className="w-12 h-12 rounded-full"/>
-    <div className="flex-1">
-      <b>{x.user}</b> <div className="text-[14px]">{x.text}</div>
-      <div className="text-xs text-gray-500 flex gap-2 mt-1">
-        <span>{x.time}</span>
-        <button onClick={()=>toggleReplyLike(x.id)}>❤️ {x.likes}</button>
-        <button onClick={()=>setReplyingTo(x.id)} className="bg-blue-100 px-2 rounded font-bold">Reply</button>
-      </div>
-      {replyingTo===x.id && (
-        <div className="flex gap-2 mt-2">
-          <input value={replyText} onChange={(e:any)=>setReplyText(e.target.value)} className="flex-1 border rounded-full px-3 py-1.5 text-[13px]" placeholder={`Reply to ${x.user}...`}/>
-          <button onClick={()=>{setReplyText(""); setReplyingTo(null); alert("Replied!")}} className="bg-black text-white px-3 rounded-full text-[13px]">Send</button>
-        </div>
-      )}
+        <div className="flex justify-between items-center px-4 py-3 border-b">
+  <button onClick={()=>setShowMsg(false)} className="font-bold">← Back</button>
+  <span className="font-bold">Notifications</span>
+  <div></div>
+</div>
+<div className="flex border-b overflow-x-auto">
+  <button onClick={()=>setTab("likes")} className="px-4 py-3 font-semibold text-[13px] whitespace-nowrap">Likes</button>
+  <button onClick={()=>setTab("reply")} className="px-4 py-3 font-semibold text-[13px] whitespace-nowrap">Reply Likes</button>
+  <button onClick={()=>setTab("msgs")} className="px-4 py-3 font-semibold text-[13px] whitespace-nowrap">Messages</button>
+  <button onClick={()=>setTab("saved")} className="px-4 py-3 font-semibold text-[13px] whitespace-nowrap">Saved</button>
+</div>
+<div className="flex-1 overflow-y-auto">
+  {tab==="likes" && likesNotifs.map((x:any,i:number)=>(
+    <div key={i} className="flex items-center gap-3 px-4 py-3 border-b">
+      <img src={x.pic} className="w-12 h-12 rounded-full"/>
+      <div className="flex-1"><span className="font-bold">{x.user}</span> liked your post</div>
     </div>
-  </div>
-))}
-{tab==="msgs" && (
-  <div className="p-4 text-center text-gray-500 text-[14px]">No messages yet!</div>
-)}
-              <div key={i} onClick={()=>setViewProfile(x)} className="flex items-center gap-3 px-4 py-3 border-b hover:bg-gray-50 cursor-pointer"><img src={x.pic} className="w-14 h-14 rounded-full"/><div className="flex-1"><div className="font-bold text-[15px]">{x.user}</div><div className="text-[14px] text-gray-600">{x.msg}</div></div><div className="text-[11px] text-gray-400">{x.time}</div></div>
-            ))}
-            {tab==="saved" && (posts.filter(p=>p.saved).length===0? <div className="p-10 text-center text-gray-500">No saved posts yet. Save chey BRO 💯</div> : posts.filter(p=>p.saved).map(p=><div key={p.id} className="p-2"><img src={p.image} className="w-full rounded-xl"/></div>))}
-          </div>
-          {viewProfile && (<div className="absolute inset-0 bg-white z-10 flex flex-col"><div className="flex items-center gap-3 px-4 py-3 border-b"><button onClick={()=>setViewProfile(null)} className="text-[20px]">←</button><span className="font-bold">{viewProfile.user}</span></div><div className="flex flex-col items-center pt-10"><img src={viewProfile.pic} className="w-24 h-24 rounded-full mb-3"/><h2 className="font-bold text-[20px]">{viewProfile.user}</h2><p className="text-gray-500 text-[14px]">@{viewProfile.user}</p></div></div>)}
+  ))}
+  {tab==="reply" && replyLikes.map((x:any)=>(
+    <div key={x.id} className="flex items-center gap-3 px-4 py-3 border-b">
+      <img src={x.pic} className="w-12 h-12 rounded-full"/>
+      <div className="flex-1">
+        <b>{x.user}</b> <div className="text-[14px]">{x.text}</div>
+        <div className="text-xs text-gray-500 flex gap-2 mt-1">
+          <span>{x.time}</span>
+          <button onClick={()=>toggleReplyLike(x.id)}>❤️ {x.likes}</button>
+          <button onClick={()=>setReplyingTo(x.id)} className="bg-blue-100 px-2 rounded font-bold">Reply</button>
         </div>
-      )}
-
+        {replyingTo===x.id && (
+          <div className="flex gap-2 mt-2">
+            <input value={replyText} onChange={(e:any)=>setReplyText(e.target.value)} className="flex-1 border rounded-full px-3 py-1.5 text-[13px]" placeholder={`Reply to ${x.user}...`}/>
+            <button onClick={()=>{setReplyText(""); setReplyingTo(null); alert("Replied!")}} className="bg-black text-white px-3 rounded-full text-[13px]">Send</button>
+          </div>
+        )}
+      </div>
+    </div>
+  ))}
+  {tab==="msgs" && (
+    <div className="p-4 text-center text-gray-500 text-[14px]">No messages yet!</div>
+  )}
+  {tab==="saved" && (posts.filter((p:any)=>p.saved).length===0? <div className="p-10 text-center">No saved posts</div> : null)}
+</div>
       {/* STORIES - WITH 24H TIMER */}
       <div className="flex gap-4 px-3 py-3 overflow-x-auto border-b">
         <div onClick={()=>storyRef.current?.click()} className="flex flex-col items-center cursor-pointer"><div className="w-[62px] h-[62px] rounded-full bg-[#eee] flex items-center justify-center text-2xl border-2 border-dashed">+</div><span className="text-[11px] mt-1 font-bold">Add Story</span></div>
