@@ -173,12 +173,15 @@ export default function Page(){
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               </div>
             ))}
-            {tab==="saved" && (posts.filter(p=>p.saved).length===0? <div className="p-10 text-center text-gray-500">No saved posts yet. Save chey BRO 💯</div> : posts.filter(p=>p.saved).map(p=><div key={p.id} className="p-2"><img src={p.image} className="w-full rounded-xl"/></div>))}
+            {tab==="saved" && (
+              posts.filter((p:any)=>p.saved).length===0
+             ? <div className="p-10 text-center text-gray-500">No saved posts yet</div>
+              : posts.filter((p:any)=>p.saved).map((p:any,i:number)=><div key={i} className="p-2"><img src={p.url || p.image} className="w-full rounded-lg"/></div>)
+            )}
           </div>
-          {viewProfile && (<div className="absolute inset-0 bg-white z-10 flex flex-col"><div className="flex items-center gap-3 px-4 py-3 border-b"><button onClick={()=>setViewProfile(null)} className="text-[20px]">←</button><span className="font-bold">{viewProfile.user}</span></div><div className="flex flex-col items-center pt-10"><img src={viewProfile.pic} className="w-24 h-24 rounded-full mb-3"/><h2 className="font-bold text-[20px]">{viewProfile.user}</h2><p className="text-gray-500 text-[14px]">@{viewProfile.user}</p></div></div>)}
+          {viewProfile && (<div className="absolute inset-0 bg-white z-10 flex flex-col"><div className="flex items-center gap-3 p-3 border-b"><button onClick={()=>setViewProfile(null)}>← Back</button><img src={viewProfile.pic} className="w-8 h-8 rounded-full"/><b>{viewProfile.user}</b></div><div className="flex-1 flex items-center justify-center text-gray-400">Chat coming soon...</div></div>)}
         </div>
       )}
-
         {/* STORIES - INSTAGRAM RING + 24H TIMER */}
   <div className="flex gap-4 px-3 py-3 overflow-x-auto border-b">
     <div onClick={()=>storyRef.current?.click()} className="flex flex-col items-center cursor-pointer min-w-[62px]">
