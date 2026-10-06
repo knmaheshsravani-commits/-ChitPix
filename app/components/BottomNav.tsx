@@ -1,14 +1,38 @@
 "use client";
-export default function BottomNav() {
+import { useState } from "react";
+import { supabase } from "../lib/supabase";
+
+export default function PostCard({ img, post }: any) {
+  const isReal =!!post;
+  const imageUrl = isReal? post.image_url : `https://picsum.photos/seed/${img}/500/500`;
+  const username = isReal? post.username : "arjun.vizag";
+  const location = isReal? post.location : "Visakhapatnam";
+  const caption = isReal? post.caption : "Vizag beach vibes 🌊 #ChitPix";
+  const [likes, setLikes] = useState(post?.likes || 124);
+  const [liked, setLiked] = useState(false);
+
+  const handleLike = async () => {
+    const newLiked =!liked;
+    const newLikes = newLiked? likes + 1 : likes - 1;
+    setLiked(newLiked);
+    setLikes(newLikes);
+    if (isReal) {
+      await supabase.from("posts").update({ likes: newLikes }).eq("id", post.id);
+    }
+  };
+
   return (
-    <div style={{ position: "fixed", bottom: "20px", left: 0, right: 0, display: "flex", justifyContent: "center", zIndex: 50 }}>
-      <div style={{ background: "black", borderRadius: "999px", padding: "12px 24px", display: "flex", alignItems: "center", gap: "28px" }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2.1L2 12h3v8h6v-6h2v6h6v-8h3z"/></svg>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><circle cx="11" cy="11" r="6"/><path d="M21 21l-4.3-4.3"/></svg>
-        <div style={{ width: "28px", height: "28px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "18px" }}>+</div>
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        <div style={{ width: "24px", height: "24px", background: "white", borderRadius: "50%" }}></div>
+    <div style={{ background: "white", borderBottom: "1px solid #f4f4f5", paddingBottom: "12px", marginBottom: "8px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "12px" }}>
+        <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "linear-gradient(45deg,#FF8A00,#FF3A00,#C700B1)", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontWeight: "bold", fontSize: "12px" }}>{username[0].toUpperCase()}</div>
+        <div><p style={{ fontWeight: "600", fontSize: "14px" }}>{username}</p><p style={{ fontSize: "11px", color: "#71717a" }}>{location}</p></div>
       </div>
-    </div>
-  );
-}
+
+      {/* Image */}
+      <img src={imageUrl} alt="post" style={{ width: "100%", aspectRatio: "1/1", objectFit: "cover", background: "#f4f4f5" }} />
+
+      {/* Actions - OLD ICONS */}
+      <div style={{ display: "flex", justifyContent: "space-between", padding: "12px" }}>
+        <div style={{ display: "flex", gap: "16px" }}>
+          <svg onClick={handleLike} style={{ cursor: "pointer" }} width="24" height="24" viewBox="0 0 24 24" fill={liked? "red" : "none"} stroke={liked? "red" : "black"} strokeWidth="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0
