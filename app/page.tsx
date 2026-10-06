@@ -178,11 +178,12 @@ export default function Page(){
              ? <div className="p-10 text-center text-gray-500">No saved posts yet</div>
               : posts.filter((p:any)=>p.saved).map((p:any,i:number)=><div key={i} className="p-2"><img src={p.url || p.image} className="w-full rounded-lg"/></div>)
             )}
-          </div>
+         </div>
           {viewProfile && (<div className="absolute inset-0 bg-white z-10 flex flex-col"><div className="flex items-center gap-3 p-3 border-b"><button onClick={()=>setViewProfile(null)}>← Back</button><img src={viewProfile.pic} className="w-8 h-8 rounded-full"/><b>{viewProfile.user}</b></div><div className="flex-1 flex items-center justify-center text-gray-400">Chat coming soon...</div></div>)}
         </div>
+      </div>
+      </div>
       )}
-
       {/* STORIES - INSTAGRAM RING + 24H TIMER */}
   <div className="flex gap-4 px-3 py-3 overflow-x-auto border-b">
     <div onClick={()=>storyRef.current?.click()} className="flex flex-col items-center cursor-pointer min-w-[62px]">
