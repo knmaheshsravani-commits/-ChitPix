@@ -1,17 +1,2 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-body {
-  background: white;
-  color: black;
-  margin: 0;
-  padding: 0;
-}
-
-* {
-  scrollbar-width: none;
-}
-*::-webkit-scrollbar {
-  display: none;
-}
+html { touch-action: manipulation; }
+body { overscroll-behavior: none; }
