@@ -6,12 +6,12 @@ import BottomNav from "./components/BottomNav";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-white pb-24 max-w-[500px] mx-auto border-x border-zinc-100">
+    <div style={{ minHeight: "100vh", background: "white", paddingBottom: "90px", maxWidth: "500px", margin: "0 auto" }}>
       <Header />
       <Stories />
-      <PostCard />
-      <PostCard />
-      <PostCard />
+      <PostCard img={1} />
+      <PostCard img={2} />
+      <PostCard img={3} />
       <BottomNav />
     </div>
   );
