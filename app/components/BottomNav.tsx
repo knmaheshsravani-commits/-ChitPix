@@ -1,4 +1,4 @@
-"use client";
+use ";
 import { useState } from "react";
 export default function BottomNav() {
   const [active,setActive] = useState("home");
