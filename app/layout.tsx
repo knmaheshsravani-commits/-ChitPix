@@ -42,12 +42,29 @@ function ZoomBlocker() {
   );
 }
 
+function SwRegister() {
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
+          if('serviceWorker' in navigator){
+            window.addEventListener('load', function(){
+              navigator.serviceWorker.register('/sw.js');
+            });
+          }
+        `,
+      }}
+    />
+  );
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" style={{ backgroundColor: "#fff" }}>
       <body className="bg-white text-black antialiased max-w-[480px] mx-auto overflow-x-hidden">
         {children}
         <ZoomBlocker />
+        <SwRegister />
       </body>
     </html>
   );
