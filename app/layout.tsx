@@ -4,7 +4,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ChitPix.",
   description: "Instagram of India",
-  themeColor: "#ffffff",
+  themeColor: "#ff6600",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
