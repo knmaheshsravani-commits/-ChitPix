@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ChitPix.com",
+  title: "ChitPix.",
   description: "Instagram of India",
 };
 
@@ -15,7 +16,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-white text-black antialiased max-w-[480px] mx-auto overflow-x-hidden">
+        {children}
+      </body>
     </html>
   );
 }
