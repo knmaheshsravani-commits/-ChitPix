@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ChitPix.",
   description: "Instagram of India",
+  themeColor: "#ffffff",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
@@ -11,6 +16,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#ffffff",
+  viewportFit: "cover",
 };
 
 function ZoomBlocker() {
@@ -36,7 +43,7 @@ function ZoomBlocker() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ backgroundColor: "#fff" }}>
       <body className="bg-white text-black antialiased max-w-[480px] mx-auto overflow-x-hidden">
         {children}
         <ZoomBlocker />
