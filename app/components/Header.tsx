@@ -1,12 +1,26 @@
-"use client";
+'use client'
+import { useRouter } from 'next/navigation'
+
 export default function Header() {
+  const router = useRouter()
   return (
-    <header style={{ position: "sticky", top: 0, zIndex: 50, background: "white", borderBottom: "1px solid #e4e4e7", height: "60px", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px" }}>
-      <h1 style={{ fontSize: "28px", fontWeight: "900", letterSpacing: "-1px" }}>ChitPix.</h1>
-      <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    <div style={{height:'60px', display:'flex', justifyContent:'space-between', alignItems:'center', padding:'0 16px', borderBottom:'1px solid #eee', background:'white', position:'sticky', top:0, zIndex:50}}>
+      <h1 style={{fontFamily:'cursive', fontSize:'28px', fontWeight:'bold'}}>ChitPix</h1>
+      <div style={{display:'flex', gap:'18px'}}>
+        {/* Like Icon */}
+        <button onClick={()=>router.push('/notifications')} style={{background:'none', border:'none'}}>
+          <svg width="24" height="24" fill="none" stroke="black" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="M12 21C12 21 4 13 4 8.5A4.5 4.5 0 0 1 12 5a4.5 4.5 0 0 1 8 3.5C20 13 12 21 12 21z"/>
+          </svg>
+        </button>
+        {/* DM Icon */}
+        <button onClick={()=>router.push('/messages')} style={{background:'none', border:'none'}}>
+          <svg width="24" height="24" fill="none" stroke="black" strokeWidth="1.8" viewBox="0 0 24 24">
+            <path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 0 1 21 11.5z"/>
+            <path d="M8 12l2 2 4-4"/>
+          </svg>
+        </button>
       </div>
-    </header>
-  );
+    </div>
+  )
 }
