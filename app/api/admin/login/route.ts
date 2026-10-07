@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
-export async function DELETE(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const { postId } = await req.json()
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY! || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    const { error } = await supabase.from('posts').delete().eq('id', postId)
-    if (error) throw error
-    return NextResponse.json({ success: true })
+    const { password } = await req.json()
+    
+    // Nee admin password ikkada pettu
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'chitpix123'
+
+    if (password === ADMIN_PASSWORD) {
+      return NextResponse.json({ success: true })
+    } else {
+      return NextResponse.json({ error: 'Wrong password' }, { status: 401 })
+    }
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
