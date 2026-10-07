@@ -1,56 +1,51 @@
 'use client'
-import { useRef, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-
-const Icons = {
-  home: (active:boolean) => (
-    <svg width="26" height="26" fill={active ? "black" : "none"} stroke="black" strokeWidth="1.8" viewBox="0 0 24 24">
-      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-5H9v5H4a1 1 0 0 1-1-1V9.5z"/>
-    </svg>
-  ),
-  search: (active:boolean) => (
-    <svg width="26" height="26" fill="none" stroke="black" strokeWidth={active ? "2.5" : "1.8"} viewBox="0 0 24 24">
-      <circle cx="11" cy="11" r="6"/><path d="M16.5 16.5L20 20"/>
-    </svg>
-  ),
-  plus: () => (
-    <div style={{width:'26px', height:'26px', border:'1.8px solid black', borderRadius:'6px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'20px', fontWeight:'300'}}>+</div>
-  ),
-  reels: (active:boolean) => (
-    <svg width="26" height="26" fill={active ? "black" : "none"} stroke="black" strokeWidth="1.8" viewBox="0 0 24 24">
-      <rect x="2" y="2" width="20" height="20" rx="4"/><path d="M10 8l6 4-6 4V8z" fill={active ? "white" : "black"} stroke="none"/>
-    </svg>
-  ),
-  profile: (active:boolean, img?:string) => (
-    <img src={img || "https://i.pravatar.cc/100"} style={{width:'26px', height:'26px', borderRadius:'50%', border: active ? '2px solid black' : '1px solid #ccc'}} />
-  )
-}
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export default function BottomNav() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [tab, setTab] = useState(pathname)
+  const path = usePathname()
+  const isActive = (p: string) => path === p
 
-  const handleNav = (path:string) => {
-    setTab(path)
-    router.push(path)
-  }
+  const iconStyle = (active: boolean) => ({
+    width: '26px', height: '26px', stroke: active ? '#000' : '#000',
+    strokeWidth: active ? '2.6' : '1.8', fill: active ? '#000' : 'none'
+  })
 
   return (
-    <>
-      <input type="file" ref={fileInputRef} hidden accept="image/*,video/*" capture="environment" />
-      <div style={{
-        position:'fixed', bottom:0, left:0, right:0,
-        height:'60px', background:'white', borderTop:'1px solid #e5e5e5',
-        display:'flex', justifyContent:'space-around', alignItems:'center', zIndex:100
-      }}>
-        <button onClick={()=>handleNav('/')} style={{background:'none', border:'none'}}>{Icons.home(tab==='/')}</button>
-        <button onClick={()=>handleNav('/search')} style={{background:'none', border:'none'}}>{Icons.search(tab==='/search')}</button>
-        <button onClick={()=>fileInputRef.current?.click()} style={{background:'none', border:'none'}}>{Icons.plus()}</button>
-        <button onClick={()=>handleNav('/reels')} style={{background:'none', border:'none'}}>{Icons.reels(tab==='/reels')}</button>
-        <button onClick={()=>handleNav('/profile')} style={{background:'none', border:'none'}}>{Icons.profile(tab==='/profile')}</button>
-      </div>
-    </>
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0, height: '60px',
+      background: '#fff', borderTop: '1px solid #dbdbdb',
+      display: 'flex', justifyContent: 'space-around', alignItems: 'center',
+      zIndex: 9999, paddingBottom: '6px'
+    }}>
+      {/* HOME */}
+      <Link href="/" style={{ padding: '8px 20px', background: isActive('/') ? '#efefef' : 'transparent', borderRadius: '24px' }}>
+        <svg style={iconStyle(isActive('/'))} viewBox="0 0 24 24">
+          {isActive('/') ? <path d="M12 2L3 10v10a1 1 0 001 1h5v-5h4v5h5a1 1 0 001-1V10L12 2z" fill="currentColor" stroke="none"/> : <path d="M12 2L3 10v10a1 1 0 001 1h5v-6h4v6h5a1 1 0 001-1V10L12 2z"/>}
+        </svg>
+      </Link>
+
+      {/* REELS */}
+      <Link href="/reels" style={{ padding: '8px 20px' }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><polygon points="10 8 16 12 10 16 10 8" fill={isActive('/reels')?'#000':'none'} stroke="none"/></svg>
+      </Link>
+
+      {/* DM / SHARE */}
+      <Link href="/dm" style={{ padding: '8px 20px', position: 'relative' }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.8"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        <span style={{ position: 'absolute', top: '6px', right: '16px', width: '8px', height: '8px', background: '#ff3040', borderRadius: '50%' }}></span>
+      </Link>
+
+      {/* SEARCH */}
+      <Link href="/search" style={{ padding: '8px 20px' }}>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth={isActive('/search')?'2.6':'1.8'}><circle cx="11" cy="11" r="6"/><line x1="16" y1="16" x2="21" y2="21"/></svg>
+      </Link>
+
+      {/* PROFILE */}
+      <Link href="/profile" style={{ padding: '8px 20px', position: 'relative' }}>
+        <img src="https://i.pravatar.cc/100" style={{ width: '28px', height: '28px', borderRadius: '50%', border: isActive('/profile')?'2px solid #000':'1.5px solid #000' }} alt="profile"/>
+        <span style={{ position: 'absolute', bottom: '6px', right: '14px', width: '8px', height: '8px', background: '#ff3040', borderRadius: '50%', border: '1.5px solid #fff' }}></span>
+      </Link>
+    </div>
   )
 }
