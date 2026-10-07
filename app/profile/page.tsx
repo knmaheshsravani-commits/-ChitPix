@@ -1,61 +1,83 @@
 'use client'
-import { useState } from 'react'
-import BottomNav from '../components/BottomNav'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 export default function ProfilePage() {
-  const [tab, setTab] = useState('posts')
-  const isAdmin = true // Neevu admin kabatti true - tarvata email tho check cheddam
+  const [user, setUser] = useState<any>(null)
+  const [showEdit, setShowEdit] = useState(false)
+  const [bio, setBio] = useState('')
+  const [name, setName] = useState('')
+
+  useEffect(() => {
+    const stored = localStorage.getItem('chitpix_user')
+    if (stored) {
+      const u = JSON.parse(stored)
+      setUser(u)
+      setBio(u.bio || '')
+      setName(u.username || '')
+    }
+  }, [])
+
+  const handleShare = async () => {
+    const url = window.location.href
+    if (navigator.share) {
+      await navigator.share({ title: 'ChitPix Profile', url })
+    } else {
+      await navigator.clipboard.writeText(url)
+      alert('Profile link copied! 🔗')
+    }
+  }
+
+  const handleSave = async () => {
+    const updated = { ...user, username: name, bio }
+    localStorage.setItem('chitpix_user', JSON.stringify(updated))
+    setUser(updated)
+    setShowEdit(false)
+    alert('Profile updated! ✅')
+    // Backend save
+    await fetch('/api/profile/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: name, bio })
+    }).catch(()=>{})
+  }
+
+  if (!user) return <p style={{padding:20}}>Loading...</p>
 
   return (
-    <div style={{ maxWidth: '470px', margin: '0 auto', background: '#fff', minHeight: '100vh', paddingBottom: '60px' }}>
-      
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', alignItems: 'center', borderBottom: '1px solid #efefef' }}>
-        <div style={{ fontWeight: 800, fontSize: '18px' }}>mahesh_ravani <span style={{ color: '#0095f6' }}>✓</span></div>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          {isAdmin && (
-            <Link href="/admin" style={{ background: '#000', color: '#fff', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>
-              👑 Admin
-            </Link>
-          )}
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
+      <div style={{ textAlign: 'center' }}>
+        <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.username}`} 
+             style={{ width: '90px', height: '90px', borderRadius: '50%' }} />
+        <h2>{user.username}</h2>
+        <p>{bio || 'No bio yet'}</p>
+        
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '15px' }}>
+          <button onClick={() => setShowEdit(true)} 
+            style={{ padding: '8px 20px', borderRadius: '8px', border: '1px solid #ccc', background: 'white', fontWeight: '600' }}>
+            Edit Profile
+          </button>
+          <button onClick={handleShare}
+            style={{ padding: '8px 20px', borderRadius: '8px', border: '1px solid #ccc', background: 'white', fontWeight: '600' }}>
+            Share Profile
+          </button>
         </div>
       </div>
 
-      {/* Migatha profile code same */}
-      <div style={{ padding: '16px', display: 'flex', gap: '28px', alignItems: 'center' }}>
-        <img src="https://i.pravatar.cc/150?img=3" style={{ width: '86px', height: '86px', borderRadius: '50%' }} alt="" />
-        <div style={{ display: 'flex', gap: '24px', flex: 1, justifyContent: 'space-around' }}>
-          <div style={{ textAlign: 'center' }}><div style={{ fontWeight: 700 }}>9</div><div style={{ fontSize: '14px' }}>posts</div></div>
-          <div style={{ textAlign: 'center' }}><div style={{ fontWeight: 700 }}>1K</div><div style={{ fontSize: '14px' }}>followers</div></div>
-          <div style={{ textAlign: 'center' }}><div style={{ fontWeight: 700 }}>200</div><div style={{ fontSize: '14px' }}>following</div></div>
-        </div>
-      </div>
-
-      <div style={{ padding: '0 16px' }}>
-        <div style={{ fontWeight: 700 }}>Mahesh Ravani</div>
-        <div style={{ fontSize: '14px', marginTop: '2px' }}>🚀 Founder @ChitPix</div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '8px', padding: '14px 16px' }}>
-        <button style={{ flex: 1, background: '#efefef', border: 'none', padding: '7px', borderRadius: '8px', fontWeight: 600 }}>Edit profile</button>
-        <button style={{ flex: 1, background: '#efefef', border: 'none', padding: '7px', borderRadius: '8px', fontWeight: 600 }}>Share profile</button>
-      </div>
-
-      {isAdmin && (
-        <div style={{ margin: '0 16px 12px', background: 'linear-gradient(90deg, #000, #333)', color: '#fff', padding: '12px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div><div style={{ fontWeight: 700, fontSize: '14px' }}>Admin Dashboard</div><div style={{ fontSize: '12px', opacity: 0.7 }}>Manage ChitPix</div></div>
-          <Link href="/admin" style={{ background: '#fff', color: '#000', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, textDecoration: 'none' }}>Open</Link>
+      {showEdit && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'white', padding: '20px', borderRadius: '12px', width: '90%', maxWidth: '350px' }}>
+            <h3>Edit Profile</h3>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="Username" 
+              style={{ width: '100%', padding: '10px', margin: '10px 0', borderRadius: '8px', border: '1px solid #ccc' }} />
+            <textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Bio"
+              style={{ width: '100%', padding: '10px', margin: '10px 0', borderRadius: '8px', border: '1px solid #ccc' }} />
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={handleSave} style={{ flex: 1, padding: '10px', background: 'black', color: 'white', borderRadius: '8px' }}>Save</button>
+              <button onClick={()=>setShowEdit(false)} style={{ flex: 1, padding: '10px', background: '#eee', borderRadius: '8px' }}>Cancel</button>
+            </div>
+          </div>
         </div>
       )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '2px' }}>
-        {Array.from({ length: 9 }).map((_, i) => (
-          <img key={i} src={`https://picsum.photos/300/300?random=${i+100}`} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover' }} alt="" />
-        ))}
-      </div>
-
-      <BottomNav />
     </div>
   )
 }
