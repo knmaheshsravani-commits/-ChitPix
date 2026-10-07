@@ -11,7 +11,11 @@ export default function Admin() {
       method: 'POST',
       body: JSON.stringify({ password: pass })
     })
-    if (res.ok) setOk(true)
+      if (res.ok) {
+    localStorage.setItem('chitpix_admin', 'true')
+    localStorage.setItem('isAdmin', 'true')
+    setOk(true)
+      }
     else alert('Wrong Password bro!')
   }
 
