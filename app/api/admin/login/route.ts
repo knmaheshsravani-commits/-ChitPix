@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
     const { password } = await req.json()
     
     // Nee admin password ikkada pettu
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'chitpix123'
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'ChitPix@2026!'
 
     if (password === ADMIN_PASSWORD) {
       return NextResponse.json({ success: true })
