@@ -56,15 +56,6 @@ export default function LoginPage() {
           Log In
         </button>
 
-        <div className="flex items-center my-4">
-          <div className="flex-1 h-px bg-zinc-700"></div>
-          <span className="px-3 text-zinc-500 text-sm">OR</span>
-          <div className="flex-1 h-px bg-zinc-700"></div>
-        </div>
-
-        <button onClick={handleGoogleLogin} className="w-full bg-white text-black py-3 rounded-lg font-bold">
-          Continue with Gmail
-        </button>
       </div>
     </div>
   );
