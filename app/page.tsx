@@ -12,6 +12,8 @@ export default function HomePage() {
   const [username, setUsername] = useState("Knmahesh")
   const [showMenu, setShowMenu] = useState<number | null>(null)
   const [stories, setStories] = useState<any[]>([])
+  const [showStory, setShowStory] = useState<any>(null)
+  const [showHeart, setShowHeart] = useState<number | null>(null)
 
   useEffect(()=>{
     const saved = localStorage.getItem("posts")
@@ -19,8 +21,8 @@ export default function HomePage() {
       setPosts(JSON.parse(saved))
     } else {
       setPosts([
-        {id:1, image:"https://picsum.photos/600/800?random=5", username:"memer_ipothaa", music:"Anirudh Ravicha...", caption:"ela ipov... more", likes:20700, comments:76, shares:81, saves:7432, liked:false, following:false, time:"21 hours ago", avatar:""},
-        {id:2, image:"https://picsum.photos/800/600?random=10", username:"memer_ipothaa", music:"Sunset Vibes", caption:"Sunset", likes:20800, comments:76, shares:81, saves:74432, liked:true, following:false, time:"21 hours ago", avatar:""},
+        {id:1, image:"https://picsum.photos/600/800?random=5", username:"memer_ipothaa", music:"Anirudh Ravicha...", caption:"ela ipov... more", likes:20700, comments:76, shares:81, saves:7432, liked:false, saved:false, following:false, time:"21 hours ago", avatar:""},
+        {id:2, image:"https://picsum.photos/800/600?random=10", username:"memer_ipothaa", music:"Sunset Vibes", caption:"Sunset", likes:20800, comments:76, shares:81, saves:74432, liked:true, saved:false, following:false, time:"21 hours ago", avatar:""},
       ])
     }
     const p = localStorage.getItem("chitpix_profile_photo")
@@ -39,10 +41,20 @@ export default function HomePage() {
     localStorage.setItem("posts", JSON.stringify(v))
   }
 
-  const handleLike = (i:number)=>{
+  const handleLike = (i:number, animate=false)=>{
     const u=[...posts]
     u[i].liked =!u[i].liked
     u[i].likes += u[i].liked? 1 : -1
+    savePosts(u)
+    if(animate && u[i].liked){
+      setShowHeart(u[i].id)
+      setTimeout(()=>setShowHeart(null), 900)
+    }
+  }
+
+  const handleSave = (i:number)=>{
+    const u=[...posts]
+    u[i].saved =!u[i].saved
     savePosts(u)
   }
 
@@ -55,10 +67,10 @@ export default function HomePage() {
   const handleCreate = ()=>{
     if(!newImage){ alert("Photo select chey"); return }
     const newPost = {
-      id: Date.now(), image: newImage, username, music:"Original audio", caption, likes:0, comments:0, shares:0, saves:0, liked:false, following:false, time:"Just now", avatar:photo
+      id: Date.now(), image: newImage, username, music:"Original audio", caption, likes:0, comments:0, shares:0, saves:0, liked:false, saved:false, following:false, time:"Just now", avatar:photo
     }
     savePosts([newPost,...posts])
-    const newStory = {id: Date.now(), time: Date.now()}
+    const newStory = {id: Date.now(), image: newImage, time: Date.now()}
     const all = [...stories, newStory]
     localStorage.setItem("chitpix_stories", JSON.stringify(all))
     setStories(all)
@@ -95,14 +107,14 @@ export default function HomePage() {
         </div>
 
         <div className="flex gap-4 px-4 py-3 overflow-x-auto border-b">
-          <div className="text-center min-w-[60px]">
+          <button onClick={()=>{if(stories.length>0) setShowStory(stories[stories.length-1])}} className="text-center min-w-[60px]">
             <div className={`w-14 h-14 rounded-full p-[2px] mx-auto ${hasStory? 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600' : 'bg-gray-200'}`}>
               <div className="bg-white w-full h-full rounded-full overflow-hidden flex items-center justify-center">
                 {photo? <img src={photo} className="w-full h-full object-cover" alt=""/> : <b>M</b>}
               </div>
             </div>
             <p className="text-[10px] mt-1">You</p>
-          </div>
+          </button>
           <div className="text-center min-w-[60px]"><div className="w-14 h-14 rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-[2px] mx-auto"><div className="bg-white w-full h-full rounded-full flex items-center justify-center font-bold">C</div></div><p className="text-[10px] mt-1">ChitPix</p></div>
           <div className="text-center min-w-[60px]"><div className="w-14 h-14 rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-[2px] mx-auto"><div className="bg-white w-full h-full rounded-full flex items-center justify-center font-bold">M</div></div><p className="text-[10px] mt-1">My Work</p></div>
           <div className="text-center min-w-[60px]"><div className="w-14 h-14 rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-[2px] mx-auto"><div className="bg-white w-full h-full rounded-full flex items-center justify-center font-bold">T</div></div><p className="text-[10px] mt-1">Travel</p></div>
@@ -132,8 +144,13 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="bg-black w-full aspect-square overflow-hidden">
-              <img src={p.image} alt="" className="w-full h-full object-cover" onDoubleClick={()=>handleLike(i)} />
+            <div className="bg-black w-full aspect-square overflow-hidden relative" onDoubleClick={()=>handleLike(i, true)}>
+              <img src={p.image} alt="" className="w-full h-full object-cover" />
+              {showHeart===p.id && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[80px] animate-pulse">❤️</span>
+                </div>
+              )}
             </div>
 
             <div className="px-3 py-3">
@@ -161,18 +178,36 @@ export default function HomePage() {
                   <span className="text-[14px]">{p.shares}</span>
                 </button>
 
-                <button className="ml-auto">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                <button onClick={()=>handleSave(i)} className="ml-auto">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill={p.saved? "black" : "none"} stroke="black" strokeWidth="1.7"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                 </button>
               </div>
               <div className="mt-2">
                 <p className="text-[14px]"><span className="font-bold">{p.username}</span> {p.caption}</p>
+                <Link href={`/post/${p.id}`} className="text-[13px] text-gray-500 mt-1 block">View all {p.comments} comments</Link>
                 <p className="text-[13px] text-gray-500 mt-1">{p.time}</p>
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {showStory && (
+        <div className="fixed inset-0 bg-black z-[100] flex flex-col animate-in">
+          <div className="flex justify-between items-center p-4 text-white">
+            <p className="font-bold text-[14px]">You • {Math.floor((Date.now()-showStory.time)/60000)}m ago</p>
+            <button onClick={()=>setShowStory(null)} className="text-xl w-8 h-8 flex items-center justify-center">✕</button>
+          </div>
+          <div className="flex-1 flex items-center justify-center">
+            <img src={showStory.image} className="max-w-full max-h-full object-contain" alt=""/>
+          </div>
+          <div className="p-4">
+            <div className="h-1 bg-gray-600 rounded-full overflow-hidden">
+              <div className="h-full bg-white w-full"></div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCreate && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center">
@@ -191,4 +226,4 @@ export default function HomePage() {
       <BottomNav />
     </div>
   )
-              }
+                }
