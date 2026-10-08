@@ -27,8 +27,6 @@ export default function HomePage() {
     if(p) setPhoto(p)
     const n = localStorage.getItem("chitpix_username")
     if(n) setUsername(n)
-
-    // 4. STORIES 24H AUTO DELETE
     const savedStories = JSON.parse(localStorage.getItem("chitpix_stories") || "[]")
     const now = Date.now()
     const valid = savedStories.filter((s:any)=> now - s.time < 24*60*60*1000)
@@ -48,7 +46,6 @@ export default function HomePage() {
     savePosts(u)
   }
 
-  // 1. FOLLOW WORKING + COUNT
   const handleFollow = (i:number)=>{
     const u=[...posts]
     u[i].following =!u[i].following
@@ -61,7 +58,6 @@ export default function HomePage() {
       id: Date.now(), image: newImage, username, music:"Original audio", caption, likes:0, comments:0, shares:0, saves:0, liked:false, following:false, time:"Just now", avatar:photo
     }
     savePosts([newPost,...posts])
-    // Add story for 24h
     const newStory = {id: Date.now(), time: Date.now()}
     const all = [...stories, newStory]
     localStorage.setItem("chitpix_stories", JSON.stringify(all))
@@ -86,7 +82,11 @@ export default function HomePage() {
 
         <div className="flex justify-between items-center px-4 py-3 border-b sticky top-0 bg-white z-10">
           <h1 className="font-black text-[22px]">ChitPix</h1>
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
+            {/* DM ICON ADDED */}
+            <Link href="/messages" className="w-8 h-8 flex items-center justify-center">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            </Link>
             <button onClick={()=>setShowCreate(true)} className="w-8 h-8 bg-black rounded-full text-white flex items-center justify-center text-xl">+</button>
             <Link href="/profile" className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden block">
               {photo? <img src={photo} className="w-full h-full object-cover" alt=""/> : <div className="w-full h-full flex items-center justify-center font-bold">M</div>}
@@ -96,10 +96,9 @@ export default function HomePage() {
 
         <div className="flex gap-4 px-4 py-3 overflow-x-auto border-b">
           <div className="text-center min-w-[60px]">
-            {/* 4. STORY RING - 24H */}
             <div className={`w-14 h-14 rounded-full p-[2px] mx-auto ${hasStory? 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600' : 'bg-gray-200'}`}>
               <div className="bg-white w-full h-full rounded-full overflow-hidden flex items-center justify-center">
-                {photo? <img src={photo} className="w-full h-full object-cover" alt=""/> : <b>U</b>}
+                {photo? <img src={photo} className="w-full h-full object-cover" alt=""/> : <b>M</b>}
               </div>
             </div>
             <p className="text-[10px] mt-1">You</p>
@@ -117,15 +116,12 @@ export default function HomePage() {
                 <p className="font-bold text-[14px]">{p.username}</p>
                 <p className="text-[11px] flex items-center gap-1">♫ {p.music}</p>
               </div>
-              {/* 1. FOLLOW BUTTON WORKING */}
               <button onClick={()=>handleFollow(i)} className={`px-4 py-1 rounded-full text-[13px] font-bold transition ${p.following? 'bg-black text-white' : 'bg-gray-100'}`}>
                 {p.following? 'Following' : 'Follow'}
               </button>
-              {/* 2. 3 DOTS */}
               <button onClick={()=>setShowMenu(showMenu===i? null : i)} className="w-8 h-8 flex items-center justify-center text-xl font-bold">⋮</button>
             </div>
 
-            {/* 2. 3 DOTS MENU WORKING */}
             {showMenu===i && (
               <div className="absolute right-3 top-12 bg-white border rounded-2xl shadow-2xl z-30 w-56 overflow-hidden">
                 <button onClick={()=>{handleFollow(i); setShowMenu(null)}} className="w-full text-left px-4 py-3.5 text-[14px] hover:bg-gray-50 border-b">{p.following? 'Unfollow' : 'Follow'} {p.username}</button>
@@ -140,21 +136,31 @@ export default function HomePage() {
               <img src={p.image} alt="" className="w-full h-full object-cover" onDoubleClick={()=>handleLike(i)} />
             </div>
 
-            {/* 3. NEW MODERN ICONS */}
             <div className="px-3 py-3">
               <div className="flex items-center gap-5">
                 <button onClick={()=>handleLike(i)} className="flex items-center gap-1.5">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill={p.liked? "#ff3040" : "none"} stroke={p.liked? "#ff3040" : "black"} strokeWidth="1.7"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                   <span className="text-[14px] font-medium">{p.likes>=1000? (p.likes/1000).toFixed(1)+'K' : p.likes}</span>
                 </button>
-                <button className="flex items-center gap-1.5">
+
+                {/* ✅ COMMENT FIX - POST PAGE KI VELTHUNDI */}
+                <button onClick={()=>window.location.href=`/post/${p.id}`} className="flex items-center gap-1.5">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                   <span className="text-[14px]">{p.comments}</span>
                 </button>
-                <button className="flex items-center gap-1.5">
+
+                {/* ✅ SHARE FIX - MESSAGES KI VELTHUNDI */}
+                <button onClick={()=>{
+                  localStorage.setItem("chitpix_shared_post", JSON.stringify(p))
+                  const updated=[...posts]
+                  updated[i].shares += 1
+                  savePosts(updated)
+                  window.location.href="/messages"
+                }} className="flex items-center gap-1.5">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   <span className="text-[14px]">{p.shares}</span>
                 </button>
+
                 <button className="ml-auto">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                 </button>
@@ -185,4 +191,4 @@ export default function HomePage() {
       <BottomNav />
     </div>
   )
-      }
+              }
