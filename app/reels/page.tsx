@@ -12,6 +12,7 @@ export default function ReelsPage() {
   const [showComments, setShowComments] = useState<any>(null)
   const [commentText, setCommentText] = useState("")
   const [commentsList, setCommentsList] = useState<any>({})
+  const [showShare, setShowShare] = useState<any>(null)
 
   useEffect(()=>{
     const p = localStorage.getItem("posts")
@@ -64,6 +65,16 @@ export default function ReelsPage() {
     setCommentText("")
   }
 
+  const doShare = (target:string)=>{
+    if(!showShare) return
+    const updated = reels.map((r:any)=> r.id===showShare.id? {...r, shares:r.shares+1} : r)
+    setReels(updated)
+    localStorage.setItem("chitpix_shared_post", JSON.stringify(showShare))
+    localStorage.setItem("chitpix_share_target", target)
+    setShowShare(null)
+    window.location.href="/messages"
+  }
+
   return (
     <div className="w-full h-[100dvh] bg-white relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center px-4 py-3 bg-white/80 backdrop-blur">
@@ -78,7 +89,7 @@ export default function ReelsPage() {
           <div key={reel.id} className="w-full h-[100dvh] snap-start relative bg-white flex justify-center">
             <div className="relative w-full max-w-[440px] h-full bg-white flex items-center justify-center overflow-hidden" onDoubleClick={()=>handleLike(reel.id,true)}>
               <img src={reel.image} alt="" className="w-full h-full object-contain" draggable={false} />
-              {heart===reel.id && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"><span className="text-[90px] animate-bounce">❤️</span></div>)}
+              {heart===reel.id && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"><span className="text-[90px] animate-[bounce_0.9s]">❤️</span></div>)}
 
               <div className="absolute right-2 bottom-28 flex flex-col items-center gap-6 z-20">
                 <button onClick={()=>handleLike(reel.id)} className="flex flex-col items-center active:scale-90 transition">
@@ -93,7 +104,7 @@ export default function ReelsPage() {
                   <svg width="26" height="26" viewBox="0 0 24 24" fill={reposted[reel.id]? "black" : "none"} stroke="black" strokeWidth="1.7"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
                   <span className="text-[12px] font-bold text-black mt-1">{reel.reposts>0? reel.reposts : ""}</span>
                 </button>
-                <button onClick={()=>{localStorage.setItem("chitpix_shared_post", JSON.stringify(reel)); const updated=[...reels]; const idx=updated.findIndex((r:any)=>r.id===reel.id); if(idx>-1){ updated[idx].shares+=1; setReels(updated) } window.location.href="/messages"}} className="flex flex-col items-center active:scale-90 transition">
+                <button onClick={()=>setShowShare(reel)} className="flex flex-col items-center active:scale-90 transition">
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   <span className="text-[12px] font-bold text-black mt-1">{reel.shares}</span>
                 </button>
@@ -137,8 +148,37 @@ export default function ReelsPage() {
           </div>
         </div>
       )}
+
+      {showShare && (
+        <div className="absolute inset-0 z-[60] bg-black/40 flex items-end justify-center" onClick={()=>setShowShare(null)}>
+          <div className="bg-white w-full max-w-[440px] rounded-t-[20px] p-4 pb-8 animate-[slideUp_0.25s]" onClick={e=>e.stopPropagation()}>
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+            <p className="font-bold text-center text-[16px] mb-4">Share</p>
+            <div className="grid grid-cols-4 gap-4 mb-6">
+              {[
+                {name:"ChitPix Team", letter:"C"},
+                {name:"K N Mahesh", letter:"K"},
+                {name:"Best Friend", letter:"B"},
+                {name:"Mom", letter:"M"},
+              ].map((u:any,i:number)=>(
+                <div key={i} onClick={()=>doShare(u.name)} className="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95">
+                  <div className="w-[56px] h-[56px] rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-[18px]">{u.letter}</div>
+                  <p className="text-[11px] text-center truncate w-14">{u.name.split(" ")[0]}</p>
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2">
+              <button onClick={()=>{ navigator.clipboard.writeText("https://chitpix.com/reels/"+showShare.id); setShowShare(null); alert("Link copied! 🔗")}} className="w-full flex items-center gap-3 bg-gray-100 py-3.5 px-4 rounded-xl font-medium text-[14px]">
+                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">🔗</div> Copy Link
+              </button>
+              <button onClick={()=>setShowShare(null)} className="w-full bg-black text-white py-3.5 rounded-xl font-bold text-[14px]">Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
-      <style jsx>{`.snap-y{scrollbar-width:none}.snap-y::-webkit-scrollbar{display:none}`}</style>
+      <style jsx>{`.snap-y{scrollbar-width:none}.snap-y::-webkit-scrollbar{display:none} @keyframes slideUp{from{transform:translateY(100%)} to{transform:translateY(0)}}`}</style>
     </div>
   )
-                }
+              }
