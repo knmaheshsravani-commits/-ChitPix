@@ -158,16 +158,16 @@ const handleFollow = () => {
             </button>
           </div>
 
-          <div className="flex gap-4 mt-6 overflow-x-auto">
-            {['ChitPix','My Work','Travel','Friends'].map(h=>(
-              <div key={h} className="text-center min-w-[60px]">
-                <div className="w-14 h-14 rounded-full border p-0.5 mx-auto"><div className="w-full h-full bg-gray-100 rounded-full flex items-center justify-center text-lg">✨</div></div>
-                <p className="text-[11px] mt-1">{h}</p>
-              </div>
-            ))}
+            <div className="flex gap-4 mt-6 overflow-x-auto">
+      {['ChitPix','My Work','Travel','Friends'].map((h)=>(
+        <div key={h} className="text-center min-w-[60px] cursor-pointer" onClick={()=> alert(h + ' Story Coming Soon!')}>
+          <div className="w-14 h-14 rounded-full border p-0.5 mx-auto bg-gradient-to-tr from-yellow-400 to-purple-600">
+            <div className="bg-white rounded-full w-full h-full flex items-center justify-center text-xl">✨</div>
           </div>
+          <p className="text-[11px] mt-1">{h}</p>
         </div>
-
+      ))}
+    </div>
         <div className="flex border-t mt-2">
           <button onClick={()=>setActiveTab('posts')} className={`flex-1 py-3 text-sm ${activeTab==='posts'?'border-t-2 border-black font-bold': 'text-gray-400'}`}>⊞ POSTS</button>
           <button onClick={()=>setActiveTab('reels')} className={`flex-1 py-3 text-sm ${activeTab==='reels'?'border-t-2 border-black font-bold': 'text-gray-400'}`}>▶ REELS</button>
