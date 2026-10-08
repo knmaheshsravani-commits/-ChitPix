@@ -16,7 +16,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('posts')
   const [selectedPost, setSelectedPost] = useState<any>(null)
 
-  // NEW STATES BRO 👇
+  // FOLLOW COUNT STATES
   const [followers, setFollowers] = useState(1200)
   const [isFollowing, setIsFollowing] = useState(false)
 
@@ -26,14 +26,20 @@ export default function ProfilePage() {
     const l = localStorage.getItem('profile_link') || 'chitpix.app'
     const p = localStorage.getItem('profile_photo') || ''
     const admin = localStorage.getItem('chitpix_admin')
-    const followStatus = localStorage.getItem('is_following_mahesh')
+
+    // BRO IKKADA FIX: Knmahesh ayithe auto admin
+    if (n === 'Knmahesh' || admin === 'true') {
+      setIsAdmin(true)
+    }
+
     const savedFollowers = localStorage.getItem('followers_count')
+    const followStatus = localStorage.getItem('is_following_mahesh')
+
+    if (savedFollowers) setFollowers(parseInt(savedFollowers))
+    if (followStatus === 'true') setIsFollowing(true)
 
     setUsername(n); setBio(b); setLink(l); setPhoto(p)
     setEditName(n); setEditBio(b); setEditLink(l)
-    if (admin) setIsAdmin(true)
-    if (followStatus === 'true') setIsFollowing(true)
-    if (savedFollowers) setFollowers(parseInt(savedFollowers))
 
     fetch('/api/posts').then(r=>r.json()).then(d=>setPosts(d.posts || d || [])).catch(()=>{})
   }, [])
@@ -49,7 +55,6 @@ export default function ProfilePage() {
     }
     reader.readAsDataURL(file)
   }
-
   const handleSave = () => {
     localStorage.setItem('profile_name', editName)
     localStorage.setItem('profile_bio', editBio)
@@ -57,7 +62,6 @@ export default function ProfilePage() {
     setUsername(editName); setBio(editBio); setLink(editLink)
     setShowEdit(false)
   }
-
   const handleLogout = () => {
     if (confirm('Logout avvala bro?')) {
       localStorage.clear()
@@ -65,7 +69,7 @@ export default function ProfilePage() {
     }
   }
 
-  // FOLLOW / UNFOLLOW WORKING 100% 💯
+  // FOLLOW / UNFOLLOW 100% WORKING
   const handleFollow = () => {
     if (isFollowing) {
       const newCount = followers - 1
@@ -82,49 +86,37 @@ export default function ProfilePage() {
     }
   }
 
-  // SHARE PROFILE WITH NATIVE SHEET ✅
   const handleShare = async () => {
-    const profileUrl = window.location.href
-    const shareData = {
-      title: 'ChitPix',
-      text: `Check out ${username} on ChitPix 💙`,
-      url: profileUrl
-    }
+    const url = window.location.href
     if (navigator.share) {
-      try {
-        await navigator.share(shareData)
-      } catch (err) {
-        console.log('Share cancelled')
-      }
+      await navigator.share({ title: username, text: `Check ${username} on ChitPix 💙`, url })
     } else {
-      await navigator.clipboard.writeText(profileUrl)
+      await navigator.clipboard.writeText(url)
       alert('Link Copied! 🔗')
     }
   }
 
-  // ADMIN DELETE POST ✅
-  const handleDeletePost = (postIndex: number) => {
-    if (!confirm('Ee post delete cheyala bro? 🗑️')) return
-    const newPosts = posts.filter((_, i) => i!== postIndex)
-    setPosts(newPosts)
-    // API kuda unte akkada kuda delete chey
-    // fetch(`/api/posts/${selectedPost.id}`, { method: 'DELETE' })
+  // DELETE POST - ADMIN KE
+  const handleDeletePost = (index: number) => {
+    if (!confirm('Delete cheyala bro? 🗑️')) return
+    const updated = posts.filter((_, i) => i!== index)
+    setPosts(updated)
     setSelectedPost(null)
+    alert('Post Deleted ✅')
   }
 
   return (
     <div className="min-h-screen bg-white pb-20">
       <div className="max-w-md mx-auto">
-        {/* HEADER */}
+        {/* HEADER - ADMIN BUTTON FIX */}
         <div className="flex justify-between items-center p-4 border-b">
           <h1 className="font-bold text-lg flex items-center gap-1">{username} <span className="text-blue-500 text-sm">✓</span></h1>
-          <div className="flex gap-3">
-            {isAdmin && <Link href="/admin" className="text-xs bg-red-600 text-white px-3 py-1 rounded-full">ADMIN</Link>}
+          <div className="flex gap-2 items-center">
+            {isAdmin && <Link href="/admin" className="text-[11px] bg-red-600 text-white px-4 py-1.5 rounded-full font-bold">ADMIN</Link>}
             <button onClick={handleLogout} className="text-xl">⚙️</button>
           </div>
         </div>
 
-        {/* PROFILE INFO */}
         <div className="p-4">
           <div className="flex gap-6 items-center">
             <div className="relative">
@@ -139,7 +131,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex gap-6 text-center flex-1 justify-around">
               <div><b className="block text-lg">{posts.length}</b><span className="text-sm">Posts</span></div>
-              <div><b className="block text-lg">{followers > 1000? (followers/1000).toFixed(1)+'K' : followers}</b><span className="text-sm">Followers</span></div>
+              <div><b className="block text-lg">{followers >= 1000? (followers/1000).toFixed(1)+'K' : followers}</b><span className="text-sm">Followers</span></div>
               <div><b className="block text-lg">180</b><span className="text-sm">Following</span></div>
             </div>
           </div>
@@ -153,12 +145,11 @@ export default function ProfilePage() {
           <div className="flex gap-2 mt-4">
             <button onClick={()=>setShowEdit(true)} className="flex-1 py-1.5 rounded-lg bg-gray-100 font-semibold text-sm">Edit Profile</button>
             <button onClick={handleShare} className="flex-1 py-1.5 rounded-lg bg-gray-100 font-semibold text-sm">Share Profile</button>
-            <button onClick={handleFollow} className={`px-6 py-1.5 rounded-lg font-semibold text-sm ${isFollowing? 'bg-gray-200 text-black' : 'bg-blue-500 text-white'}`}>
+            <button onClick={handleFollow} className={`flex-1 py-1.5 rounded-lg font-bold text-sm ${isFollowing? 'bg-gray-200 text-black' : 'bg-blue-600 text-white'}`}>
               {isFollowing? 'Following' : 'Follow'}
             </button>
           </div>
 
-          {/* HIGHLIGHTS */}
           <div className="flex gap-4 mt-6 overflow-x-auto">
             {['ChitPix','My Work','Travel','Friends'].map(h=>(
               <div key={h} className="text-center min-w-[60px]">
@@ -166,25 +157,20 @@ export default function ProfilePage() {
                 <p className="text-[11px] mt-1">{h}</p>
               </div>
             ))}
-            <div className="text-center min-w-[60px]">
-              <div className="w-14 h-14 rounded-full border border-dashed flex items-center justify-center mx-auto">+</div>
-              <p className="text-[11px] mt-1">New</p>
-            </div>
           </div>
         </div>
 
-        {/* TABS */}
         <div className="flex border-t mt-2">
-          <button onClick={()=>setActiveTab('posts')} className={`flex-1 py-3 text-sm flex justify-center items-center gap-1 ${activeTab==='posts'?'border-t border-black font-bold': 'text-gray-400'}`}>⊞ POSTS</button>
-          <button onClick={()=>setActiveTab('reels')} className={`flex-1 py-3 text-sm flex justify-center items-center gap-1 ${activeTab==='reels'?'border-t border-black font-bold': 'text-gray-400'}`}>▶ REELS</button>
-          <button onClick={()=>setActiveTab('saved')} className={`flex-1 py-3 text-sm flex justify-center items-center gap-1 ${activeTab==='saved'?'border-t border-black font-bold': 'text-gray-400'}`}>♡ SAVED</button>
+          <button onClick={()=>setActiveTab('posts')} className={`flex-1 py-3 text-sm ${activeTab==='posts'?'border-t-2 border-black font-bold': 'text-gray-400'}`}>⊞ POSTS</button>
+          <button onClick={()=>setActiveTab('reels')} className={`flex-1 py-3 text-sm ${activeTab==='reels'?'border-t-2 border-black font-bold': 'text-gray-400'}`}>▶ REELS</button>
+          <button onClick={()=>setActiveTab('saved')} className={`flex-1 py-3 text-sm ${activeTab==='saved'?'border-t-2 border-black font-bold': 'text-gray-400'}`}>♡ SAVED</button>
         </div>
 
-        {/* GRID */}
         <div className="grid grid-cols-3 gap-0.5">
           {activeTab==='posts' && posts.length>0? posts.map((p,i)=>(
-            <div key={i} onClick={()=>setSelectedPost({...p, index: i})} className="aspect-square bg-gray-100 relative cursor-pointer">
+            <div key={i} onClick={()=>setSelectedPost({...p, realIndex: i})} className="aspect-square bg-gray-100 relative cursor-pointer">
               <img src={p.image || p.imageUrl || p.url} className="w-full h-full object-cover" />
+              {isAdmin && <span className="absolute top-1 right-1 bg-red-600 text-white text-[9px] px-1 rounded">ADMIN</span>}
             </div>
           )) : activeTab==='posts'? (
             <div className="col-span-3 py-20 text-center">
@@ -199,7 +185,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* EDIT MODAL */}
       {showEdit && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
@@ -215,20 +200,17 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* POST VIEW MODAL WITH DELETE */}
       {selectedPost && (
-        <div className="fixed inset-0 bg-black/90 flex flex-col items-center justify-center z-50 p-4" onClick={()=>setSelectedPost(null)}>
-          <div onClick={e=>e.stopPropagation()} className="relative">
-            <img src={selectedPost.image || selectedPost.imageUrl} className="max-w-full max-h-[80vh] rounded" />
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4" onClick={()=>setSelectedPost(null)}>
+          <div onClick={e=>e.stopPropagation()} className="w-full max-w-sm">
+            <img src={selectedPost.image || selectedPost.imageUrl} className="w-full rounded-lg max-h-[70vh] object-contain bg-black" />
             <div className="flex gap-2 mt-4">
-              <button onClick={()=>setSelectedPost(null)} className="flex-1 py-2 bg-white/20 text-white rounded-full">Close</button>
-              {(isAdmin || true) && (
-                <button onClick={()=>handleDeletePost(selectedPost.index)} className="flex-1 py-2 bg-red-600 text-white rounded-full font-bold">🗑️ Delete</button>
-              )}
+              <button onClick={()=>setSelectedPost(null)} className="flex-1 py-3 bg-white/20 text-white rounded-full">Close</button>
+              {isAdmin && <button onClick={()=>handleDeletePost(selectedPost.realIndex)} className="flex-1 py-3 bg-red-600 text-white rounded-full font-bold">🗑️ Delete Post</button>}
             </div>
           </div>
         </div>
       )}
     </div>
   )
-            }
+              }
