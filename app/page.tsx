@@ -34,8 +34,12 @@ export default function HomePage() {
 
   const handleLike = (i:number)=>{
     const u=[...posts]
-    u[i].liked=!u[i].liked
-    u[i].likes+= u[i].liked?1:-1
+    u[i].liked =!u[i].liked
+    if(u[i].liked){
+      u[i].likes += 1
+    } else {
+      u[i].likes -= 1
+    }
     savePosts(u)
   }
 
@@ -65,8 +69,9 @@ export default function HomePage() {
   }
 
   return (
-    <div className="w-full bg-white min-h-screen">
-      <div className="max-w-md mx-auto bg-white pb-[80px]">
+    // SCROLL FIX 100% - idhe main
+    <div className="w-full bg-white overflow-y-auto" style={{height:'100dvh'}}>
+      <div className="max-w-md mx-auto bg-white pb-[140px]">
 
         <div className="flex justify-between items-center px-4 py-3 border-b sticky top-0 bg-white z-10">
           <h1 className="font-black text-[22px]">ChitPix</h1>
