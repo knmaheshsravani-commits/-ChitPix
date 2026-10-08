@@ -12,18 +12,20 @@ export default function ProfilePage() {
   const [link, setLink] = useState("chitpix.com")
   const [photo, setPhoto] = useState("")
   const [showEdit, setShowEdit] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
   const [editName, setEditName] = useState("")
   const [editBio, setEditBio] = useState("")
   const [editLink, setEditLink] = useState("")
-  const [activeTab, setActiveTab] = useState("posts")
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(()=>{
     const saved = localStorage.getItem("posts")
     if(saved) setPosts(JSON.parse(saved))
+    const f = localStorage.getItem("followers")
+    if(f) setFollowers(parseInt(f))
     const admin = localStorage.getItem("isAdmin")
-    if(admin) setIsAdmin(true)
+    if(admin==="true") setIsAdmin(true)
   },[])
 
   const savePosts = (newPosts:any[])=>{
@@ -31,37 +33,39 @@ export default function ProfilePage() {
     localStorage.setItem("posts", JSON.stringify(newPosts))
   }
 
+  const handleFollow = () => {
+    if(isFollowing){
+      const newCount = followers - 1
+      setFollowers(newCount)
+      setIsFollowing(false)
+      localStorage.setItem("followers", newCount.toString())
+    } else {
+      const newCount = followers + 1
+      setFollowers(newCount)
+      setIsFollowing(true)
+      localStorage.setItem("followers", newCount.toString())
+    }
+  }
+
   const handleDelete = (index:number)=>{
     if(confirm("Ee post delete cheyala?")){
       const newPosts = posts.filter((_,i)=> i!== index)
       savePosts(newPosts)
       setSelectedPost(null)
-      alert("Post Deleted ✅")
     }
-  }
-
-  const handleFollow = () => {
-    setIsFollowing(!isFollowing)
-    setFollowers(f=> isFollowing? f-1 : f+1)
-  }
-  const handleSave = () => {
-    setUsername(editName || username)
-    setBio(editBio || bio)
-    setLink(editLink || link)
-    setShowEdit(false)
   }
 
   return (
     <div className="min-h-screen bg-white pb-20">
       <div className="max-w-md mx-auto">
-        {/* HEADER - ADMIN BUTTON FIX */}
+        {/* HEADER */}
         <div className="flex justify-between items-center p-4 border-b">
           <h1 className="font-bold text-xl">{username}</h1>
-          <div className="flex gap-3 items-center">
-            <button onClick={()=>{setIsAdmin(!isAdmin); localStorage.setItem("isAdmin", isAdmin?"":"true")}} className="text-xs bg-black text-white px-2 py-1 rounded">
+          <div className="flex gap-2 items-center">
+            <button onClick={()=>{ const n=!isAdmin; setIsAdmin(n); localStorage.setItem("isAdmin", n.toString()); }} className={`text-xs px-3 py-1.5 rounded font-bold ${isAdmin?'bg-black text-white':'bg-gray-100'}`}>
               {isAdmin? "Admin ON" : "Admin"}
             </button>
-            <span>☰</span>
+            <button onClick={()=>setShowMenu(true)} className="text-2xl">☰</button>
           </div>
         </div>
 
@@ -69,7 +73,7 @@ export default function ProfilePage() {
           <div className="relative">
             <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-tr from-yellow-400 to-purple-600">
               <div className="bg-white rounded-full p-0.5">
-                {photo? <img src={photo} className="w-[72px] h-[72px] rounded-full object-cover" /> : <div className="w-[72px] h-[72px] rounded-full bg-white flex items-center justify-center text-3xl">👤</div>}
+                {photo? <img src={photo} className="w-[72px] h-[72px] rounded-full object-cover" /> : <div className="w-[72px] h-[72px] rounded-full bg-gray-100 flex items-center justify-center text-3xl">👤</div>}
               </div>
             </div>
             <label htmlFor="photoInput" className="absolute bottom-0 right-0 bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm cursor-pointer">+</label>
@@ -88,12 +92,15 @@ export default function ProfilePage() {
           <p className="text-sm text-blue-600 font-semibold">🔗 {link}</p>
         </div>
 
+        {/* BUTTONS - FOLLOW + UNFOLLOW COUNT WORKING */}
         <div className="flex gap-2 mt-4 px-4">
           <button onClick={()=>setShowEdit(true)} className="flex-1 py-1.5 rounded-lg bg-gray-100 font-semibold text-sm">Edit Profile</button>
           <button onClick={()=>{navigator.clipboard.writeText(window.location.href); alert("Link Copied!")}} className="flex-1 py-1.5 rounded-lg bg-gray-100 font-semibold text-sm">Share Profile</button>
+          <button onClick={handleFollow} className={`flex-1 py-1.5 rounded-lg font-bold text-sm ${isFollowing? 'bg-gray-100 text-black border' : 'bg-blue-500 text-white'}`}>
+            {isFollowing? 'Following' : 'Follow'}
+          </button>
         </div>
 
-        {/* HIGHLIGHTS CLICKABLE */}
         <div className="flex gap-4 mt-6 overflow-x-auto px-4">
           {['ChitPix','My Work','Travel','Friends'].map((h)=>(
             <div key={h} className="text-center min-w-[60px] cursor-pointer" onClick={()=> alert(h + ' Story Coming Soon! ✨')}>
@@ -106,7 +113,7 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex border-t mt-4">
-          <button onClick={()=>setActiveTab('posts')} className={`flex-1 py-3 text-sm ${activeTab==='posts'?'border-t-2 border-black font-bold':''}`}>POSTS</button>
+          <button className="flex-1 py-3 text-sm border-t-2 border-black font-bold">POSTS</button>
           <button className="flex-1 py-3 text-sm text-gray-400">REELS</button>
           <button className="flex-1 py-3 text-sm text-gray-400">SAVED</button>
         </div>
@@ -125,12 +132,36 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* POST VIEW + DELETE */}
+      {/* ADMIN MENU - Admin ON pakkana ☰ click chesthe ide working */}
+      {showMenu && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-2xl p-4">
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+            <h3 className="font-bold text-lg mb-3">Settings</h3>
+            {isAdmin? (
+              <>
+                <button onClick={()=>{ if(confirm("Anni posts delete cheyala?")){ savePosts([]); setShowMenu(false); }}} className="w-full text-left p-3 hover:bg-gray-100 rounded">🗑️ Clear All Posts (Admin)</button>
+                <button onClick={()=>{ const n=prompt("Followers count entha pettali?", followers.toString()); if(n){ setFollowers(parseInt(n)); localStorage.setItem("followers", n); } setShowMenu(false); }} className="w-full text-left p-3 hover:bg-gray-100 rounded">👥 Edit Followers Count</button>
+                <button onClick={()=>{ localStorage.clear(); alert("All Data Cleared!"); setShowMenu(false); location.reload(); }} className="w-full text-left p-3 hover:bg-gray-100 rounded text-red-600">⚠️ Reset Everything</button>
+                <button onClick={()=>{ setIsAdmin(false); localStorage.setItem("isAdmin","false"); setShowMenu(false); }} className="w-full text-left p-3 hover:bg-gray-100 rounded">🔒 Admin OFF</button>
+              </>
+            ) : (
+              <>
+                <p className="p-3 text-sm text-gray-500">Admin ON cheste extra options vastayi</p>
+                <button onClick={()=>{ setIsAdmin(true); localStorage.setItem("isAdmin","true"); setShowMenu(false); }} className="w-full text-left p-3 bg-black text-white rounded-lg text-center font-bold">🔓 Turn Admin ON</button>
+              </>
+            )}
+            <button onClick={()=>setShowMenu(false)} className="w-full mt-3 p-3 bg-gray-100 rounded-lg font-bold">Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* POST DELETE */}
       {selectedPost && (
         <div className="fixed inset-0 bg-black/90 flex flex-col z-50">
           <div className="flex justify-between p-4 text-white">
             <button onClick={()=>setSelectedPost(null)}>✕ Close</button>
-            <button onClick={()=>handleDelete(selectedPost.realIndex)} className="bg-red-600 px-3 py-1 rounded text-sm font-bold">🗑️ Delete Post</button>
+            {isAdmin && <button onClick={()=>handleDelete(selectedPost.realIndex)} className="bg-red-600 px-3 py-1 rounded text-sm font-bold">🗑️ Delete</button>}
           </div>
           <div className="flex-1 flex items-center justify-center">
             <img src={selectedPost.image || selectedPost.imageUrl} className="max-w-full max-h-[80vh] object-contain" />
@@ -146,7 +177,7 @@ export default function ProfilePage() {
             <textarea value={editBio} onChange={(e)=>setEditBio(e.target.value)} rows={3} placeholder="Bio" className="w-full border p-2 rounded mb-2" />
             <input value={editLink} onChange={(e)=>setEditLink(e.target.value)} placeholder="Link" className="w-full border p-2 rounded mb-2" />
             <div className="flex gap-2 mt-3">
-              <button onClick={handleSave} className="flex-1 p-3 bg-black text-white rounded-lg font-bold">Save</button>
+              <button onClick={()=>{setUsername(editName||username); setBio(editBio||bio); setLink(editLink||link); setShowEdit(false);}} className="flex-1 p-3 bg-black text-white rounded-lg font-bold">Save</button>
               <button onClick={()=>setShowEdit(false)} className="flex-1 p-3 bg-gray-100 rounded-lg">Cancel</button>
             </div>
           </div>
@@ -154,4 +185,4 @@ export default function ProfilePage() {
       )}
     </div>
   )
-            }
+                                                                               }
