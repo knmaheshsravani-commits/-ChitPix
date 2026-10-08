@@ -26,15 +26,17 @@ export default function HomePage() {
   const handleCreate = ()=>{ if(!newImage) return alert("Photo select chey"); savePosts([{id:Date.now(), image:newImage, username, music:"Original audio", caption, likes:0, comments:0, shares:0, saves:0, liked:false, time:"Just now", avatar:photo},...posts]); setNewImage(""); setCaption(""); setShowCreate(false) }
 
   return (
-    // FIX 1: overflow-y-auto + height auto - idhe scroll fix
-    <div className="w-full bg-white overflow-y-auto" style={{height:"auto", minHeight:"100vh"}}>
-      <div className="max-w-md mx-auto bg-white pb-[90px]">
+    // SCROLL FIX: overflow-y-auto teesa - ippudu body natural ga scroll avuthundi
+    <div className="w-full bg-white min-h-screen">
+      <div className="max-w-md mx-auto bg-white pb-[80px]">
 
         <div className="flex justify-between items-center px-4 py-3 border-b sticky top-0 bg-white z-10">
           <h1 className="font-black text-[22px]">ChitPix</h1>
           <div className="flex gap-3">
             <button onClick={()=>setShowCreate(true)} className="w-8 h-8 bg-black rounded-full text-white flex items-center justify-center text-xl">+</button>
-            <Link href="/profile" className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden block">{photo && <img src={photo} className="w-full h-full object-cover" alt=""/>}</Link>
+            <Link href="/profile" className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden block">
+              {photo? <img src={photo} className="w-full h-full object-cover" alt=""/> : <div className="w-full h-full flex items-center justify-center font-bold">M</div>}
+            </Link>
           </div>
         </div>
 
@@ -48,7 +50,7 @@ export default function HomePage() {
         {posts.map((p,i)=>(
           <div key={p.id} className="border-b">
             <div className="flex items-center gap-2 px-3 py-2">
-              <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">{p.avatar && <img src={p.avatar} className="w-full h-full object-cover" alt=""/>}</div>
+              <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">{p.avatar? <img src={p.avatar} className="w-full h-full object-cover" alt=""/> : (photo? <img src={photo} className="w-full h-full object-cover" alt=""/> : null)}</div>
               <div className="flex-1 leading-tight">
                 <p className="font-bold text-[14px]">{p.username}</p>
                 <p className="text-[11px] flex items-center gap-1">♫ {p.music || "Original audio"}</p>
@@ -119,7 +121,6 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
-
     </div>
   )
-}
+      }
