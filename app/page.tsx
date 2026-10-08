@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import BottomNav from "./components/BottomNav"
 
@@ -14,6 +14,7 @@ export default function HomePage() {
   const [stories, setStories] = useState<any[]>([])
   const [showStory, setShowStory] = useState<any>(null)
   const [showHeart, setShowHeart] = useState<number | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(()=>{
     const saved = localStorage.getItem("posts")
@@ -40,7 +41,6 @@ export default function HomePage() {
     setPosts(v)
     localStorage.setItem("posts", JSON.stringify(v))
   }
-
   const handleLike = (i:number, animate=false)=>{
     const u=[...posts]
     u[i].liked =!u[i].liked
@@ -83,20 +83,39 @@ export default function HomePage() {
   }
 
   const hasStory = stories.length > 0
-  const ICON_SIZE = 23 // 💯 FIXED SIZE - anni okela
+  const ICON_SIZE = 23
 
   return (
     <div className="w-full bg-white overflow-y-auto" style={{height:'100dvh'}}>
-      <div className="max-w-md mx-auto bg-white pb-[140px]">
+      {/* DIRECT GALLERY INPUT - HIDDEN */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e:any)=>{
+          const f=e.target.files[0]
+          if(f){
+            const r=new FileReader()
+            r.onload=()=>{
+              setNewImage(r.result as string)
+              setShowCreate(true)
+            }
+            r.readAsDataURL(f)
+          }
+        }}
+      />
 
-        {/* HEADER - ICONS SAME SIZE */}
+      <div className="max-w-md mx-auto bg-white pb-[140px]">
         <div className="flex justify-between items-center px-4 py-3 border-b sticky top-0 bg-white z-10">
           <h1 className="font-black text-[22px] tracking-tight">ChitPix</h1>
           <div className="flex gap-4 items-center">
-            <Link href="/messages" className="w-[32px] h-[32px] flex items-center justify-center active:scale-90 transition">
+            {/* DM - FIXED - BUTTON */}
+            <button onClick={()=>window.location.href="/messages"} className="w-[32px] h-[32px] flex items-center justify-center active:scale-90 transition">
               <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-            </Link>
-            <button onClick={()=>setShowCreate(true)} className="w-[32px] h-[32px] bg-black rounded-full text-white flex items-center justify-center active:scale-90 transition">
+            </button>
+            {/* PLUS - DIRECT GALLERY */}
+            <button onClick={()=>fileInputRef.current?.click()} className="w-[32px] h-[32px] bg-black rounded-full text-white flex items-center justify-center active:scale-90 transition">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
             <Link href="/profile" className="w-[32px] h-[32px] rounded-full bg-gray-200 overflow-hidden block border border-gray-200">
@@ -105,7 +124,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* STORIES */}
         <div className="flex gap-4 px-4 py-3 overflow-x-auto border-b scrollbar-none">
           <button onClick={()=>{if(stories.length>0) setShowStory(stories[stories.length-1])}} className="text-center min-w-[60px]">
             <div className={`w-[56px] h-[56px] rounded-full p-[2px] mx-auto ${hasStory? 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600' : 'bg-gray-200'}`}>
@@ -157,19 +175,16 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* POST ICONS - 💯 SAME SIZE */}
             <div className="px-3 py-3">
               <div className="flex items-center gap-4">
                 <button onClick={()=>handleLike(i)} className="flex items-center gap-1.5 active:scale-90 transition">
                   <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill={p.liked? "#ff3040" : "none"} stroke={p.liked? "#ff3040" : "black"} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                   <span className="text-[13px] font-semibold">{p.likes>=1000? (p.likes/1000).toFixed(1)+'K' : p.likes}</span>
                 </button>
-
                 <button onClick={()=>window.location.href=`/post/${p.id}`} className="flex items-center gap-1.5 active:scale-90 transition">
                   <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
                   <span className="text-[13px] font-medium">{p.comments}</span>
                 </button>
-
                 <button onClick={()=>{
                   localStorage.setItem("chitpix_shared_post", JSON.stringify(p))
                   const updated=[...posts]
@@ -180,7 +195,6 @@ export default function HomePage() {
                   <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   <span className="text-[13px] font-medium">{p.shares}</span>
                 </button>
-
                 <button onClick={()=>handleSave(i)} className="ml-auto active:scale-90 transition">
                   <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill={p.saved? "black" : "none"} stroke="black" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
                 </button>
@@ -196,7 +210,7 @@ export default function HomePage() {
       </div>
 
       {showStory && (
-        <div className="fixed inset-0 bg-black z-[100] flex flex-col">
+        <div className="fixed inset-0 bg-black z-[999] flex flex-col">
           <div className="flex justify-between items-center p-4 text-white">
             <p className="font-bold text-[14px]">You • {Math.floor((Date.now()-showStory.time)/60000)}m ago</p>
             <button onClick={()=>setShowStory(null)} className="text-xl w-8 h-8 flex items-center justify-center">✕</button>
@@ -208,23 +222,30 @@ export default function HomePage() {
       )}
 
       {showCreate && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full sm:max-w-sm rounded-t-2xl p-4">
-            <div className="flex justify-between mb-3"><b>New Post</b><button onClick={()=>setShowCreate(false)}>✕</button></div>
-            <label className="border-2 border-dashed rounded-xl h-60 flex items-center justify-center bg-gray-50 overflow-hidden cursor-pointer">
-              {newImage? <img src={newImage} className="w-full h-full object-cover" alt=""/> : <span className="text-sm text-gray-500">Tap to upload</span>}
-              <input type="file" accept="image/*" hidden onChange={(e:any)=>{const f=e.target.files[0]; if(f){const r=new FileReader(); r.onload=()=>setNewImage(r.result as string); r.readAsDataURL(f)}}} />
-            </label>
-            <input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="caption..." className="w-full border p-3 rounded-lg mt-3 text-sm"/>
-            <button onClick={handleCreate} className="w-full bg-black text-white py-3 rounded-lg font-bold mt-3">Share</button>
+        <div className="fixed inset-0 bg-black/80 z-[999] flex items-end sm:items-center justify-center">
+          <div className="bg-white w-full sm:max-w-md rounded-t-[22px] sm:rounded-[22px] overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b">
+              <button onClick={()=>{setShowCreate(false); setNewImage(""); setCaption("")}} className="text-[14px]">Cancel</button>
+              <b className="text-[15px]">New post</b>
+              <button onClick={handleCreate} className="text-[14px] font-bold text-blue-500">Share</button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <div className="bg-black w-full aspect-square flex items-center justify-center relative">
+                {newImage && <img src={newImage} className="w-full h-full object-contain" alt=""/>}
+                <button onClick={()=>fileInputRef.current?.click()} className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[12px] font-bold shadow">Change photo</button>
+              </div>
+              <div className="p-3">
+                <textarea value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Write a caption..." className="w-full min-h-[80px] text-[14px] focus:outline-none resize-none" autoFocus/>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      <BottomNav />
+      {!showCreate &&!showStory && <BottomNav />}
       <style jsx>{`
-       .scrollbar-none::-webkit-scrollbar{display:none}
-       .scrollbar-none{scrollbar-width:none}
+      .scrollbar-none::-webkit-scrollbar{display:none}
+      .scrollbar-none{scrollbar-width:none}
         @keyframes heartPop{
           0%{transform:scale(0); opacity:0}
           15%{transform:scale(1.2); opacity:1}
@@ -235,4 +256,4 @@ export default function HomePage() {
       `}</style>
     </div>
   )
-                }
+            }
