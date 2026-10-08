@@ -1,59 +1,57 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
 
-export default function BottomNav() {
+export default function BottomNav(){
   const path = usePathname()
-  const [photo, setPhoto] = useState("")
 
-  useEffect(()=>{
-    const p = localStorage.getItem("chitpix_profile_photo")
-    if(p) setPhoto(p)
-  },[])
+  const isHome = path === '/'
+  const isReels = path === '/reels'
+  const isSearch = path === '/search'
+  const isMessages = path === '/messages'
+  const isProfile = path === '/profile'
 
   return (
-    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid #dbdbdb', zIndex: 100 }}>
-      <div style={{ maxWidth: '470px', margin: '0 auto', height: '50px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' }}>
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#dbdbdb] z-[100]">
+      <div className="max-w-[470px] mx-auto h-[52px] flex justify-between items-center px-2">
 
-        {/* HOME - 2026 pill active */}
-        <Link href="/">
-          <div style={{ padding: '8px 20px', background: path==='/'?'#efefef':'transparent', borderRadius: '20px', display:'flex', alignItems:'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={path==='/'?'black':'none'} stroke="black" strokeWidth={path==='/'? 2.5 : 2}><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill={path==='/'?'white':'none'}/></svg>
-          </div>
-        </Link>
-      
-        {/* REELS - 2026 New icon - okkate icon */}
-        <Link href="/reels">
-          <div style={{ padding: '8px 20px', background: path==='/reels'?'#000':'transparent', borderRadius: '20px', display:'flex', justifyContent:'center', alignItems:'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill={path==='/reels'?'white':'none'} stroke={path==='/reels'?'white':'black'} strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8l6 4-6 4V8z" fill={path==='/reels'?'black':'black'} stroke="none"/></svg>
+        {/* 1 - HOME */}
+        <Link href="/" className="flex-1 flex justify-center">
+          <div className={`px-5 py-2 rounded-full flex items-center justify-center ${isHome? 'bg-[#efefef]' : ''}`}>
+            {isHome? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z"/></svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+            )}
           </div>
         </Link>
 
-        {/* DM / SHARE - separate icon - reels ki veru, DM ki veru */}
-        <Link href="/messages">
-          <div style={{ padding: '8px', width:'44px', height:'44px', display:'flex', justifyContent:'center', alignItems:'center', position:'relative' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>
-            <span style={{ position:'absolute', top:'6px', right:'6px', width:'7px', height:'7px', background:'red', borderRadius:'50%' }}></span>
+        {/* 2 - REELS - New 2026 */}
+        <Link href="/reels" className="flex-1 flex justify-center">
+          <div className={`px-5 py-2 rounded-full flex items-center justify-center ${isReels? 'bg-black' : ''}`}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill={isReels? 'white' : 'none'} stroke={isReels? 'white' : 'black'} strokeWidth="1.8"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill={isReels? 'white' : 'black'} stroke="none"/></svg>
           </div>
         </Link>
 
-        {/* SEARCH - 2026 pill */}
-        <Link href="/search">
-          <div style={{ padding: '8px 20px', background: path==='/search'?'#efefef':'transparent', borderRadius: '20px', display:'flex', alignItems:'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth={path==='/search'? 2.6 : 2}><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        {/* 3 - DM / SHARE */}
+        <Link href="/messages" className="flex-1 flex justify-center">
+          <div className={`w-11 h-11 flex items-center justify-center relative rounded-full ${isMessages? 'bg-[#efefef]' : ''}`}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.9"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
           </div>
         </Link>
 
-        {/* PROFILE - M logo with ring */}
-        <Link href="/profile">
-          <div style={{ padding: '4px 12px', background: path==='/profile'?'#efefef':'transparent', borderRadius: '20px', display:'flex', alignItems:'center', position:'relative' }}>
-            <div style={{ width:'26px', height:'26px', borderRadius:'50%', padding:'2px', background: path==='/profile'?'#000':'linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)' }}>
-              <div style={{ background:'#fff', borderRadius:'50%', padding:'2px', width:'100%', height:'100%' }}>
-                {photo ? <img src={photo} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit:'cover' }} alt="" /> : <div style={{ width:'100%', height:'100%', borderRadius:'50%', background:'#000', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', fontWeight:'bold' }}>M</div>}
-              </div>
-            </div>
-            {path!=='/profile' && <span style={{ position:'absolute', top:'2px', right:'6px', width:'7px', height:'7px', background:'red', borderRadius:'50%', border:'1px solid white' }}></span>}
+        {/* 4 - SEARCH */}
+        <Link href="/search" className="flex-1 flex justify-center">
+          <div className={`px-5 py-2 rounded-full flex items-center justify-center ${isSearch? 'bg-[#efefef]' : ''}`}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth={isSearch? '2.6' : '1.8'}><circle cx="11" cy="11" r="6"/><path d="M21 21l-3.5-3.5"/></svg>
+          </div>
+        </Link>
+
+        {/* 5 - PROFILE - M Logo */}
+        <Link href="/profile" className="flex-1 flex justify-center">
+          <div className={`px-3 py-1 rounded-full flex items-center justify-center ${isProfile? 'bg-[#efefef]' : ''}`}>
+            <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold border-2 border-white shadow">M</div>
           </div>
         </Link>
 
