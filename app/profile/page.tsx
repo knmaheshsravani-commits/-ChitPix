@@ -16,10 +16,10 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('posts')
   const [selectedPost, setSelectedPost] = useState<any>(null)
 
-  // FOLLOW COUNT STATES
-  const [followers, setFollowers] = useState(1200)
-  const [isFollowing, setIsFollowing] = useState(false)
-
+  // FOLLOW COUNT STATES - 100% WORKING
+const [followers, setFollowers] = useState(1200)
+const [following, setFollowing] = useState(180)
+const [isFollowing, setIsFollowing] = useState(false)
   useEffect(() => {
     const n = localStorage.getItem('profile_name') || 'Knmahesh'
     const b = localStorage.getItem('profile_bio') || 'Welcome to ChitPix💙🧡🤝'
@@ -32,10 +32,12 @@ export default function ProfilePage() {
       setIsAdmin(true)
     }
 
-    const savedFollowers = localStorage.getItem('followers_count')
+        const savedFollowers = localStorage.getItem('followers_count')
+    const savedFollowing = localStorage.getItem('following_count')
     const followStatus = localStorage.getItem('is_following_mahesh')
 
     if (savedFollowers) setFollowers(parseInt(savedFollowers))
+    if (savedFollowing) setFollowing(parseInt(savedFollowing))
     if (followStatus === 'true') setIsFollowing(true)
 
     setUsername(n); setBio(b); setLink(l); setPhoto(p)
@@ -69,22 +71,28 @@ export default function ProfilePage() {
     }
   }
 
-  // FOLLOW / UNFOLLOW 100% WORKING
-  const handleFollow = () => {
-    if (isFollowing) {
-      const newCount = followers - 1
-      setFollowers(newCount)
-      setIsFollowing(false)
-      localStorage.setItem('is_following_mahesh', 'false')
-      localStorage.setItem('followers_count', newCount.toString())
-    } else {
-      const newCount = followers + 1
-      setFollowers(newCount)
-      setIsFollowing(true)
-      localStorage.setItem('is_following_mahesh', 'true')
-      localStorage.setItem('followers_count', newCount.toString())
-    }
+  // FOLLOW / UNFOLLOW 100% WORKING - BOTH COUNTS
+const handleFollow = () => {
+  if (isFollowing) {
+    const newCount = followers - 1
+    const newFollowingCount = following - 1
+    setFollowers(newCount)
+    setFollowing(newFollowingCount)
+    setIsFollowing(false)
+    localStorage.setItem('is_following_mahesh', 'false')
+    localStorage.setItem('followers_count', newCount.toString())
+    localStorage.setItem('following_count', newFollowingCount.toString())
+  } else {
+    const newCount = followers + 1
+    const newFollowingCount = following + 1
+    setFollowers(newCount)
+    setFollowing(newFollowingCount)
+    setIsFollowing(true)
+    localStorage.setItem('is_following_mahesh', 'true')
+    localStorage.setItem('followers_count', newCount.toString())
+    localStorage.setItem('following_count', newFollowingCount.toString())
   }
+}
 
   const handleShare = async () => {
     const url = window.location.href
@@ -131,8 +139,8 @@ export default function ProfilePage() {
             </div>
             <div className="flex gap-6 text-center flex-1 justify-around">
               <div><b className="block text-lg">{posts.length}</b><span className="text-sm">Posts</span></div>
-              <div><b className="block text-lg">{followers >= 1000? (followers/1000).toFixed(1)+'K' : followers}</b><span className="text-sm">Followers</span></div>
-              <div><b className="block text-lg">180</b><span className="text-sm">Following</span></div>
+              <div><b className="block text-lg">{followers >= 10000 ? (followers/10000).toFixed(1)+'K' : followers}</b><span className="text-sm">Followers</span></div>
+<div><b className="block text-lg">{following}</b><span className="text-sm">Following</span></div>
             </div>
           </div>
 
