@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
 
+  // LOAD - anni localStorage nunchi load
   useEffect(()=>{
     const saved = localStorage.getItem("posts")
     if(saved) setPosts(JSON.parse(saved))
@@ -26,6 +27,19 @@ export default function ProfilePage() {
     if(f) setFollowers(parseInt(f))
     const admin = localStorage.getItem("isAdmin")
     if(admin==="true") setIsAdmin(true)
+
+    // PHOTO & PROFILE SAVE FIX
+    const savedPhoto = localStorage.getItem("chitpix_profile_photo")
+    if(savedPhoto) setPhoto(savedPhoto)
+
+    const savedName = localStorage.getItem("chitpix_username")
+    if(savedName) setUsername(savedName)
+
+    const savedBio = localStorage.getItem("chitpix_bio")
+    if(savedBio) setBio(savedBio)
+
+    const savedLink = localStorage.getItem("chitpix_link")
+    if(savedLink) setLink(savedLink)
   },[])
 
   const savePosts = (newPosts:any[])=>{
@@ -55,6 +69,37 @@ export default function ProfilePage() {
     }
   }
 
+  // PHOTO SAVE FIX
+  const handlePhotoChange = (e: any) => {
+    const f = e.target.files?.[0]
+    if(f){
+      const r = new FileReader()
+      r.onload = () => {
+        const result = r.result as string
+        setPhoto(result)
+        localStorage.setItem("chitpix_profile_photo", result) // permanent save
+      }
+      r.readAsDataURL(f)
+    }
+  }
+
+  // PROFILE SAVE FIX
+  const handleProfileSave = () => {
+    const newName = editName || username
+    const newBio = editBio || bio
+    const newLink = editLink || link
+
+    setUsername(newName)
+    setBio(newBio)
+    setLink(newLink)
+
+    localStorage.setItem("chitpix_username", newName)
+    localStorage.setItem("chitpix_bio", newBio)
+    localStorage.setItem("chitpix_link", newLink)
+
+    setShowEdit(false)
+  }
+
   return (
     <div className="min-h-screen bg-white pb-20">
       <div className="max-w-md mx-auto">
@@ -77,7 +122,7 @@ export default function ProfilePage() {
               </div>
             </div>
             <label htmlFor="photoInput" className="absolute bottom-0 right-0 bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm cursor-pointer">+</label>
-            <input id="photoInput" type="file" accept="image/*" onChange={(e)=>{const f=e.target.files?.[0]; if(f){const r=new FileReader(); r.onload=()=>setPhoto(r.result as string); r.readAsDataURL(f)}}} className="hidden" />
+            <input id="photoInput" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
           </div>
           <div className="flex gap-6 text-center flex-1 justify-around">
             <div><b className="block text-lg">{posts.length}</b><span className="text-sm">Posts</span></div>
@@ -92,9 +137,8 @@ export default function ProfilePage() {
           <p className="text-sm text-blue-600 font-semibold">🔗 {link}</p>
         </div>
 
-        {/* BUTTONS - FOLLOW + UNFOLLOW COUNT WORKING */}
         <div className="flex gap-2 mt-4 px-4">
-          <button onClick={()=>setShowEdit(true)} className="flex-1 py-1.5 rounded-lg bg-gray-100 font-semibold text-sm">Edit Profile</button>
+          <button onClick={()=>{setEditName(username); setEditBio(bio); setEditLink(link); setShowEdit(true)}} className="flex-1 py-1.5 rounded-lg bg-gray-100 font-semibold text-sm">Edit Profile</button>
           <button onClick={()=>{navigator.clipboard.writeText(window.location.href); alert("Link Copied!")}} className="flex-1 py-1.5 rounded-lg bg-gray-100 font-semibold text-sm">Share Profile</button>
           <button onClick={handleFollow} className={`flex-1 py-1.5 rounded-lg font-bold text-sm ${isFollowing? 'bg-gray-100 text-black border' : 'bg-blue-500 text-white'}`}>
             {isFollowing? 'Following' : 'Follow'}
@@ -132,7 +176,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ADMIN MENU - Admin ON pakkana ☰ click chesthe ide working */}
       {showMenu && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end">
           <div className="bg-white w-full rounded-t-2xl p-4">
@@ -156,7 +199,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* POST DELETE */}
       {selectedPost && (
         <div className="fixed inset-0 bg-black/90 flex flex-col z-50">
           <div className="flex justify-between p-4 text-white">
@@ -177,7 +219,7 @@ export default function ProfilePage() {
             <textarea value={editBio} onChange={(e)=>setEditBio(e.target.value)} rows={3} placeholder="Bio" className="w-full border p-2 rounded mb-2" />
             <input value={editLink} onChange={(e)=>setEditLink(e.target.value)} placeholder="Link" className="w-full border p-2 rounded mb-2" />
             <div className="flex gap-2 mt-3">
-              <button onClick={()=>{setUsername(editName||username); setBio(editBio||bio); setLink(editLink||link); setShowEdit(false);}} className="flex-1 p-3 bg-black text-white rounded-lg font-bold">Save</button>
+              <button onClick={handleProfileSave} className="flex-1 p-3 bg-black text-white rounded-lg font-bold">Save</button>
               <button onClick={()=>setShowEdit(false)} className="flex-1 p-3 bg-gray-100 rounded-lg">Cancel</button>
             </div>
           </div>
@@ -185,4 +227,4 @@ export default function ProfilePage() {
       )}
     </div>
   )
-                                                                               }
+            }
