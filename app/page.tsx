@@ -3,6 +3,27 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import BottomNav from "./components/BottomNav"
 
+// FIXED - PHOTO SIZE COMPRESS - ADDED 20 LINES
+const compressImage = (base64: string): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.src = base64
+    img.onload = () => {
+      const canvas = document.createElement("canvas")
+      const MAX = 800
+      let w = img.width, h = img.height
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = (h * MAX) / w; w = MAX }
+        else { w = (w * MAX) / h; h = MAX }
+      }
+      canvas.width = w; canvas.height = h
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL("image/jpeg", 0.6))
+    }
+    img.onerror = () => resolve(base64)
+  })
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([])
   const [showCreate, setShowCreate] = useState(false)
@@ -47,9 +68,17 @@ export default function HomePage() {
     setStories(valid)
   },[])
 
+  // FIXED - STORAGE FULL FIX
   const savePosts = (v:any[])=>{
-    setPosts(v)
-    localStorage.setItem("posts", JSON.stringify(v))
+    try{
+      setPosts(v)
+      localStorage.setItem("posts", JSON.stringify(v))
+    }catch(e){
+      alert("Storage full bro!")
+      const trimmed = v.slice(0, 10)
+      setPosts(trimmed)
+      localStorage.setItem("posts", JSON.stringify(trimmed))
+    }
   }
 
   const handleLike = (i:number, animate=false)=>{
@@ -134,8 +163,10 @@ export default function HomePage() {
           const f=e.target.files[0]
           if(f){
             const r=new FileReader()
-            r.onload=()=>{
-              setNewImage(r.result as string)
+            // FIXED - COMPRESS ADDED
+            r.onload=async ()=>{
+              const compressed = await compressImage(r.result as string)
+              setNewImage(compressed)
               setShowCreate(true)
             }
             r.readAsDataURL(f)
@@ -448,16 +479,8 @@ export default function HomePage() {
       {!showCreate &&!showStory && <BottomNav />}
 
       <style jsx>{`
-       .scrollbar-none::-webkit-scrollbar{display:none}
-       .scrollbar-none{scrollbar-width:none}
+      .scrollbar-none::-webkit-scrollbar{display:none}
+      .scrollbar-none{scrollbar-width:none}
         @keyframes heartPop{
           0%{transform:scale(0); opacity:0}
-          15%{transform:scale(1.2); opacity:1}
-          30%{transform:scale(0.95)}
-          45%,80%{transform:scale(1); opacity:1}
-          100%{transform:scale(1); opacity:0}
-        }
-      `}</style>
-    </div>
-  )
-              }
+          15%{transform:scale(1
