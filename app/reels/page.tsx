@@ -188,24 +188,30 @@ export default function ReelsPage() {
       </div>
 
       {showComments && (
-        <div className="absolute inset-0 z-50 bg-black/30 flex items-end" onClick={()=>setShowComments(null)}>
-          <div className="bg-white w-full max-w-[440px] mx-auto rounded-t-[18px] h-[65%] flex flex-col" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mt-3"></div>
-            <p className="font-bold text-center mt-3 text-[15px]">Comments</p>
-            <div className="flex-1 overflow-y-auto px-4 mt-4 space-y-3">
-              {(commentsList[showComments.id]||[]).length===0 && <p className="text-center text-gray-400 text-[13px] mt-10">No comments yet. Be first!</p>}
-              {(commentsList[showComments.id]||[]).map((c:any,i:number)=>(
-                <div key={i} className="flex gap-2"><div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">M</div><div><p className="text-[13px]"><b>{c.user}</b> {c.text}</p><p className="text-[11px] text-gray-500">{c.time}</p></div></div>
-              ))}
-            </div>
-            <div className="border-t p-3 flex gap-2 items-center">
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-[10px]">M</div>
-              <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-[13px] outline-none" onKeyDown={e=>{if(e.key==='Enter') handleAddComment()}} />
-              <button onClick={handleAddComment} className="text-blue-500 font-bold text-[14px]">Post</button>
-            </div>
+  <div className="absolute inset-0 z-[70] bg-black/30 flex items-end" onClick={()=>setShowComments(null)}>
+    <div className="bg-white w-full max-w-[440px] mx-auto rounded-t-[18px] h-[85%] flex flex-col relative" onClick={e=>e.stopPropagation()}>
+      <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mt-3"></div>
+      <p className="font-bold text-center mt-3 text-[15px]">Comments</p>
+
+      <div className="flex-1 overflow-y-auto px-4 mt-4 space-y-3 pb-[90px]">
+        {(commentsList[showComments.id]||[]).length===0 && <p className="text-center text-gray-400 text-[13px] mt-10">No comments yet. Be first! ❤️</p>}
+        {(commentsList[showComments.id]||[]).map((c:any,i:number)=>(
+          <div key={i} className="flex gap-2">
+            <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">M</div>
+            <div><p className="text-[13px]"><b>{c.user}</b> {c.text}</p><p className="text-[11px] text-gray-500">{c.time}</p></div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 border-t p-3 flex gap-2 items-center bg-white">
+        <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold text-[10px]">M</div>
+        <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-[13px] outline-none border focus:border-black" onKeyDown={e=>{if(e.key==='Enter') handleAddComment()}} autoFocus />
+        <button onClick={handleAddComment} className="text-blue-500 font-bold text-[14px] px-2">Post</button>
+      </div>
+
+    </div>
+  </div>
+)}
 
       {showShare && (
         <div className="absolute inset-0 z-[60] bg-black/40 flex items-end justify-center" onClick={()=>setShowShare(null)}>
