@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import BottomNav from "../components/BottomNav"
 
 export default function ReelsPage() {
@@ -13,6 +13,8 @@ export default function ReelsPage() {
   const [commentText, setCommentText] = useState("")
   const [commentsList, setCommentsList] = useState<any>({})
   const [showShare, setShowShare] = useState<any>(null)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(()=>{
     const p = localStorage.getItem("posts")
@@ -33,6 +35,51 @@ export default function ReelsPage() {
   },[])
 
   const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
+
+  // NEW - Reels Upload Logic
+  const handleReelUpload = async (e:any) => {
+    const file = e.target.files?.[0]
+    if(!file) return
+    setUploading(true)
+    try {
+      // Upload to R2
+      const formData = new FormData()
+      formData.append("file", file)
+      let uploadedUrl = ""
+      try {
+        const res = await fetch("/api/upload", { method:"POST", body:formData })
+        const data = await res.json()
+        uploadedUrl = data.url || data.secure_url || ""
+      } catch {}
+
+      if(!uploadedUrl) {
+        uploadedUrl = URL.createObjectURL(file)
+      }
+
+      const newReel = {
+        id: Date.now(),
+        image: uploadedUrl,
+        video: file.type.startsWith("video/")? uploadedUrl : null,
+        isVideo: file.type.startsWith("video/"),
+        username:"Knmahesh",
+        caption: file.type.startsWith("video/")? "New Reel 🔥 #chitpix" : "New post 🔥",
+        music:"Knmahesh • Original audio",
+        likes:0, comments:0, reposts:0, shares:0, saves:0
+      }
+
+      const updated = [newReel,...reels]
+      setReels(updated)
+
+      // Save to posts too for feed sync
+      const allPosts = JSON.parse(localStorage.getItem("posts")||"[]")
+      localStorage.setItem("posts", JSON.stringify([newReel,...allPosts]))
+
+    } catch(err) {
+      alert("Upload failed bro - try again!")
+    }
+    setUploading(false)
+    if(fileRef.current) fileRef.current.value = ""
+  }
 
   const handleLike = (id:number, double=false)=>{
     const isLiked =!liked[id]
@@ -77,52 +124,63 @@ export default function ReelsPage() {
 
   return (
     <div className="w-full h-[100dvh] bg-white relative overflow-hidden">
+      {/* HEADER WITH + BUTTON - NEW */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center px-4 py-3 bg-white/80 backdrop-blur">
-        <span className="text-[22px]">+</span>
+        <label className="text-[26px] cursor-pointer active:scale-90 w-8 h-8 flex items-center justify-center rounded-full bg-black text-white">
+          +
+          <input ref={fileRef} type="file" accept="video/*,image/*" className="hidden" onChange={handleReelUpload} />
+        </label>
         <span className="ml-2 font-bold text-[18px]">Reels</span><span className="ml-1 text-[12px]">▼</span>
         <span className="ml-5 text-black/40 font-medium">Friends</span>
+        {uploading && <span className="ml-3 text-[12px] text-blue-500 animate-pulse font-bold">Uploading...</span>}
         <div className="ml-auto w-7 h-7 rounded-full bg-gray-100 border"></div>
       </div>
 
       <div className="w-full h-full overflow-y-scroll snap-y snap-mandatory">
         {reels.map((reel:any)=>(
-          <div key={reel.id} className="w-full h-[100dvh] snap-start relative bg-white flex justify-center">
-            <div className="relative w-full max-w-[440px] h-full bg-white flex items-center justify-center overflow-hidden" onDoubleClick={()=>handleLike(reel.id,true)}>
-              <img src={reel.image} alt="" className="w-full h-full object-contain" draggable={false} />
+          <div key={reel.id} className="w-full h-[100dvh] snap-start relative bg-black flex justify-center">
+            <div className="relative w-full max-w-[440px] h-full bg-black flex items-center justify-center overflow-hidden" onDoubleClick={()=>handleLike(reel.id,true)}>
+
+              {reel.isVideo || reel.video? (
+                <video src={reel.video || reel.image} className="w-full h-full object-contain" autoPlay loop muted playsInline />
+              ) : (
+                <img src={reel.image} alt="" className="w-full h-full object-contain bg-white" draggable={false} />
+              )}
+
               {heart===reel.id && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"><span className="text-[90px] animate-[bounce_0.9s]">❤️</span></div>)}
 
               <div className="absolute right-2 bottom-28 flex flex-col items-center gap-6 z-20">
                 <button onClick={()=>handleLike(reel.id)} className="flex flex-col items-center active:scale-90 transition">
-                  <div className="w-7 h-7"><svg viewBox="0 0 24 24" fill={liked[reel.id]? "#ff3040" : "none"} stroke={liked[reel.id]? "#ff3040" : "black"} strokeWidth="1.7"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-                  <span className="text-[12px] font-bold text-black mt-1">{reel.likes}</span>
+                  <div className="w-7 h-7"><svg viewBox="0 0 24 24" fill={liked[reel.id]? "#ff3040" : "none"} stroke={liked[reel.id]? "#ff3040" : "white"} strokeWidth="1.7"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+                  <span className="text-[12px] font-bold text-white mt-1">{reel.likes}</span>
                 </button>
                 <button onClick={()=>setShowComments(reel)} className="flex flex-col items-center active:scale-90 transition">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                  <span className="text-[12px] font-bold text-black mt-1">{reel.comments}</span>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                  <span className="text-[12px] font-bold text-white mt-1">{reel.comments}</span>
                 </button>
                 <button onClick={()=>handleRepost(reel.id)} className="flex flex-col items-center active:scale-90 transition">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill={reposted[reel.id]? "black" : "none"} stroke="black" strokeWidth="1.7"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                  <span className="text-[12px] font-bold text-black mt-1">{reel.reposts>0? reel.reposts : ""}</span>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill={reposted[reel.id]? "white" : "none"} stroke="white" strokeWidth="1.7"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                  <span className="text-[12px] font-bold text-white mt-1">{reel.reposts>0? reel.reposts : ""}</span>
                 </button>
                 <button onClick={()=>setShowShare(reel)} className="flex flex-col items-center active:scale-90 transition">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  <span className="text-[12px] font-bold text-black mt-1">{reel.shares}</span>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  <span className="text-[12px] font-bold text-white mt-1">{reel.shares}</span>
                 </button>
                 <button onClick={()=>handleSave(reel.id)} className="flex flex-col items-center active:scale-90 transition">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill={saved[reel.id]? "black" : "none"} stroke="black" strokeWidth="1.7"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                  <span className="text-[12px] font-bold text-black mt-1">{reel.saves>0? reel.saves : "0"}</span>
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill={saved[reel.id]? "white" : "none"} stroke="white" strokeWidth="1.7"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  <span className="text-[12px] font-bold text-white mt-1">{reel.saves>0? reel.saves : "0"}</span>
                 </button>
-                <div className="w-7 h-7 rounded-[6px] bg-gradient-to-br from-pink-500 to-orange-400 border border-black/10 shadow-sm mt-1"></div>
+                <div className="w-7 h-7 rounded-[6px] bg-gradient-to-br from-pink-500 to-orange-400 border border-white/20 shadow-sm mt-1"></div>
               </div>
 
               <div className="absolute left-3 bottom-[88px] right-16 z-10">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-[13px] border">K</div>
-                  <span className="font-bold text-[14px] text-black truncate">Knmahesh...</span>
-                  <button onClick={()=>handleFollow(reel.id)} className={`px-4 py-1 rounded-full text-[12px] font-bold border transition ${followed[reel.id]? 'bg-black text-white border-black' : 'bg-white text-black border-black'}`}>{followed[reel.id]? 'Following' : 'Follow'}</button>
+                  <span className="font-bold text-[14px] text-white truncate">Knmahesh...</span>
+                  <button onClick={()=>handleFollow(reel.id)} className={`px-4 py-1 rounded-full text-[12px] font-bold border transition ${followed[reel.id]? 'bg-white text-black border-white' : 'bg-transparent text-white border-white'}`}>{followed[reel.id]? 'Following' : 'Follow'}</button>
                 </div>
-                <p className="text-[12px] text-black/80 mt-1">♫ {reel.music}</p>
-                <p className="text-[13px] text-black mt-1 truncate">{reel.caption}</p>
+                <p className="text-[12px] text-white/80 mt-1">♫ {reel.music}</p>
+                <p className="text-[13px] text-white mt-1 truncate">{reel.caption}</p>
               </div>
             </div>
           </div>
@@ -181,4 +239,4 @@ export default function ReelsPage() {
       <style jsx>{`.snap-y{scrollbar-width:none}.snap-y::-webkit-scrollbar{display:none} @keyframes slideUp{from{transform:translateY(100%)} to{transform:translateY(0)}}`}</style>
     </div>
   )
-              }
+                                            }
