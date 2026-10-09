@@ -2,7 +2,6 @@
 import { useState, useEffect, useRef } from "react"
 import BottomNav from "../components/BottomNav"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 
 export default function ReelsPage() {
   const router = useRouter()
@@ -23,16 +22,23 @@ export default function ReelsPage() {
   const videoRefs = useRef<any>({})
 
   useEffect(()=>{
-    const p = localStorage.getItem("posts")
-    let posts = p? JSON.parse(p) : []
-    if(posts.length===0){
-      posts=[
-        {id:1, image:"https://i.imgur.com/8Km9tLL.png", username:"Knmahesh", caption:"My M logo design 🔥 Knmahesh", music:"Knmahesh • Original audio", likes:1, comments:0, reposts:0, shares:4, saves:0},
-        {id:2, image:"https://picsum.photos/600/800?random=5", username:"zepto_rider_", caption:"Single boy life 😔❤️ 15 hrs duty", music:"Original audio", likes:5222, comments:48, reposts:40, shares:263, saves:131},
-      ]
-    }
-    posts = posts.map((r:any)=>({likes:1, comments:0, reposts:0, shares:4, saves:0, music:"Original audio",...r}))
-    setReels(posts)
+    try {
+      // ✅ FIX - reels_data first chudu, lekapothe posts
+      const savedReels = localStorage.getItem("reels_data")
+      const p = localStorage.getItem("posts")
+      let posts = []
+      if(savedReels) posts = JSON.parse(savedReels)
+      else if(p) posts = JSON.parse(p)
+
+      if(posts.length===0){
+        posts=[
+          {id:1, image:"https://i.imgur.com/8Km9tLL.png", username:"Knmahesh", caption:"My M logo design 🔥 Knmahesh", music:"Knmahesh • Original audio", likes:1, comments:0, reposts:0, shares:4, saves:0},
+          {id:2, image:"https://picsum.photos/600/800?random=5", username:"zepto_rider_", caption:"Single boy life 😔❤️ 15 hrs duty", music:"Original audio", likes:5222, comments:48, reposts:40, shares:263, saves:131},
+        ]
+      }
+      posts = posts.map((r:any)=>({likes:1, comments:0, reposts:0, shares:4, saves:0, music:"Original audio",...r}))
+      setReels(posts)
+    } catch {}
     setLiked(JSON.parse(localStorage.getItem("reels_liked")||"{}"))
     setSaved(JSON.parse(localStorage.getItem("reels_saved")||"{}"))
     setFollowed(JSON.parse(localStorage.getItem("reels_followed")||"{}"))
@@ -42,7 +48,7 @@ export default function ReelsPage() {
     if(n) setCurrentUser(n)
   },[])
 
-    const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
+  const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
 
   const toBase64 = (file:File):Promise<string> => {
     return new Promise((res, rej)=>{
@@ -66,11 +72,9 @@ export default function ReelsPage() {
         const data = await res.json()
         uploadedUrl = data.url || data.secure_url || ""
       } catch {}
-
       if(!uploadedUrl) {
         uploadedUrl = await toBase64(file)
       }
-
       const newReel = {
         id: Date.now(),
         image: uploadedUrl,
@@ -80,37 +84,27 @@ export default function ReelsPage() {
         caption: file.type.startsWith("video/")? "New Reel 🔥 #chitpix" : "New post 🔥 #chitpix",
         music:"Knmahesh • Original audio",
         likes:0, comments:0, reposts:0, shares:0, saves:0
-            }
-
+      }
       const updated = [newReel,...reels]
       setReels(updated)
-      
-      // ✅ SAVE - Storage full ayina kuda error radu
       try {
         localStorage.setItem("posts", JSON.stringify(updated))
         localStorage.setItem("reels_data", JSON.stringify(updated))
-        saveLS("reels_data", updated)
       } catch {
-        console.log("Storage full bro - trimming")
-        const trimmed = updated.slice(0, 2)
+        const trimmed = updated.slice(0,2)
         try {
           localStorage.setItem("posts", JSON.stringify(trimmed))
           localStorage.setItem("reels_data", JSON.stringify(trimmed))
         } catch {}
       }
-
-    } catch {
-      console.log("Upload error but reel created")
+    } catch(err) {
+      console.log("Upload error", err)
     } finally {
       setUploading(false)
       if(fileRef.current) fileRef.current.value = ""
     }
   }
-    setUploading(false)
-    if(fileRef.current) fileRef.current.value = ""
-  }
 
-  // FIX 1 - LIKES COUNT AVVALI + SAVE TO LS
   const handleLike = (id:number, double=false)=>{
     const isLiked =!liked[id]
     const nl = {...liked, [id]:isLiked}
@@ -118,18 +112,29 @@ export default function ReelsPage() {
     const updated = reels.map(r=>r.id===id?{...r, likes: isLiked? r.likes+1 : Math.max(0,r.likes-1)}:r)
     setReels(updated)
     localStorage.setItem("posts", JSON.stringify(updated))
+    localStorage.setItem("reels_data", JSON.stringify(updated))
     if(double && isLiked){ setHeart(id); setTimeout(()=>setHeart(null), 900) }
   }
 
   const handleSave = (id:number)=>{
     const ns = {...saved, [id]:!saved[id]}
     setSaved(ns); saveLS("reels_saved", ns)
-    setReels(prev=>prev.map(r=>r.id===id?{...r, saves: ns[id]? r.saves+1 : Math.max(0,r.saves-1)}:r))
+    setReels(prev=>{
+      const u = prev.map(r=>r.id===id?{...r, saves: ns[id]? r.saves+1 : Math.max(0,r.saves-1)}:r)
+      localStorage.setItem("posts", JSON.stringify(u))
+      localStorage.setItem("reels_data", JSON.stringify(u))
+      return u
+    })
   }
   const handleRepost = (id:number)=>{
     const nr = {...reposted, [id]:!reposted[id]}
     setReposted(nr); saveLS("reels_reposted", nr)
-    setReels(prev=>prev.map(r=>r.id===id?{...r, reposts: nr[id]? r.reposts+1 : Math.max(0,r.reposts-1)}:r))
+    setReels(prev=>{
+      const u = prev.map(r=>r.id===id?{...r, reposts: nr[id]? r.reposts+1 : Math.max(0,r.reposts-1)}:r)
+      localStorage.setItem("posts", JSON.stringify(u))
+      localStorage.setItem("reels_data", JSON.stringify(u))
+      return u
+    })
   }
   const handleFollow = (id:number)=>{
     const nf={...followed, [id]:!followed[id]}
@@ -142,7 +147,12 @@ export default function ReelsPage() {
     const newComment = {text:commentText, user:"Knmahesh", time:"Just now"}
     const updated = {...commentsList, [id]:[...(commentsList[id]||[]), newComment]}
     setCommentsList(updated); saveLS("reels_comments", updated)
-    setReels(prev=>prev.map(r=>r.id===id?{...r, comments:r.comments+1}:r))
+    setReels(prev=>{
+      const u = prev.map(r=>r.id===id?{...r, comments:r.comments+1}:r)
+      localStorage.setItem("posts", JSON.stringify(u))
+      localStorage.setItem("reels_data", JSON.stringify(u))
+      return u
+    })
     setCommentText("")
   }
 
@@ -150,54 +160,51 @@ export default function ReelsPage() {
     if(!showShare) return
     const updated = reels.map((r:any)=> r.id===showShare.id? {...r, shares:r.shares+1} : r)
     setReels(updated)
+    localStorage.setItem("posts", JSON.stringify(updated))
+    localStorage.setItem("reels_data", JSON.stringify(updated))
     localStorage.setItem("chitpix_shared_post", JSON.stringify(showShare))
     localStorage.setItem("chitpix_share_target", target)
     setShowShare(null)
     window.location.href="/messages"
   }
 
-    // FIX 2 - SOUND TOGGLE - PER REEL SOUND + OLD REEL AUTO MUTE
-const toggleSound = (id:number)=>{
-  const isCurrentlyMuted = mutedMap[id]?? true
-  const newMap:any = {}
-  // Andari reels ni mute chey
-  Object.keys(videoRefs.current).forEach(k=>{ newMap[k] = true })
-  newMap[id] =!isCurrentlyMuted
-  setMutedMap(newMap)
-
-  Object.keys(videoRefs.current).forEach(k=>{
-    const v = videoRefs.current[k]
-    if(!v) return
-    if(Number(k) === id){
-      v.muted =!isCurrentlyMuted
-      if(isCurrentlyMuted) v.play().catch(()=>{})
-    } else {
-      v.muted = true
-      v.pause()
-    }
-  })
-}
-
-// FIX 2b - SCROLL CHESTHE OLD REEL AUTO MUTE
-useEffect(()=>{
-  const scroller = document.querySelector('.snap-y.snap-mandatory') as any
-  if(!scroller) return
-  const onScroll = ()=>{
-    Object.entries(videoRefs.current).forEach(([key, vid]:any)=>{
-      if(!vid) return
-      const r = vid.getBoundingClientRect()
-      const visible = r.top > -200 && r.top < window.innerHeight - 200
-      if(!visible){
-        vid.pause()
-        vid.muted = true
+  const toggleSound = (id:number)=>{
+    const isCurrentlyMuted = mutedMap[id]?? true
+    const newMap:any = {}
+    Object.keys(videoRefs.current).forEach(k=>{ newMap[k] = true })
+    newMap[id] =!isCurrentlyMuted
+    setMutedMap(newMap)
+    Object.keys(videoRefs.current).forEach(k=>{
+      const v = videoRefs.current[k]
+      if(!v) return
+      if(Number(k) === id){
+        v.muted =!isCurrentlyMuted
+        if(isCurrentlyMuted) v.play().catch(()=>{})
+      } else {
+        v.muted = true
+        v.pause()
       }
     })
   }
-  scroller.addEventListener('scroll', onScroll, {passive:true})
-  return ()=> scroller.removeEventListener('scroll', onScroll)
-}, [])
 
-  // FIX 3 - PROFILE CLICK -> DIRECT PROFILE OPEN
+  useEffect(()=>{
+    const scroller = document.querySelector('.snap-y.snap-mandatory') as any
+    if(!scroller) return
+    const onScroll = ()=>{
+      Object.entries(videoRefs.current).forEach(([key, vid]:any)=>{
+        if(!vid) return
+        const r = vid.getBoundingClientRect()
+        const visible = r.top > -200 && r.top < window.innerHeight - 200
+        if(!visible){
+          vid.pause()
+          vid.muted = true
+        }
+      })
+    }
+    scroller.addEventListener('scroll', onScroll, {passive:true})
+    return ()=> scroller.removeEventListener('scroll', onScroll)
+  }, [])
+
   const handleProfileClick = (username:string)=>{
     if(username.toLowerCase() === currentUser.toLowerCase() || username.toLowerCase().includes("knmahesh")){
       router.push("/profile")
@@ -223,7 +230,6 @@ useEffect(()=>{
         {reels.map((reel:any)=>(
           <div key={reel.id} className="w-full h-[100dvh] snap-start relative bg-black flex justify-center">
             <div className="relative w-full max-w-[440px] h-full bg-black flex items-center justify-center overflow-hidden" onDoubleClick={()=>handleLike(reel.id,true)}>
-
               {reel.isVideo || reel.video? (
                 <video
                   ref={(el:any)=>videoRefs.current[reel.id]=el}
@@ -238,20 +244,13 @@ useEffect(()=>{
               ) : (
                 <img src={reel.image} alt="" className="w-full h-full object-contain bg-white" draggable={false} />
               )}
-
-              {/* FIX 2 - SOUND BUTTON */}
               {(reel.isVideo || reel.video) && (
-                <button
-                  onClick={()=>toggleSound(reel.id)}
-                  className="absolute top-20 left-4 z-20 bg-black/60 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5"
-                >
+                <button onClick={()=>toggleSound(reel.id)} className="absolute top-20 left-4 z-20 bg-black/60 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5">
                   <span>{(mutedMap[reel.id]?? true)? "🔇" : "🔊"}</span>
                   <span className="text-white text-[11px] font-bold">{(mutedMap[reel.id]?? true)? "Tap for sound" : "Sound on"}</span>
                 </button>
               )}
-
               {heart===reel.id && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"><span className="text-[90px] animate-[bounce_0.9s]">❤️</span></div>)}
-
               <div className="absolute right-2 bottom-28 flex flex-col items-center gap-6 z-20">
                 <button onClick={()=>handleLike(reel.id)} className="flex flex-col items-center active:scale-90 transition">
                   <div className="w-7 h-7"><svg viewBox="0 0 24 24" fill={liked[reel.id]? "#ff3040" : "none"} stroke={liked[reel.id]? "#ff3040" : "white"} strokeWidth="1.7"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
@@ -275,16 +274,10 @@ useEffect(()=>{
                 </button>
                 <div className="w-7 h-7 rounded-[6px] bg-gradient-to-br from-pink-500 to-orange-400 border border-white/20 shadow-sm mt-1"></div>
               </div>
-
               <div className="absolute left-3 bottom-[88px] right-16 z-10">
                 <div className="flex items-center gap-2">
-                  {/* FIX 3 - PROFILE CLICK */}
-                  <button onClick={()=>handleProfileClick(reel.username)} className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-[13px] border active:scale-90">
-                    K
-                  </button>
-                  <button onClick={()=>handleProfileClick(reel.username)} className="font-bold text-[14px] text-white truncate active:underline">
-                    Knmahesh...
-                  </button>
+                  <button onClick={()=>handleProfileClick(reel.username)} className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-[13px] border active:scale-90">K</button>
+                  <button onClick={()=>handleProfileClick(reel.username)} className="font-bold text-[14px] text-white truncate active:underline">Knmahesh...</button>
                   <button onClick={()=>handleFollow(reel.id)} className={`px-4 py-1 rounded-full text-[12px] font-bold border transition ${followed[reel.id]? 'bg-white text-black border-white' : 'bg-transparent text-white border-white'}`}>{followed[reel.id]? 'Following' : 'Follow'}</button>
                 </div>
                 <p className="text-[12px] text-white/80 mt-1">♫ {reel.music}</p>
@@ -303,10 +296,7 @@ useEffect(()=>{
             <div className="flex-1 overflow-y-auto px-4 mt-4 space-y-3 pb-[120px]">
               {(commentsList[showComments.id]||[]).length===0 && <p className="text-center text-gray-400 text-[13px] mt-10">No comments yet. Be first! ❤️</p>}
               {(commentsList[showComments.id]||[]).map((c:any,i:number)=>(
-                <div key={i} className="flex gap-2">
-                  <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">M</div>
-                  <div><p className="text-[13px]"><b>{c.user}</b> {c.text}</p><p className="text-[11px] text-gray-500">{c.time}</p></div>
-                </div>
+                <div key={i} className="flex gap-2"><div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">M</div><div><p className="text-[13px]"><b>{c.user}</b> {c.text}</p><p className="text-[11px] text-gray-500">{c.time}</p></div></div>
               ))}
             </div>
             <div className="absolute bottom-[75px] left-0 right-0 border-t p-3 flex gap-2 items-center bg-white">
@@ -324,12 +314,7 @@ useEffect(()=>{
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
             <p className="font-bold text-center text-[16px] mb-4">Share</p>
             <div className="grid grid-cols-4 gap-4 mb-6">
-              {[
-                {name:"ChitPix Team", letter:"C"},
-                {name:"K N Mahesh", letter:"K"},
-                {name:"Best Friend", letter:"B"},
-                {name:"Mom", letter:"M"},
-              ].map((u:any,i:number)=>(
+              {[{name:"ChitPix Team", letter:"C"},{name:"K N Mahesh", letter:"K"},{name:"Best Friend", letter:"B"},{name:"Mom", letter:"M"}].map((u:any,i:number)=>(
                 <div key={i} onClick={()=>doShare(u.name)} className="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95">
                   <div className="w-[56px] h-[56px] rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-[18px]">{u.letter}</div>
                   <p className="text-[11px] text-center truncate w-14">{u.name.split(" ")[0]}</p>
@@ -350,4 +335,4 @@ useEffect(()=>{
       <style jsx>{`.snap-y{scrollbar-width:none}.snap-y::-webkit-scrollbar{display:none} @keyframes slideUp{from{transform:translateY(100%)} to{transform:translateY(0)}}`}</style>
     </div>
   )
-      }
+    }
