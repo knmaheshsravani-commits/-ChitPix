@@ -131,19 +131,46 @@ export default function ReelsPage() {
     window.location.href="/messages"
   }
 
-    // FIX 2 - SOUND TOGGLE - PER REEL SOUND
-  const toggleSound = (id:number)=>{
-    const isCurrentlyMuted = mutedMap[id]?? true
-    const newMap = {...mutedMap, [id]:!isCurrentlyMuted}
-    setMutedMap(newMap)
+    // FIX 2 - SOUND TOGGLE - PER REEL SOUND + OLD REEL AUTO MUTE
+const toggleSound = (id:number)=>{
+  const isCurrentlyMuted = mutedMap[id]?? true
+  const newMap:any = {}
+  // Andari reels ni mute chey
+  Object.keys(videoRefs.current).forEach(k=>{ newMap[k] = true })
+  newMap[id] =!isCurrentlyMuted
+  setMutedMap(newMap)
 
-    if(videoRefs.current[id]){
-      videoRefs.current[id].muted =!isCurrentlyMuted
-      if(isCurrentlyMuted){
-        videoRefs.current[id].play().catch(()=>{})
-      }
+  Object.keys(videoRefs.current).forEach(k=>{
+    const v = videoRefs.current[k]
+    if(!v) return
+    if(Number(k) === id){
+      v.muted =!isCurrentlyMuted
+      if(isCurrentlyMuted) v.play().catch(()=>{})
+    } else {
+      v.muted = true
+      v.pause()
     }
+  })
+}
+
+// FIX 2b - SCROLL CHESTHE OLD REEL AUTO MUTE
+useEffect(()=>{
+  const scroller = document.querySelector('.snap-y.snap-mandatory') as any
+  if(!scroller) return
+  const onScroll = ()=>{
+    Object.entries(videoRefs.current).forEach(([key, vid]:any)=>{
+      if(!vid) return
+      const r = vid.getBoundingClientRect()
+      const visible = r.top > -200 && r.top < window.innerHeight - 200
+      if(!visible){
+        vid.pause()
+        vid.muted = true
+      }
+    })
   }
+  scroller.addEventListener('scroll', onScroll, {passive:true})
+  return ()=> scroller.removeEventListener('scroll', onScroll)
+}, [])
 
   // FIX 3 - PROFILE CLICK -> DIRECT PROFILE OPEN
   const handleProfileClick = (username:string)=>{
