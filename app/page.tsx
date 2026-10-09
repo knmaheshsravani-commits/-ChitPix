@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { supabase } from "./lib/supabase"
+import { supabase } from "@/lib/supabase"
 import BottomNav from "./components/BottomNav"
 import PostCard from "./components/PostCard"
 
@@ -12,20 +12,18 @@ export default function HomePage() {
   const [preview, setPreview] = useState("")
   const [fileData, setFileData] = useState("")
 
-  // LOAD POSTS FROM SUPABASE
   useEffect(() => {
     fetchPosts()
   }, [])
 
   const fetchPosts = async () => {
     const { data } = await supabase
-     .from("posts")
-     .select("*")
-     .order("created_at", { ascending: false })
+    .from("posts")
+    .select("*")
+    .order("created_at", { ascending: false })
     if (data) setPosts(data)
   }
 
-  // R2 UPLOAD FUNCTION - 100% FIXED
   const handleFileChange = (e: any) => {
     const file = e.target.files[0]
     if (!file) return
@@ -41,7 +39,6 @@ export default function HomePage() {
     if (!fileData) return alert("Photo select chey bro!")
     setUploading(true)
     try {
-      // 1. Upload to R2 via API
       const res = await fetch("/api/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -51,9 +48,7 @@ export default function HomePage() {
         })
       })
       const { url } = await res.json()
-      console.log("R2 URL:", url)
 
-      // 2. Save to Supabase posts table with R2 URL
       const { error } = await supabase.from("posts").insert([{
         image_url: url,
         caption: caption,
@@ -71,7 +66,6 @@ export default function HomePage() {
       fetchPosts()
     } catch (err: any) {
       alert("Error: " + err.message)
-      console.error(err)
     }
     setUploading(false)
   }
@@ -79,14 +73,11 @@ export default function HomePage() {
   return (
     <div className="w-full bg-black min-h-screen text-white">
       <div className="max-w-md mx-auto bg-black pb-[70px] min-h-screen">
-
-        {/* HEADER */}
         <div className="flex justify-between items-center p-4 sticky top-0 bg-black z-10 border-b border-zinc-800">
           <h1 className="text-xl font-bold tracking-wider">ChitPix</h1>
           <button onClick={() => setShowCreate(true)} className="bg-white text-black px-4 py-1.5 rounded-full font-bold text-sm">+ Create</button>
         </div>
 
-        {/* STORIES */}
         <div className="flex gap-4 p-3 overflow-x-auto border-b border-zinc-800">
           {["Your Story", "mahesh", "sravani", "chitpix"].map((s, i) => (
             <div key={i} className="flex flex-col items-center min-w-[60px]">
@@ -98,7 +89,6 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* FEED */}
         <div className="bg-black">
           {posts.length === 0 && <p className="text-center p-10 text-zinc-500">No posts yet - Create one!</p>}
           {posts.map((post) => (
@@ -106,7 +96,6 @@ export default function HomePage() {
           ))}
         </div>
 
-        {/* CREATE MODAL */}
         {showCreate && (
           <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
             <div className="bg-zinc-900 w-full max-w-sm rounded-2xl p-4">
@@ -114,20 +103,15 @@ export default function HomePage() {
                 <h2 className="font-bold text-lg">New Post</h2>
                 <button onClick={() => setShowCreate(false)} className="text-xl">✕</button>
               </div>
-
               <input type="file" accept="image/*" onChange={handleFileChange} className="mb-3 text-sm" />
-
               {preview && <img src={preview} className="w-full h-64 object-cover rounded-xl mb-3" alt="preview" />}
-
               <textarea value={caption} onChange={e => setCaption(e.target.value)} placeholder="Write a caption..." className="w-full bg-zinc-800 rounded-xl p-3 text-sm outline-none min-h-[80px] mb-3" />
-
               <button onClick={uploadToR2} disabled={uploading} className="w-full bg-white text-black font-bold py-3 rounded-full disabled:opacity-50">
                 {uploading? "Uploading to R2..." : "Share to ChitPix 🔥"}
               </button>
             </div>
           </div>
         )}
-
       </div>
       <BottomNav />
     </div>
