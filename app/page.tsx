@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import { supabase } from "@/lib/supabase"
+import { supabase } from "../lib/supabase"
 import BottomNav from "./components/BottomNav"
 import PostCard from "./components/PostCard"
 
