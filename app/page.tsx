@@ -2,6 +2,11 @@
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import BottomNav from "./components/BottomNav"
+import { auth, db, storage } from "../lib/firebase"
+import { onAuthStateChanged } from "firebase/auth"
+import { collection, addDoc, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, serverTimestamp } from "firebase/firestore"
+import { ref, uploadString, getDownloadURL } from "firebase/storage"
+import { useRouter } from "next/navigation"
 
 const compressImage = (base64: string): Promise<string> => {
   return new Promise((resolve) => {
@@ -35,134 +40,105 @@ export default function HomePage() {
   const [newImage, setNewImage] = useState("")
   const [caption, setCaption] = useState("")
   const [photo, setPhoto] = useState("")
-  const [username, setUsername] = useState("Knmahesh")
+  const [username, setUsername] = useState("User")
   const [showMenu, setShowMenu] = useState<number | null>(null)
   const [stories, setStories] = useState<any[]>([])
   const [showStory, setShowStory] = useState<any>(null)
-  const [showHeart, setShowHeart] = useState<number | null>(null)
+  const [showHeart, setShowHeart] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
   useEffect(()=>{
-    const saved = localStorage.getItem("posts")
-    if(saved){
-      let parsed = JSON.parse(saved)
-      // FIX - Remove expired blob URLs
-      parsed = parsed.filter((p:any)=>!p.image.startsWith("blob:"))
-      if(parsed.length === 0){
-        parsed = [
-          {id:1, image:"https://picsum.photos/600/800?random=5", username:"memer_ipothaa", music:"Anirudh Ravicha...", caption:"ela ipov... more", likes:20700, comments:76, shares:81, saves:7432, liked:false, saved:false, following:false, time:"21 hours ago", avatar:""},
-          {id:2, image:"https://picsum.photos/800/600?random=10", username:"memer_ipothaa", music:"Sunset Vibes", caption:"Sunset", likes:20800, comments:76, shares:81, saves:74432, liked:true, saved:false, following:false, time:"21 hours ago", avatar:""},
-        ]
-        localStorage.setItem("posts", JSON.stringify(parsed))
+    // ✅ LOGIN CHECK - login lekapothe login page ki pampu
+    const unsubAuth = onAuthStateChanged(auth, (user)=>{
+      if(!user){
+        router.push("/login")
+      } else {
+        setUsername(user.email?.split("@")[0] || "User")
+        setPhoto(user.photoURL || "")
+        setLoading(false)
       }
-      setPosts(parsed)
-    } else {
-      setPosts([
-        {id:1, image:"https://picsum.photos/600/800?random=5", username:"memer_ipothaa", music:"Anirudh Ravicha...", caption:"ela ipov... more", likes:20700, comments:76, shares:81, saves:7432, liked:false, saved:false, following:false, time:"21 hours ago", avatar:""},
-        {id:2, image:"https://picsum.photos/800/600?random=10", username:"memer_ipothaa", music:"Sunset Vibes", caption:"Sunset", likes:20800, comments:76, shares:81, saves:74432, liked:true, saved:false, following:false, time:"21 hours ago", avatar:""},
-      ])
-    }
-    const p = localStorage.getItem("chitpix_profile_photo")
-    if(p) setPhoto(p)
-    const n = localStorage.getItem("chitpix_username")
-    if(n) setUsername(n)
-    const savedStories = JSON.parse(localStorage.getItem("chitpix_stories") || "[]")
-    const now = Date.now()
-    const valid = savedStories.filter((s:any)=> now - s.time < 24*60*60*1000)
-    localStorage.setItem("chitpix_stories", JSON.stringify(valid))
-    setStories(valid)
+    })
+
+    // ✅ REAL FIREBASE POSTS - andari phone lo same kanipistayi
+    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"))
+    const unsubPosts = onSnapshot(q, (snap)=>{
+      const data = snap.docs.map(d=>({ id: d.id,...d.data() }))
+      setPosts(data as any)
+    })
+
+    return ()=>{ unsubAuth(); unsubPosts(); }
   },[])
 
-  const savePosts = (v:any[])=>{
-    try{
-      setPosts(v);
-      localStorage.setItem("posts", JSON.stringify(v));
-    }catch(e){
-      const trimmed = v.slice(0, 10);
-      setPosts(trimmed);
-      localStorage.setItem("posts", JSON.stringify(trimmed));
-    }
-  }
-
-  const handleLike = (i:number, animate=false)=>{
-    const u=[...posts]
-    u[i].liked =!u[i].liked
-    u[i].likes += u[i].liked? 1 : -1
-    savePosts(u)
-    if(animate && u[i].liked){
-      setShowHeart(u[i].id)
+  const handleLike = async (p:any)=>{
+    const postRef = doc(db, "posts", p.id)
+    await updateDoc(postRef, {
+      likedBy: p.likedBy?.includes(auth.currentUser?.uid)? p.likedBy.filter((u:string)=>u!==auth.currentUser?.uid) : [...(p.likedBy||[]), auth.currentUser?.uid],
+      likes: p.likedBy?.includes(auth.currentUser?.uid)? (p.likes||1)-1 : (p.likes||0)+1
+    })
+    if(!p.likedBy?.includes(auth.currentUser?.uid)){
+      setShowHeart(p.id)
       setTimeout(()=>setShowHeart(null), 900)
     }
   }
 
-  const handleSave = (i:number)=>{
-    const u=[...posts]
-    u[i].saved =!u[i].saved
-    savePosts(u)
+  const handleSave = async (p:any)=>{
+    const postRef = doc(db, "posts", p.id)
+    await updateDoc(postRef, {
+      savedBy: p.savedBy?.includes(auth.currentUser?.uid)? p.savedBy.filter((u:string)=>u!==auth.currentUser?.uid) : [...(p.savedBy||[]), auth.currentUser?.uid]
+    })
   }
 
-  const handleFollow = (i:number)=>{
-    const u=[...posts]
-    u[i].following =!u[i].following
-    savePosts(u)
-  }
-
-  const handleCreate = ()=>{
+  const handleCreate = async ()=>{
     if(!newImage){
-      alert("Photo select chey")
+      alert("Photo select chey BRO!")
       return
     }
-    const newPost = {
-      id: Date.now(),
-      image: newImage,
-      username,
-      music:"Original audio",
-      caption,
-      likes:0,
-      comments:0,
-      shares:0,
-      saves:0,
-      liked:false,
-      saved:false,
-      following:false,
-      time:"Just now",
-      avatar:photo
+    try{
+      // Upload to Firebase Storage
+      const storageRef = ref(storage, `posts/${Date.now()}_${auth.currentUser?.uid}.jpg`)
+      const snap = await uploadString(storageRef, newImage, 'data_url')
+      const url = await getDownloadURL(snap.ref)
+
+      await addDoc(collection(db, "posts"), {
+        image: url,
+        username,
+        music:"Original audio",
+        caption,
+        likes:0,
+        comments:0,
+        shares:0,
+        likedBy:[],
+        savedBy:[],
+        time:"Just now",
+        avatar: photo,
+        uid: auth.currentUser?.uid,
+        createdAt: serverTimestamp()
+      })
+      setNewImage("")
+      setCaption("")
+      setShowCreate(false)
+    } catch(e:any){
+      alert("Upload failed: "+e.message)
     }
-    savePosts([newPost,...posts])
-    const newStory = {
-      id: Date.now(),
-      image: newImage,
-      time: Date.now()
-    }
-    const all = [...stories, newStory]
-    localStorage.setItem("chitpix_stories", JSON.stringify(all))
-    setStories(all)
-    setNewImage("")
-    setCaption("")
-    setShowCreate(false)
   }
 
-  const handleDelete = (i:number)=>{
+  const handleDelete = async (p:any)=>{
     if(confirm("Delete post?")){
-      const u=[...posts]
-      u.splice(i,1)
-      savePosts(u)
+      await deleteDoc(doc(db, "posts", p.id))
       setShowMenu(null)
     }
   }
 
-  const hasStory = stories.length > 0;
+  if(loading) return <div className="min-h-screen bg-black text-white flex items-center justify-center">Loading ChitPix...</div>
+
+  const hasStory = false;
   const ICON_SIZE = 23;
 
   return (
     <div className="w-full bg-white overflow-y-auto" style={{height:'100dvh'}}>
-      {/* DIRECT GALLERY INPUT - HIDDEN */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={(e:any)=>{
+      <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={(e:any)=>{
           const f=e.target.files[0]
           if(f){
             const r=new FileReader()
@@ -177,320 +153,80 @@ export default function HomePage() {
       />
 
       <div className="max-w-md mx-auto bg-white pb-[140px]">
-        {/* HEADER - CHITPIX LOGO + DM + PLUS */}
         <div className="flex justify-between items-center px-4 py-3 border-b sticky top-0 bg-white z-[100]">
-          <h1 className="font-black text-[24px] tracking-tight italic">
-            ChitPix
-          </h1>
+          <h1 className="font-black text-[24px] tracking-tight italic">ChitPix</h1>
           <div className="flex gap-4 items-center">
-            {/* DM BUTTON - PAPER PLANE ICON */}
-            <Link
-              href="/messages"
-              className="w-[32px] h-[32px] flex items-center justify-center active:scale-90 transition"
-            >
-              <svg
-                width={ICON_SIZE}
-                height={ICON_SIZE}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="black"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
+            <Link href="/messages" className="w-[32px] h-[32px] flex items-center justify-center">
+              <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
             </Link>
-            {/* PLUS BUTTON - DIRECT GALLERY OPEN */}
-            <button
-              onClick={()=>fileInputRef.current?.click()}
-              className="w-[32px] h-[32px] bg-black rounded-full text-white flex items-center justify-center active:scale-90 transition"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
+            <button onClick={()=>fileInputRef.current?.click()} className="w-[32px] h-[32px] bg-black rounded-full text-white flex items-center justify-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
             </button>
-            <Link
-              href="/profile"
-              className="w-[32px] h-[32px] rounded-full bg-gray-200 overflow-hidden block border border-gray-200"
-            >
-              {photo? (
-                <img src={photo} className="w-full h-full object-cover" alt="" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center font-bold text-[13px]">
-                  M
-                </div>
-              )}
+            <Link href="/profile" className="w-[32px] h-[32px] rounded-full bg-gray-200 overflow-hidden block border">
+              {photo? <img src={photo} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center font-bold text-[13px]">{username[0].toUpperCase()}</div>}
             </Link>
           </div>
         </div>
 
-        {/* STORIES BAR */}
-        <div className="flex gap-4 px-4 py-3 overflow-x-auto border-b scrollbar-none">
-          <button
-            onClick={()=>{if(stories.length>0) setShowStory(stories[stories.length-1])}}
-            className="text-center min-w-[60px]"
-          >
-            <div className={`w-[56px] h-[56px] rounded-full p-[2px] mx-auto ${hasStory? 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600' : 'bg-gray-200'}`}>
-              <div className="bg-white w-full h-full rounded-full overflow-hidden flex items-center justify-center p-[2px]">
-                {photo? (
-                  <img src={photo} className="w-full h-full object-cover rounded-full" alt="" />
-                ) : (
-                  <b className="text-[14px]">M</b>
-                )}
-              </div>
-            </div>
-            <p className="text-[11px] mt-1">You</p>
-          </button>
-          {[
-            {l:"C", n:"ChitPix"},
-            {l:"M", n:"My Work"},
-            {l:"T", n:"Travel"},
-          ].map((s,i)=>(
-            <div key={i} className="text-center min-w-[60px]">
-              <div className="w-[56px] h-[56px] rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-[2px] mx-auto">
-                <div className="bg-white w-full h-full rounded-full flex items-center justify-center font-bold text-[12px]">
-                  {s.l}
-                </div>
-              </div>
-              <p className="text-[11px] mt-1">{s.n}</p>
-            </div>
-          ))}
-        </div>
+        {posts.length===0 && (
+          <div className="p-10 text-center text-gray-500">No posts yet - Be first to post! Click +</div>
+        )}
 
-        {/* POSTS - FIXED IMAGES */}
-        {posts.map((p,i)=>(
+        {posts.map((p:any)=>(
           <div key={p.id} className="border-b relative bg-white">
             <div className="flex items-center gap-2.5 px-3 py-2.5">
-              <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border border-gray-100">
-                {p.avatar? (
-                  <img src={p.avatar} className="w-full h-full object-cover" alt="" />
-                ) : (
-                  photo? (
-                    <img src={photo} className="w-full h-full object-cover" alt="" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center font-bold text-[12px] bg-gradient-to-br from-pink-500 to-orange-400 text-white">
-                      {p.username[0].toUpperCase()}
-                    </div>
-                  )
-                )}
+              <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden border">
+                {p.avatar? <img src={p.avatar} className="w-full h-full object-cover" alt="" /> : <div className="w-full h-full flex items-center justify-center font-bold text-[12px] bg-gradient-to-br from-pink-500 to-orange-400 text-white">{p.username[0].toUpperCase()}</div>}
               </div>
               <div className="flex-1 leading-tight">
                 <p className="font-semibold text-[13.5px]">{p.username}</p>
-                <p className="text-[11px] text-gray-600 flex items-center gap-1">
-                  ♫ {p.music}
-                </p>
+                <p className="text-[11px] text-gray-600">♫ {p.music}</p>
               </div>
-              <button
-                onClick={()=>handleFollow(i)}
-                className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition ${p.following? 'bg-black text-white' : 'bg-gray-100 text-black'}`}
-              >
-                {p.following? 'Following' : 'Follow'}
-              </button>
-              <button
-                onClick={()=>setShowMenu(showMenu===i? null : i)}
-                className="w-8 h-8 flex items-center justify-center"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="black">
-                  <circle cx="12" cy="12" r="1.5" />
-                  <circle cx="19.5" cy="12" r="1.5" />
-                  <circle cx="4.5" cy="12" r="1.5" />
-                </svg>
-              </button>
+              <button onClick={()=>setShowMenu(showMenu===p.id? null : p.id)} className="w-8 h-8 flex items-center justify-center">•••</button>
             </div>
 
-            {showMenu===i && (
+            {showMenu===p.id && (
               <div className="absolute right-3 top-12 bg-white border rounded-2xl shadow-2xl z-30 w-56 overflow-hidden">
-                <button
-                  onClick={()=>{handleFollow(i); setShowMenu(null)}}
-                  className="w-full text-left px-4 py-3.5 text-[14px] hover:bg-gray-50 border-b"
-                >
-                  {p.following? 'Unfollow' : 'Follow'} {p.username}
-                </button>
-                <button
-                  onClick={()=>{navigator.clipboard.writeText(p.image); alert("Link copied!"); setShowMenu(null)}}
-                  className="w-full text-left px-4 py-3.5 text-[14px] hover:bg-gray-50 border-b"
-                >
-                  🔗 Copy link
-                </button>
-                <button
-                  onClick={()=>{alert("Reported"); setShowMenu(null)}}
-                  className="w-full text-left px-4 py-3.5 text-[14px] hover:bg-gray-50 border-b text-red-500"
-                >
-                  Report
-                </button>
-                {p.username===username && (
-                  <button
-                    onClick={()=>handleDelete(i)}
-                    className="w-full text-left px-4 py-3.5 text-[14px] hover:bg-gray-50 text-red-500 font-bold"
-                  >
-                    Delete post
-                  </button>
-                )}
-                <button
-                  onClick={()=>setShowMenu(null)}
-                  className="w-full py-3 text-[14px] bg-gray-100 font-medium"
-                >
-                  Cancel
-                </button>
+                {p.uid===auth.currentUser?.uid && <button onClick={()=>handleDelete(p)} className="w-full text-left px-4 py-3.5 text-[14px] text-red-500 font-bold">Delete post</button>}
+                <button onClick={()=>setShowMenu(null)} className="w-full py-3 text-[14px] bg-gray-100 font-medium">Cancel</button>
               </div>
             )}
 
-            <div
-              className="bg-white w-full aspect-square overflow-hidden relative flex items-center justify-center"
-              onDoubleClick={()=>handleLike(i, true)}
-            >
-              <img
-                src={p.image}
-                alt=""
-                className="w-full h-full object-contain"
-                onError={(e:any)=>{
-                  e.target.src = `https://picsum.photos/600/600?random=${p.id}`
-                }}
-              />
-              {showHeart===p.id && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <span className="text-[80px] animate-[heartPop_0.9s_ease-out]">
-                    ❤️
-                  </span>
-                </div>
-              )}
+            <div className="bg-white w-full aspect-square overflow-hidden relative flex items-center justify-center" onDoubleClick={()=>handleLike(p)}>
+              <img src={p.image} alt="" className="w-full h-full object-contain" />
+              {showHeart===p.id && <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><span className="text-[80px] animate-[heartPop_0.9s_ease-out]">❤️</span></div>}
             </div>
 
             <div className="px-3 py-3">
               <div className="flex items-center gap-4">
-                <button
-                  onClick={()=>handleLike(i)}
-                  className="flex items-center gap-1.5 active:scale-90 transition"
-                >
-                  <svg
-                    width={ICON_SIZE}
-                    height={ICON_SIZE}
-                    viewBox="0 0 24 24"
-                    fill={p.liked? "#ff3040" : "none"}
-                    stroke={p.liked? "#ff3040" : "black"}
-                    strokeWidth="1.6"
-                  >
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                  </svg>
-                  <span className="text-[13px] font-semibold">
-                    {p.likes>=1000? (p.likes/1000).toFixed(1)+'K' : p.likes}
-                  </span>
+                <button onClick={()=>handleLike(p)} className="flex items-center gap-1.5">
+                  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill={p.likedBy?.includes(auth.currentUser?.uid)? "#ff3040" : "none"} stroke={p.likedBy?.includes(auth.currentUser?.uid)? "#ff3040" : "black"} strokeWidth="1.6"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                  <span className="text-[13px] font-semibold">{p.likes||0}</span>
                 </button>
-                <button
-                  onClick={()=>window.location.href=`/post/${p.id}`}
-                  className="flex items-center gap-1.5 active:scale-90 transition"
-                >
-                  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                  </svg>
-                  <span className="text-[13px] font-medium">{p.comments}</span>
-                </button>
-                <button
-                  onClick={()=>{
-                    localStorage.setItem("chitpix_shared_post", JSON.stringify(p))
-                    const updated=[...posts]
-                    updated[i].shares += 1
-                    savePosts(updated)
-                    window.location.href="/messages"
-                  }}
-                  className="flex items-center gap-1.5 active:scale-90 transition"
-                >
-                  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6">
-                    <line x1="22" y1="2" x2="11" y2="13" />
-                    <polygon points="22 2 15 22 11 13 2 9 22 2" />
-                  </svg>
-                  <span className="text-[13px] font-medium">{p.shares}</span>
-                </button>
-                <button
-                  onClick={()=>handleSave(i)}
-                  className="ml-auto active:scale-90 transition"
-                >
-                  <svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill={p.saved? "black" : "none"} stroke="black" strokeWidth="1.6">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                  </svg>
-                </button>
+                <button onClick={()=>handleSave(p)} className="ml-auto"><svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24" fill={p.savedBy?.includes(auth.currentUser?.uid)? "black" : "none"} stroke="black" strokeWidth="1.6"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg></button>
               </div>
-              <div className="mt-2.5">
-                <p className="text-[13.5px] leading-[18px]">
-                  <span className="font-bold">{p.username}</span> {p.caption}
-                </p>
-                <Link href={`/post/${p.id}`} className="text-[13px] text-[#8e8e8e] mt-1 block">
-                  View all {p.comments} comments
-                </Link>
-                <p className="text-[11px] text-[#8e8e8e] mt-1 uppercase tracking-wide">
-                  {p.time}
-                </p>
-              </div>
+              <p className="text-[13.5px] mt-2"><b>{p.username}</b> {p.caption}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {showStory && (
-        <div className="fixed inset-0 bg-black z-[999] flex flex-col">
-          <div className="flex justify-between items-center p-4 text-white">
-            <p className="font-bold text-[14px]">
-              You • {Math.floor((Date.now()-showStory.time)/60000)}m ago
-            </p>
-            <button onClick={()=>setShowStory(null)} className="text-xl w-8 h-8 flex items-center justify-center">
-              ✕
-            </button>
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <img src={showStory.image} className="max-w-full max-h-full object-contain" alt="" />
-          </div>
-        </div>
-      )}
-
       {showCreate && (
         <div className="fixed inset-0 bg-black/80 z-[999] flex items-end sm:items-center justify-center">
-          <div className="bg-white w-full sm:max-w-md rounded-t-[22px] sm:rounded-[22px] overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="bg-white w-full sm:max-w-md rounded-t-[22px] sm:rounded-[22px] overflow-hidden">
             <div className="flex justify-between items-center p-4 border-b">
-              <button onClick={()=>{setShowCreate(false); setNewImage(""); setCaption("")}} className="text-[14px]">
-                Cancel
-              </button>
-              <b className="text-[15px]">New post</b>
-              <button onClick={handleCreate} className="text-[14px] font-bold text-blue-500">
-                Share
-              </button>
+              <button onClick={()=>{setShowCreate(false); setNewImage("");}} className="text-[14px]">Cancel</button>
+              <b>New post</b>
+              <button onClick={handleCreate} className="text-[14px] font-bold text-blue-500">Share</button>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              <div className="bg-black w-full aspect-square flex items-center justify-center relative">
-                {newImage && <img src={newImage} className="w-full h-full object-contain" alt="" />}
-                <button onClick={()=>fileInputRef.current?.click()} className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-4 py-2 rounded-full text-[12px] font-bold shadow">
-                  Change photo
-                </button>
-              </div>
-              <div className="p-3">
-                <textarea
-                  value={caption}
-                  onChange={e=>setCaption(e.target.value)}
-                  placeholder="Write a caption..."
-                  className="w-full min-h-[80px] text-[14px] focus:outline-none resize-none"
-                  autoFocus
-                />
-              </div>
-            </div>
+            <div className="bg-black w-full aspect-square flex items-center justify-center"><img src={newImage} className="w-full h-full object-contain" alt="" /></div>
+            <div className="p-3"><textarea value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Write caption..." className="w-full min-h-[80px] text-[14px] outline-none" /></div>
           </div>
         </div>
       )}
 
-      {!showCreate &&!showStory && <BottomNav />}
-
-      <style jsx>{`
-      .scrollbar-none::-webkit-scrollbar{display:none}
-      .scrollbar-none{scrollbar-width:none}
-        @keyframes heartPop{
-          0%{transform:scale(0); opacity:0}
-          15%{transform:scale(1.2); opacity:1}
-          30%{transform:scale(0.95)}
-          45%,80%{transform:scale(1); opacity:1}
-          100%{transform:scale(1); opacity:0}
-        }
-      `}</style>
+      <BottomNav />
+      <style jsx>{`@keyframes heartPop{0%{transform:scale(0);opacity:0}15%{transform:scale(1.2);opacity:1}30%{transform:scale(0.95)}45%,80%{transform:scale(1);opacity:1}100%{transform:scale(0);opacity:0}}`}</style>
     </div>
   )
-}
+        }
