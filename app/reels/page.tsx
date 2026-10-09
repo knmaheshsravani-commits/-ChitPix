@@ -42,7 +42,16 @@ export default function ReelsPage() {
     if(n) setCurrentUser(n)
   },[])
 
-  const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
+    const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
+
+  const toBase64 = (file:File):Promise<string> => {
+    return new Promise((res, rej)=>{
+      const r = new FileReader()
+      r.readAsDataURL(file)
+      r.onload = ()=> res(r.result as string)
+      r.onerror = rej
+    })
+  }
 
   const handleReelUpload = async (e:any) => {
     const file = e.target.files?.[0]
@@ -59,7 +68,7 @@ export default function ReelsPage() {
       } catch {}
 
       if(!uploadedUrl) {
-        uploadedUrl = URL.createObjectURL(file)
+        uploadedUrl = await toBase64(file)
       }
 
       const newReel = {
@@ -68,7 +77,7 @@ export default function ReelsPage() {
         video: file.type.startsWith("video/")? uploadedUrl : null,
         isVideo: file.type.startsWith("video/"),
         username:"Knmahesh",
-        caption: file.type.startsWith("video/")? "New Reel 🔥 #chitpix" : "New post 🔥",
+        caption: file.type.startsWith("video/")? "New Reel 🔥 #chitpix" : "New post 🔥 #chitpix",
         music:"Knmahesh • Original audio",
         likes:0, comments:0, reposts:0, shares:0, saves:0
       }
