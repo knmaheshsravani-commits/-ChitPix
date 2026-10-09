@@ -1,61 +1,98 @@
 "use client";
 import { useState } from "react";
+import { auth } from "@/lib/firebase";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider
+} from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [userId, setUserId] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Login success BRO! " + userId);
-    window.location.href = "/";
+    if(!email || !password){
+      alert("Email & Password pettu BRO!");
+      return;
+    }
+    setLoading(true);
+    try {
+      if(isLogin){
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await createUserWithEmailAndPassword(auth, email, password);
+      }
+      router.push("/");
+    } catch (err: any) {
+      alert(err.message);
+    }
+    setLoading(false);
   };
 
   const handleGoogleLogin = async () => {
     try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseKey) {
-        alert("Supabase keys ledu BRO! Normal login vaadu");
-        return;
-      }
-
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.origin },
-      });
-      if (error) alert(error.message);
-    } catch (err) {
-      console.log(err);
-      alert("Google login setup cheyali BRO!");
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      router.push("/");
+    } catch (err: any) {
+      alert(err.message + " - Firebase Console lo Google Enable chey BRO!");
     }
   };
 
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6">
-      <h1 className="text-5xl font-bold text-white mb-10 italic">ChitPix 🌸</h1>
+      <h1 className="text-5xl font-bold text-white mb-2 italic">ChitPix 🌸</h1>
+      <p className="text-zinc-400 mb-10">{isLogin ? "Login to continue" : "Create account"}</p>
       
       <div className="w-full max-w-sm space-y-4">
-        <input
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
-          placeholder="User ID (ex: mahesh_07)"
-          className="w-full px-4 py-3 rounded-lg text-black"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="w-full px-4 py-3 rounded-lg text-black"
-        />
-        <button onClick={handleLogin} className="w-full bg-[#0095f6] text-white py-3 rounded-lg font-bold">
-          Log In
+        <form onSubmit={handleLogin} className="space-y-4">
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email (ex: mahesh@gmail.com)"
+            type="email"
+            className="w-full px-4 py-3 rounded-lg text-black outline-none"
+            required
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password (min 6)"
+            className="w-full px-4 py-3 rounded-lg text-black outline-none"
+            required
+          />
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[#0095f6] text-white py-3 rounded-lg font-bold disabled:opacity-50"
+          >
+            {loading ? "Loading..." : isLogin ? "Log In" : "Sign Up"}
+          </button>
+        </form>
+
+        <div className="text-center text-zinc-500 text-sm">or</div>
+
+        <button 
+          onClick={handleGoogleLogin} 
+          className="w-full bg-white text-black py-3 rounded-lg font-bold"
+        >
+          Continue with Google
         </button>
 
+        <p className="text-center text-zinc-400 text-sm pt-4">
+          {isLogin ? "No account?" : "Have account?"}{" "}
+          <span onClick={()=>setIsLogin(!isLogin)} className="text-white font-bold underline cursor-pointer">
+            {isLogin ? "Sign Up" : "Log In"}
+          </span>
+        </p>
       </div>
     </div>
   );
