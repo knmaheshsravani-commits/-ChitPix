@@ -17,7 +17,7 @@ export default function ReelsPage() {
   const [commentsList, setCommentsList] = useState<any>({})
   const [showShare, setShowShare] = useState<any>(null)
   const [uploading, setUploading] = useState(false)
-  const [muted, setMuted] = useState(true)
+  const [mutedMap, setMutedMap] = useState<any>({})
   const [currentUser, setCurrentUser] = useState("Knmahesh")
   const fileRef = useRef<HTMLInputElement>(null)
   const videoRefs = useRef<any>({})
@@ -131,14 +131,16 @@ export default function ReelsPage() {
     window.location.href="/messages"
   }
 
-  // FIX 2 - SOUND TOGGLE
+    // FIX 2 - SOUND TOGGLE - PER REEL SOUND
   const toggleSound = (id:number)=>{
-    const newMuted =!muted
-    setMuted(newMuted)
+    const isCurrentlyMuted = mutedMap[id]?? true
+    const newMap = {...mutedMap, [id]:!isCurrentlyMuted}
+    setMutedMap(newMap)
+
     if(videoRefs.current[id]){
-      videoRefs.current[id].muted = newMuted
-      if(!newMuted){
-        videoRefs.current[id].play()
+      videoRefs.current[id].muted =!isCurrentlyMuted
+      if(isCurrentlyMuted){
+        videoRefs.current[id].play().catch(()=>{})
       }
     }
   }
@@ -177,7 +179,7 @@ export default function ReelsPage() {
                   className="w-full h-full object-contain"
                   autoPlay
                   loop
-                  muted={muted}
+                  muted={mutedMap[reel.id]?? true}
                   playsInline
                   onClick={()=>toggleSound(reel.id)}
                 />
@@ -191,8 +193,8 @@ export default function ReelsPage() {
                   onClick={()=>toggleSound(reel.id)}
                   className="absolute top-20 left-4 z-20 bg-black/60 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5"
                 >
-                  <span className="text-white text-[14px]">{muted? "🔇" : "🔊"}</span>
-                  <span className="text-white text-[11px] font-bold">{muted? "Tap for sound" : "Sound on"}</span>
+                  <span>{(mutedMap[reel.id]?? true)? "🔇" : "🔊"}</span>
+                  <span className="text-white text-[11px] font-bold">{(mutedMap[reel.id]?? true)? "Tap for sound" : "Sound on"}</span>
                 </button>
               )}
 
