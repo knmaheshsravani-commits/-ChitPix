@@ -187,7 +187,7 @@ export default function ReelsPage() {
         ))}
       </div>
 
-      {showComments && (
+      <div className="absolute inset-0 z-[100] bg-black/30 flex items-end"
   <div className="absolute inset-0 z-[70] bg-black/30 flex items-end" onClick={()=>setShowComments(null)}>
     <div className="bg-white w-full max-w-[440px] mx-auto rounded-t-[18px] h-[85%] flex flex-col relative" onClick={e=>e.stopPropagation()}>
       <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mt-3"></div>
@@ -203,7 +203,7 @@ export default function ReelsPage() {
         ))}
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 border-t p-3 flex gap-2 items-center bg-white">
+      <div className="absolute bottom-[75px] left-0 right-0 border-t p-3 flex gap-2 items
         <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold text-[10px]">M</div>
         <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-[13px] outline-none border focus:border-black" onKeyDown={e=>{if(e.key==='Enter') handleAddComment()}} autoFocus />
         <button onClick={handleAddComment} className="text-blue-500 font-bold text-[14px] px-2">Post</button>
