@@ -1,8 +1,11 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import BottomNav from "../components/BottomNav"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function ReelsPage() {
+  const router = useRouter()
   const [reels, setReels] = useState<any[]>([])
   const [liked, setLiked] = useState<any>({})
   const [saved, setSaved] = useState<any>({})
@@ -14,7 +17,10 @@ export default function ReelsPage() {
   const [commentsList, setCommentsList] = useState<any>({})
   const [showShare, setShowShare] = useState<any>(null)
   const [uploading, setUploading] = useState(false)
+  const [muted, setMuted] = useState(true)
+  const [currentUser, setCurrentUser] = useState("Knmahesh")
   const fileRef = useRef<HTMLInputElement>(null)
+  const videoRefs = useRef<any>({})
 
   useEffect(()=>{
     const p = localStorage.getItem("posts")
@@ -32,17 +38,17 @@ export default function ReelsPage() {
     setFollowed(JSON.parse(localStorage.getItem("reels_followed")||"{}"))
     setReposted(JSON.parse(localStorage.getItem("reels_reposted")||"{}"))
     setCommentsList(JSON.parse(localStorage.getItem("reels_comments")||"{}"))
+    const n = localStorage.getItem("chitpix_username")
+    if(n) setCurrentUser(n)
   },[])
 
   const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
 
-  // NEW - Reels Upload Logic
   const handleReelUpload = async (e:any) => {
     const file = e.target.files?.[0]
     if(!file) return
     setUploading(true)
     try {
-      // Upload to R2
       const formData = new FormData()
       formData.append("file", file)
       let uploadedUrl = ""
@@ -69,8 +75,6 @@ export default function ReelsPage() {
 
       const updated = [newReel,...reels]
       setReels(updated)
-
-      // Save to posts too for feed sync
       const allPosts = JSON.parse(localStorage.getItem("posts")||"[]")
       localStorage.setItem("posts", JSON.stringify([newReel,...allPosts]))
 
@@ -81,13 +85,17 @@ export default function ReelsPage() {
     if(fileRef.current) fileRef.current.value = ""
   }
 
+  // FIX 1 - LIKES COUNT AVVALI + SAVE TO LS
   const handleLike = (id:number, double=false)=>{
     const isLiked =!liked[id]
     const nl = {...liked, [id]:isLiked}
     setLiked(nl); saveLS("reels_liked", nl)
-    setReels(prev=>prev.map(r=>r.id===id?{...r, likes: isLiked? r.likes+1 : Math.max(0,r.likes-1)}:r))
+    const updated = reels.map(r=>r.id===id?{...r, likes: isLiked? r.likes+1 : Math.max(0,r.likes-1)}:r)
+    setReels(updated)
+    localStorage.setItem("posts", JSON.stringify(updated))
     if(double && isLiked){ setHeart(id); setTimeout(()=>setHeart(null), 900) }
   }
+
   const handleSave = (id:number)=>{
     const ns = {...saved, [id]:!saved[id]}
     setSaved(ns); saveLS("reels_saved", ns)
@@ -102,6 +110,7 @@ export default function ReelsPage() {
     const nf={...followed, [id]:!followed[id]}
     setFollowed(nf); saveLS("reels_followed", nf)
   }
+
   const handleAddComment = ()=>{
     if(!commentText.trim() ||!showComments) return
     const id = showComments.id
@@ -122,9 +131,29 @@ export default function ReelsPage() {
     window.location.href="/messages"
   }
 
+  // FIX 2 - SOUND TOGGLE
+  const toggleSound = (id:number)=>{
+    const newMuted =!muted
+    setMuted(newMuted)
+    if(videoRefs.current[id]){
+      videoRefs.current[id].muted = newMuted
+      if(!newMuted){
+        videoRefs.current[id].play()
+      }
+    }
+  }
+
+  // FIX 3 - PROFILE CLICK -> DIRECT PROFILE OPEN
+  const handleProfileClick = (username:string)=>{
+    if(username.toLowerCase() === currentUser.toLowerCase() || username.toLowerCase().includes("knmahesh")){
+      router.push("/profile")
+    } else {
+      router.push(`/profile?user=${username}`)
+    }
+  }
+
   return (
     <div className="w-full h-[100dvh] bg-white relative overflow-hidden">
-      {/* HEADER WITH + BUTTON - NEW */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center px-4 py-3 bg-white/80 backdrop-blur">
         <label className="text-[26px] cursor-pointer active:scale-90 w-8 h-8 flex items-center justify-center rounded-full bg-black text-white">
           +
@@ -142,9 +171,29 @@ export default function ReelsPage() {
             <div className="relative w-full max-w-[440px] h-full bg-black flex items-center justify-center overflow-hidden" onDoubleClick={()=>handleLike(reel.id,true)}>
 
               {reel.isVideo || reel.video? (
-                <video src={reel.video || reel.image} className="w-full h-full object-contain" autoPlay loop muted playsInline />
+                <video
+                  ref={(el:any)=>videoRefs.current[reel.id]=el}
+                  src={reel.video || reel.image}
+                  className="w-full h-full object-contain"
+                  autoPlay
+                  loop
+                  muted={muted}
+                  playsInline
+                  onClick={()=>toggleSound(reel.id)}
+                />
               ) : (
                 <img src={reel.image} alt="" className="w-full h-full object-contain bg-white" draggable={false} />
+              )}
+
+              {/* FIX 2 - SOUND BUTTON */}
+              {(reel.isVideo || reel.video) && (
+                <button
+                  onClick={()=>toggleSound(reel.id)}
+                  className="absolute top-20 left-4 z-20 bg-black/60 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5"
+                >
+                  <span className="text-white text-[14px]">{muted? "🔇" : "🔊"}</span>
+                  <span className="text-white text-[11px] font-bold">{muted? "Tap for sound" : "Sound on"}</span>
+                </button>
               )}
 
               {heart===reel.id && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"><span className="text-[90px] animate-[bounce_0.9s]">❤️</span></div>)}
@@ -175,8 +224,13 @@ export default function ReelsPage() {
 
               <div className="absolute left-3 bottom-[88px] right-16 z-10">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-[13px] border">K</div>
-                  <span className="font-bold text-[14px] text-white truncate">Knmahesh...</span>
+                  {/* FIX 3 - PROFILE CLICK */}
+                  <button onClick={()=>handleProfileClick(reel.username)} className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-[13px] border active:scale-90">
+                    K
+                  </button>
+                  <button onClick={()=>handleProfileClick(reel.username)} className="font-bold text-[14px] text-white truncate active:underline">
+                    Knmahesh...
+                  </button>
                   <button onClick={()=>handleFollow(reel.id)} className={`px-4 py-1 rounded-full text-[12px] font-bold border transition ${followed[reel.id]? 'bg-white text-black border-white' : 'bg-transparent text-white border-white'}`}>{followed[reel.id]? 'Following' : 'Follow'}</button>
                 </div>
                 <p className="text-[12px] text-white/80 mt-1">♫ {reel.music}</p>
@@ -192,7 +246,6 @@ export default function ReelsPage() {
           <div className="bg-white w-full max-w-[440px] mx-auto rounded-t-[18px] h-[85%] flex flex-col relative" onClick={e=>e.stopPropagation()}>
             <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mt-3"></div>
             <p className="font-bold text-center mt-3 text-[15px]">Comments</p>
-
             <div className="flex-1 overflow-y-auto px-4 mt-4 space-y-3 pb-[120px]">
               {(commentsList[showComments.id]||[]).length===0 && <p className="text-center text-gray-400 text-[13px] mt-10">No comments yet. Be first! ❤️</p>}
               {(commentsList[showComments.id]||[]).map((c:any,i:number)=>(
@@ -202,13 +255,11 @@ export default function ReelsPage() {
                 </div>
               ))}
             </div>
-
             <div className="absolute bottom-[75px] left-0 right-0 border-t p-3 flex gap-2 items-center bg-white">
               <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold text-[10px]">M</div>
               <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-[13px] outline-none border focus:border-black" onKeyDown={e=>{if(e.key==='Enter') handleAddComment()}} autoFocus />
               <button onClick={handleAddComment} className="text-blue-500 font-bold text-[14px] px-2">Post</button>
             </div>
-
           </div>
         </div>
       )}
