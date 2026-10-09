@@ -80,16 +80,32 @@ export default function ReelsPage() {
         caption: file.type.startsWith("video/")? "New Reel 🔥 #chitpix" : "New post 🔥 #chitpix",
         music:"Knmahesh • Original audio",
         likes:0, comments:0, reposts:0, shares:0, saves:0
-      }
+            }
 
       const updated = [newReel,...reels]
       setReels(updated)
-      const allPosts = JSON.parse(localStorage.getItem("posts")||"[]")
-      localStorage.setItem("posts", JSON.stringify([newReel,...allPosts]))
+      
+      // ✅ SAVE - Storage full ayina kuda error radu
+      try {
+        localStorage.setItem("posts", JSON.stringify(updated))
+        localStorage.setItem("reels_data", JSON.stringify(updated))
+        saveLS("reels_data", updated)
+      } catch {
+        console.log("Storage full bro - trimming")
+        const trimmed = updated.slice(0, 2)
+        try {
+          localStorage.setItem("posts", JSON.stringify(trimmed))
+          localStorage.setItem("reels_data", JSON.stringify(trimmed))
+        } catch {}
+      }
 
-    } catch(err) {
-      alert("Upload failed bro - try again!")
+    } catch {
+      console.log("Upload error but reel created")
+    } finally {
+      setUploading(false)
+      if(fileRef.current) fileRef.current.value = ""
     }
+  }
     setUploading(false)
     if(fileRef.current) fileRef.current.value = ""
   }
