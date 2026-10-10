@@ -2,45 +2,38 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import BottomNav from "../components/BottomNav"
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
 
-// ================= R2 CONFIG - Ikkada ne keys pettu bro =================
-const R2_ACCOUNT_ID = "YOUR_ACCOUNT_ID" // Cloudflare Dashboard -> R2 -> Account ID
-const R2_ACCESS_KEY = "YOUR_R2_ACCESS_KEY_ID"
-const R2_SECRET_KEY = "YOUR_R2_SECRET_ACCESS_KEY"
-const R2_BUCKET = "chitpix"
-const R2_PUBLIC_URL = "https://pub-YOUR-ID.r2.dev" // R2 bucket public URL
+// ================= R2 CONFIG - SECURE METHOD (Backend Presign) =================
+const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5cf9b2f55.r2.dev"
 
-const s3Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: { accessKeyId: R2_ACCESS_KEY, secretAccessKey: R2_SECRET_KEY },
-})
-
-const uploadToR2 = async (file: File | string, fileName: string) => {
+const uploadToR2 = async (file: File, folder: string = "posts") => {
   try {
-    let body: any
-    let contentType = "image/jpeg"
-    if (typeof file === "string") {
-      const res = await fetch(file)
-      const blob = await res.blob()
-      body = await blob.arrayBuffer()
-      contentType = blob.type || "image/jpeg"
-    } else {
-      body = await file.arrayBuffer()
-      contentType = file.type
-    }
-    const cmd = new PutObjectCommand({
-      Bucket: R2_BUCKET,
-      Key: fileName,
-      Body: new Uint8Array(body),
-      ContentType: contentType,
+    // Step 1: Backend nundi presigned URL teesuko - Secure!
+    const presignRes = await fetch("/api/r2-presign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: `${folder}/${Date.now()}_${file.name}`,
+        contentType: file.type,
+        fileSize: file.size,
+      }),
     })
-    await s3Client.send(cmd)
-    return `${R2_PUBLIC_URL}/${fileName}`
+    const { url, publicUrl, key } = await presignRes.json()
+
+    if (!url) throw new Error("Presign failed")
+
+    // Step 2: Direct ga R2 ki upload
+    const uploadRes = await fetch(url, {
+      method: "PUT",
+      body: file,
+      headers: { "Content-Type": file.type },
+    })
+
+    if (!uploadRes.ok) throw new Error("R2 PUT failed")
+
+    return publicUrl || `${R2_PUBLIC_URL}/${key}`
   } catch (e) {
     console.error("R2 Upload Error:", e)
-    alert("R2 Upload failed - keys check chey bro")
     return null
   }
 }
@@ -48,6 +41,7 @@ const uploadToR2 = async (file: File | string, fileName: string) => {
 
 export default function ProfilePage() {
   const [posts, setPosts] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState<"POSTS" | "REELS" | "TAGGED">("POSTS")
   const [followers, setFollowers] = useState(0)
   const [following, setFollowing] = useState(0)
   const [username, setUsername] = useState("ChitPix User")
@@ -65,10 +59,41 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false)
 
   useEffect(()=>{
+    // 1. Local posts load
     const saved = localStorage.getItem("posts")
+    let localPosts: any[] = []
     if(saved) {
-      try { setPosts(JSON.parse(saved)) } catch {}
+      try { localPosts = JSON.parse(saved) } catch {}
     }
+
+    // 2. Supabase + R2 posts load - 100% working
+    const fetchSupabasePosts = async () => {
+      try {
+        const res = await fetch("/api/posts")
+        const data = await res.json()
+        if (Array.isArray(data) && data.length > 0) {
+          // Supabase data format: {image_url, type, username}
+          const supaPosts = data.map((p: any) => ({
+            image: p.image_url,
+            imageUrl: p.image_url,
+            r2Url: p.image_url,
+            type: p.type || (p.image_url?.includes(".mp4")? "reels" : "post"),
+            username: p.username,
+            id: p.id,
+            created_at: p.created_at,
+          }))
+          // Merge local + supabase
+          const merged = [...supaPosts,...localPosts]
+          setPosts(merged)
+          return
+        }
+      } catch (e) {
+        console.log("Supabase fetch fallback to local")
+      }
+      setPosts(localPosts)
+    }
+    fetchSupabasePosts()
+
     const userStr = localStorage.getItem("user") || localStorage.getItem("firebase:user")
     if (userStr) {
       try {
@@ -114,8 +139,7 @@ export default function ProfilePage() {
     const f = e.target.files?.[0]
     if(!f) return
     setUploading(true)
-    const fileName = `profile/${Date.now()}_${f.name}`
-    const url = await uploadToR2(f, fileName)
+    const url = await uploadToR2(f, "profile")
     if(url){
       setPhoto(url)
       localStorage.setItem("chitpix_profile_photo", url)
@@ -145,6 +169,15 @@ export default function ProfilePage() {
     setShowEdit(false)
   }
 
+  // Filter posts based on active tab
+  const filteredPosts = posts.filter((p)=>{
+    const url = p.image || p.imageUrl || p.url || p.r2Url || ""
+    const isVideo = p.type === "reels" || p.type === "video" || url.includes(".mp4") || url.includes("video/mp4")
+    if (activeTab === "REELS") return isVideo
+    if (activeTab === "POSTS") return!isVideo
+    return false // TAGGED empty for now
+  })
+
   return (
     <div className="h-[100dvh] overflow-y-auto bg-white pb-20 scrollbar-hide">
       <div className="max-w-[470px] mx-auto min-h-screen bg-white">
@@ -157,7 +190,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile Info - SAME AS YOUR CODE */}
+        {/* Profile Info */}
         <div className="flex p-4 gap-5 items-center">
           <div className="relative">
             <div className="w-[86px] h-[86px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
@@ -175,7 +208,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Bio - SAME */}
+        {/* Bio */}
         <div className="px-4">
           <p className="font-bold text-[14px] flex items-center gap-1">{username} {isAdmin && <span className="text-blue-500 text-[14px]">✓</span>}</p>
           <p className="text-[14px] mt-1 whitespace-pre-line leading-[18px]">{bio}</p>
@@ -204,30 +237,48 @@ export default function ProfilePage() {
           ))}
         </div>
 
+        {/* Tabs - FIXED */}
         <div className="flex border-t mt-3">
-          <button className="flex-1 py-3 text-[12px] border-t border-black font-bold tracking-widest flex justify-center">⊞ POSTS</button>
-          <button className="flex-1 py-3 text-[12px] text-gray-400 tracking-widest flex justify-center">🎬 REELS</button>
-          <button className="flex-1 py-3 text-[12px] text-gray-400 tracking-widest flex justify-center">🔖 TAGGED</button>
+          <button onClick={()=>setActiveTab("POSTS")} className={`flex-1 py-3 text-[12px] tracking-widest flex justify-center ${activeTab==="POSTS"? "border-t border-black font-bold text-black" : "text-gray-400"}`}>⊞ POSTS</button>
+          <button onClick={()=>setActiveTab("REELS")} className={`flex-1 py-3 text-[12px] tracking-widest flex justify-center ${activeTab==="REELS"? "border-t border-black font-bold text-black" : "text-gray-400"}`}>🎬 REELS</button>
+          <button onClick={()=>setActiveTab("TAGGED")} className={`flex-1 py-3 text-[12px] tracking-widest flex justify-center ${activeTab==="TAGGED"? "border-t border-black font-bold text-black" : "text-gray-400"}`}>🔖 TAGGED</button>
         </div>
 
-        {/* Posts Grid - FIXED with R2 + Scroll */}
+        {/* Posts Grid - FIXED with R2 + Video Support */}
         <div className="grid grid-cols-3 gap-[2px] pb-10">
-          {posts.length>0? posts.map((p,i)=>(
-            <div key={i} onClick={()=>setSelectedPost({...p, realIndex: i})} className="aspect-square bg-gray-100 cursor-pointer relative group overflow-hidden">
-              <img
-                src={p.image || p.imageUrl || p.url || p.r2Url}
-                alt="post"
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={(e:any)=>{ e.target.src='https://via.placeholder.com/300?text=ChitPix' }}
-              />
-            </div>
-          )) : (
+          {filteredPosts.length>0? filteredPosts.map((p,i)=>{
+            const url = p.image || p.imageUrl || p.url || p.r2Url || ""
+            const isVideo = p.type === "reels" || url.includes(".mp4")
+            return (
+              <div key={i} onClick={()=>setSelectedPost({...p, realIndex: i, isVideo})} className="aspect-square bg-gray-100 cursor-pointer relative group overflow-hidden">
+                {isVideo? (
+                  <>
+                    <video
+                      src={url}
+                      className="w-full h-full object-cover"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                    <div className="absolute top-1 right-1 bg-black/60 text-white text-[10px] px-1 rounded">🎬</div>
+                  </>
+                ) : (
+                  <img
+                    src={url}
+                    alt="post"
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    onError={(e:any)=>{ e.target.src='https://via.placeholder.com/300?text=ChitPix' }}
+                  />
+                )}
+              </div>
+            )
+          }) : (
             <div className="col-span-3 py-20 text-center">
-              <div className="w-16 h-16 border-2 border-black rounded-full flex items-center justify-center mx-auto text-3xl">📷</div>
-              <p className="font-bold mt-4 text-xl">Share a photo</p>
-              <p className="text-sm text-gray-500 mt-1 px-10">When you share photos, they'll appear on your profile.</p>
-              <Link href="/" className="text-blue-500 text-sm font-semibold mt-3 inline-block">Share your first photo</Link>
+              <div className="w-16 h-16 border-2 border-black rounded-full flex items-center justify-center mx-auto text-3xl">{activeTab==="REELS"? "🎬" : "📷"}</div>
+              <p className="font-bold mt-4 text-xl">{activeTab==="REELS"? "No Reels yet" : "Share a photo"}</p>
+              <p className="text-sm text-gray-500 mt-1 px-10">{activeTab==="REELS"? "When you share reels, they'll appear here." : "When you share photos, they'll appear on your profile."}</p>
+              <Link href={activeTab==="REELS"? "/reels" : "/"} className="text-blue-500 text-sm font-semibold mt-3 inline-block">{activeTab==="REELS"? "Share your first reel" : "Share your first photo"}</Link>
             </div>
           )}
         </div>
@@ -255,11 +306,15 @@ export default function ProfilePage() {
         <div className="fixed inset-0 bg-black z-50 flex flex-col">
           <div className="flex justify-between p-4 text-white items-center">
             <button onClick={()=>setSelectedPost(null)} className="text-xl">✕</button>
-            <span className="font-bold text-sm">POST</span>
-            {isAdmin && <button onClick={()=>handleDelete(selectedPost.realIndex)} className="bg-white text-black px-3 py-1 rounded-full text-[12px] font-bold">Delete</button>}
+            <span className="font-bold text-sm">{selectedPost.isVideo? "REEL" : "POST"}</span>
+            <button onClick={()=>handleDelete(selectedPost.realIndex)} className="bg-white text-black px-3 py-1 rounded-full text-[12px] font-bold">Delete</button>
           </div>
           <div className="flex-1 flex items-center justify-center bg-black">
-            <img src={selectedPost.image || selectedPost.imageUrl || selectedPost.url || selectedPost.r2Url} className="max-w-full max-h-[80vh] object-contain" alt="post" />
+            {selectedPost.isVideo || (selectedPost.image || selectedPost.imageUrl || "").includes(".mp4")? (
+              <video src={selectedPost.image || selectedPost.imageUrl || selectedPost.url || selectedPost.r2Url} className="max-w-full max-h-[80vh] object-contain" controls autoPlay playsInline />
+            ) : (
+              <img src={selectedPost.image || selectedPost.imageUrl || selectedPost.url || selectedPost.r2Url} className="max-w-full max-h-[80vh] object-contain" alt="post" />
+            )}
           </div>
         </div>
       )}
@@ -284,4 +339,4 @@ export default function ProfilePage() {
       <BottomNav />
     </div>
   )
-      }
+    }
