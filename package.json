@@ -1,5 +1,4 @@
-{
-  "name": "chitpix",
+chitpix",
   "private": true,
   "scripts": {
     "dev": "next dev",
