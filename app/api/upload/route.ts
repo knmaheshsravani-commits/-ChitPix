@@ -17,63 +17,62 @@ async function getPostsFromR2() {
   try {
     const res = await client.send(new GetObjectCommand({ Bucket: BUCKET, Key: POSTS_KEY }))
     const text = await res.Body?.transformToString()
-    return text? JSON.parse(text) : []
-  } catch {
-    return [] // First time file lekapothe empty
-  }
+    return text ? JSON.parse(text) : []
+  } catch { return [] }
 }
 
-// GET - Home lo andari posts - 5 sec refresh tho andari ki kanipistadi
-export async function GET() {
-  const posts = await getPostsFromR2()
-  return NextResponse.json(posts, { headers: { "Cache-Control": "no-store" } })
-}
-
-// POST - R2 lo Photo + R2 lone posts.json update - A to Z R2 ONLY
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { image, filename, folder, caption, username } = body
+    const form = await req.formData()
+    const file = form.get("file") as File
+    const type = (form.get("type") as string) || "posts"
+    const caption = (form.get("caption") as string) || "New Reel 🔥 #chitpix"
+    const username = (form.get("username") as string) || "Knmahesh"
 
-    if (!image) return NextResponse.json({ error: "No image" }, { status: 400 })
+    if (!file) return NextResponse.json({ error: "No file", url: "" }, { status: 400 })
 
-    // Base64 to Buffer
-    const buffer = Buffer.from(image.split(",")[1], "base64")
-    const key = `${folder || 'posts'}/${Date.now()}_${(filename || 'post').replaceAll(" ", "_")}.jpg`
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const isVideo = file.type.startsWith("video/")
+    const ext = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg")
+    const key = `${type}/${Date.now()}_${file.name.replaceAll(" ", "_").replaceAll(/[^a-zA-Z0-9._-]/g,"")}.${ext}`.replace(`.${ext}.${ext}`, `.${ext}`)
 
-    // 1. Photo R2 lo upload
+    // 1. R2 lo Full HD Upload - 100MB varaku
     await client.send(new PutObjectCommand({
       Bucket: BUCKET,
       Key: key,
       Body: buffer,
-      ContentType: 'image/jpeg',
+      ContentType: file.type || (isVideo ? "video/mp4" : "image/jpeg"),
     }))
 
     const url = `${process.env.R2_PUBLIC_URL}/${key}`
 
-    // 2. Posts list R2 lone update - Supabase 0% - Ide main fix!
+    // 2. posts.json update - Andariki kanipinchadaniki
     const posts = await getPostsFromR2()
     const newPost = {
       id: Date.now().toString(),
+      image: url,
       image_url: url,
-      caption: caption || "",
-      username: username || "knmahesh",
-      likes: 0,
-      user_photo: "",
+      video: isVideo ? url : null,
+      isVideo: isVideo,
+      caption,
+      username,
+      likes: 0, comments: 0, reposts: 0, shares: 0, saves: 0,
+      music: "Original audio",
       created_at: new Date().toISOString(),
+      type: type
     }
 
     await client.send(new PutObjectCommand({
       Bucket: BUCKET,
       Key: POSTS_KEY,
-      Body: JSON.stringify([newPost,...posts]),
+      Body: JSON.stringify([newPost, ...posts]),
       ContentType: 'application/json',
     }))
 
-    return NextResponse.json({ url, post: newPost })
+    return NextResponse.json({ url, secure_url: url, post: newPost })
 
   } catch (e: any) {
-    console.error("R2 ERROR:", e)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    console.error("R2 UPLOAD ERROR:", e)
+    return NextResponse.json({ error: e.message, url: "" }, { status: 500 })
   }
 }
