@@ -26,12 +26,14 @@ export default function ReelsPage() {
 
   useEffect(()=>{
     fetch("/api/posts", { cache: "no-store" })
-   .then(r => r.json())
-   .then((posts:any[])=>{
+  .then(r => r.json())
+  .then((posts:any[])=>{
+        console.log("R2 Posts:", posts)
         if(posts && posts.length>0){
-           const vids = posts.filter(p=> p.type==="reels" || p.image_url?.endsWith(".mp4") || p.image_url?.includes("/reels/"))
-           setReels(vids.length? vids : posts.filter(p=>p.image_url?.endsWith(".mp4")))
+           const vids = posts.filter(p=> p.type==="reels" || p.image_url?.endsWith(".mp4") || p.image_url?.includes("/reels/") || p.image_url?.includes(".mp4"))
+           setReels(vids.length? vids : posts)
            if(vids.length>0) setActiveId(vids[0].id)
+           else if(posts.length>0) setActiveId(posts[0].id)
         }
       }).catch(()=>{})
     setLiked(JSON.parse(localStorage.getItem("reels_liked")||"{}"))
@@ -43,9 +45,9 @@ export default function ReelsPage() {
     if(n) setCurrentUser(n)
   },[])
 
-  // ✅ 100% FIX - SCROLL PLAY LOGIC - INSTAGRAM STYLE
+  // ✅ 100% FIX - SCROLL PLAY LOGIC - INSTAGRAM STYLE - FIXED
   useEffect(()=>{
-    if(!containerRef.current) return
+    if(!containerRef.current || reels.length===0) return
     const observer = new IntersectionObserver((entries)=>{
       entries.forEach(entry=>{
         const id = Number(entry.target.getAttribute("data-id"))
@@ -54,16 +56,13 @@ export default function ReelsPage() {
         if(entry.isIntersecting){
           setActiveId(id)
           video.muted = mutedMap[id]?? true
-          video.play().catch(()=>{})
+          video.play().catch((e)=>console.log("Play error:", e))
         } else {
           video.pause()
         }
       })
-    }, { threshold: 0.7 })
+    }, { threshold: 0.6 })
 
-    Object.values(videoRefs.current).forEach((el:any)=>{
-      if(el?.parentElement?.parentElement) observer.observe(el.parentElement.parentElement)
-    })
     const divs = containerRef.current.querySelectorAll("[data-id]")
     divs.forEach(d=> observer.observe(d))
 
@@ -72,43 +71,56 @@ export default function ReelsPage() {
 
   const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
 
-  // *** NEW R2 DIRECT UPLOAD - NO VERCEL LIMIT - 11 SEC REEL FIX ***
+  // *** 100% FIXED R2 DIRECT UPLOAD - NO BLACK SCREEN ***
   const handleReelUpload = async (e:any) => {
     const file = e.target.files?.[0]
     if(!file) return
     if(file.size > 100*1024*1024) return alert("Max 100MB Bro! 60 sec reel pettu 🙏")
     setUploading(true)
     try {
-      // STEP 1: Get presigned URL from R2
+      // STEP 1: Get presigned URL from R2 - COMPATIBLE PAYLOAD
       const presignRes = await fetch("/api/r2-presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, fileType: file.type, folder: "reels" })
+        body: JSON.stringify({
+          fileName: `${Date.now()}_${file.name}`,
+          contentType: file.type,
+          fileType: file.type,
+          folder: "reels",
+          fileSize: file.size
+        })
       })
       const presignData = await presignRes.json()
-      if(!presignData.uploadUrl ||!presignData.publicUrl) throw new Error(presignData.error || "Presign failed")
+      console.log("Presign:", presignData)
+
+      const uploadUrl = presignData.uploadUrl || presignData.url
+      const publicUrl = presignData.publicUrl || presignData.publicUrl
+
+      if(!uploadUrl ||!publicUrl) throw new Error(presignData.error || "Presign failed - ENV check chey")
 
       // STEP 2: Direct upload to R2 - Vercel bypass - 100MB OK!
-      const uploadRes = await fetch(presignData.uploadUrl, {
+      const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type }
       })
-      if(!uploadRes.ok) throw new Error("R2 Cloud upload failed: " + uploadRes.statusText)
+      console.log("R2 Upload:", uploadRes.status)
+      if(!uploadRes.ok) throw new Error("R2 Cloud upload failed: " + uploadRes.status + " " + uploadRes.statusText)
 
       // STEP 3: Save in Supabase posts table as reels
-      await fetch("/api/posts", {
+      const saveRes = await fetch("/api/posts", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ image_url: presignData.publicUrl, caption: "New Reel 🔥 #chitpix", username: currentUser, type: "reels" })
+        body: JSON.stringify({ image_url: publicUrl, caption: "New Reel 🔥 #chitpix", username: currentUser, type: "reels" })
       })
+      console.log("Save post:", await saveRes.text())
 
       // Refresh feed instantly
       const posts = await fetch("/api/posts", { cache: "no-store" }).then(r=>r.json())
-      const vids = posts.filter((p:any)=> p.type==="reels" || p.image_url?.endsWith(".mp4") || p.image_url?.includes("/reels/"))
-      setReels(vids.length? vids : posts.filter((p:any)=>p.image_url?.endsWith(".mp4")))
+      const vids = posts.filter((p:any)=> p.type==="reels" || p.image_url?.endsWith(".mp4") || p.image_url?.includes("/reels/") || p.image_url?.includes(".mp4"))
+      setReels(vids.length? vids : posts)
 
-      alert("Reel Uploaded to R2! 🔥 11 sec reel success!")
+      alert("Reel Uploaded to R2! 🔥")
     } catch(err:any){
       console.error(err)
       alert("Upload Error - " + err.message)
@@ -146,9 +158,10 @@ export default function ReelsPage() {
     const video = videoRefs.current[id] as HTMLVideoElement
     if(!video) return
     const isMuted = video.muted
+    // Mute all others
     Object.values(videoRefs.current).forEach((v:any)=>{ if(v) v.muted = true })
     video.muted =!isMuted
-    setMutedMap((prev:any)=>({...prev, [id]:!isMuted? true : false}))
+    setMutedMap((prev:any)=>({...prev, [id]:!isMuted}))
     if(isMuted) video.play().catch(()=>{})
   }
   const handleProfileClick = (username:string)=>{
@@ -169,8 +182,8 @@ export default function ReelsPage() {
 
       <div ref={containerRef} className="w-full h-full overflow-y-scroll snap-y snap-mandatory">
         {reels.map((reel:any)=>{
-          const vidSrc = reel.video || reel.image_url || reel.image
-          const isVideo = vidSrc?.endsWith(".mp4") || vidSrc?.includes("/reels/") || reel.type==="reels"
+          const vidSrc = reel.video || reel.image_url || reel.image || reel.r2Url || ""
+          const isVideo = vidSrc?.endsWith(".mp4") || vidSrc?.includes("/reels/") || vidSrc?.includes(".mp4") || reel.type==="reels"
           return (
           <div key={reel.id} data-id={reel.id} className="w-full h-[100dvh] snap-start relative bg-black flex justify-center">
             <div className="relative w-full max-w-[440px] h-full flex items-center justify-center overflow-hidden bg-black" onDoubleClick={()=>handleLike(reel.id,true)}>
@@ -178,14 +191,13 @@ export default function ReelsPage() {
                 <video
                   ref={(el:any)=>videoRefs.current[reel.id]=el}
                   src={vidSrc}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover bg-black"
                   loop
                   muted={mutedMap[reel.id]?? true}
                   playsInline
-                  preload="metadata"
-                  crossOrigin="anonymous"
+                  preload="auto"
                   onClick={()=>toggleSound(reel.id)}
-                  poster={reel.thumbnail || ""}
+                  onError={(e:any)=>console.log("R2 Video Error:", vidSrc, e)}
                 />
               ) : <img src={vidSrc} alt="" className="w-full h-full object-contain bg-black" /> }
 
@@ -247,4 +259,4 @@ export default function ReelsPage() {
       <style jsx>{`.snap-y::-webkit-scrollbar{display:none}`}</style>
     </div>
   )
-  }
+        }
