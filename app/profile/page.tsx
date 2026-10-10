@@ -2,6 +2,49 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import BottomNav from "../components/BottomNav"
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3"
+
+// ================= R2 CONFIG - Ikkada ne keys pettu bro =================
+const R2_ACCOUNT_ID = "YOUR_ACCOUNT_ID" // Cloudflare Dashboard -> R2 -> Account ID
+const R2_ACCESS_KEY = "YOUR_R2_ACCESS_KEY_ID"
+const R2_SECRET_KEY = "YOUR_R2_SECRET_ACCESS_KEY"
+const R2_BUCKET = "chitpix"
+const R2_PUBLIC_URL = "https://pub-YOUR-ID.r2.dev" // R2 bucket public URL
+
+const s3Client = new S3Client({
+  region: "auto",
+  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: { accessKeyId: R2_ACCESS_KEY, secretAccessKey: R2_SECRET_KEY },
+})
+
+const uploadToR2 = async (file: File | string, fileName: string) => {
+  try {
+    let body: any
+    let contentType = "image/jpeg"
+    if (typeof file === "string") {
+      const res = await fetch(file)
+      const blob = await res.blob()
+      body = await blob.arrayBuffer()
+      contentType = blob.type || "image/jpeg"
+    } else {
+      body = await file.arrayBuffer()
+      contentType = file.type
+    }
+    const cmd = new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: fileName,
+      Body: new Uint8Array(body),
+      ContentType: contentType,
+    })
+    await s3Client.send(cmd)
+    return `${R2_PUBLIC_URL}/${fileName}`
+  } catch (e) {
+    console.error("R2 Upload Error:", e)
+    alert("R2 Upload failed - keys check chey bro")
+    return null
+  }
+}
+// =========================================================================
 
 export default function ProfilePage() {
   const [posts, setPosts] = useState<any[]>([])
@@ -19,13 +62,13 @@ export default function ProfilePage() {
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [currentUserEmail, setCurrentUserEmail] = useState("")
+  const [uploading, setUploading] = useState(false)
 
   useEffect(()=>{
     const saved = localStorage.getItem("posts")
     if(saved) {
       try { setPosts(JSON.parse(saved)) } catch {}
     }
-    // Firebase user email check
     const userStr = localStorage.getItem("user") || localStorage.getItem("firebase:user")
     if (userStr) {
       try {
@@ -35,14 +78,11 @@ export default function ProfilePage() {
         if (u.photoURL) setPhoto(u.photoURL)
       } catch {}
     }
-    // Real admin check - only your email
     const adminEmails = ["knmaheshsravani@gmail.com", "sravani.mahesh@gmail.com"]
     const savedUser = localStorage.getItem("userEmail") || currentUserEmail
     if (adminEmails.includes(savedUser) || localStorage.getItem("isAdmin") === "true") {
-      // Check if actually admin email
       if (adminEmails.includes(savedUser)) setIsAdmin(true)
     }
-
     const savedPhoto = localStorage.getItem("chitpix_profile_photo")
     if(savedPhoto) setPhoto(savedPhoto)
     const savedName = localStorage.getItem("chitpix_username")
@@ -70,9 +110,17 @@ export default function ProfilePage() {
     }
   }
 
-  const handlePhotoChange = (e: any) => {
+  const handlePhotoChange = async (e: any) => {
     const f = e.target.files?.[0]
-    if(f){
+    if(!f) return
+    setUploading(true)
+    const fileName = `profile/${Date.now()}_${f.name}`
+    const url = await uploadToR2(f, fileName)
+    if(url){
+      setPhoto(url)
+      localStorage.setItem("chitpix_profile_photo", url)
+    } else {
+      // Fallback base64 if R2 fail
       const r = new FileReader()
       r.onload = () => {
         const result = r.result as string
@@ -81,6 +129,7 @@ export default function ProfilePage() {
       }
       r.readAsDataURL(f)
     }
+    setUploading(false)
   }
 
   const handleProfileSave = () => {
@@ -97,9 +146,9 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      <div className="max-w-[470px] mx-auto">
-        {/* Header - Admin button REMOVED */}
+    <div className="h-[100dvh] overflow-y-auto bg-white pb-20 scrollbar-hide">
+      <div className="max-w-[470px] mx-auto min-h-screen bg-white">
+        {/* Header */}
         <div className="flex justify-between items-center p-4 sticky top-0 bg-white z-10 border-b">
           <h1 className="font-bold text-[20px] flex items-center gap-1">{username} <span className="text-[12px]">⌄</span></h1>
           <div className="flex gap-4 items-center">
@@ -108,7 +157,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Profile Info */}
+        {/* Profile Info - SAME AS YOUR CODE */}
         <div className="flex p-4 gap-5 items-center">
           <div className="relative">
             <div className="w-[86px] h-[86px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600">
@@ -116,7 +165,7 @@ export default function ProfilePage() {
                 {photo? <img src={photo} className="w-[77px] h-[77px] rounded-full object-cover" alt="profile" /> : <div className="w-[77px] h-[77px] rounded-full bg-gray-100 flex items-center justify-center text-3xl">👤</div>}
               </div>
             </div>
-            <label htmlFor="photoInput" className="absolute bottom-0 right-0 bg-blue-500 text-white w-[22px] h-[22px] rounded-full flex items-center justify-center text-[14px] cursor-pointer border-2 border-white">+</label>
+            <label htmlFor="photoInput" className="absolute bottom-0 right-0 bg-blue-500 text-white w-[22px] h-[22px] rounded-full flex items-center justify-center text-[14px] cursor-pointer border-2 border-white">{uploading? "..." : "+"}</label>
             <input id="photoInput" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
           </div>
           <div className="flex gap-6 text-center flex-1 justify-around">
@@ -126,20 +175,18 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Bio */}
+        {/* Bio - SAME */}
         <div className="px-4">
           <p className="font-bold text-[14px] flex items-center gap-1">{username} {isAdmin && <span className="text-blue-500 text-[14px]">✓</span>}</p>
           <p className="text-[14px] mt-1 whitespace-pre-line leading-[18px]">{bio}</p>
           <p className="text-[14px] text-[#00376b] font-semibold mt-1 flex gap-1">🔗 {link}</p>
         </div>
 
-        {/* Buttons - NO FOLLOW on own profile */}
         <div className="flex gap-2 mt-4 px-4">
           <button onClick={()=>{setEditName(username); setEditBio(bio); setEditLink(link); setShowEdit(true)}} className="flex-1 py-[6px] rounded-lg bg-[#efefef] font-semibold text-[14px]">Edit profile</button>
           <button onClick={()=>{navigator.clipboard.writeText(window.location.href); alert("Link Copied!")}} className="flex-1 py-[6px] rounded-lg bg-[#efefef] font-semibold text-[14px]">Share profile</button>
         </div>
 
-        {/* Highlights - Fixed icons */}
         <div className="flex gap-4 mt-5 overflow-x-auto px-4 pb-2 scrollbar-hide">
           {[
             {name:'ChitPix', icon:'📸'},
@@ -157,21 +204,21 @@ export default function ProfilePage() {
           ))}
         </div>
 
-        {/* Tabs */}
         <div className="flex border-t mt-3">
           <button className="flex-1 py-3 text-[12px] border-t border-black font-bold tracking-widest flex justify-center">⊞ POSTS</button>
           <button className="flex-1 py-3 text-[12px] text-gray-400 tracking-widest flex justify-center">🎬 REELS</button>
           <button className="flex-1 py-3 text-[12px] text-gray-400 tracking-widest flex justify-center">🔖 TAGGED</button>
         </div>
 
-        {/* Posts Grid - FIXED broken image */}
-        <div className="grid grid-cols-3 gap-[2px]">
+        {/* Posts Grid - FIXED with R2 + Scroll */}
+        <div className="grid grid-cols-3 gap-[2px] pb-10">
           {posts.length>0? posts.map((p,i)=>(
-            <div key={i} onClick={()=>setSelectedPost({...p, realIndex: i})} className="aspect-square bg-gray-100 cursor-pointer relative group">
+            <div key={i} onClick={()=>setSelectedPost({...p, realIndex: i})} className="aspect-square bg-gray-100 cursor-pointer relative group overflow-hidden">
               <img
-                src={p.image || p.imageUrl || p.url}
+                src={p.image || p.imageUrl || p.url || p.r2Url}
                 alt="post"
                 className="w-full h-full object-cover"
+                loading="lazy"
                 onError={(e:any)=>{ e.target.src='https://via.placeholder.com/300?text=ChitPix' }}
               />
             </div>
@@ -186,7 +233,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Menu - Admin only for you */}
       {showMenu && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end" onClick={()=>setShowMenu(false)}>
           <div className="bg-white w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto" onClick={e=>e.stopPropagation()}>
@@ -205,7 +251,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Post View - Delete only if admin */}
       {selectedPost && (
         <div className="fixed inset-0 bg-black z-50 flex flex-col">
           <div className="flex justify-between p-4 text-white items-center">
@@ -214,12 +259,11 @@ export default function ProfilePage() {
             {isAdmin && <button onClick={()=>handleDelete(selectedPost.realIndex)} className="bg-white text-black px-3 py-1 rounded-full text-[12px] font-bold">Delete</button>}
           </div>
           <div className="flex-1 flex items-center justify-center bg-black">
-            <img src={selectedPost.image || selectedPost.imageUrl || selectedPost.url} className="max-w-full max-h-[80vh] object-contain" alt="post" />
+            <img src={selectedPost.image || selectedPost.imageUrl || selectedPost.url || selectedPost.r2Url} className="max-w-full max-h-[80vh] object-contain" alt="post" />
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
       {showEdit && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-2xl w-full max-w-sm">
@@ -237,8 +281,7 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
       <BottomNav />
     </div>
   )
-            }
+      }
