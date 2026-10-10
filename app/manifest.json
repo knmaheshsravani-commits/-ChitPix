@@ -4,11 +4,15 @@
   "description": "Instagram clone with Reels, Photo, Profile - Share Your Memories With All Friends!",
   "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ff3040",
+  "lang": "en",
   "categories": ["social", "photo", "entertainment"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-e961942523b3",
   "prefer_related_applications": false,
   "icons": [
     {
