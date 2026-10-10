@@ -2,8 +2,8 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3
 import { NextRequest, NextResponse } from "next/server"
 
 const R2_ENDPOINT = process.env.R2_ENDPOINT!
-const R2_ACCESS = process.env.R2_ACCESS_KEY_ID || (process.env as any).R2_ACCE_KEY_ID || process.env.R2_ACCESS_KEY || ""
-const R2_SECRET = process.env.R2_SECRET_ACCESS_KEY || (process.env as any).R2_SECR_SS_KEY || process.env.R2_SECRET_KEY || ""
+const R2_ACCESS = process.env.R2_ACCESS_KEY_ID || (process.env as any).R2_ACCE_KEY_ID || ""
+const R2_SECRET = process.env.R2_SECRET_ACCESS_KEY || (process.env as any).R2_SECR_SS_KEY || ""
 const R2_BUCKET = process.env.R2_BUCKET || process.env.R2_BUCKET_NAME || ""
 const R2_PUBLIC = process.env.R2_PUBLIC_URL || ""
 
@@ -24,10 +24,20 @@ async function getPostsFromR2() {
   } catch { return [] }
 }
 
+// Reels page kosam GET
+export async function GET() {
+  try {
+    const posts = await getPostsFromR2()
+    return NextResponse.json({ posts, success: true })
+  } catch (e:any) {
+    return NextResponse.json({ posts: [], error: e.message })
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
-    if (!R2_BUCKET || !R2_ENDPOINT || !R2_PUBLIC || !R2_ACCESS) {
-      throw new Error("R2 Env missing - Vercel lo R2_ACCESS_KEY_ID add chey")
+    if (!R2_BUCKET || !R2_ENDPOINT || !R2_PUBLIC || !R2_ACCESS || !R2_SECRET) {
+      throw new Error("R2 Env missing! Vercel Settings > Env check chey bro")
     }
     const form = await req.formData()
     const file = form.get("file") as File
@@ -45,22 +55,34 @@ export async function POST(req: NextRequest) {
     const baseName = cleanName.replace(`.${ext}`, "")
     const key = `${type}/${Date.now()}_${baseName}.${ext}`
 
+    // 1. File R2 ki upload
     await client.send(new PutObjectCommand({
       Bucket: R2_BUCKET, Key: key, Body: buffer, ContentType: file.type,
     }))
 
     const url = `${R2_PUBLIC.replace(/\/$/, "")}/${key}`
+    
+    // 2. Post list update - 100% R2 connected
     const posts = await getPostsFromR2()
     const newPost = {
-      id: Date.now().toString(), image: url, image_url: url,
-      video: isVideo ? url : null, video_url: isVideo ? url : null, isVideo,
-      caption, username, user_avatar: `https://i.pravatar.cc/150?u=${username}`,
-      likes: 0, comments: 0, saves: 0, created_at: new Date().toISOString(), type
+      id: Date.now().toString(),
+      image: url, image_url: url,
+      video: isVideo ? url : null, video_url: isVideo ? url : null, 
+      isVideo, is_video: isVideo,
+      caption, username, 
+      user_avatar: `https://i.pravatar.cc/150?u=${username}`,
+      likes: 0, comments: 0, saves: 0, 
+      created_at: new Date().toISOString(), type
     }
+    
     await client.send(new PutObjectCommand({
-      Bucket: R2_BUCKET, Key: POSTS_KEY, Body: JSON.stringify([newPost, ...posts]), ContentType: 'application/json',
+      Bucket: R2_BUCKET, Key: POSTS_KEY, 
+      Body: JSON.stringify([newPost, ...posts]), 
+      ContentType: 'application/json',
     }))
+
     return NextResponse.json({ url, secure_url: url, post: newPost, success: true })
+    
   } catch (e: any) {
     console.error("UPLOAD ERROR:", e)
     return NextResponse.json({ error: e.message }, { status: 500 })
