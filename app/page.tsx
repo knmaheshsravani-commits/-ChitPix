@@ -40,9 +40,9 @@ export default function HomePage() {
 
     // REALTIME - DM lo kuda instant update
     const channel = supabase
-     .channel("posts_realtime")
-     .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => fetchPosts())
-     .subscribe()
+    .channel("posts_realtime")
+    .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => fetchPosts())
+    .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [])
@@ -59,24 +59,40 @@ export default function HomePage() {
     setPreview(URL.createObjectURL(f))
   }
 
-  // R2 UPLOAD - MAIN CONNECT
+  // R2 UPLOAD - DIRECT R2 - NO VERCEL LIMIT - 11 SEC VIDEO FIX
   const uploadToR2 = async () => {
     if (!file) return alert("Photo select chey bro! 📸")
     setUploading(true)
     try {
-      const formData = new FormData()
-      formData.append("file", file)
-
-      const res = await fetch("/api/upload", {
+      // STEP 1: Backend nundi Presigned URL teesuko - R2 ki direct upload kosam
+      const presignRes = await fetch("/api/r2-presign", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          folder: "posts"
+        }),
       })
-      const result = await res.json()
-      if (!result.url) throw new Error(result.error || "R2 Upload failed")
+      const presignData = await presignRes.json()
+      if (!presignData.uploadUrl ||!presignData.publicUrl) {
+        throw new Error(presignData.error || "R2 Presign failed")
+      }
 
+      // STEP 2: Direct R2 ki upload - Vercel bypass - 100MB kuda OK!
+      const r2UploadRes = await fetch(presignData.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      })
+      if (!r2UploadRes.ok) {
+        throw new Error("R2 Cloud upload failed: " + r2UploadRes.statusText)
+      }
+
+      // STEP 3: Supabase lo R2 Public URL tho save chey
       const { error } = await supabase.from("posts").insert([
         {
-          image_url: result.url, // R2 URL - No Grey Bug!
+          image_url: presignData.publicUrl, // R2 URL - No Grey Bug! Direct R2!
           caption: caption,
           username: username,
           user_photo: userPhoto,
@@ -91,8 +107,9 @@ export default function HomePage() {
       setFile(null)
       setShowCreate(false)
       fetchPosts()
-      alert("ChitPix lo Posted! 🔥")
+      alert("ChitPix lo Posted! R2 lo 🔥")
     } catch (err: any) {
+      console.error("Upload error:", err)
       alert("Upload Error: " + err.message)
     }
     setUploading(false)
@@ -231,7 +248,7 @@ export default function HomePage() {
 
               <label className="w-full h-[260px] border-2 border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center cursor-pointer mb-3 overflow-hidden bg-zinc-800/50">
                 {preview? <img src={preview} className="w-full h-full object-cover rounded-xl" alt="preview" /> : <div className="text-center"><div className="text-4xl mb-2">📸</div><p className="text-zinc-400 text-sm">Click to select photo</p><p className="text-zinc-600 text-[11px] mt-1">R2 Cloud Storage</p></div>}
-                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                <input type="file" accept="image/*,video/*" onChange={handleFileChange} className="hidden" />
               </label>
 
               <textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Write a caption... ✨ #ChitPix" className="w-full bg-zinc-800 rounded-xl p-3 text-sm outline-none min-h-[80px] mb-3 border border-zinc-700 resize-none" />
@@ -247,4 +264,4 @@ export default function HomePage() {
       <BottomNav />
     </div>
   )
-              }
+          }
