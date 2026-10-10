@@ -13,6 +13,7 @@ type Post = {
   user_photo?: string
   created_at: string
   comments?: number
+  type?: string
 }
 
 export default function HomePage() {
@@ -37,19 +38,16 @@ export default function HomePage() {
     if (savedName) setUsername(savedName)
     if (savedPhoto) setUserPhoto(savedPhoto)
     fetchPosts()
-
-    // REALTIME - DM lo kuda instant update
     const channel = supabase
-    .channel("posts_realtime")
-    .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => fetchPosts())
-    .subscribe()
-
+     .channel("posts_realtime_home_final")
+     .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => fetchPosts())
+     .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [])
 
   const fetchPosts = async () => {
-    const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false })
-    if (!error && data) setPosts(data)
+    const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false }).limit(100)
+    if (!error && data) setPosts(data as any)
   }
 
   const handleFileChange = (e: any) => {
@@ -59,55 +57,51 @@ export default function HomePage() {
     setPreview(URL.createObjectURL(f))
   }
 
-  // R2 UPLOAD - DIRECT R2 - NO VERCEL LIMIT - 11 SEC VIDEO FIX
   const uploadToR2 = async () => {
-    if (!file) return alert("Photo select chey bro! 📸")
+    if (!file) return alert("Photo/video select chey bro! 📸")
     setUploading(true)
     try {
-      // STEP 1: Backend nundi Presigned URL teesuko - R2 ki direct upload kosam
+      const isVideo = file.type.includes("video")
+      const folder = isVideo? "reels" : "posts"
       const presignRes = await fetch("/api/r2-presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileName: file.name,
           fileType: file.type,
-          folder: "posts"
+          contentType: file.type,
+          folder: folder
         }),
       })
       const presignData = await presignRes.json()
       if (!presignData.uploadUrl ||!presignData.publicUrl) {
-        throw new Error(presignData.error || "R2 Presign failed")
+        throw new Error(presignData.error || "R2 Presign failed - ENV check chey bro")
       }
-
-      // STEP 2: Direct R2 ki upload - Vercel bypass - 100MB kuda OK!
       const r2UploadRes = await fetch(presignData.uploadUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type },
       })
       if (!r2UploadRes.ok) {
-        throw new Error("R2 Cloud upload failed: " + r2UploadRes.statusText)
+        throw new Error("R2 Cloud upload failed: " + r2UploadRes.status + " " + r2UploadRes.statusText)
       }
-
-      // STEP 3: Supabase lo R2 Public URL tho save chey
       const { error } = await supabase.from("posts").insert([
         {
-          image_url: presignData.publicUrl, // R2 URL - No Grey Bug! Direct R2!
+          image_url: presignData.publicUrl,
           caption: caption,
           username: username,
           user_photo: userPhoto,
           likes: 0,
+          type: isVideo? "reels" : "post"
         },
       ])
-
       if (error) throw error
-
       setCaption("")
       setPreview("")
       setFile(null)
       setShowCreate(false)
       fetchPosts()
-      alert("ChitPix lo Posted! R2 lo 🔥")
+      alert(isVideo? "Reel uploaded to R2! 🔥" : "Post uploaded to R2! 🔥")
     } catch (err: any) {
       console.error("Upload error:", err)
       alert("Upload Error: " + err.message)
@@ -131,17 +125,26 @@ export default function HomePage() {
     lastTap.current = now
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Ee post delete cheyala bro?")) return
-    await supabase.from("posts").delete().eq("id", id)
+  const handleDelete = async (id: string, postUser: string) => {
+    if (postUser!== username) {
+      return alert("Idi nee post kaadu bro - Nee posts ne delete cheyavachu!")
+    }
+    if (!confirm("Ee post delete cheyala bro? 🗑️")) return
+    const { error } = await supabase.from("posts").delete().eq("id", id).eq("username", username)
+    if (error) {
+      alert("Delete failed: " + error.message)
+      return
+    }
     fetchPosts()
+  }
+
+  const isVideoUrl = (url: string) => {
+    return url?.includes(".mp4") || url?.includes(".mov") || url?.includes("/reels/") || url?.includes("video")
   }
 
   return (
     <div className="w-full bg-black h-[100dvh] overflow-y-auto text-white scrollbar-hide">
       <div className="max-w-[470px] mx-auto bg-black pb-[90px] min-h-screen relative border-x border-zinc-900">
-
-        {/* Header - Full Features */}
         <div className="flex justify-between items-center p-4 sticky top-0 bg-black/90 backdrop-blur-md z-20 border-b border-zinc-800">
           <h1 className="text-[26px] font-bold tracking-tight" style={{ fontFamily: "cursive" }}>ChitPix</h1>
           <div className="flex gap-5 items-center text-[22px]">
@@ -150,8 +153,6 @@ export default function HomePage() {
             <button onClick={() => setShowCreate(true)} className="bg-white text-black px-4 py-1.5 rounded-full font-bold text-[13px]">+ Create</button>
           </div>
         </div>
-
-        {/* Stories - Full Feature */}
         <div className="flex gap-4 p-3.5 overflow-x-auto border-b border-zinc-800 scrollbar-hide">
           <div className="flex flex-col items-center min-w-[64px]">
             <div className="w-[64px] h-[64px] rounded-full bg-zinc-800 p-[3px] relative">
@@ -175,88 +176,87 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-
-        {/* Feed - Full Working Features */}
         <div className="bg-black">
           {posts.length === 0 && (
             <div className="text-center p-20">
               <div className="text-5xl mb-3">📸</div>
-              <p className="text-zinc-500">No posts yet</p>
-              <button onClick={() => setShowCreate(true)} className="mt-3 bg-white text-black px-5 py-2 rounded-full font-bold text-sm">Create first post</button>
+              <p className="text-zinc-500">No posts yet - Be first to post!</p>
+              <button onClick={() => setShowCreate(true)} className="mt-3 bg-white text-black px-5 py-2 rounded-full font-bold text-sm">Create first post - R2 Upload</button>
             </div>
           )}
-
-          {posts.map((post) => (
-            <div key={post.id} className="border-b border-zinc-800 pb-3 mb-1">
-              {/* Post Header */}
-              <div className="flex justify-between items-center p-3">
-                <div className="flex gap-2.5 items-center">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-[2px]">
-                    <img src={post.user_photo || `https://i.pravatar.cc/100?u=${post.username}`} className="w-full h-full rounded-full object-cover border border-black" alt="" />
+          {posts.map((post) => {
+            const url = post.image_url || ""
+            const video = post.type === "reels" || isVideoUrl(url)
+            return (
+              <div key={post.id} className="border-b border-zinc-800 pb-3 mb-1">
+                <div className="flex justify-between items-center p-3">
+                  <div className="flex gap-2.5 items-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-[2px]">
+                      <img src={post.user_photo || `https://i.pravatar.cc/100?u=${post.username}`} className="w-full h-full rounded-full object-cover border border-black" alt="" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[13px] flex items-center gap-1">{post.username} <span className="text-blue-500 text-[11px]">✓</span>{video && <span className="bg-zinc-800 text-[9px] px-1.5 py-0.5 rounded ml-1">REEL</span>}</p>
+                      <p className="text-[11px] text-zinc-400">Bangalore, India • {video? "R2 Reels" : "R2 Posts"}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-[13px] flex items-center gap-1">{post.username} <span className="text-blue-500 text-[11px]">✓</span></p>
-                    <p className="text-[11px] text-zinc-400">Bangalore, India</p>
+                  {post.username === username? (
+                    <button onClick={() => handleDelete(post.id, post.username)} className="text-[11px] bg-red-500/20 text-red-400 px-3 py-1.5 rounded-full font-bold border border-red-500/30">Delete</button>
+                  ) : (
+                    <button className="font-bold text-[18px]">⋯</button>
+                  )}
+                </div>
+                <div className="relative bg-zinc-900 aspect-square overflow-hidden" onClick={() => handleDoubleTap(post.id)}>
+                  {video? (
+                    <video src={url} className="w-full h-full object-contain bg-black" controls playsInline preload="metadata" />
+                  ) : (
+                    <img src={url} loading="lazy" className="w-full h-full object-cover" alt="post" onError={(e: any) => e.target.src = "https://via.placeholder.com/500?text=ChitPix+R2"} />
+                  )}
+                  {showHeart === post.id && <div className="absolute inset-0 flex items-center justify-center text-[90px] animate-[ping_0.9s_ease] pointer-events-none">❤️</div>}
+                </div>
+                <div className="flex justify-between p-3">
+                  <div className="flex gap-4 text-[24px]">
+                    <button onClick={() => handleLike(post.id)} className="active:scale-125 transition">{liked[post.id]? "❤️" : "♡"}</button>
+                    <button onClick={() => setShowComments(showComments === post.id? null : post.id)}>💬</button>
+                    <button onClick={() => { navigator.clipboard.writeText(url); alert("Link copied! 🔗") }}>↗️</button>
                   </div>
+                  <button onClick={() => setSaved((p) => ({...p, [post.id]:!p[post.id] }))} className="text-[22px]">{saved[post.id]? "🔖" : "📑"}</button>
                 </div>
-                <button onClick={() => handleDelete(post.id)} className="font-bold text-[18px]">⋯</button>
-              </div>
-
-              {/* Image - Double Tap + R2 URL */}
-              <div className="relative bg-zinc-900 aspect-square overflow-hidden" onClick={() => handleDoubleTap(post.id)}>
-                <img src={post.image_url} loading="lazy" className="w-full h-full object-cover" alt="post" onError={(e: any) => e.target.src = "https://via.placeholder.com/500?text=ChitPix"} />
-                {showHeart === post.id && <div className="absolute inset-0 flex items-center justify-center text-[90px] animate-[ping_0.9s_ease]">❤️</div>}
-              </div>
-
-              {/* Actions */}
-              <div className="flex justify-between p-3">
-                <div className="flex gap-4 text-[24px]">
-                  <button onClick={() => handleLike(post.id)} className="active:scale-125 transition">{liked[post.id]? "❤️" : "♡"}</button>
-                  <button onClick={() => setShowComments(showComments === post.id? null : post.id)}>💬</button>
-                  <button onClick={() => navigator.clipboard.writeText(post.image_url)}>↗️</button>
+                <div className="px-3 text-[14px] leading-5">
+                  <p className="font-bold">{post.likes} likes</p>
+                  <p className="mt-1"><span className="font-bold mr-1">{post.username}</span>{post.caption || "My ChitPix moment ✨ #chitpix"}</p>
+                  <button onClick={() => setShowComments(showComments === post.id? null : post.id)} className="text-zinc-400 text-[13px] mt-1">View all comments</button>
+                  <p className="text-zinc-500 text-[10px] uppercase mt-1 tracking-wider">{new Date(post.created_at).toLocaleString()}</p>
                 </div>
-                <button onClick={() => setSaved((p) => ({...p, [post.id]:!p[post.id] }))} className="text-[22px]">{saved[post.id]? "🔖" : "📑"}</button>
+                {showComments === post.id && (
+                  <div className="px-3 mt-3 flex gap-2 items-center">
+                    <img src={userPhoto || "https://i.pravatar.cc/100"} className="w-7 h-7 rounded-full" alt="" />
+                    <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-transparent border-b border-zinc-700 text-[13px] outline-none py-1" />
+                    <button onClick={() => { setCommentText(""); setShowComments(null) }} className="text-blue-500 font-bold text-[13px]">Post</button>
+                  </div>
+                )}
               </div>
-
-              {/* Details */}
-              <div className="px-3 text-[14px] leading-5">
-                <p className="font-bold">{post.likes} likes</p>
-                <p className="mt-1"><span className="font-bold mr-1">{post.username}</span>{post.caption || "My ChitPix moment ✨"}</p>
-                <button onClick={() => setShowComments(post.id)} className="text-zinc-400 text-[13px] mt-1">View all comments</button>
-                <p className="text-zinc-500 text-[10px] uppercase mt-1 tracking-wider">{new Date(post.created_at).toLocaleTimeString()} ago</p>
-              </div>
-
-              {/* Comment Box */}
-              {showComments === post.id && (
-                <div className="px-3 mt-3 flex gap-2">
-                  <input value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-transparent border-b border-zinc-700 text-[13px] outline-none py-1" />
-                  <button onClick={() => { setCommentText(""); setShowComments(null) }} className="text-blue-500 font-bold text-[13px]">Post</button>
-                </div>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
-
-        {/* Create Modal - R2 Connected */}
         {showCreate && (
           <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
-            <div className="bg-zinc-900 w-full max-w-[380px] rounded-2xl p-4 border border-zinc-800">
+            <div className="bg-zinc-900 w-full max-w-[380px] rounded-2xl p-4 border border-zinc-800 max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="font-bold text-[16px]">New Post - R2 Upload</h2>
+                <h2 className="font-bold text-[16px]">New Post - R2 Cloud ☁️</h2>
                 <button onClick={() => setShowCreate(false)} className="text-xl w-8 h-8 bg-zinc-800 rounded-full flex items-center justify-center">✕</button>
               </div>
-
-              <label className="w-full h-[260px] border-2 border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center cursor-pointer mb-3 overflow-hidden bg-zinc-800/50">
-                {preview? <img src={preview} className="w-full h-full object-cover rounded-xl" alt="preview" /> : <div className="text-center"><div className="text-4xl mb-2">📸</div><p className="text-zinc-400 text-sm">Click to select photo</p><p className="text-zinc-600 text-[11px] mt-1">R2 Cloud Storage</p></div>}
+              <label className="w-full h-[300px] border-2 border-dashed border-zinc-700 rounded-xl flex flex-col items-center justify-center cursor-pointer mb-3 overflow-hidden bg-zinc-800/50">
+                {preview? (
+                  file?.type.includes("video")? <video src={preview} className="w-full h-full object-contain bg-black" controls autoPlay muted /> : <img src={preview} className="w-full h-full object-cover rounded-xl" alt="preview" />
+                ) : <div className="text-center"><div className="text-4xl mb-2">📸🎥</div><p className="text-zinc-400 text-sm">Click to select photo or reel</p><p className="text-zinc-600 text-[11px] mt-1">Direct to Cloudflare R2 - 100MB OK - No Vercel Limit</p></div>}
                 <input type="file" accept="image/*,video/*" onChange={handleFileChange} className="hidden" />
               </label>
-
-              <textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Write a caption... ✨ #ChitPix" className="w-full bg-zinc-800 rounded-xl p-3 text-sm outline-none min-h-[80px] mb-3 border border-zinc-700 resize-none" />
-
+              {file && <div className="text-[11px] text-zinc-400 mb-2 bg-zinc-800 p-2 rounded-lg">📁 {file.name} • {(file.size / 1024 / 1024).toFixed(2)} MB • {file.type.includes("video")? "🎥 Reel -> R2/reels/" : "📸 Post -> R2/posts/"} • {file.type}</div>}
+              <textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Write a caption... ✨ #ChitPix #R2" className="w-full bg-zinc-800 rounded-xl p-3 text-sm outline-none min-h-[80px] mb-3 border border-zinc-700 resize-none" />
               <button onClick={uploadToR2} disabled={uploading ||!file} className="w-full bg-white text-black font-bold py-3.5 rounded-full disabled:opacity-40 hover:bg-zinc-200 transition text-[14px]">
-                {uploading? "Uploading to R2 Cloud... ☁️" : "Share to ChitPix 🔥"}
+                {uploading? "Uploading to R2 Cloud... ☁️" : file?.type.includes("video")? "Share Reel to ChitPix 🔥" : "Share Post to ChitPix 🔥"}
               </button>
-              <p className="text-center text-[10px] text-zinc-500 mt-2">Photo will be saved in Cloudflare R2 - No Grey Bug!</p>
+              <p className="text-center text-[10px] text-zinc-500 mt-2">Saved in Cloudflare R2 - pub-6290...r2.dev - No Grey Bug - 100% Working!</p>
             </div>
           </div>
         )}
@@ -264,4 +264,4 @@ export default function HomePage() {
       <BottomNav />
     </div>
   )
-          }
+            }
