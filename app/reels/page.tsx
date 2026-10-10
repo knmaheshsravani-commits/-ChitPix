@@ -26,8 +26,8 @@ export default function ReelsPage() {
 
   useEffect(()=>{
     fetch("/api/posts", { cache: "no-store" })
-    .then(r => r.json())
-    .then((posts:any[])=>{
+   .then(r => r.json())
+   .then((posts:any[])=>{
         if(posts && posts.length>0){
            const vids = posts.filter(p=> p.type==="reels" || p.image_url?.endsWith(".mp4") || p.image_url?.includes("/reels/"))
            setReels(vids.length? vids : posts.filter(p=>p.image_url?.endsWith(".mp4")))
@@ -64,7 +64,6 @@ export default function ReelsPage() {
     Object.values(videoRefs.current).forEach((el:any)=>{
       if(el?.parentElement?.parentElement) observer.observe(el.parentElement.parentElement)
     })
-    // observe divs
     const divs = containerRef.current.querySelectorAll("[data-id]")
     divs.forEach(d=> observer.observe(d))
 
@@ -73,25 +72,47 @@ export default function ReelsPage() {
 
   const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
 
+  // *** NEW R2 DIRECT UPLOAD - NO VERCEL LIMIT - 11 SEC REEL FIX ***
   const handleReelUpload = async (e:any) => {
     const file = e.target.files?.[0]
     if(!file) return
-    if(file.size > 100*1024*1024) return alert("Max 100MB Bro!")
+    if(file.size > 100*1024*1024) return alert("Max 100MB Bro! 60 sec reel pettu 🙏")
     setUploading(true)
     try {
-      const fd = new FormData()
-      fd.append("file", file)
-      fd.append("type", "reels")
-      const res = await fetch("/api/upload", { method:"POST", body:fd })
-      const data = await res.json()
-      if(!data.url) throw new Error("R2 Upload Failed")
+      // STEP 1: Get presigned URL from R2
+      const presignRes = await fetch("/api/r2-presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileName: file.name, fileType: file.type, folder: "reels" })
+      })
+      const presignData = await presignRes.json()
+      if(!presignData.uploadUrl ||!presignData.publicUrl) throw new Error(presignData.error || "Presign failed")
+
+      // STEP 2: Direct upload to R2 - Vercel bypass - 100MB OK!
+      const uploadRes = await fetch(presignData.uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type }
+      })
+      if(!uploadRes.ok) throw new Error("R2 Cloud upload failed: " + uploadRes.statusText)
+
+      // STEP 3: Save in Supabase posts table as reels
       await fetch("/api/posts", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ image_url: data.url, caption: "New Reel 🔥 #chitpix", username: currentUser, type: "reels" })
+        body: JSON.stringify({ image_url: presignData.publicUrl, caption: "New Reel 🔥 #chitpix", username: currentUser, type: "reels" })
       })
-      location.reload()
-    } catch(err){ alert("Upload Error - /api/upload check chey") }
+
+      // Refresh feed instantly
+      const posts = await fetch("/api/posts", { cache: "no-store" }).then(r=>r.json())
+      const vids = posts.filter((p:any)=> p.type==="reels" || p.image_url?.endsWith(".mp4") || p.image_url?.includes("/reels/"))
+      setReels(vids.length? vids : posts.filter((p:any)=>p.image_url?.endsWith(".mp4")))
+
+      alert("Reel Uploaded to R2! 🔥 11 sec reel success!")
+    } catch(err:any){
+      console.error(err)
+      alert("Upload Error - " + err.message)
+    }
     finally { setUploading(false); if(fileRef.current) fileRef.current.value="" }
   }
 
@@ -125,7 +146,6 @@ export default function ReelsPage() {
     const video = videoRefs.current[id] as HTMLVideoElement
     if(!video) return
     const isMuted = video.muted
-    // mute all others
     Object.values(videoRefs.current).forEach((v:any)=>{ if(v) v.muted = true })
     video.muted =!isMuted
     setMutedMap((prev:any)=>({...prev, [id]:!isMuted? true : false}))
@@ -144,7 +164,7 @@ export default function ReelsPage() {
           <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={handleReelUpload} />
         </label>
         <span className="ml-3 font-bold text-[18px] text-white">Reels</span>
-        {uploading && <span className="ml-3 text-[11px] bg-blue-600 text-white px-2.5 py-1 rounded-full animate-pulse font-bold flex gap-1 items-center"><Loader2 size={12} className="animate-spin"/> Uploading Full HD...</span>}
+        {uploading && <span className="ml-3 text-[11px] bg-blue-600 text-white px-2.5 py-1 rounded-full animate-pulse font-bold flex gap-1 items-center"><Loader2 size={12} className="animate-spin"/> Uploading to R2...</span>}
       </div>
 
       <div ref={containerRef} className="w-full h-full overflow-y-scroll snap-y snap-mandatory">
@@ -227,4 +247,4 @@ export default function ReelsPage() {
       <style jsx>{`.snap-y::-webkit-scrollbar{display:none}`}</style>
     </div>
   )
-                                              }
+  }
