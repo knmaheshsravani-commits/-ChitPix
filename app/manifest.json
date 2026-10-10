@@ -1,11 +1,15 @@
 {
   "name": "ChitPix - Share Your World",
   "short_name": "ChitPix",
-  "description": "Instagram clone with Reels, Photo, Profile",
+  "description": "Instagram clone with Reels, Photo, Profile - Share Your Memories With All Friends!",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ff3040",
+  "categories": ["social", "photo", "entertainment"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icon-192.png",
@@ -18,6 +22,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "ChitPix Feed"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ChitPix Mobile"
     }
   ]
 }
