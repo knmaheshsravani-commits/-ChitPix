@@ -2,6 +2,11 @@
 import { useState, useEffect, useRef } from "react"
 import BottomNav from "../components/BottomNav"
 import { useRouter } from "next/navigation"
+import {
+  Heart, MessageCircle, Repeat2, Send,
+  Bookmark, Volume2, VolumeX, Music2,
+  Plus, X, Link2, MoreHorizontal
+} from "lucide-react"
 
 export default function ReelsPage() {
   const router = useRouter()
@@ -10,7 +15,7 @@ export default function ReelsPage() {
   const [saved, setSaved] = useState<any>({})
   const [followed, setFollowed] = useState<any>({})
   const [reposted, setReposted] = useState<any>({})
-  const [heart, setHeart] = useState<number|null>(null)
+  const [heart, setHeart] = useState<number | null>(null)
   const [showComments, setShowComments] = useState<any>(null)
   const [commentText, setCommentText] = useState("")
   const [commentsList, setCommentsList] = useState<any>({})
@@ -21,318 +26,252 @@ export default function ReelsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const videoRefs = useRef<any>({})
 
-  useEffect(()=>{
-    try {
-      // ✅ FIX - reels_data first chudu, lekapothe posts
-      const savedReels = localStorage.getItem("reels_data")
-      const p = localStorage.getItem("posts")
-      let posts = []
-      if(savedReels) posts = JSON.parse(savedReels)
-      else if(p) posts = JSON.parse(p)
-
-      if(posts.length===0){
-        posts=[
-          {id:1, image:"https://i.imgur.com/8Km9tLL.png", username:"Knmahesh", caption:"My M logo design 🔥 Knmahesh", music:"Knmahesh • Original audio", likes:1, comments:0, reposts:0, shares:4, saves:0},
-          {id:2, image:"https://picsum.photos/600/800?random=5", username:"zepto_rider_", caption:"Single boy life 😔❤️ 15 hrs duty", music:"Original audio", likes:5222, comments:48, reposts:40, shares:263, saves:131},
-        ]
-      }
-      posts = posts.map((r:any)=>({likes:1, comments:0, reposts:0, shares:4, saves:0, music:"Original audio",...r}))
-      setReels(posts)
-    } catch {}
-    setLiked(JSON.parse(localStorage.getItem("reels_liked")||"{}"))
-    setSaved(JSON.parse(localStorage.getItem("reels_saved")||"{}"))
-    setFollowed(JSON.parse(localStorage.getItem("reels_followed")||"{}"))
-    setReposted(JSON.parse(localStorage.getItem("reels_reposted")||"{}"))
-    setCommentsList(JSON.parse(localStorage.getItem("reels_comments")||"{}"))
-    const n = localStorage.getItem("chitpix_username")
-    if(n) setCurrentUser(n)
-  },[])
-
-  const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
-
-  const toBase64 = (file:File):Promise<string> => {
-    return new Promise((res, rej)=>{
-      const r = new FileReader()
-      r.readAsDataURL(file)
-      r.onload = ()=> res(r.result as string)
-      r.onerror = rej
-    })
-  }
-
-  const handleReelUpload = async (e:any) => {
-    const file = e.target.files?.[0]
-    if(!file) return
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append("file", file)
-      let uploadedUrl = ""
-      try {
-        const res = await fetch("/api/upload", { method:"POST", body:formData })
-        const data = await res.json()
-        uploadedUrl = data.url || data.secure_url || ""
-      } catch {}
-      if(!uploadedUrl) {
-        uploadedUrl = await toBase64(file)
-      }
-      const newReel = {
-        id: Date.now(),
-        image: uploadedUrl,
-        video: file.type.startsWith("video/")? uploadedUrl : null,
-        isVideo: file.type.startsWith("video/"),
-        username:"Knmahesh",
-        caption: file.type.startsWith("video/")? "New Reel 🔥 #chitpix" : "New post 🔥 #chitpix",
-        music:"Knmahesh • Original audio",
-        likes:0, comments:0, reposts:0, shares:0, saves:0
-      }
-      const updated = [newReel,...reels]
-      setReels(updated)
-      try {
-        localStorage.setItem("posts", JSON.stringify(updated))
-        localStorage.setItem("reels_data", JSON.stringify(updated))
-      } catch {
-        const trimmed = updated.slice(0,2)
-        try {
-          localStorage.setItem("posts", JSON.stringify(trimmed))
-          localStorage.setItem("reels_data", JSON.stringify(trimmed))
-        } catch {}
-      }
-    } catch(err) {
-      console.log("Upload error", err)
-    } finally {
-      setUploading(false)
-      if(fileRef.current) fileRef.current.value = ""
-    }
-  }
-
-  const handleLike = (id:number, double=false)=>{
-    const isLiked =!liked[id]
-    const nl = {...liked, [id]:isLiked}
-    setLiked(nl); saveLS("reels_liked", nl)
-    const updated = reels.map(r=>r.id===id?{...r, likes: isLiked? r.likes+1 : Math.max(0,r.likes-1)}:r)
-    setReels(updated)
-    localStorage.setItem("posts", JSON.stringify(updated))
-    localStorage.setItem("reels_data", JSON.stringify(updated))
-    if(double && isLiked){ setHeart(id); setTimeout(()=>setHeart(null), 900) }
-  }
-
-  const handleSave = (id:number)=>{
-    const ns = {...saved, [id]:!saved[id]}
-    setSaved(ns); saveLS("reels_saved", ns)
-    setReels(prev=>{
-      const u = prev.map(r=>r.id===id?{...r, saves: ns[id]? r.saves+1 : Math.max(0,r.saves-1)}:r)
-      localStorage.setItem("posts", JSON.stringify(u))
-      localStorage.setItem("reels_data", JSON.stringify(u))
-      return u
-    })
-  }
-  const handleRepost = (id:number)=>{
-    const nr = {...reposted, [id]:!reposted[id]}
-    setReposted(nr); saveLS("reels_reposted", nr)
-    setReels(prev=>{
-      const u = prev.map(r=>r.id===id?{...r, reposts: nr[id]? r.reposts+1 : Math.max(0,r.reposts-1)}:r)
-      localStorage.setItem("posts", JSON.stringify(u))
-      localStorage.setItem("reels_data", JSON.stringify(u))
-      return u
-    })
-  }
-  const handleFollow = (id:number)=>{
-    const nf={...followed, [id]:!followed[id]}
-    setFollowed(nf); saveLS("reels_followed", nf)
-  }
-
-  const handleAddComment = ()=>{
-    if(!commentText.trim() ||!showComments) return
-    const id = showComments.id
-    const newComment = {text:commentText, user:"Knmahesh", time:"Just now"}
-    const updated = {...commentsList, [id]:[...(commentsList[id]||[]), newComment]}
-    setCommentsList(updated); saveLS("reels_comments", updated)
-    setReels(prev=>{
-      const u = prev.map(r=>r.id===id?{...r, comments:r.comments+1}:r)
-      localStorage.setItem("posts", JSON.stringify(u))
-      localStorage.setItem("reels_data", JSON.stringify(u))
-      return u
-    })
-    setCommentText("")
-  }
-
-  const doShare = (target:string)=>{
-    if(!showShare) return
-    const updated = reels.map((r:any)=> r.id===showShare.id? {...r, shares:r.shares+1} : r)
-    setReels(updated)
-    localStorage.setItem("posts", JSON.stringify(updated))
-    localStorage.setItem("reels_data", JSON.stringify(updated))
-    localStorage.setItem("chitpix_shared_post", JSON.stringify(showShare))
-    localStorage.setItem("chitpix_share_target", target)
-    setShowShare(null)
-    window.location.href="/messages"
-  }
-
-  const toggleSound = (id:number)=>{
-    const isCurrentlyMuted = mutedMap[id]?? true
-    const newMap:any = {}
-    Object.keys(videoRefs.current).forEach(k=>{ newMap[k] = true })
-    newMap[id] =!isCurrentlyMuted
-    setMutedMap(newMap)
-    Object.keys(videoRefs.current).forEach(k=>{
-      const v = videoRefs.current[k]
-      if(!v) return
-      if(Number(k) === id){
-        v.muted =!isCurrentlyMuted
-        if(isCurrentlyMuted) v.play().catch(()=>{})
-      } else {
-        v.muted = true
-        v.pause()
-      }
-    })
-  }
-
-  useEffect(()=>{
-    const scroller = document.querySelector('.snap-y.snap-mandatory') as any
-    if(!scroller) return
-    const onScroll = ()=>{
-      Object.entries(videoRefs.current).forEach(([key, vid]:any)=>{
-        if(!vid) return
-        const r = vid.getBoundingClientRect()
-        const visible = r.top > -200 && r.top < window.innerHeight - 200
-        if(!visible){
-          vid.pause()
-          vid.muted = true
-        }
+  useEffect(() => {
+    fetch("/api/posts?cache=no-store", { cache: "no-store" })
+     .then(r => r.json())
+     .then((posts: any[]) => {
+        let vids = posts.filter(p =>
+          p.image_url?.includes("/reels/") ||
+          p.image_url?.match(/\.(mp4|mov|webm)$/) ||
+          p.type === "reels"
+        )
+        if (vids.length === 0) vids = posts // fallback
+        setReels(vids)
       })
-    }
-    scroller.addEventListener('scroll', onScroll, {passive:true})
-    return ()=> scroller.removeEventListener('scroll', onScroll)
+     .catch(() => {})
+    setLiked(JSON.parse(localStorage.getItem("reels_liked") || "{}"))
+    setSaved(JSON.parse(localStorage.getItem("reels_saved") || "{}"))
+    setFollowed(JSON.parse(localStorage.getItem("reels_followed") || "{}"))
+    setReposted(JSON.parse(localStorage.getItem("reels_reposted") || "{}"))
+    setCommentsList(JSON.parse(localStorage.getItem("reels_comments") || "{}"))
+    const n = localStorage.getItem("chitpix_username")
+    if (n) setCurrentUser(n)
   }, [])
 
-  const handleProfileClick = (username:string)=>{
-    if(username.toLowerCase() === currentUser.toLowerCase() || username.toLowerCase().includes("knmahesh")){
-      router.push("/profile")
-    } else {
-      router.push(`/profile?user=${username}`)
-    }
+  const saveLS = (k: string, v: any) => localStorage.setItem(k, JSON.stringify(v))
+
+  // 100% R2 ONLY - NO BASE64 - Full HD
+  const handleReelUpload = async (e: any) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 100 * 1024 * 1024) return alert("Max 100MB bro!")
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("type", "reels")
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      const data = await res.json()
+      if (!data.url) throw new Error("R2 upload failed")
+
+      const newReel = {
+        image_url: data.url, // Full HD R2 URL
+        caption: "New Reel 2026 🔥 #chitpix",
+        username: currentUser,
+        type: "reels",
+        likes: 0, comments: 0, reposts: 0, shares: 0, saves: 0,
+        music: "Original audio"
+      }
+      await fetch("/api/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newReel)
+      })
+      const updated = [{ id: Date.now(), image: data.url, video: data.url, isVideo: true,...newReel },...reels]
+      setReels(updated)
+    } catch (err) { alert("Upload failed - Check R2 env") }
+    finally { setUploading(false); if (fileRef.current) fileRef.current.value = "" }
+  }
+
+  const handleLike = (id: number, dbl = false) => {
+    const isLiked =!liked[id]
+    const nl = {...liked, [id]: isLiked }
+    setLiked(nl); saveLS("reels_liked", nl)
+    setReels(prev => prev.map(r => r.id === id? {...r, likes: isLiked? (r.likes || 0) + 1 : Math.max(0, (r.likes || 1) - 1) } : r))
+    if (dbl && isLiked) { setHeart(id); setTimeout(() => setHeart(null), 900) }
+  }
+  const handleSave = (id: number) => {
+    const ns = {...saved, [id]:!saved[id] }; setSaved(ns); saveLS("reels_saved", ns)
+  }
+  const handleRepost = (id: number) => {
+    const nr = {...reposted, [id]:!reposted[id] }; setReposted(nr); saveLS("reels_reposted", nr)
+  }
+  const handleFollow = (id: number) => {
+    const nf = {...followed, [id]:!followed[id] }; setFollowed(nf); saveLS("reels_followed", nf)
+  }
+  const handleAddComment = () => {
+    if (!commentText.trim() ||!showComments) return
+    const id = showComments.id
+    const newComment = { text: commentText, user: currentUser, time: "Just now" }
+    const updated = {...commentsList, [id]: [...(commentsList[id] || []), newComment] }
+    setCommentsList(updated); saveLS("reels_comments", updated)
+    setCommentText("")
+  }
+  const doShare = (target: string) => {
+    if (!showShare) return
+    localStorage.setItem("chitpix_shared_post", JSON.stringify(showShare))
+    localStorage.setItem("chitpix_share_target", target)
+    setShowShare(null); router.push("/messages")
+  }
+  const toggleSound = (id: number) => {
+    const isMuted = mutedMap[id]?? true
+    const newMap: any = {}; Object.keys(videoRefs.current).forEach(k => newMap[k] = true)
+    newMap[id] =!isMuted; setMutedMap(newMap)
+    Object.entries(videoRefs.current).forEach(([k, v]: any) => {
+      if (!v) return
+      if (Number(k) === id) { v.muted =!isMuted; if (isMuted) v.play().catch(() => { }) }
+      else { v.muted = true; v.pause() }
+    })
+  }
+  const handleProfileClick = (username: string) => {
+    if (username.toLowerCase() === currentUser.toLowerCase() || username.toLowerCase().includes("knmahesh")) router.push("/profile")
+    else router.push(`/profile?user=${username}`)
   }
 
   return (
-    <div className="w-full h-[100dvh] bg-white relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center px-4 py-3 bg-white/80 backdrop-blur">
-        <label className="text-[26px] cursor-pointer active:scale-90 w-8 h-8 flex items-center justify-center rounded-full bg-black text-white">
-          +
-          <input ref={fileRef} type="file" accept="video/*,image/*" className="hidden" onChange={handleReelUpload} />
+    <div className="w-full h-[100dvh] bg-black relative overflow-hidden">
+      {/* TOP 2026 HEADER */}
+      <div className="absolute top-0 left-0 right-0 z-30 flex items-center px-4 py-3 bg-gradient-to-b from-black/60 to-transparent">
+        <label className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center cursor-pointer active:scale-90 transition shadow-xl">
+          <Plus size={20} strokeWidth={2.5} />
+          <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={handleReelUpload} />
         </label>
-        <span className="ml-2 font-bold text-[18px]">Reels</span><span className="ml-1 text-[12px]">▼</span>
-        <span className="ml-5 text-black/40 font-medium">Friends</span>
-        {uploading && <span className="ml-3 text-[12px] text-blue-500 animate-pulse font-bold">Uploading...</span>}
-        <div className="ml-auto w-7 h-7 rounded-full bg-gray-100 border"></div>
+        <span className="ml-3 font-bold text-[17px] text-white tracking-tight">Reels</span>
+        {uploading && <span className="ml-3 text-[11px] text-white bg-blue-600 px-2 py-1 rounded-full animate-pulse">Uploading Full HD...</span>}
       </div>
 
       <div className="w-full h-full overflow-y-scroll snap-y snap-mandatory">
-        {reels.map((reel:any)=>(
-          <div key={reel.id} className="w-full h-[100dvh] snap-start relative bg-black flex justify-center">
-            <div className="relative w-full max-w-[440px] h-full bg-black flex items-center justify-center overflow-hidden" onDoubleClick={()=>handleLike(reel.id,true)}>
-              {reel.isVideo || reel.video? (
-                <video
-                  ref={(el:any)=>videoRefs.current[reel.id]=el}
-                  src={reel.video || reel.image}
-                  className="w-full h-full object-contain"
-                  autoPlay
-                  loop
-                  muted={mutedMap[reel.id]?? true}
-                  playsInline
-                  onClick={()=>toggleSound(reel.id)}
-                />
-              ) : (
-                <img src={reel.image} alt="" className="w-full h-full object-contain bg-white" draggable={false} />
-              )}
-              {(reel.isVideo || reel.video) && (
-                <button onClick={()=>toggleSound(reel.id)} className="absolute top-20 left-4 z-20 bg-black/60 backdrop-blur px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                  <span>{(mutedMap[reel.id]?? true)? "🔇" : "🔊"}</span>
-                  <span className="text-white text-[11px] font-bold">{(mutedMap[reel.id]?? true)? "Tap for sound" : "Sound on"}</span>
-                </button>
-              )}
-              {heart===reel.id && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"><span className="text-[90px] animate-[bounce_0.9s]">❤️</span></div>)}
-              <div className="absolute right-2 bottom-28 flex flex-col items-center gap-6 z-20">
-                <button onClick={()=>handleLike(reel.id)} className="flex flex-col items-center active:scale-90 transition">
-                  <div className="w-7 h-7"><svg viewBox="0 0 24 24" fill={liked[reel.id]? "#ff3040" : "none"} stroke={liked[reel.id]? "#ff3040" : "white"} strokeWidth="1.7"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-                  <span className="text-[12px] font-bold text-white mt-1">{reel.likes}</span>
-                </button>
-                <button onClick={()=>setShowComments(reel)} className="flex flex-col items-center active:scale-90 transition">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                  <span className="text-[12px] font-bold text-white mt-1">{reel.comments}</span>
-                </button>
-                <button onClick={()=>handleRepost(reel.id)} className="flex flex-col items-center active:scale-90 transition">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill={reposted[reel.id]? "white" : "none"} stroke="white" strokeWidth="1.7"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                  <span className="text-[12px] font-bold text-white mt-1">{reel.reposts>0? reel.reposts : ""}</span>
-                </button>
-                <button onClick={()=>setShowShare(reel)} className="flex flex-col items-center active:scale-90 transition">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  <span className="text-[12px] font-bold text-white mt-1">{reel.shares}</span>
-                </button>
-                <button onClick={()=>handleSave(reel.id)} className="flex flex-col items-center active:scale-90 transition">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill={saved[reel.id]? "white" : "none"} stroke="white" strokeWidth="1.7"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                  <span className="text-[12px] font-bold text-white mt-1">{reel.saves>0? reel.saves : "0"}</span>
-                </button>
-                <div className="w-7 h-7 rounded-[6px] bg-gradient-to-br from-pink-500 to-orange-400 border border-white/20 shadow-sm mt-1"></div>
-              </div>
-              <div className="absolute left-3 bottom-[88px] right-16 z-10">
-                <div className="flex items-center gap-2">
-                  <button onClick={()=>handleProfileClick(reel.username)} className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center font-bold text-[13px] border active:scale-90">K</button>
-                  <button onClick={()=>handleProfileClick(reel.username)} className="font-bold text-[14px] text-white truncate active:underline">Knmahesh...</button>
-                  <button onClick={()=>handleFollow(reel.id)} className={`px-4 py-1 rounded-full text-[12px] font-bold border transition ${followed[reel.id]? 'bg-white text-black border-white' : 'bg-transparent text-white border-white'}`}>{followed[reel.id]? 'Following' : 'Follow'}</button>
+        {reels.map((reel: any) => {
+          const vidSrc = reel.video || reel.image || reel.image_url
+          const isVideo = reel.isVideo || vidSrc?.includes(".mp4") || vidSrc?.includes("/reels/")
+          return (
+            <div key={reel.id} className="w-full h-[100dvh] snap-start relative bg-black flex justify-center">
+              <div className="relative w-full max-w-[440px] h-full bg-black flex items-center justify-center overflow-hidden" onDoubleClick={() => handleLike(reel.id, true)}>
+
+                {isVideo? (
+                  <video
+                    ref={(el: any) => videoRefs.current[reel.id] = el}
+                    src={vidSrc}
+                    className="w-full h-full object-cover"
+                    autoPlay loop muted={mutedMap[reel.id]?? true} playsInline
+                    onClick={() => toggleSound(reel.id)}
+                  />
+                ) : (
+                  <img src={vidSrc} alt="" className="w-full h-full object-cover" draggable={false} />
+                )}
+
+                {/* SOUND 2026 ICON */}
+                {isVideo && (
+                  <button onClick={() => toggleSound(reel.id)} className="absolute top-20 left-4 z-20 bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full flex items-center gap-2">
+                    {(mutedMap[reel.id]?? true)? <VolumeX size={14} className="text-white" /> : <Volume2 size={14} className="text-white" />}
+                    <span className="text-white text-[11px] font-semibold">{(mutedMap[reel.id]?? true)? "Tap for sound" : "Sound on"}</span>
+                  </button>
+                )}
+
+                {/* HEART 2026 ANIMATION */}
+                {heart === reel.id && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                    <Heart size={88} className="text-white fill-white animate-[ping_0.9s_ease]" />
+                  </div>
+                )}
+
+                {/* RIGHT ACTIONS - 2026 NEW ICONS */}
+                <div className="absolute right-2.5 bottom-28 flex flex-col items-center gap-5 z-20">
+                  <button onClick={() => handleLike(reel.id)} className="flex flex-col items-center active:scale-85 transition">
+                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
+                      <Heart size={26} strokeWidth={1.8} className={`${liked[reel.id]? "fill-[#ff3040] text-[#ff3040]" : "text-white"}`} />
+                    </div>
+                    <span className="text-[12px] font-semibold text-white mt-1.5">{reel.likes || 0}</span>
+                  </button>
+
+                  <button onClick={() => setShowComments(reel)} className="flex flex-col items-center active:scale-85 transition">
+                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
+                      <MessageCircle size={26} strokeWidth={1.8} className="text-white" />
+                    </div>
+                    <span className="text-[12px] font-semibold text-white mt-1.5">{reel.comments || 0}</span>
+                  </button>
+
+                  <button onClick={() => handleRepost(reel.id)} className="flex flex-col items-center active:scale-85 transition">
+                    <div className={`w-12 h-12 rounded-full backdrop-blur-md flex items-center justify-center border border-white/10 ${reposted[reel.id]? "bg-white" : "bg-white/10"}`}>
+                      <Repeat2 size={26} strokeWidth={1.8} className={reposted[reel.id]? "text-black" : "text-white"} />
+                    </div>
+                    <span className="text-[12px] font-semibold text-white mt-1.5">{reel.reposts || ""}</span>
+                  </button>
+
+                  <button onClick={() => setShowShare(reel)} className="flex flex-col items-center active:scale-85 transition">
+                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
+                      <Send size={24} strokeWidth={1.8} className="text-white" />
+                    </div>
+                    <span className="text-[12px] font-semibold text-white mt-1.5">{reel.shares || 0}</span>
+                  </button>
+
+                  <button onClick={() => handleSave(reel.id)} className="flex flex-col items-center active:scale-85 transition">
+                    <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10">
+                      <Bookmark size={24} strokeWidth={1.8} className={`${saved[reel.id]? "fill-white text-white" : "text-white"}`} />
+                    </div>
+                  </button>
+
+                  <div className="w-8 h-8 rounded-[8px] bg-gradient-to-br from-violet-500 to-fuchsia-500 border border-white/20 mt-1 shadow-lg"></div>
                 </div>
-                <p className="text-[12px] text-white/80 mt-1">♫ {reel.music}</p>
-                <p className="text-[13px] text-white mt-1 truncate">{reel.caption}</p>
+
+                {/* BOTTOM INFO - 2026 */}
+                <div className="absolute left-3 bottom-[88px] right-[70px] z-10">
+                  <div className="flex items-center gap-2.5">
+                    <button onClick={() => handleProfileClick(reel.username)} className="w-8 h-8 rounded-full bg-white flex items-center justify-center font-bold text-[12px] text-black active:scale-90">M</button>
+                    <button onClick={() => handleProfileClick(reel.username)} className="font-bold text-[14px] text-white truncate">{reel.username}</button>
+                    <button onClick={() => handleFollow(reel.id)} className={`px-3.5 py-1 rounded-full text-[12px] font-bold border transition ${followed[reel.id]? 'bg-white text-black border-white' : 'bg-transparent text-white border-white/60'}`}>{followed[reel.id]? 'Following' : 'Follow'}</button>
+                  </div>
+                  <p className="text-[13px] text-white mt-2 line-clamp-2 leading-4">{reel.caption || reel.image_url}</p>
+                  <div className="flex items-center gap-2 mt-2 text-white/90">
+                    <Music2 size={13} />
+                    <p className="text-[11px]">{reel.music || "Original audio"} • {reel.username}</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
+      {/* COMMENTS - 2026 BOTTOM SHEET */}
       {showComments && (
-        <div className="absolute inset-0 z-[100] bg-black/30 flex items-end" onClick={()=>setShowComments(null)}>
-          <div className="bg-white w-full max-w-[440px] mx-auto rounded-t-[18px] h-[85%] flex flex-col relative" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mt-3"></div>
-            <p className="font-bold text-center mt-3 text-[15px]">Comments</p>
-            <div className="flex-1 overflow-y-auto px-4 mt-4 space-y-3 pb-[120px]">
-              {(commentsList[showComments.id]||[]).length===0 && <p className="text-center text-gray-400 text-[13px] mt-10">No comments yet. Be first! ❤️</p>}
-              {(commentsList[showComments.id]||[]).map((c:any,i:number)=>(
-                <div key={i} className="flex gap-2"><div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">M</div><div><p className="text-[13px]"><b>{c.user}</b> {c.text}</p><p className="text-[11px] text-gray-500">{c.time}</p></div></div>
+        <div className="absolute inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-end" onClick={() => setShowComments(null)}>
+          <div className="bg-[#121212] w-full max-w-[440px] mx-auto rounded-t-[24px] h-[75%] flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mt-3"></div>
+            <div className="flex justify-between items-center p-4 border-b border-white/10">
+              <p className="font-bold text-white">Comments</p>
+              <button onClick={() => setShowComments(null)} className="bg-white/10 p-2 rounded-full"><X size={16} className="text-white" /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 mt-4 space-y-4 pb-[120px]">
+              {(commentsList[showComments.id] || []).length === 0 && <p className="text-center text-white/40 text-[13px] mt-10">No comments yet. Be first!</p>}
+              {(commentsList[showComments.id] || []).map((c: any, i: number) => (
+                <div key={i} className="flex gap-3"><div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center text-[11px] font-bold">M</div><div><p className="text-[13px] text-white"><b>{c.user}</b> {c.text}</p><p className="text-[11px] text-white/40">{c.time}</p></div></div>
               ))}
             </div>
-            <div className="absolute bottom-[75px] left-0 right-0 border-t p-3 flex gap-2 items-center bg-white">
-              <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold text-[10px]">M</div>
-              <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-[13px] outline-none border focus:border-black" onKeyDown={e=>{if(e.key==='Enter') handleAddComment()}} autoFocus />
-              <button onClick={handleAddComment} className="text-blue-500 font-bold text-[14px] px-2">Post</button>
+            <div className="absolute bottom-[75px] left-0 right-0 border-t border-white/10 p-3 flex gap-2 items-center bg-[#121212]">
+              <input value={commentText} onChange={e => setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-white/10 rounded-full px-4 py-2.5 text-[13px] text-white outline-none" onKeyDown={e => { if (e.key === 'Enter') handleAddComment() }} autoFocus />
+              <button onClick={handleAddComment} className="text-blue-400 font-bold text-[14px] px-2">Post</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* SHARE - 2026 */}
       {showShare && (
-        <div className="absolute inset-0 z-[60] bg-black/40 flex items-end justify-center" onClick={()=>setShowShare(null)}>
-          <div className="bg-white w-full max-w-[440px] rounded-t-[20px] p-4 pb-8 animate-[slideUp_0.25s]" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
-            <p className="font-bold text-center text-[16px] mb-4">Share</p>
-            <div className="grid grid-cols-4 gap-4 mb-6">
-              {[{name:"ChitPix Team", letter:"C"},{name:"K N Mahesh", letter:"K"},{name:"Best Friend", letter:"B"},{name:"Mom", letter:"M"}].map((u:any,i:number)=>(
-                <div key={i} onClick={()=>doShare(u.name)} className="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95">
-                  <div className="w-[56px] h-[56px] rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-[18px]">{u.letter}</div>
-                  <p className="text-[11px] text-center truncate w-14">{u.name.split(" ")[0]}</p>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-2">
-              <button onClick={()=>{ navigator.clipboard.writeText("https://chitpix.com/reels/"+showShare.id); setShowShare(null); alert("Link copied! 🔗")}} className="w-full flex items-center gap-3 bg-gray-100 py-3.5 px-4 rounded-xl font-medium text-[14px]">
-                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center">🔗</div> Copy Link
-              </button>
-              <button onClick={()=>setShowShare(null)} className="w-full bg-black text-white py-3.5 rounded-xl font-bold text-[14px]">Close</button>
-            </div>
+        <div className="absolute inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-end justify-center" onClick={() => setShowShare(null)}>
+          <div className="bg-[#121212] w-full max-w-[440px] rounded-t-[24px] p-5 pb-10" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-5"></div>
+            <p className="font-bold text-center text-white mb-5">Share</p>
+            <button onClick={() => { navigator.clipboard.writeText("https://chitpix.com/reels/" + showShare.id); setShowShare(null) }} className="w-full flex items-center gap-3 bg-white/10 py-3.5 px-4 rounded-2xl font-medium text-[14px] text-white mb-3">
+              <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center"><Link2 size={18} className="text-black" /></div> Copy Link
+            </button>
+            <button onClick={() => setShowShare(null)} className="w-full bg-white text-black py-3.5 rounded-2xl font-bold text-[14px]">Close</button>
           </div>
         </div>
       )}
 
       <BottomNav />
-      <style jsx>{`.snap-y{scrollbar-width:none}.snap-y::-webkit-scrollbar{display:none} @keyframes slideUp{from{transform:translateY(100%)} to{transform:translateY(0)}}`}</style>
+      <style jsx>{`.snap-y{scrollbar-width:none}.snap-y::-webkit-scrollbar{display:none}`}</style>
     </div>
   )
-    }
+      }
