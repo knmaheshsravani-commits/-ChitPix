@@ -175,7 +175,7 @@ export default function HomePage() {
       const { error } = await supabase.from("stories").insert({
         image_url: presignData.publicUrl,
         username: username,
-        user_id: currentUserId || '00000000-0000-0000-0000-000000000000'
+        user_id: null
       })
       if (error) throw error
       fetchStories()
