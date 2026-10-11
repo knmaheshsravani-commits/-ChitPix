@@ -170,23 +170,23 @@ export default function HomePage() {
       if (!presignData.uploadUrl ||!presignData.publicUrl) throw new Error("R2 Presign failed")
 
       const put = await fetch(presignData.uploadUrl, { method: "PUT", body: f, headers: { "Content-Type": f.type } })
-      if (!put.ok) throw new Error("R2 upload fail")
+          if (!put.ok) throw new Error("R2 upload fail")
 
-      const { error } = await supabase.from("stories").insert({
-      let finalUsername = username
-      if (!finalUsername) {
-        const { data } = await supabase.auth.getUser()
-        finalUsername = data?.user?.user_metadata?.username || data?.user?.email?.split('@')[0] || "user"
-      }
+    let finalUsername = username
+    if (!finalUsername) {
+      const { data } = await supabase.auth.getUser()
+      finalUsername = data?.user?.user_metadata?.username || data?.user?.email?.split('@')[0] || "user"
+    }
 
-      const { error } = await supabase.from("stories").insert({
-        image_url: presignData.publicUrl,
-        username: finalUsername,
-        user_id: null
-      })
-      if (error) throw error
-      fetchStories()
-      alert("Story Added! 🔥")
+    const { error } = await supabase.from("stories").insert({
+      image_url: presignData.publicUrl,
+      username: finalUsername,
+      user_id: null
+    })
+
+    if (error) throw error
+    fetchStories()
+    alert("Story Added! 🔥")
     } catch (err: any) {
       alert("Story Error: " + err.message)
     }
