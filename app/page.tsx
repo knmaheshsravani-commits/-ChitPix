@@ -173,8 +173,6 @@ export default function HomePage() {
       if (!put.ok) throw new Error("R2 upload fail")
 
       const { error } = await supabase.from("stories").insert({
-        image_url: presignData.publicUrl,
-        // USERNAME DYNAMIC - Yavaru pedite valla peru vastadi
       let finalUsername = username
       if (!finalUsername) {
         const { data } = await supabase.auth.getUser()
