@@ -151,11 +151,10 @@ export default function HomePage() {
     setUploading(false)
   }
 
-  // STORIES UPLOAD - R2 CONNECTED 100% WORKING
+ // STORIES UPLOAD - FIXED - NO LOGIN NEEDED - R2 CONNECTED
   const handleStoryUpload = async (e: any) => {
     const f = e.target.files[0]
     if (!f) return
-    if (!currentUserId) return alert("Login avvaledu bro - refresh kottu")
     try {
       const presignRes = await fetch("/api/r2-presign", {
         method: "POST",
@@ -169,11 +168,18 @@ export default function HomePage() {
       })
       const presignData = await presignRes.json()
       if (!presignData.uploadUrl ||!presignData.publicUrl) throw new Error("R2 Presign failed")
-      await fetch(presignData.uploadUrl, { method: "PUT", body: f, headers: { "Content-Type": f.type } })
-      const { error } = await supabase.from("stories").insert({ user_id: currentUserId, image_url: presignData.publicUrl })
+
+      const put = await fetch(presignData.uploadUrl, { method: "PUT", body: f, headers: { "Content-Type": f.type } })
+      if (!put.ok) throw new Error("R2 upload fail")
+
+      const { error } = await supabase.from("stories").insert({
+        image_url: presignData.publicUrl,
+        username: username,
+        user_id: currentUserId || '00000000-0000-0000-0000-000000000000'
+      })
       if (error) throw error
       fetchStories()
-      alert("Story Added! 24h lo auto delete 🔥")
+      alert("Story Added! 🔥")
     } catch (err: any) {
       alert("Story Error: " + err.message)
     }
