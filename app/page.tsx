@@ -174,7 +174,16 @@ export default function HomePage() {
 
       const { error } = await supabase.from("stories").insert({
         image_url: presignData.publicUrl,
-        username: username,
+        // USERNAME DYNAMIC - Yavaru pedite valla peru vastadi
+      let finalUsername = username
+      if (!finalUsername) {
+        const { data } = await supabase.auth.getUser()
+        finalUsername = data?.user?.user_metadata?.username || data?.user?.email?.split('@')[0] || "user"
+      }
+
+      const { error } = await supabase.from("stories").insert({
+        image_url: presignData.publicUrl,
+        username: finalUsername,
         user_id: null
       })
       if (error) throw error
