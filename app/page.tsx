@@ -16,6 +16,14 @@ type Post = {
   type?: string
 }
 
+type Story = {
+  id: string
+  user_id: string
+  image_url: string
+  created_at: string
+  expires_at: string
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [caption, setCaption] = useState("")
@@ -32,16 +40,30 @@ export default function HomePage() {
   const [userPhoto, setUserPhoto] = useState("")
   const lastTap = useRef(0)
 
+  // STORIES - KOTHA STATES BRO
+  const [stories, setStories] = useState<Story[]>([])
+  const [activeStory, setActiveStory] = useState<Story | null>(null)
+  const [storyProgress, setStoryProgress] = useState(0)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
   useEffect(() => {
     const savedName = localStorage.getItem("chitpix_username")
     const savedPhoto = localStorage.getItem("chitpix_profile_photo")
     if (savedName) setUsername(savedName)
     if (savedPhoto) setUserPhoto(savedPhoto)
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setCurrentUserId(data.user.id)
+    })
+
     fetchPosts()
+    fetchStories()
+
     const channel = supabase
-     .channel("posts_realtime_home_final")
-     .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => fetchPosts())
-     .subscribe()
+    .channel("posts_realtime_home_final")
+    .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => fetchPosts())
+    .on("postgres_changes", { event: "*", schema: "public", table: "stories" }, () => fetchStories())
+    .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [])
 
@@ -49,6 +71,26 @@ export default function HomePage() {
     const { data, error } = await supabase.from("posts").select("*").order("created_at", { ascending: false }).limit(100)
     if (!error && data) setPosts(data as any)
   }
+
+  const fetchStories = async () => {
+    const { data } = await supabase.from("stories").select("*").gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false })
+    if (data) setStories(data)
+  }
+
+  useEffect(() => {
+    if (!activeStory) return
+    setStoryProgress(0)
+    const interval = setInterval(() => {
+      setStoryProgress(p => {
+        if (p >= 100) {
+          setActiveStory(null)
+          return 0
+        }
+        return p + 2
+      })
+    }, 80)
+    return () => clearInterval(interval)
+  }, [activeStory])
 
   const handleFileChange = (e: any) => {
     const f = e.target.files[0]
@@ -109,6 +151,34 @@ export default function HomePage() {
     setUploading(false)
   }
 
+  // STORIES UPLOAD - R2 CONNECTED 100% WORKING
+  const handleStoryUpload = async (e: any) => {
+    const f = e.target.files[0]
+    if (!f) return
+    if (!currentUserId) return alert("Login avvaledu bro - refresh kottu")
+    try {
+      const presignRes = await fetch("/api/r2-presign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: `story_${Date.now()}_${f.name}`,
+          fileType: f.type,
+          contentType: f.type,
+          folder: "stories"
+        }),
+      })
+      const presignData = await presignRes.json()
+      if (!presignData.uploadUrl ||!presignData.publicUrl) throw new Error("R2 Presign failed")
+      await fetch(presignData.uploadUrl, { method: "PUT", body: f, headers: { "Content-Type": f.type } })
+      const { error } = await supabase.from("stories").insert({ user_id: currentUserId, image_url: presignData.publicUrl })
+      if (error) throw error
+      fetchStories()
+      alert("Story Added! 24h lo auto delete 🔥")
+    } catch (err: any) {
+      alert("Story Error: " + err.message)
+    }
+  }
+
   const handleLike = (id: string) => {
     const isLiked = liked[id]
     setLiked((prev) => ({...prev, [id]:!isLiked }))
@@ -142,6 +212,12 @@ export default function HomePage() {
     return url?.includes(".mp4") || url?.includes(".mov") || url?.includes("/reels/") || url?.includes("video")
   }
 
+  const groupedStories = stories.reduce((acc: any, s: Story) => {
+    if (!acc[s.user_id]) acc[s.user_id] = []
+    acc[s.user_id].push(s)
+    return acc
+  }, {} as Record<string, Story[]>)
+
   return (
     <div className="w-full bg-black h-[100dvh] overflow-y-auto text-white scrollbar-hide">
       <div className="max-w-[470px] mx-auto bg-black pb-[90px] min-h-screen relative border-x border-zinc-900">
@@ -153,29 +229,42 @@ export default function HomePage() {
             <button onClick={() => setShowCreate(true)} className="bg-white text-black px-4 py-1.5 rounded-full font-bold text-[13px]">+ Create</button>
           </div>
         </div>
+
+        {/* STORIES BAR - 100% WORKING R2 + 24H */}
         <div className="flex gap-4 p-3.5 overflow-x-auto border-b border-zinc-800 scrollbar-hide">
           <div className="flex flex-col items-center min-w-[64px]">
-            <div className="w-[64px] h-[64px] rounded-full bg-zinc-800 p-[3px] relative">
+            <label className="w-[64px] h-[64px] rounded-full bg-zinc-800 p-[3px] relative cursor-pointer">
               <img src={userPhoto || "https://i.pravatar.cc/100"} className="w-full h-full rounded-full object-cover" alt="" />
               <div className="absolute bottom-0 right-0 bg-blue-500 w-5 h-5 rounded-full flex items-center justify-center text-[12px] border-2 border-black">+</div>
-            </div>
+              <input type="file" accept="image/*" hidden onChange={handleStoryUpload} />
+            </label>
             <span className="text-[11px] mt-1">Your Story</span>
           </div>
-          {[
-            { name: "mahesh_kn", img: "https://i.pravatar.cc/100?img=1" },
-            { name: "sravani_m", img: "https://i.pravatar.cc/100?img=5" },
-            { name: "chitpix", img: "https://i.pravatar.cc/100?img=8" },
-            { name: "travel", img: "https://i.pravatar.cc/100?img=12" },
-            { name: "friends", img: "https://i.pravatar.cc/100?img=20" },
-          ].map((s, i) => (
-            <div key={i} className="flex flex-col items-center min-w-[64px] cursor-pointer">
+          {Object.keys(groupedStories).map((uid) => (
+            <div key={uid} className="flex flex-col items-center min-w-[64px] cursor-pointer" onClick={() => setActiveStory(groupedStories[uid][0])}>
               <div className="w-[64px] h-[64px] rounded-full p-[2.5px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600">
-                <img src={s.img} className="w-full h-full rounded-full object-cover border-2 border-black" alt="" />
+                <img src={groupedStories[uid][0].image_url} className="w-full h-full rounded-full object-cover border-2 border-black" alt="" />
               </div>
-              <span className="text-[11px] mt-1 truncate w-[64px] text-center">{s.name}</span>
+              <span className="text-[11px] mt-1 truncate w-[64px] text-center">{uid === currentUserId? "You" : uid.slice(0,6)}</span>
             </div>
           ))}
+          {stories.length === 0 && (
+            <>
+              {[
+                { name: "mahesh_kn", img: "https://i.pravatar.cc/100?img=1" },
+                { name: "sravani_m", img: "https://i.pravatar.cc/100?img=5" },
+              ].map((s, i) => (
+                <div key={i} className="flex flex-col items-center min-w-[64px] opacity-40">
+                  <div className="w-[64px] h-[64px] rounded-full p-[2.5px] bg-zinc-700">
+                    <img src={s.img} className="w-full h-full rounded-full object-cover border-2 border-black" alt="" />
+                  </div>
+                  <span className="text-[11px] mt-1 truncate w-[64px] text-center">{s.name}</span>
+                </div>
+              ))}
+            </>
+          )}
         </div>
+
         <div className="bg-black">
           {posts.length === 0 && (
             <div className="text-center p-20">
@@ -238,6 +327,7 @@ export default function HomePage() {
             )
           })}
         </div>
+
         {showCreate && (
           <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
             <div className="bg-zinc-900 w-full max-w-[380px] rounded-2xl p-4 border border-zinc-800 max-h-[90vh] overflow-y-auto">
@@ -260,8 +350,29 @@ export default function HomePage() {
             </div>
           </div>
         )}
+
+        {/* FULL SCREEN STORY VIEW - CLICK CHESTE OPEN */}
+        {activeStory && (
+          <div className="fixed inset-0 z-[9999] bg-black flex flex-col" onClick={() => setActiveStory(null)}>
+            <div className="w-full h-1 bg-zinc-800">
+              <div className="h-full bg-white transition-all" style={{ width: `${storyProgress}%` }} />
+            </div>
+            <div className="flex justify-between items-center p-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-[2px]"><div className="w-full h-full bg-black rounded-full" /></div>
+                <span className="text-sm font-semibold">{currentUserId === activeStory.user_id? "Your Story" : activeStory.user_id.slice(0,8)}</span>
+                <span className="text-xs text-zinc-400">{new Date(activeStory.created_at).toLocaleTimeString()}</span>
+              </div>
+              <button className="text-xl" onClick={() => setActiveStory(null)}>✕</button>
+            </div>
+            <div className="flex-1 flex items-center justify-center bg-zinc-950">
+              <img src={activeStory.image_url} className="max-w-full max-h-full object-contain" alt="story" />
+            </div>
+            <div className="p-4 text-center text-xs text-zinc-500">24h tarvata auto delete - R2 Stories ☁️</div>
+          </div>
+        )}
       </div>
       <BottomNav />
     </div>
   )
-            }
+      }
