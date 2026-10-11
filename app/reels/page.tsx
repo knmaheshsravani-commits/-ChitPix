@@ -26,11 +26,10 @@ export default function ReelsPage() {
 
   useEffect(()=>{
     fetch("/api/posts", { cache: "no-store" })
-  .then(r => r.json())
-  .then((posts:any[])=>{
-        console.log("R2 Posts:", posts)
+ .then(r => r.json())
+ .then((posts:any[])=>{
         if(posts && posts.length>0){
-           const vids = posts.filter(p=> p.type==="reels" || p.image_url?.endsWith(".mp4") || p.image_url?.includes("/reels/") || p.image_url?.includes(".mp4"))
+           const vids = posts.filter(p=> p.type==="reels" || p.type==="reel" || (p.image_url && (p.image_url.includes("/reels/") || /\.(mp4|mov|webm)/i.test(p.image_url.split("?")[0]))))
            setReels(vids.length? vids : posts)
            if(vids.length>0) setActiveId(vids[0].id)
            else if(posts.length>0) setActiveId(posts[0].id)
@@ -45,7 +44,7 @@ export default function ReelsPage() {
     if(n) setCurrentUser(n)
   },[])
 
-  // ✅ 100% FIX - SCROLL PLAY LOGIC - INSTAGRAM STYLE - FIXED
+  // ✅ FIXED SCROLL PLAY - INSTAGRAM STYLE
   useEffect(()=>{
     if(!containerRef.current || reels.length===0) return
     const observer = new IntersectionObserver((entries)=>{
@@ -56,29 +55,26 @@ export default function ReelsPage() {
         if(entry.isIntersecting){
           setActiveId(id)
           video.muted = mutedMap[id]?? true
-          video.play().catch((e)=>console.log("Play error:", e))
+          video.play().catch(()=>{})
         } else {
           video.pause()
         }
       })
-    }, { threshold: 0.6 })
-
+    }, { threshold: 0.7 })
     const divs = containerRef.current.querySelectorAll("[data-id]")
     divs.forEach(d=> observer.observe(d))
-
     return ()=> observer.disconnect()
-  }, [reels, mutedMap])
+  }, [reels])
 
   const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
 
-  // *** 100% FIXED R2 DIRECT UPLOAD - NO BLACK SCREEN ***
+  // R2 DIRECT UPLOAD - FIXED
   const handleReelUpload = async (e:any) => {
     const file = e.target.files?.[0]
     if(!file) return
-    if(file.size > 100*1024*1024) return alert("Max 100MB Bro! 60 sec reel pettu 🙏")
+    if(file.size > 100*1024*1024) return alert("Max 100MB Bro!")
     setUploading(true)
     try {
-      // STEP 1: Get presigned URL from R2 - COMPATIBLE PAYLOAD
       const presignRes = await fetch("/api/r2-presign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,38 +87,29 @@ export default function ReelsPage() {
         })
       })
       const presignData = await presignRes.json()
-      console.log("Presign:", presignData)
-
       const uploadUrl = presignData.uploadUrl || presignData.url
-      const publicUrl = presignData.publicUrl || presignData.publicUrl
+      const publicUrl = presignData.publicUrl || presignData.public || presignData.publicUrl
 
-      if(!uploadUrl ||!publicUrl) throw new Error(presignData.error || "Presign failed - ENV check chey")
+      if(!uploadUrl ||!publicUrl) throw new Error(presignData.error || "Presign failed")
 
-      // STEP 2: Direct upload to R2 - Vercel bypass - 100MB OK!
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
         headers: { "Content-Type": file.type }
       })
-      console.log("R2 Upload:", uploadRes.status)
-      if(!uploadRes.ok) throw new Error("R2 Cloud upload failed: " + uploadRes.status + " " + uploadRes.statusText)
+      if(!uploadRes.ok) throw new Error("R2 upload failed: " + uploadRes.status)
 
-      // STEP 3: Save in Supabase posts table as reels
-      const saveRes = await fetch("/api/posts", {
+      await fetch("/api/posts", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ image_url: publicUrl, caption: "New Reel 🔥 #chitpix", username: currentUser, type: "reels" })
+        body: JSON.stringify({ image_url: publicUrl, video: publicUrl, video_url: publicUrl, caption: "New Reel 🔥 #chitpix", username: currentUser, type: "reels" })
       })
-      console.log("Save post:", await saveRes.text())
 
-      // Refresh feed instantly
       const posts = await fetch("/api/posts", { cache: "no-store" }).then(r=>r.json())
-      const vids = posts.filter((p:any)=> p.type==="reels" || p.image_url?.endsWith(".mp4") || p.image_url?.includes("/reels/") || p.image_url?.includes(".mp4"))
+      const vids = posts.filter((p:any)=> p.type==="reels" || p.image_url?.includes("/reels/") || /\.(mp4|mov|webm)/i.test(p.image_url?.split("?")[0]))
       setReels(vids.length? vids : posts)
-
       alert("Reel Uploaded to R2! 🔥")
     } catch(err:any){
-      console.error(err)
       alert("Upload Error - " + err.message)
     }
     finally { setUploading(false); if(fileRef.current) fileRef.current.value="" }
@@ -147,22 +134,13 @@ export default function ReelsPage() {
     setReels(prev=>prev.map(r=>r.id===id?{...r, comments:(r.comments||0)+1}:r))
     setCommentText("")
   }
-  const doShare = (target:string)=>{
-    if(!showShare) return
-    localStorage.setItem("chitpix_shared_post", JSON.stringify(showShare))
-    localStorage.setItem("chitpix_share_target", target)
-    setShowShare(null)
-    window.location.href="/messages"
-  }
   const toggleSound = (id:number)=>{
     const video = videoRefs.current[id] as HTMLVideoElement
     if(!video) return
-    const isMuted = video.muted
-    // Mute all others
-    Object.values(videoRefs.current).forEach((v:any)=>{ if(v) v.muted = true })
-    video.muted =!isMuted
-    setMutedMap((prev:any)=>({...prev, [id]:!isMuted}))
-    if(isMuted) video.play().catch(()=>{})
+    Object.values(videoRefs.current).forEach((v:any)=>{ if(v && v!==video) v.muted = true })
+    video.muted =!video.muted
+    setMutedMap((prev:any)=>({...prev, [id]:video.muted}))
+    if(video.paused) video.play().catch(()=>{})
   }
   const handleProfileClick = (username:string)=>{
     if(username.toLowerCase() === currentUser.toLowerCase() || username.toLowerCase().includes("knmahesh")) router.push("/profile")
@@ -182,8 +160,9 @@ export default function ReelsPage() {
 
       <div ref={containerRef} className="w-full h-full overflow-y-scroll snap-y snap-mandatory">
         {reels.map((reel:any)=>{
-          const vidSrc = reel.video || reel.image_url || reel.image || reel.r2Url || ""
-          const isVideo = vidSrc?.endsWith(".mp4") || vidSrc?.includes("/reels/") || vidSrc?.includes(".mp4") || reel.type==="reels"
+          const vidSrc = reel.video_url || reel.video || reel.image_url || reel.image || reel.r2Url || ""
+          const cleanSrc = vidSrc.split("?")[0]
+          const isVideo = cleanSrc.includes("/reels/") || /\.(mp4|mov|webm|m4v)$/i.test(cleanSrc) || reel.type==="reels" || reel.type==="reel" || vidSrc.includes("video")
           return (
           <div key={reel.id} data-id={reel.id} className="w-full h-[100dvh] snap-start relative bg-black flex justify-center">
             <div className="relative w-full max-w-[440px] h-full flex items-center justify-center overflow-hidden bg-black" onDoubleClick={()=>handleLike(reel.id,true)}>
@@ -193,6 +172,7 @@ export default function ReelsPage() {
                   src={vidSrc}
                   className="w-full h-full object-cover bg-black"
                   loop
+                  autoPlay
                   muted={mutedMap[reel.id]?? true}
                   playsInline
                   preload="auto"
@@ -230,33 +210,8 @@ export default function ReelsPage() {
           </div>
         )})}
       </div>
-
-      {showComments && (
-        <div className="absolute inset-0 z-[100] bg-black/30 flex items-end" onClick={()=>setShowComments(null)}>
-          <div className="bg-white w-full max-w-[440px] mx-auto rounded-t-[18px] h-[85%] flex flex-col relative" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mt-3"></div>
-            <p className="font-bold text-center mt-3">Comments • {commentsList[showComments.id]?.length||0}</p>
-            <div className="flex-1 overflow-y-auto px-4 mt-4 space-y-3 pb-[120px]">
-              {(commentsList[showComments.id]||[]).map((c:any,i:number)=><div key={i} className="flex gap-2"><div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold">M</div><div><p className="text-[13px]"><b>{c.user}</b> {c.text}</p><p className="text-[11px] text-gray-500">{c.time}</p></div></div>)}
-            </div>
-            <div className="absolute bottom-[75px] left-0 right-0 border-t p-3 flex gap-2 bg-white">
-              <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-[13px] outline-none" onKeyDown={e=>{if(e.key==='Enter') handleAddComment()}} />
-              <button onClick={handleAddComment} className="text-blue-500 font-bold text-[14px] px-2">Post</button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showShare && (
-        <div className="absolute inset-0 z-[60] bg-black/40 flex items-end justify-center" onClick={()=>setShowShare(null)}>
-          <div className="bg-white w-full max-w-[440px] rounded-t-[20px] p-4 pb-8" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
-            <p className="font-bold text-center mb-4">Share</p>
-            <button onClick={()=>{ navigator.clipboard.writeText(showShare.image_url || showShare.image); setShowShare(null) }} className="w-full flex items-center gap-3 bg-gray-100 py-3.5 px-4 rounded-xl font-medium">🔗 Copy Link</button>
-          </div>
-        </div>
-      )}
       <BottomNav />
       <style jsx>{`.snap-y::-webkit-scrollbar{display:none}`}</style>
     </div>
   )
-        }
+            }
