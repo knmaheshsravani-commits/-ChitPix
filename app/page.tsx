@@ -156,16 +156,15 @@ export default function HomePage() {
     const f = e.target.files[0]
     if (!f) return
     try {
-      const presignRes = await fetch("/api/r2-presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName: `story_${Date.now()}_${f.name}`,
-          fileType: f.type,
-          contentType: f.type,
-          folder: "stories"
-        }),
-      })
+      const presignRes = await fetch("/api/r2/presign", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    fileName: f.name,
+    fileType: f.type,
+    folder: "stories"
+  }),
+})
       const presignData = await presignRes.json()
       if (!presignData.uploadUrl ||!presignData.publicUrl) throw new Error("R2 Presign failed")
 
