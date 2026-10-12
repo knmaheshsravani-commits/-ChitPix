@@ -151,51 +151,43 @@ export default function HomePage() {
     setUploading(false)
   }
 
- // STORIES UPLOAD - R2 CONNECTED - 100% WORKING - 2026
+ // STORIES UPLOAD - FIXED - HANDLES DOCTYPE + NULL + R2
 const handleStoryUpload = async (e: any) => {
   const f = e.target.files?.[0]
   if (!f) return
-  const localUrl = URL.createObjectURL(f)
-  const tempId = Date.now().toString()
-  // Instant UI - Instagram style
-  setStories((prev: any) => [{
-    id: tempId,
-    image_url: localUrl,
-    username: username || "Knmahesh",
-    created_at: new Date().toISOString(),
-    viewed: false
-  },...prev])
-
   try {
     const form = new FormData()
     form.append("file", f)
     form.append("type", "stories")
-    form.append("caption", "Story 🔥")
+    form.append("caption", "Story")
     form.append("username", username || "Knmahesh")
 
     const res = await fetch("/api/upload", {
       method: "POST",
       body: form
     })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error || "R2 Upload Failed")
 
-    const finalUrl = data.url || data.post?.image_url
-    // Update temp with R2 URL
-    setStories((prev: any) => prev.map((s: any) =>
-      s.id === tempId? {...s, image_url: finalUrl } : s
-    ))
-    // Save to Supabase for Ring + 24h expiry
+    // FIX DOCTYPE ERROR - HTML vaste text chudu
+    const text = await res.text()
+    let data: any
+    try { data = JSON.parse(text) }
+    catch { throw new Error("API route not found! /api/upload ledu. Text: " + text.slice(0,100)) }
+
+    if (!res.ok) throw new Error(data.error || "Upload failed")
+
+    const finalUrl = data.url || data.post?.image_url || data.post?.video_url
+    if (!finalUrl) throw new Error("R2 URL raledu")
+
     await supabase.from("stories").insert({
       image_url: finalUrl,
-      username: username || "Knmahesh",
+      username: username || "Knmahesh", // NULL FIX
       user_id: null
     })
     fetchStories()
     alert("Story Added to R2! 🔥")
   } catch (err: any) {
-    setStories((prev: any) => prev.filter((s: any) => s.id!== tempId))
     alert("Story Error: " + err.message)
+    console.error(err)
   }
 }
 
