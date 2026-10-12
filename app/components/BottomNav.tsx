@@ -13,9 +13,8 @@ export default function BottomNav(){
     const file = e.target.files?.[0]
     if(!file) return
 
-    // 100MB check
     if(file.size > 100*1024*1024){
-      alert("Max 100MB bro!")
+      alert("Max 100MB")
       return
     }
 
@@ -24,27 +23,25 @@ export default function BottomNav(){
       const formData = new FormData()
       formData.append("file", file)
       formData.append("type", file.type.startsWith("video/")? "reels" : "posts")
-      formData.append("caption", file.type.startsWith("video/")? "New Reel 🔥 #chitpix" : "New Post 🔥 #chitpix")
-      formData.append("username", "Knmahesh")
+      formData.append("caption", file.type.startsWith("video/")? "New Reel #chitpix" : "New Post #chitpix")
 
-      // 100% R2 Upload - localStorage LE DU!
+      const storedUser = typeof window!== 'undefined'? localStorage.getItem("username") : null
+      formData.append("username", storedUser || "Knmahesh")
+
       const res = await fetch("/api/upload",{method:"POST", body:formData})
       const data = await res.json()
 
       if(!res.ok) throw new Error(data.error || "Upload failed")
 
-      // data.image_url or data.video_url will be there from R2!
       console.log("R2 URL:", data.image_url || data.video_url)
 
-      // NO localStorage - Directly go to feed - Feed will fetch from /api/posts -> R2 posts.json
       if(file.type.startsWith("video/")) router.push("/reels")
       else router.push("/")
 
-      // Force reload to fetch from R2
       setTimeout(()=>window.location.reload(), 500)
 
     }catch(err:any){
-      alert("Upload failed: "+err.message+" bro")
+      alert("Upload failed: "+err.message)
       console.error(err)
     }
     setUploading(false)
@@ -52,51 +49,33 @@ export default function BottomNav(){
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#dbdbdb] z-[100]">
+    <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 z-[100]">
       <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleUpload} />
-      <div className="max-w-[470px] mx-auto h-[52px] flex justify-between items-center px-1">
-        <Link href="/" className="flex-1 flex justify-center">
-          <div className={`w-11 h-11 flex items-center justify-center rounded-full ${path==='/'?'bg-[#efefef]':''}`}>
-            {path==='/'? (
-              <svg width="25" height="25" viewBox="0 0 24 24" fill="black"><path d="M12 2.5L2 12.5h3v8h6v-6h2v6h6v-8h3L12 2.5z"/></svg>
-            ) : (
-              <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M12 2.5L2 12.5h3v8h6v-6h2v6h6v-8h3L12 2.5z"/></svg>
-            )}
-          </div>
+      <div className="max-w-[470px] mx-auto h-[50px] flex justify-around items-center px-2">
+        <Link href="/" className="flex-1 flex justify-center py-2">
+          {path==='/'? (
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white" stroke="white" strokeWidth="1.5"><path d="M12 2.5L2 12.5h3v8h6v-6h2v6h6v-8h3L12 2.5z"/></svg>
+          ) : (
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7"><path d="M12 2.5L2 12.5h3v8h6v-6h2v6h6v-8h3L12 2.5z"/></svg>
+          )}
         </Link>
-        <Link href="/search" className="flex-1 flex justify-center">
-          <div className={`w-11 h-11 flex items-center justify-center rounded-full ${path==='/search'?'bg-[#efefef]':''}`}>
-            <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth={path==='/search'?'2.7':'1.8'}><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
-          </div>
+        <Link href="/search" className="flex-1 flex justify-center py-2">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={path==='/search'? "2.6" : "1.7"}><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.6" y2="16.6"/></svg>
         </Link>
-        <div className="flex-1 flex justify-center">
-          <button onClick={()=>fileRef.current?.click()} className="w-11 h-11 flex items-center justify-center active:scale-90">
-            <div className="w-6 h-6 border-[2px] border-black rounded-md flex items-center justify-center bg-white">
-              {uploading? (
-                <span className="text-[8px] font-bold animate-pulse">...</span>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              )}
-            </div>
+        <div className="flex-1 flex justify-center py-2">
+          <button onClick={()=>fileRef.current?.click()} className="active:scale-90 transition-transform">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7"><rect x="2" y="2" width="20" height="20" rx="6"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
           </button>
         </div>
-        <Link href="/reels" className="flex-1 flex justify-center">
-          <div className={`w-11 h-11 flex items-center justify-center rounded-full ${path==='/reels'?'bg-black':''}`}>
-            {path==='/reels'? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill="black"/></svg>
-            ) : (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill="black"/></svg>
-            )}
-          </div>
+        <Link href="/reels" className="flex-1 flex justify-center py-2">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill={path==='/reels'? "white" : "none"} stroke="white" strokeWidth="1.7"><rect x="2" y="2" width="20" height="20" rx="6"/><path d="M10 8.5l6 3.5-6 3.5v-7z" fill={path==='/reels'? "black" : "white"}/></svg>
         </Link>
-        <Link href="/profile" className="flex-1 flex justify-center">
-          <div className={`w-11 h-11 flex items-center justify-center rounded-full ${path==='/profile'?'bg-[#efefef]':''}`}>
-            <div className="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-[11px] font-bold">M</div>
-          </div>
+        <Link href="/profile" className="flex-1 flex justify-center py-2">
+          <div className={`w-[26px] h-[26px] rounded-full bg-white text-black flex items-center justify-center text-[12px] font-bold ${path==='/profile'? 'ring-2 ring-white ring-offset-2 ring-offset-black' : ''}`}>M</div>
         </Link>
       </div>
       {uploading && (
-        <div className="fixed bottom-[60px] left-1/2 -translate-x-1/2 bg-black text-white px-3 py-1.5 rounded-full text-[12px] font-bold">Uploading to R2... 🚀</div>
+        <div className="fixed bottom-[60px] left-1/2 -translate-x-1/2 bg-white text-black px-4 py-2 rounded-full text-[12px] font-bold shadow-lg">Uploading to R2...</div>
       )}
     </div>
   )
