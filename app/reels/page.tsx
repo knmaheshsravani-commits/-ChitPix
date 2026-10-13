@@ -5,7 +5,6 @@ import { supabase } from '../../lib/supabase'
 let activeVideoRef: HTMLVideoElement | null = null
 export const dynamic = 'force-dynamic'
 
-// R2 PUBLIC URL - .env.local lo pettu: NEXT_PUBLIC_R2_PUBLIC_URL=https://pub-xxx.r2.dev
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || ''
 
 function ReelItem({ post }: any) {
@@ -26,7 +25,8 @@ function ReelItem({ post }: any) {
   if (rawUrl && !rawUrl.startsWith('http') && R2_PUBLIC_URL) {
     imageUrl = `${R2_PUBLIC_URL}/${rawUrl.replace(/^\/+/, '')}`
   }
-  const isVideo = true
+  const lower = imageUrl?.toLowerCase() || ""
+  const isVideoFile = lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm') || imageUrl.includes('r2.dev') && (lower.includes('.mp4') || post?.isVideo) || post?.isVideo || post?.type === 'reels' || post?.video_url
   const username = post?.username || post?.profiles?.username || 'Knmahesh'
   const avatar = post?.user_avatar || post?.profiles?.avatar_url || `https://i.pravatar.cc/100?u=${username}`
   const caption = post?.caption || ''
@@ -48,7 +48,7 @@ function ReelItem({ post }: any) {
 
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || !isVideoFile) return
     video.muted = true
     const onMute = (e: any) => { if (e.detail !== video) { video.muted = true; video.pause(); setIsMuted(true) } }
     window.addEventListener('CHITPIX_MUTE_OTHERS', onMute)
@@ -65,7 +65,7 @@ function ReelItem({ post }: any) {
     }, { threshold: 0.75 })
     observer.observe(video)
     return () => { window.removeEventListener('CHITPIX_MUTE_OTHERS', onMute); observer.disconnect() }
-  }, [])
+  }, [isVideoFile])
 
   const handleLike = async () => {
     const myName = localStorage.getItem("chitpix_username") || "guest"
@@ -85,7 +85,7 @@ function ReelItem({ post }: any) {
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/reels` : ''
   const doWhatsApp = () => { window.open(`https://wa.me/?text=${encodeURIComponent("Check this reel 🔥 " + shareUrl + " " + imageUrl)}`, "_blank"); setShowShare(false) }
   const doCopy = async () => { await navigator.clipboard.writeText(imageUrl); alert("Link Copied ✅"); setShowShare(false) }
-  const doSaveR2 = async () => { const a = document.createElement('a'); a.href = imageUrl; a.download = `chitpix-${post.id}.mp4`; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove(); setShowShare(false) }
+  const doSaveR2 = async () => { const a = document.createElement('a'); a.href = imageUrl; a.download = `chitpix-${post.id}.${isVideoFile ? 'mp4' : 'jpg'}`; a.target = '_blank'; document.body.appendChild(a); a.click(); a.remove(); setShowShare(false) }
 
   const toggleMute = () => {
     const v = videoRef.current; if (!v) return
@@ -100,13 +100,17 @@ function ReelItem({ post }: any) {
 
   return (
     <div style={{ background: '#000', color: '#fff', width: '100%', height: '100vh', position: 'relative', scrollSnapAlign: 'start', overflow: 'hidden' }}>
-      <video ref={videoRef} src={imageUrl} loop muted playsInline preload="metadata" crossOrigin="anonymous" onClick={toggleMute} onDoubleClick={handleLike} style={{ width: '100%', height: '100vh', objectFit: 'cover', display: 'block' }} />
-      <button onClick={toggleMute} style={{ position: 'absolute', bottom: '120px', right: '12px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: '42px', height: '42px', fontSize: '20px' }}>{isMuted ? '🔇' : '🔊'}</button>
+      {isVideoFile ? (
+        <video ref={videoRef} src={imageUrl} loop muted playsInline preload="metadata" crossOrigin="anonymous" onClick={toggleMute} onDoubleClick={handleLike} style={{ width: '100%', height: '100vh', objectFit: 'cover', display: 'block' }} />
+      ) : (
+        <img src={imageUrl} onDoubleClick={handleLike} style={{ width: '100%', height: '100vh', objectFit: 'cover', display: 'block' }} alt="post" />
+      )}
+      {isVideoFile && <button onClick={toggleMute} style={{ position: 'absolute', bottom: '120px', right: '12px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: '42px', height: '42px', fontSize: '20px' }}>{isMuted ? '🔇' : '🔊'}</button>}
       
       <div style={{ position: 'absolute', bottom: '20px', left: '0', right: '70px', padding: '0 12px' }}>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}><img src={avatar} style={{ width: '32px', height: '32px', borderRadius: '50%', border: '2px solid #fff' }} alt="av" /><b>{username}</b><span style={{ background: '#fff', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}>Follow</span></div>
         <div style={{ fontSize: '14px', marginBottom: '6px' }}>{caption}</div>
-        <div style={{ fontSize: '11px', opacity: 0.7 }}>🌐 R2 Connected: {imageUrl.includes('r2') ? '✅ Cloudflare R2' : 'Supabase'}</div>
+        <div style={{ fontSize: '11px', opacity: 0.7 }}>🌐 R2 Connected: {imageUrl.includes('r2') || imageUrl.includes('cloudflare') ? '✅ Cloudflare R2' : '✅ Supabase'}</div>
       </div>
 
       <div style={{ position: 'absolute', right: '8px', bottom: '20px', display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center' }}>
@@ -153,14 +157,12 @@ export default function ReelsPage() {
       try {
         const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false })
         if (error) throw error
-        // ✅ BUILD FAIL FIX - undefined check + R2 support
+        // ✅ FULL FIX - CUT CHEYALE - R2 + SUPABASE BOTH
         const filtered = (data || []).filter((p: any) => {
           if (!p) return false
           const url = p?.image_url || p?.image || p?.video_url || p?.video || p?.url || ''
           if (!url) return false
-          const lower = url.toLowerCase()
-          const isVideo = p?.isVideo || p?.type === 'reels' || lower.includes('.mp4') || lower.includes('.mov') || lower.includes('.webm') || url.includes('r2.dev') || url.includes('r2.cloudflarestorage') || url.includes('cloudflare')
-          return isVideo
+          return true // ✅ ALL POSTS - Image ayina Video ayina R2 ayina anni
         })
         setPosts(filtered)
       } catch (e) { console.log(e); setPosts([]) }
@@ -170,12 +172,11 @@ export default function ReelsPage() {
   }, [])
 
   if (loading) return <div style={{ background: '#000', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading R2 Reels... 🔄</div>
-  if (posts.length === 0) return <div style={{ background: '#000', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}><div style={{ fontSize: '40px' }}>🎬</div><p>No reels - Upload R2 video first!</p></div>
+  if (posts.length === 0) return <div style={{ background: '#000', color: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}><div style={{ fontSize: '40px' }}>🎬</div><p>No posts - Upload first!</p><p style={{ fontSize: '12px', opacity: 0.6 }}>Check Supabase posts table</p></div>
 
   return (
     <div style={{ background: '#000', height: '100vh', overflowY: 'scroll', scrollSnapType: 'y mandatory', maxWidth: '470px', margin: '0 auto' }}>
       {posts.map((post: any) => {
-        // ✅ ULTRA SAFE - idhe nee error fix
         if (!post) return null
         const url = post?.image_url || post?.image || post?.video_url || post?.video || post?.url
         if (!url) return null
@@ -183,4 +184,4 @@ export default function ReelsPage() {
       })}
     </div>
   )
-        }
+    }
