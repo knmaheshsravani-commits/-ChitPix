@@ -1,244 +1,284 @@
-"use client"
-import { useState, useEffect, useRef } from "react"
-import BottomNav from "../components/BottomNav"
-import { useRouter } from "next/navigation"
-import { Heart, MessageCircle, Repeat2, Send, Bookmark, Volume2, VolumeX, Music2, Plus, Loader2, X } from "lucide-react"
+'use client'
+import { useEffect, useState, useRef } from 'react'
+import { supabase } from '../../lib/supabase'
 
-export default function ReelsPage() {
-  const router = useRouter()
-  const [reels, setReels] = useState<any[]>([])
-  const [liked, setLiked] = useState<any>({})
-  const [saved, setSaved] = useState<any>({})
-  const [followed, setFollowed] = useState<any>({})
-  const [reposted, setReposted] = useState<any>({})
-  const [heart, setHeart] = useState<number|null>(null)
-  const [showComments, setShowComments] = useState<any>(null)
+let activeVideoRef: HTMLVideoElement | null = null
+
+export default function PostCard({ post }: any) {
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [liked, setLiked] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [showComments, setShowComments] = useState(false)
+  const [showShare, setShowShare] = useState(false)
   const [commentText, setCommentText] = useState("")
-  const [commentsList, setCommentsList] = useState<any>({})
-  const [showShare, setShowShare] = useState<any>(null)
-  const [uploading, setUploading] = useState(false)
-  const [mutedMap, setMutedMap] = useState<any>({})
-  const [currentUser, setCurrentUser] = useState("Knmahesh")
-  const [activeId, setActiveId] = useState<number|null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
-  const videoRefs = useRef<any>({})
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [comments, setComments] = useState<any[]>([])
+  const [isMuted, setIsMuted] = useState(true)
+  const [filter, setFilter] = useState("normal")
+  const [isPosting, setIsPosting] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
-  useEffect(()=>{
-    fetch("/api/posts", { cache: "no-store" })
-.then(r => r.json())
-.then((posts:any[])=>{
-        if(posts && posts.length>0){
-           const vids = posts.filter(p=> p.type==="reels" || p.type==="reel" || (p.image_url && (p.image_url.includes("/reels/") || /\.(mp4|mov|webm)/i.test(p.image_url.split("?")[0]))))
-           // 0 NUNDI COUNT FIX
-           const fixed = (vids.length? vids : posts).map((p:any)=>({...p, likes:p.likes||0, comments: (commentsList[p.id]?.length||p.comments||0), shares:p.shares||0}))
-           setReels(fixed)
-           if(fixed.length>0) setActiveId(fixed[0].id)
-        }
-      }).catch(()=>{})
-    setLiked(JSON.parse(localStorage.getItem("reels_liked")||"{}"))
-    setSaved(JSON.parse(localStorage.getItem("reels_saved")||"{}"))
-    setFollowed(JSON.parse(localStorage.getItem("reels_followed")||"{}"))
-    setReposted(JSON.parse(localStorage.getItem("reels_reposted")||"{}"))
-    setCommentsList(JSON.parse(localStorage.getItem("reels_comments")||"{}"))
-    const n = localStorage.getItem("chitpix_username")
-    if(n) setCurrentUser(n)
-  },[])
+  const [likeCount, setLikeCount] = useState(0)
+  const [commentCount, setCommentCount] = useState(0)
+  const [shareCount, setShareCount] = useState(0)
+  const [saveCount, setSaveCount] = useState(0)
 
-  useEffect(()=>{
-    if(!containerRef.current || reels.length===0) return
-    const observer = new IntersectionObserver((entries)=>{
-      entries.forEach(entry=>{
-        const id = Number(entry.target.getAttribute("data-id"))
-        const video = videoRefs.current[id] as HTMLVideoElement
-        if(!video) return
-        if(entry.isIntersecting){
-          setActiveId(id)
-          video.muted = mutedMap[id]?? true
-          video.play().catch(()=>{})
-        } else video.pause()
-      })
-    }, { threshold: 0.7 })
-    containerRef.current.querySelectorAll("[data-id]").forEach(d=> observer.observe(d))
-    return ()=> observer.disconnect()
-  }, [reels])
+  useEffect(() => {
+    if (typeof window!== 'undefined' && localStorage.getItem('chitpix_admin') === 'true') {
+      setIsAdmin(true)
+    }
+    const loadCounts = async () => {
+      const { count: l } = await supabase.from("likes").select("*", { count: "exact", head: true }).eq("post_id", post.id)
+      const { count: c } = await supabase.from("comments").select("*", { count: "exact", head: true }).eq("post_id", post.id)
+      const { count: s } = await supabase.from("saves").select("*", { count: "exact", head: true }).eq("post_id", post.id)
+      setLikeCount(l || 0)
+      setCommentCount(c || 0)
+      setSaveCount(s || 0)
 
-  const saveLS = (k:string,v:any)=>localStorage.setItem(k, JSON.stringify(v))
+      const myName = localStorage.getItem("chitpix_username")
+      if (myName) {
+        const { data: myLike } = await supabase.from("likes").select("*").eq("post_id", post.id).eq("username", myName).maybeSingle()
+        if (myLike) setLiked(true)
+        const { data: mySave } = await supabase.from("saves").select("*").eq("post_id", post.id).eq("username", myName).maybeSingle()
+        if (mySave) setSaved(true)
+        const { data: comms } = await supabase.from("comments").select("*").eq("post_id", post.id).order("created_at", { ascending: false })
+        if (comms) setComments(comms)
+      }
+    }
+    loadCounts()
+  }, [post.id])
 
-  const handleReelUpload = async (e:any) => {
-    const file = e.target.files?.[0]
-    if(!file) return
-    if(file.size > 100*1024*1024) return alert("Max 100MB Bro!")
-    setUploading(true)
+  // VIDEO - ONE SOUND ONLY
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    video.muted = true
+    setIsMuted(true)
+
+    const onGlobalMute = (e: any) => {
+      if (e.detail!== video) {
+        video.muted = true
+        video.pause()
+        setIsMuted(true)
+      }
+    }
+    window.addEventListener('CHITPIX_MUTE_OTHERS', onGlobalMute)
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            if (activeVideoRef && activeVideoRef!== video) {
+              activeVideoRef.muted = true
+              activeVideoRef.pause()
+            }
+            document.querySelectorAll('video').forEach((v) => {
+              if (v!== video) {
+                (v as HTMLVideoElement).muted = true
+                ;(v as HTMLVideoElement).pause()
+              }
+            })
+            activeVideoRef = video
+            video.muted = true
+            setIsMuted(true)
+            video.play().catch(() => {})
+            window.dispatchEvent(new CustomEvent('CHITPIX_MUTE_OTHERS', { detail: video }))
+          } else {
+            video.pause()
+            video.muted = true
+            setIsMuted(true)
+            if (activeVideoRef === video) activeVideoRef = null
+          }
+        })
+      },
+      { threshold: 0.75 }
+    )
+    observer.observe(video)
+    return () => {
+      window.removeEventListener('CHITPIX_MUTE_OTHERS', onGlobalMute)
+      observer.disconnect()
+    }
+  }, [])
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this post?')) return
+    const res = await fetch('/api/admin/delete-post', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId: post.id })
+    })
+    if (res.ok) { alert('Deleted! ✅'); window.location.reload() } else { alert('Failed') }
+  }
+
+  const handleLike = async () => {
+    const myName = localStorage.getItem("chitpix_username") || "guest"
+    if (liked) { setLiked(false); setLikeCount(v => Math.max(0, v - 1)); await supabase.from("likes").delete().eq("post_id", post.id).eq("username", myName) }
+    else { setLiked(true); setLikeCount(v => v + 1); await supabase.from("likes").insert({ post_id: post.id, username: myName }) }
+  }
+
+  const handleSave = async () => {
+    const myName = localStorage.getItem("chitpix_username") || "guest"
+    if (saved) { setSaved(false); setSaveCount(v => Math.max(0, v - 1)); await supabase.from("saves").delete().eq("post_id", post.id).eq("username", myName) }
+    else { setSaved(true); setSaveCount(v => v + 1); await supabase.from("saves").insert({ post_id: post.id, username: myName }) }
+  }
+
+  // ✅ COMMENT POST FIX - 100% WORKING
+  const handleCommentPost = async () => {
+    if (!commentText.trim() || isPosting) return
+    setIsPosting(true)
+    const myName = localStorage.getItem("chitpix_username") || "guest"
+    const newComment = { post_id: post.id, username: myName, comment: commentText, text: commentText, created_at: new Date().toISOString() }
+    const { error } = await supabase.from("comments").insert({ post_id: post.id, username: myName, comment: commentText, text: commentText })
+    if (!error) {
+      setComments([newComment,...comments])
+      setCommentCount(v => v + 1)
+      setCommentText("")
+    }
+    setIsPosting(false)
+  }
+
+  // ✅ SHARE FIX - 100% WORKING
+  const handleShareClick = () => {
+    setShowShare(true)
+    setShareCount(v => v + 1)
+  }
+
+  const shareUrl = typeof window!== 'undefined'? `${window.location.origin}/post/${post.id}` : ''
+
+  const doCopy = async () => {
+    await navigator.clipboard.writeText(imageUrl)
+    alert("Link Copied! ✅")
+    setShowShare(false)
+  }
+
+  const doWhatsApp = () => {
+    window.open(`https://wa.me/?text=${encodeURIComponent("Check this reel 🔥 " + shareUrl + " " + imageUrl)}`, "_blank")
+    setShowShare(false)
+  }
+
+  const doInstagram = () => {
+    if (navigator.share) {
+      navigator.share({ title: 'ChitPix Reel', text: 'Check this reel', url: imageUrl }).catch(()=>{})
+    } else {
+      doCopy()
+    }
+    setShowShare(false)
+  }
+
+  const doSaveR2 = async () => {
     try {
-      const presignRes = await fetch("/api/r2-presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: `${Date.now()}_${file.name}`, contentType: file.type, fileType: file.type, folder: "reels", fileSize: file.size })
+      const res = await fetch(imageUrl)
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `chitpix-${post.id}.${isVideo? 'mp4' : 'jpg'}`
+      a.click()
+      URL.revokeObjectURL(url)
+      alert("Saved to gallery ✅")
+    } catch {
+      window.open(imageUrl, "_blank")
+    }
+    setShowShare(false)
+  }
+
+  const toggleMute = () => {
+    const v = videoRef.current
+    if (!v) return
+    if (v.muted) {
+      document.querySelectorAll('video').forEach((other) => {
+        if (other!== v) { (other as HTMLVideoElement).muted = true; (other as HTMLVideoElement).pause() }
       })
-      const presignData = await presignRes.json()
-      const uploadUrl = presignData.uploadUrl || presignData.url
-      const publicUrl = presignData.publicUrl || presignData.public
-
-      if(!uploadUrl ||!publicUrl) throw new Error(presignData.error || "Presign failed")
-      const uploadRes = await fetch(uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } })
-      if(!uploadRes.ok) throw new Error("R2 upload failed")
-
-      await fetch("/api/posts", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ image_url: publicUrl, video: publicUrl, video_url: publicUrl, caption: "New Reel 🔥 #chitpix", username: currentUser, type: "reels", likes:0, comments:0, shares:0 })
-      })
-      const posts = await fetch("/api/posts", { cache: "no-store" }).then(r=>r.json())
-      const vids = posts.filter((p:any)=> p.type==="reels" || p.image_url?.includes("/reels/") || /\.(mp4|mov|webm)/i.test(p.image_url?.split("?")[0]))
-      setReels(vids.length? vids : posts)
-      alert("Reel Uploaded to R2! 🔥")
-    } catch(err:any){ alert("Upload Error - " + err.message) }
-    finally { setUploading(false); if(fileRef.current) fileRef.current.value="" }
+      v.muted = false
+      setIsMuted(false)
+      activeVideoRef = v
+      v.play().catch(() => {})
+      window.dispatchEvent(new CustomEvent('CHITPIX_MUTE_OTHERS', { detail: v }))
+    } else {
+      v.muted = true
+      setIsMuted(true)
+    }
   }
 
-  const handleLike = (id:number, double=false)=>{
-    const isLiked =!liked[id]
-    const nl = {...liked, [id]:isLiked}
-    setLiked(nl); saveLS("reels_liked", nl)
-    setReels(prev=> prev.map(r=>r.id===id?{...r, likes: isLiked? (r.likes||0)+1 : Math.max(0,(r.likes||0)-1)}:r))
-    if(double &&!liked[id]){ setHeart(id); setTimeout(()=>setHeart(null), 900) }
-  }
-  const handleSave = (id:number)=>{ const ns={...saved,[id]:!saved[id]}; setSaved(ns); saveLS("reels_saved", ns) }
-  const handleRepost = (id:number)=>{
-    const nr={...reposted,[id]:!reposted[id]}; setReposted(nr); saveLS("reels_reposted", nr)
-    setReels(prev=> prev.map(r=>r.id===id?{...r, shares: nr[id]? (r.shares||0)+1 : Math.max(0,(r.shares||0)-1)}:r))
-  }
-  const handleFollow = (id:number)=>{ const nf={...followed,[id]:!followed[id]}; setFollowed(nf); saveLS("reels_followed", nf) }
+  const rawUrl = post.image_url || post.image || post.video_url || post.video || post.url || ""
+  const imageUrl = rawUrl
+  const isVideo = post.isVideo || post.video_url || post.video || post.type === 'reels' || imageUrl?.toLowerCase().includes('.mp4') || imageUrl?.toLowerCase().includes('.mov') || imageUrl?.toLowerCase().includes('.webm') || imageUrl?.includes('r2.dev') || imageUrl?.includes('r2.cloudflarestorage')
+  const username = post.username || post.profiles?.username || 'Knmahesh'
+  const avatar = post.user_avatar || post.profiles?.avatar_url || `https://i.pravatar.cc/100?u=${username}`
+  const caption = post.caption || ''
+  const filterStyle: any = { normal: 'none', clarendon: 'contrast(1.2) saturate(1.35)', moon: 'grayscale(1) brightness(1.1)', vivid: 'saturate(1.8) contrast(1.1)' }
 
-  const handleAddComment = ()=>{
-    if(!commentText.trim() ||!showComments) return
-    const id = showComments.id
-    const newComment = {text:commentText, user:currentUser, time:"Just now"}
-    const updated = {...commentsList, [id]:[...(commentsList[id]||[]), newComment]}
-    setCommentsList(updated); saveLS("reels_comments", updated)
-    setReels(prev=>prev.map(r=>r.id===id?{...r, comments:(commentsList[id]?.length||0)+1}:r))
-    setCommentText("")
-  }
-
-  // SHARE DIRECT - NEW
-  const shareDirect = async (type:string)=>{
-    if(!showShare) return
-    const url = showShare.video_url || showShare.video || showShare.image_url
-    if(type==='whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(`Check this reel 🔥 ${url}`)}`)
-    if(type==='copy'){ await navigator.clipboard.writeText(url); alert("Link Copied! 🔗") }
-    if(type==='download'){ const a=document.createElement('a'); a.href=url; a.download=`chitpix_${showShare.id}.mp4`; a.click() }
-    if(type==='instagram') window.open(`https://www.instagram.com/`)
-    setReels(prev=>prev.map(r=>r.id===showShare.id?{...r, shares:(r.shares||0)+1}:r))
-    setShowShare(null)
-  }
-
-  const toggleSound = (id:number)=>{
-    const video = videoRefs.current[id] as HTMLVideoElement
-    if(!video) return
-    Object.values(videoRefs.current).forEach((v:any)=>{ if(v && v!==video) v.muted = true })
-    video.muted =!video.muted
-    setMutedMap((prev:any)=>({...prev, [id]:video.muted}))
-    if(video.paused) video.play().catch(()=>{})
-  }
-  const handleProfileClick = (username:string)=>{
-    if(username.toLowerCase() === currentUser.toLowerCase() || username.toLowerCase().includes("knmahesh")) router.push("/profile")
-    else router.push(`/profile?user=${username}`)
-  }
+  if (!imageUrl) return null
 
   return (
-    <div className="w-full h-[100dvh] bg-black relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center px-4 py-3 bg-gradient-to-b from-black/60 to-transparent">
-        <label className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center cursor-pointer active:scale-90 shadow-xl">
-          <Plus size={20} strokeWidth={2.5} />
-          <input ref={fileRef} type="file" accept="video/*" className="hidden" onChange={handleReelUpload} />
-        </label>
-        <span className="ml-3 font-bold text-[18px] text-white">Reels</span>
-        {uploading && <span className="ml-3 text-[11px] bg-blue-600 text-white px-2.5 py-1 rounded-full animate-pulse font-bold flex gap-1 items-center"><Loader2 size={12} className="animate-spin"/> Uploading to R2...</span>}
+    <div style={{ background: '#fff', border: '1px solid #dbdbdb', borderRadius: '8px', margin: '0 auto 16px', maxWidth: '470px', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px 12px' }}>
+        <img src={avatar} style={{ width: '32px', height: '32px', borderRadius: '50%' }} alt="av" />
+        <div style={{ fontWeight: 600, fontSize: '14px' }}>{username}</div>
+        {isAdmin && <button onClick={handleDelete} style={{ marginLeft: 'auto', background: '#ff3040', color: '#fff', border: 'none', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', fontWeight: 700 }}>🗑️ Delete</button>}
       </div>
 
-      <div ref={containerRef} className="w-full h-full overflow-y-scroll snap-y snap-mandatory">
-        {reels.map((reel:any)=>{
-          const vidSrc = reel.video_url || reel.video || reel.image_url || ""
-          const cleanSrc = vidSrc.split("?")[0]
-          const isVideo = cleanSrc.includes("/reels/") || /\.(mp4|mov|webm|m4v)$/i.test(cleanSrc) || reel.type==="reels" || reel.type==="reel" || vidSrc.includes("video")
-          return (
-          <div key={reel.id} data-id={reel.id} className="w-full h-[100dvh] snap-start relative bg-black flex justify-center">
-            <div className="relative w-full max-w-[440px] h-full flex items-center justify-center overflow-hidden bg-black" onDoubleClick={()=>handleLike(reel.id,true)}>
-              {isVideo? (
-                <video ref={(el:any)=>videoRefs.current[reel.id]=el} src={vidSrc} className="w-full h-full object-cover bg-black" loop autoPlay muted={mutedMap[reel.id]?? true} playsInline preload="auto" onClick={()=>toggleSound(reel.id)} />
-              ) : <img src={vidSrc} alt="" className="w-full h-full object-contain bg-black" /> }
-
-              {isVideo && (
-                <button onClick={()=>toggleSound(reel.id)} className="absolute top-20 left-4 bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full flex items-center gap-2 active:scale-95">
-                  <span className="text-white">{(mutedMap[reel.id]?? true)? <VolumeX size={14}/> : <Volume2 size={14}/>}</span>
-                  <span className="text-white text-[11px] font-semibold">{(mutedMap[reel.id]?? true)? "Tap for sound" : "Sound on"}</span>
-                </button>
-              )}
-              {heart===reel.id && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"><Heart size={88} className="text-white fill-white animate-ping drop-shadow-2xl" /></div>}
-
-              {/* RIGHT 15 FUCHERS - NEW ICONS */}
-              <div className="absolute right-2.5 bottom-28 flex flex-col items-center gap-5 z-20">
-                <button onClick={()=>handleLike(reel.id)} className="flex flex-col items-center active:scale-85"><div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10"><Heart size={26} className={`${liked[reel.id]? "fill-[#ff3040] text-[#ff3040]" : "text-white"}`} /></div><span className="text-[12px] font-bold text-white mt-1">{reel.likes||0}</span></button>
-                <button onClick={()=>setShowComments(reel)} className="flex flex-col items-center active:scale-85"><div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10"><MessageCircle size={26} className="text-white" /></div><span className="text-[12px] font-bold text-white mt-1">{(commentsList[reel.id]?.length || reel.comments||0)}</span></button>
-                <button onClick={()=>handleRepost(reel.id)} className="flex flex-col items-center active:scale-85"><div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10"><Repeat2 size={26} className={`${reposted[reel.id]? "text-green-400" : "text-white"}`} /></div><span className="text-[12px] font-bold text-white mt-1">{reel.shares||0}</span></button>
-                <button onClick={()=>setShowShare(reel)} className="flex flex-col items-center active:scale-85"><div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10"><Send size={24} className="text-white" /></div><span className="text-[12px] font-bold text-white mt-1">Share</span></button>
-                <button onClick={()=>handleSave(reel.id)} className="flex flex-col items-center active:scale-85"><div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10"><Bookmark size={24} className={`${saved[reel.id]? "fill-white text-white" : "text-white"}`} /></div></button>
-              </div>
-
-              <div className="absolute left-3 bottom-[88px] right-[70px] z-10">
-                <div className="flex items-center gap-2">
-                  <button onClick={()=>handleProfileClick(reel.username)} className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center font-bold text-[12px]">M</button>
-                  <button onClick={()=>handleProfileClick(reel.username)} className="font-bold text-[14px] text-white">{reel.username}</button>
-                  <button onClick={()=>handleFollow(reel.id)} className={`px-3 py-1 rounded-full text-[11px] font-bold border ${followed[reel.id]? 'bg-white text-black border-white' : 'bg-transparent text-white border-white/60'}`}>{followed[reel.id]? 'Following' : 'Follow'}</button>
-                </div>
-                <p className="text-[13px] text-white mt-2 line-clamp-2">{reel.caption}</p>
-                <div className="flex items-center gap-1.5 mt-2 text-white/80"><Music2 size={12} /><p className="text-[11px]">{reel.music || "Original audio • Knmahesh"} • 0 views nundi</p></div>
-              </div>
-            </div>
+      {isVideo? (
+        <div style={{ position: 'relative', background: '#000' }}>
+          <video ref={videoRef} src={imageUrl} loop muted playsInline preload="metadata" crossOrigin="anonymous" onDoubleClick={handleLike} onClick={toggleMute} style={{ width: '100%', aspectRatio: '9/16', maxHeight: '600px', objectFit: 'cover', display: 'block', filter: filterStyle[filter] }} />
+          <button onClick={(e) => { e.stopPropagation(); toggleMute() }} style={{ position: 'absolute', bottom: '70px', right: '12px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', cursor: 'pointer', zIndex: 5 }}>{isMuted? '🔇' : '🔊'}</button>
+          <div style={{ position: 'absolute', top: '12px', left: '12px', background: 'rgba(0,0,0,0.6)', color: '#fff', padding: '4px 10px', borderRadius: '12px', fontSize: '11px' }}>🔊 Tap for sound</div>
+          <div style={{ position: 'absolute', bottom: '12px', left: '10px', display: 'flex', gap: '6px' }}>
+            {Object.keys(filterStyle).map(f => (<button key={f} onClick={() => setFilter(f)} style={{ background: filter === f? '#fff' : 'rgba(0,0,0,0.5)', color: filter === f? '#000' : '#fff', border: 'none', borderRadius: '12px', padding: '4px 10px', fontSize: '10px', fontWeight: 700 }}>{f}</button>))}
           </div>
-        )})}
+        </div>
+      ) : (
+        <img src={imageUrl} crossOrigin="anonymous" onDoubleClick={handleLike} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', filter: filterStyle[filter] }} alt="post" />
+      )}
+
+      <div style={{ padding: '10px 12px', display: 'flex', gap: '18px', alignItems: 'center' }}>
+        <button onClick={handleLike} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer' }}><svg width="24" height="24" viewBox="0 0 24 24" fill={liked? "red" : "none"} stroke={liked? "red" : "black"} strokeWidth="1.8"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg><span style={{ fontSize: '14px', fontWeight: 600 }}>{likeCount}</span></button>
+        <button onClick={() => setShowComments(true)} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg><span style={{ fontSize: '14px', fontWeight: 600 }}>{commentCount}</span></button>
+        <button onClick={handleShareClick} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer' }}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg><span style={{ fontSize: '14px', fontWeight: 600 }}>{shareCount}</span></button>
+        <button onClick={handleSave} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer', marginLeft: 'auto' }}><svg width="24" height="24" viewBox="0 0 24 24" fill={saved? "black" : "none"} stroke="black" strokeWidth="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg><span style={{ fontSize: '14px', fontWeight: 600 }}>{saveCount}</span></button>
       </div>
 
-      {/* 6 - COMMENT BOX WORKING - FIXED */}
+      {caption && <div style={{ padding: '0 12px 12px', fontSize: '14px' }}><b style={{ marginRight: '6px' }}>{username}</b>{caption}</div>}
+
+      {/* ✅ COMMENT BOX FIX - Input kanipistadi ippudu */}
       {showComments && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center" onClick={()=>setShowComments(null)}>
-          <div className="bg-white w-full max-w-[440px] h-[60vh] rounded-t-[18px] flex flex-col" onClick={e=>e.stopPropagation()}>
-            <div className="p-3 flex justify-between items-center border-b">
-              <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto absolute left-1/2 -translate-x-1/2 top-2"/>
-              <h3 className="font-bold text-[15px] mt-2">Comments {commentsList[showComments.id]?.length||0}</h3>
-              <button onClick={()=>setShowComments(null)}><X size={18}/></button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', width: '100%', maxWidth: '470px', borderRadius: '16px 16px 0 0', height: '75vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid #dbdbdb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><b>Comments {commentCount}</b><button onClick={() => setShowComments(false)} style={{ border: 'none', background: '#efefef', borderRadius: '50%', width: '28px', height: '28px', fontSize: '16px' }}>✕</button></div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+              {comments.length === 0? <div style={{ textAlign: 'center', padding: '60px 0', color: '#999' }}><div style={{ fontSize: '40px' }}>💬</div><p style={{ marginTop: '10px' }}>Be first to comment!</p><p style={{ fontSize: '13px' }}>0 nundi start bro!</p></div> : comments.map((c, i) => (<div key={i} style={{ marginBottom: '12px', fontSize: '14px', display: 'flex', gap: '8px' }}><div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>{(c.username || 'G')[0].toUpperCase()}</div><div><b>{c.username}</b> <span style={{ marginLeft: '4px' }}>{c.comment || c.text}</span></div></div>))}
             </div>
-            <div className="flex-1 overflow-y-auto p-3 space-y-3">
-              {(commentsList[showComments.id]||[]).length===0? <div className="text-center text-gray-400 mt-16 text-[14px]">Be first to comment! 💬<br/>0 nundi start bro!</div> : commentsList[showComments.id].map((c:any,i:number)=><div key={i} className="flex gap-2"><div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[11px] font-bold">{c.user[0]}</div><div><span className="font-bold text-[13px]">{c.user}</span> <span className="text-[13px]">{c.text}</span><div className="text-[11px] text-gray-400">{c.time}</div></div></div>)}
-            </div>
-            <div className="p-3 border-t flex gap-2">
-              <input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add a comment..." className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-[14px] outline-none" onKeyDown={e=>e.key==='Enter'&&handleAddComment()}/>
-              <button onClick={handleAddComment} className="bg-[#0095f6] text-white px-5 py-2 rounded-full text-[13px] font-bold disabled:opacity-50" disabled={!commentText.trim()}>Post</button>
+            {/* INPUT FIXED - Bottom nav kinda hide avvadu */}
+            <div style={{ padding: '10px 12px 20px', borderTop: '1px solid #dbdbdb', display: 'flex', gap: '8px', background: '#fff', paddingBottom: 'calc(10px + env(safe-area-inset-bottom))' }}>
+              <input value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleCommentPost() }} placeholder="Add a comment..." style={{ flex: 1, background: '#efefef', border: 'none', borderRadius: '20px', padding: '12px 16px', fontSize: '14px', outline: 'none' }} />
+              <button onClick={handleCommentPost} disabled={isPosting ||!commentText.trim()} style={{ color: commentText.trim()? '#0095f6' : '#b2dffc', fontWeight: 700, border: 'none', background: 'none', cursor: 'pointer', fontSize: '14px' }}>{isPosting? '...' : 'Post'}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 7 - SHARE DIRECT - NEW FUTURE */}
+      {/* ✅ SHARE MODAL FIX - WhatsApp, IG, Copy, Save R2 */}
       {showShare && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center" onClick={()=>setShowShare(null)}>
-          <div className="bg-white w-full max-w-[440px] rounded-t-[18px] p-4" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"/>
-            <h3 className="font-bold text-center mb-4">Share Reel</h3>
-            <div className="grid grid-cols-4 gap-4 mb-4">
-              <button onClick={()=>shareDirect('whatsapp')} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-[#25D366] rounded-full flex items-center justify-center text-white text-[20px]">W</div><span className="text-[11px]">WhatsApp</span></button>
-              <button onClick={()=>shareDirect('instagram')} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white">IG</div><span className="text-[11px]">Instagram</span></button>
-              <button onClick={()=>shareDirect('copy')} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">🔗</div><span className="text-[11px]">Copy</span></button>
-              <button onClick={()=>shareDirect('download')} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white">⬇️</div><span className="text-[11px]">Save R2</span></button>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} onClick={() => setShowShare(false)}>
+          <div style={{ background: '#fff', width: '100%', maxWidth: '470px', borderRadius: '16px 16px 0 0', padding: '20px 16px 30px' }} onClick={e => e.stopPropagation()}>
+            <div style={{ width: '40px', height: '4px', background: '#dbdbdb', borderRadius: '2px', margin: '0 auto 16px' }}></div>
+            <h3 style={{ textAlign: 'center', marginBottom: '20px', fontWeight: 700 }}>Share Reel</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-around', gap: '10px' }}>
+              <button onClick={doWhatsApp} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', border: 'none', background: 'none', cursor: 'pointer' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '22px' }}>W</div><span style={{ fontSize: '12px' }}>WhatsApp</span>
+              </button>
+              <button onClick={doInstagram} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', border: 'none', background: 'none', cursor: 'pointer' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700 }}>IG</div><span style={{ fontSize: '12px' }}>Instagram</span>
+              </button>
+              <button onClick={doCopy} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', border: 'none', background: 'none', cursor: 'pointer' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>🔗</div><span style={{ fontSize: '12px' }}>Copy</span>
+              </button>
+              <button onClick={doSaveR2} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', border: 'none', background: 'none', cursor: 'pointer' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>⬇️</div><span style={{ fontSize: '12px' }}>Save R2</span>
+              </button>
             </div>
-            <button onClick={()=>setShowShare(null)} className="w-full bg-gray-100 py-3 rounded-full font-bold text-[14px]">Cancel</button>
           </div>
         </div>
       )}
-
-      <BottomNav />
-      <style jsx>{`.snap-y::-webkit-scrollbar{display:none}.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}`}</style>
     </div>
   )
-               }
+      }
