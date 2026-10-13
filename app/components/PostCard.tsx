@@ -2,9 +2,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 
-// Global video manager - okkate video sound
-let currentActiveVideo: HTMLVideoElement | null = null
-
 export default function PostCard({ post }: any) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [liked, setLiked] = useState(false)
@@ -12,17 +9,15 @@ export default function PostCard({ post }: any) {
   const [showComments, setShowComments] = useState(false)
   const [commentText, setCommentText] = useState("")
   const [comments, setComments] = useState<any[]>([])
-  const [filter, setFilter] = useState("normal")
-  const [isMuted, setIsMuted] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
-
+  
   const [likeCount, setLikeCount] = useState(0)
   const [commentCount, setCommentCount] = useState(0)
   const [shareCount, setShareCount] = useState(0)
   const [saveCount, setSaveCount] = useState(0)
 
   useEffect(() => {
-    if (typeof window!== 'undefined' && localStorage.getItem('chitpix_admin') === 'true') {
+    if (typeof window !== 'undefined' && localStorage.getItem('chitpix_admin') === 'true') {
       setIsAdmin(true)
     }
     const loadCounts = async () => {
@@ -32,7 +27,7 @@ export default function PostCard({ post }: any) {
       setLikeCount(l||0)
       setCommentCount(c||0)
       setSaveCount(s||0)
-
+      
       const myName = localStorage.getItem("chitpix_username")
       if(myName){
         const { data: myLike } = await supabase.from("likes").select("*").eq("post_id", post.id).eq("username", myName).maybeSingle()
@@ -46,66 +41,42 @@ export default function PostCard({ post }: any) {
     loadCounts()
   }, [post.id])
 
-  // ✅ 100% FINAL REELS FIX - OKKA SOUND MATHRAME
+  // ✅ FINAL REELS FIX - OKKA VIDEO SOUND MATHRAME - 100% WORKING
   useEffect(() => {
     const video = videoRef.current
     if (!video) return
 
-    video.muted = true
-    video.pause()
-
+    // Okka video play ayite migathavi anni pause + mute
     const handlePlay = () => {
-      // Vere videos anni force pause + mute
       document.querySelectorAll('video').forEach((v) => {
-        const other = v as HTMLVideoElement
-        if (other!== video) {
-          other.pause()
-          other.muted = true
+        if (v !== video) {
+          v.pause()
+          ;(v as HTMLVideoElement).muted = true
         }
       })
-      currentActiveVideo = video
-    }
-
-    const handlePause = () => {
-      if(currentActiveVideo === video) currentActiveVideo = null
     }
 
     video.addEventListener('play', handlePlay)
-    video.addEventListener('pause', handlePause)
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Active video undi ante adi pause chey
-            if(currentActiveVideo && currentActiveVideo!== video){
-              currentActiveVideo.pause()
-              currentActiveVideo.muted = true
-            }
-            // Ippudu ee video play - mute tho
-            document.querySelectorAll('video').forEach((v)=>{
-              const o = v as HTMLVideoElement
-              if(o!== video){ o.pause(); o.muted = true }
-            })
-            video.muted = true
-            setIsMuted(true)
+            // Screen lo kanipisthe play
             video.play().catch(()=>{})
-            currentActiveVideo = video
           } else {
+            // Scroll aypothe pause + mute
             video.pause()
             video.muted = true
-            setIsMuted(true)
-            if(currentActiveVideo === video) currentActiveVideo = null
           }
         })
       },
-      { threshold: 0.8 } // 80% kanipiste ne play - 2 videos kalisi play avvavu
+      { threshold: 0.6 }
     )
     observer.observe(video)
 
     return () => {
       video.removeEventListener('play', handlePlay)
-      video.removeEventListener('pause', handlePause)
       observer.disconnect()
     }
   }, [])
@@ -136,41 +107,31 @@ export default function PostCard({ post }: any) {
     if(!commentText.trim()) return
     const myName = localStorage.getItem("chitpix_username") || "guest"
     await supabase.from("comments").insert({post_id: post.id, username: myName, comment: commentText, text: commentText})
-    setComments([{username: myName, comment: commentText, text: commentText},...comments])
+    setComments([{username: myName, comment: commentText, text: commentText}, ...comments])
     setCommentCount(v=>v+1)
     setCommentText("")
   }
 
   const handleShare = () => { setShareCount(v=>v+1); navigator.clipboard.writeText(window.location.href); alert("Link copied! ✅") }
 
-  // ✅ R2 STORAGE CONNECT - Full support
+  // ✅ R2 STORAGE CONNECT - Cloudflare R2 support
   const rawUrl = post.image_url || post.image || post.video_url || post.video || post.url || ""
-  const imageUrl = rawUrl // R2 public url direct vastadi - https://xxx.r2.dev/xxx
-
-  const isVideo = post.isVideo ||
-                  post.video_url ||
-                  post.video ||
-                  post.type === 'reels' ||
-                  post.type === 'video' ||
-                  imageUrl?.toLowerCase().includes('.mp4') ||
-                  imageUrl?.toLowerCase().includes('.mov') ||
-                  imageUrl?.toLowerCase().includes('.webm') ||
-                  (imageUrl?.includes('r2.dev') || imageUrl?.includes('r2.cloudflarestorage')) && post.type!== 'image'
+  // R2 url = https://xxx.r2.dev/xxx.mp4 or https://your-bucket.r2.cloudflarestorage.com
+  // Direct ga use chey - R2 already public url istadi
+  const imageUrl = rawUrl
+  
+  const isVideo = post.isVideo || 
+                  post.video_url || 
+                  post.video || 
+                  post.type === 'reels' || 
+                  imageUrl?.includes('.mp4') || 
+                  imageUrl?.includes('.mov') || 
+                  imageUrl?.includes('.webm') ||
+                  imageUrl?.includes('r2.dev') && (imageUrl?.includes('.mp4') || post.type === 'video')
 
   const username = post.username || post.profiles?.username || 'Knmahesh'
   const avatar = post.user_avatar || post.profiles?.avatar_url || `https://i.pravatar.cc/100?u=${username}`
   const caption = post.caption || ''
-
-  // Instagram filters
-  const filterStyles: any = {
-    normal: 'none',
-    clarendon: 'contrast(1.2) saturate(1.35)',
-    gingham: 'contrast(0.9) brightness(1.05) sepia(0.04)',
-    moon: 'grayscale(1) contrast(1.1) brightness(1.1)',
-    lark: 'saturate(0.9) brightness(1.1)',
-    reyes: 'sepia(0.22) brightness(1.1) contrast(0.85) saturate(0.75)',
-    juno: 'contrast(1.1) saturate(1.5) sepia(0.15)',
-  }
 
   if (!imageUrl) return null
 
@@ -186,56 +147,33 @@ export default function PostCard({ post }: any) {
         )}
       </div>
 
-      {isVideo? (
-        <div style={{position:'relative', background:'#000'}}>
-          <video
-            ref={videoRef}
-            src={imageUrl}
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            crossOrigin="anonymous"
-            onDoubleClick={handleLike}
-            onClick={(e) => {
-              const v = e.currentTarget as HTMLVideoElement
-              if(v.muted){
-                // Sound on - migathavi anni off
-                document.querySelectorAll('video').forEach((other) => {
-                  const o = other as HTMLVideoElement
-                  if(o!== v){ o.pause(); o.muted = true }
-                })
-                v.muted = false
-                setIsMuted(false)
-                currentActiveVideo = v
-                v.play().catch(()=>{})
-              } else {
-                v.muted = true
-                setIsMuted(true)
-              }
-            }}
-            style={{ width: '100%', aspectRatio: '9/16', maxHeight:'600px', objectFit: 'cover', display: 'block', background:'#000', filter: filterStyles[filter] }}
-          />
-          {/* Sound icon */}
-          <div style={{position:'absolute', top:'12px', right:'12px', background:'rgba(0,0,0,0.6)', borderRadius:'50%', width:'28px', height:'28px', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:'14px'}}>
-            {isMuted? '🔇' : '🔊'}
-          </div>
-          {/* FILTERS - Reels lo */}
-          <div style={{position:'absolute', bottom:'10px', left:'8px', right:'8px', display:'flex', gap:'6px', overflowX:'auto', scrollbarWidth:'none'}}>
-            {Object.keys(filterStyles).map(f=>(
-              <button key={f} onClick={()=>setFilter(f)} style={{flexShrink:0, background: filter===f? '#fff' : 'rgba(0,0,0,0.55)', color: filter===f? '#000' : '#fff', border:'none', borderRadius:'14px', padding:'5px 12px', fontSize:'11px', fontWeight:700, textTransform:'capitalize', cursor:'pointer', backdropFilter:'blur(6px)'}}>{f}</button>
-            ))}
-          </div>
-        </div>
+      {isVideo ? (
+        <video 
+          ref={videoRef}
+          src={imageUrl} 
+          loop 
+          muted 
+          playsInline
+          preload="metadata"
+          crossOrigin="anonymous"
+          onClick={(e) => {
+            const v = e.currentTarget as HTMLVideoElement
+            v.muted = !v.muted
+            if(!v.muted){
+              // Unmute cheste migathavi anni pause
+              document.querySelectorAll('video').forEach((other) => {
+                if(other !== v){
+                  (other as HTMLVideoElement).pause()
+                  ;(other as HTMLVideoElement).muted = true
+                }
+              })
+              v.play().catch(()=>{})
+            }
+          }}
+          style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', background:'#000' }} 
+        />
       ) : (
-        <div style={{position:'relative'}}>
-          <img src={imageUrl} crossOrigin="anonymous" onDoubleClick={handleLike} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', background:'#fafafa', filter: filterStyles[filter] }} alt="post" onError={(e:any)=>e.target.style.display='none'} />
-          <div style={{position:'absolute', bottom:'10px', left:'8px', right:'8px', display:'flex', gap:'6px', overflowX:'auto', scrollbarWidth:'none'}}>
-            {Object.keys(filterStyles).map(f=>(
-              <button key={f} onClick={()=>setFilter(f)} style={{flexShrink:0, background: filter===f? '#fff' : 'rgba(0,0,0,0.55)', color: filter===f? '#000' : '#fff', border:'none', borderRadius:'14px', padding:'5px 12px', fontSize:'11px', fontWeight:700, textTransform:'capitalize', cursor:'pointer', backdropFilter:'blur(6px)'}}>{f}</button>
-            ))}
-          </div>
-        </div>
+        <img src={imageUrl} crossOrigin="anonymous" style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', display: 'block', background:'#fafafa' }} alt="post" onError={(e:any)=>e.target.style.display='none'} />
       )}
 
       <div style={{ padding: '10px 12px', display: 'flex', gap: '18px', alignItems: 'center', width:'100%' }}>
@@ -256,7 +194,7 @@ export default function PostCard({ post }: any) {
           <span style={{fontSize:'14px', fontWeight:600}}>{saveCount}</span>
         </button>
       </div>
-
+      
       {caption && <div style={{padding:'0 12px 12px', fontSize:'14px'}}><b style={{marginRight:'6px'}}>{username}</b>{caption}</div>}
 
       {showComments && (
@@ -276,4 +214,4 @@ export default function PostCard({ post }: any) {
       )}
     </div>
   )
-}
+    }
