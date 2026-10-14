@@ -28,45 +28,62 @@ async function getPosts() {
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData()
-    const file = formData.get('file') as File | null
-    const username = formData.get('username') as string || 'anonymous'
-    const caption = formData.get('caption') as string || ''
+    const contentType = req.headers.get('content-type') || ''
+    
+    let publicUrl = ''
+    let username = 'knmahesh'
+    let caption = ''
+    let fileName = ''
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
+    // CASE 1: JSON with pre-uploaded R2 URL (for big videos - NEW WAY)
+    if (contentType.includes('application/json')) {
+      const body = await req.json()
+      publicUrl = body.url || body.publicUrl || body.video_url || body.image_url
+      username = body.username || 'knmahesh'
+      caption = body.caption || ''
+      fileName = body.fileName || ''
+      if (!publicUrl) return NextResponse.json({ error: 'No URL provided' }, { status: 400 })
+    } 
+    // CASE 2: FormData with file (small files <4MB - OLD WAY)
+    else {
+      const formData = await req.formData()
+      const file = formData.get('file') as File | null
+      username = formData.get('username') as string || 'knmahesh'
+      caption = formData.get('caption') as string || ''
+      const urlFromForm = formData.get('url') as string || formData.get('publicUrl') as string
+
+      if (urlFromForm) {
+        publicUrl = urlFromForm
+      } else {
+        if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 })
+        // Size check
+        if (file.size > 4 * 1024 * 1024) {
+          return NextResponse.json({ error: 'File too big for direct upload, use presigned URL. Size: ' + Math.round(file.size/1024/1024) + 'MB' }, { status: 413 })
+        }
+        const ext = file.name.split('.').pop() || 'jpg'
+        const key = `posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const buffer = Buffer.from(await file.arrayBuffer())
+        await R2.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: file.type }))
+        const baseUrl = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
+        publicUrl = baseUrl ? `${baseUrl}/${key}` : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${key}`
+      }
     }
 
-    const ext = file.name.split('.').pop() || 'jpg'
-    const key = `posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    const buffer = Buffer.from(await file.arrayBuffer())
-
-    await R2.send(new PutObjectCommand({
-      Bucket: BUCKET,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
-    }))
-
-    // IMPORTANT: Use R2_PUBLIC_URL or fallback
-    const baseUrl = (process.env.R2_PUBLIC_URL || process.env.R2_ENDPOINT || '').replace(/\/$/, '')
-    const publicUrl = baseUrl ? `${baseUrl}/${key}` : `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${key}`
-
-    // Create post object for reels
+    // Create post - FIXED to detect video properly
     const newPost = {
       id: Date.now().toString(),
       image_url: publicUrl,
       url: publicUrl,
       video_url: publicUrl,
-      username: username,
-      caption: caption,
+      username,
+      caption,
       content: caption,
       created_at: new Date().toISOString(),
+      type: publicUrl.toLowerCase().endsWith('.mp4') || publicUrl.toLowerCase().endsWith('.mov') ? 'reel' : 'post'
     }
 
-    // SAVE TO R2 JSON (THIS IS WHAT REELS READS!)
     const posts = await getPosts()
-    const updated = [newPost, ...posts]
+    const updated = [newPost, ...posts].slice(0, 1000) // Keep 1000 max
     await R2.send(new PutObjectCommand({
       Bucket: BUCKET,
       Key: POSTS_KEY,
@@ -78,6 +95,11 @@ export async function POST(req: NextRequest) {
 
   } catch (e: any) {
     console.error('UPLOAD ERROR:', e)
-    return NextResponse.json({ error: e.message || 'Upload failed' }, { status: 500 })
+    // ALWAYS return JSON - Fix for your screenshot error
+    return NextResponse.json({ error: e.message || 'Upload failed', details: e.toString() }, { status: 500 })
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ status: 'upload endpoint ready', bucket: BUCKET, hasR2: !!process.env.R2_ACCOUNT_ID })
 }
