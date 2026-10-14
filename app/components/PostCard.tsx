@@ -244,6 +244,7 @@ export default function PostCard({ post }: any) {
           </div>
         </div>
       )}
-    </div>
+        </div>
   )
-  }
+}
+}
