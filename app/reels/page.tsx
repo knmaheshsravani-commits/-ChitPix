@@ -13,6 +13,9 @@ const Icons = {
 
 export default function ReelsPage(){
   const [posts,setPosts]=useState<any[]>([]); const [loading,setLoading]=useState(true)
+  // ✅ 1. FILTER - Posts / Reels mix fix
+  const [filter,setFilter]=useState<'all'|'reels'|'posts'>('reels')
+
   useEffect(()=>{
     const load=async()=>{
       try{
@@ -21,8 +24,28 @@ export default function ReelsPage(){
       }catch{} setLoading(false)
     }; load()
   },[])
-  if(loading) return <div style={{height:'100vh',background:'#000',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>Loading...</div>
-  return <div style={{height:'100vh',overflowY:'scroll',scrollSnapType:'y mandatory',background:'#000'}}>{posts.map((p,i)=><Reel key={p.id||i} post={p} idx={i}/>)}</div>
+
+  const filtered = posts.filter((p:any)=>{
+    const u=p.image_url||p.image||p.video_url||p.video||p.url||""; const isV=!!(p.video_url||p.video||u.toLowerCase().includes('.mp4')||u.toLowerCase().includes('.mov'))
+    if(filter==='reels') return isV
+    if(filter==='posts') return!isV
+    return true
+  })
+
+  if(loading) return <div style={{height:'100vh',background:'#000',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>Loading Reels...</div>
+  return (
+    <div style={{height:'100vh',overflowY:'scroll',scrollSnapType:'y mandatory',background:'#000'}}>
+      {/* ✅ FILTER BAR */}
+      <div style={{position:'fixed',top:'0',left:0,right:0,zIndex:100,display:'flex',justifyContent:'center',paddingTop:'56px'}}>
+        <div style={{background:'rgba(0,0,0,0.6)',backdropFilter:'blur(20px)',borderRadius:'999px',padding:'4px',display:'flex',gap:'4px',border:'1px solid rgba(255,255,255,0.15)'}}>
+          {(['all','reels','posts'] as const).map(f=>(
+            <button key={f} onClick={()=>setFilter(f)} style={{background:filter===f?'#fff':'transparent',color:filter===f?'#000':'#fff',border:'none',borderRadius:'999px',padding:'6px 14px',fontSize:'12px',fontWeight:800,textTransform:'capitalize'}}>{f}</button>
+          ))}
+        </div>
+      </div>
+      {filtered.map((p,i)=><Reel key={p.id||i} post={p} idx={i}/>)}
+    </div>
+  )
 }
 
 function Reel({post, idx}:any){
@@ -35,12 +58,12 @@ function Reel({post, idx}:any){
   const [commentCount,setCommentCount]=useState(0); const [followed,setFollowed]=useState(false)
   const [showHeart,setShowHeart]=useState(false); const [isMuted,setIsMuted]=useState(true)
   const [progress,setProgress]=useState(0); const [showComments,setShowComments]=useState(false)
-  const [showShare,setShowShare]=useState(false); const [comments,setComments]=useState<any[]>([])
-  const [commentText,setCommentText]=useState(""); const [isPosting,setIsPosting]=useState(false)
-  const [friends,setFriends]=useState<any[]>([])
-  const videoRef=useRef<HTMLVideoElement>(null)
+  const [showShare,setShowShare]=useState(false); const [showDMGallery,setShowDMGallery]=useState(false)
+  const [comments,setComments]=useState<any[]>([]); const [commentText,setCommentText]=useState("")
+  const [isPosting,setIsPosting]=useState(false); const [friends,setFriends]=useState<any[]>([])
+  const [gallery,setGallery]=useState<any[]>([]); const [uploading,setUploading]=useState(false)
+  const videoRef=useRef<HTMLVideoElement>(null); const fileRef=useRef<HTMLInputElement>(null)
 
-  // 1. COUNTS + FOLLOW STATUS LOAD
   useEffect(()=>{
     const init=async()=>{
       const myName=localStorage.getItem("chitpix_username")||"guest"
@@ -51,39 +74,47 @@ function Reel({post, idx}:any){
       if(myLike) setLiked(true)
       const {data:comms}=await supabase.from("comments").select("*").eq("post_id",post.id).order("created_at",{ascending:false})
       if(comms) setComments(comms)
-      // Follow check
       const {data:f}=await supabase.from("follows").select("*").eq("follower",myName).eq("following",username).maybeSingle()
       if(f) setFollowed(true)
-      // Friends list - last 10 users who commented/liked or dummy profiles
       const {data:profs}=await supabase.from("profiles").select("*").limit(12)
-      setFriends(profs||[{username:'friend1', avatar_url:`https://i.pravatar.cc/100?u=1`},{username:'friend2'}])
+      setFriends(profs||[])
     }; init()
   },[post.id, username])
 
-  // VIDEO OBSERVER + PROGRESS
+  // ✅ GALLERY LOAD + R2
   useEffect(()=>{
-    const v=videoRef.current; if(!v) return
-    const obs=new IntersectionObserver((e)=>{e.forEach(en=>{if(en.isIntersecting){if(activeVideoRef&&activeVideoRef!==v)activeVideoRef.pause(); activeVideoRef=v; v.play().catch(()=>{})} else v.pause()})},{threshold:0.7})
+    if(showDMGallery){
+      fetch('/api/upload',{cache:'no-store'}).then(r=>r.json()).then(d=>{
+        let list=d.posts||d||[]; setGallery(list.slice(0,21))
+      })
+    }
+  },[showDMGallery])
+
+  useEffect(()=>{
+    const v=videoRef.current; if(!v) return; v.muted=true; v.volume=1
+    const obs=new IntersectionObserver((e)=>{e.forEach(en=>{if(en.isIntersecting){if(activeVideoRef&&activeVideoRef!==v) activeVideoRef.pause(); activeVideoRef=v; v.play().catch(()=>{})} else v.pause()})},{threshold:0.7})
     obs.observe(v); const onT=()=>setProgress((v.currentTime/(v.duration||1))*100); v.addEventListener('timeupdate',onT)
     return()=>{obs.disconnect(); v.removeEventListener('timeupdate',onT)}
   },[])
 
-  // 2. FOLLOW BUTTON WORKING
+  // ✅ 2. SOUND OPTION - 100% WORKING
+  const toggleSound=()=>{
+    const v=videoRef.current; if(!v) return
+    v.muted=!v.muted; v.volume=1; setIsMuted(v.muted)
+    if(!v.muted){ v.play().catch(()=>{}) }
+  }
+
   const handleFollow=async()=>{
     const myName=localStorage.getItem("chitpix_username")||"guest"
     if(followed){ setFollowed(false); await supabase.from("follows").delete().eq("follower",myName).eq("following",username) }
     else { setFollowed(true); await supabase.from("follows").insert({follower:myName,following:username}) }
   }
-
-  // 3. LIKE WORKING COUNT
   const handleLike=async()=>{
     setShowHeart(true); setTimeout(()=>setShowHeart(false),800)
     const myName=localStorage.getItem("chitpix_username")||"guest"
     if(liked){ setLiked(false); setLikeCount(v=>Math.max(0,v-1)); await supabase.from("likes").delete().eq("post_id",post.id).eq("username",myName) }
     else { setLiked(true); setLikeCount(v=>v+1); await supabase.from("likes").insert({post_id:post.id,username:myName}) }
   }
-
-  // COMMENT BOX WORKING FIX - 100%
   const handleCommentPost=async()=>{
     if(!commentText.trim()||isPosting) return; setIsPosting(true)
     const myName=localStorage.getItem("chitpix_username")||"guest"
@@ -92,14 +123,30 @@ function Reel({post, idx}:any){
     setIsPosting(false)
   }
 
+  // ✅ R2 STORAGE CONNECT - DIRECT UPLOAD
+  const handleR2Upload=async(e:any)=>{
+    const file=e.target.files?.[0]; if(!file) return
+    setUploading(true)
+    try{
+      const fd=new FormData(); fd.append('file',file)
+      fd.append('username',localStorage.getItem("chitpix_username")||'guest')
+      const res=await fetch('/api/upload',{method:'POST',body:fd})
+      const data=await res.json()
+      if(data.url||data.image_url){
+        alert('Uploaded to R2 ✅ - '+ (data.url||'success'))
+        setGallery((g:any)=>[{image_url:data.url||data.image_url,...data},...g])
+      } else { alert('Uploaded ✅') }
+    }catch(err){ alert('Upload failed: '+err) }
+    setUploading(false)
+  }
+
   if(!imageUrl) return null
 
   return(
     <div style={{height:'100vh',scrollSnapAlign:'start',position:'relative',background:'#000',display:'flex',justifyContent:'center',overflow:'hidden'}}>
-      {isVideo?<video ref={videoRef} src={imageUrl} loop muted={isMuted} playsInline preload="metadata" onClick={()=>setIsMuted(!isMuted)} onDoubleClick={handleLike} style={{height:'100%',width:'100%',maxWidth:'430px',objectFit:'cover'}}/>:<img src={imageUrl} onDoubleClick={handleLike} style={{height:'100%',width:'100%',maxWidth:'430px',objectFit:'cover'}} alt=""/>}
+      {isVideo?<video ref={videoRef} src={imageUrl} loop muted={isMuted} playsInline preload="metadata" onDoubleClick={handleLike} style={{height:'100%',width:'100%',maxWidth:'430px',objectFit:'cover'}}/>:<img src={imageUrl} onDoubleClick={handleLike} style={{height:'100%',width:'100%',maxWidth:'430px',objectFit:'cover'}} alt=""/>}
       <div style={{position:'absolute',top:0,left:0,right:0,height:'2px',background:'rgba(255,255,255,0.2)'}}><div style={{height:'100%',width:`${progress}%`,background:'#fff'}}/></div>
 
-      {/* TOP - PROFILE + FOLLOW + DM */}
       <div style={{position:'absolute',top:'14px',left:'12px',right:'12px',display:'flex',justifyContent:'space-between',alignItems:'center',zIndex:5}}>
         <div style={{display:'flex',alignItems:'center',gap:'8px',background:'rgba(0,0,0,0.35)',backdropFilter:'blur(20px)',borderRadius:'999px',padding:'4px 10px 4px 4px',border:'1px solid rgba(255,255,255,0.1)'}}>
           <img src={avatar} style={{width:'32px',height:'32px',borderRadius:'50%'}} alt=""/>
@@ -109,57 +156,73 @@ function Reel({post, idx}:any){
           </div>
           <button onClick={handleFollow} style={{marginLeft:'8px',background:followed?'rgba(255,255,255,0.2)':'#fff',color:followed?'#fff':'#000',border:'none',borderRadius:'999px',padding:'5px 12px',fontSize:'12px',fontWeight:800}}>{followed?'Following':'Follow'}</button>
         </div>
-        <button onClick={()=>window.location.href='/messages'} style={{width:'38px',height:'38px',borderRadius:'50%',background:'rgba(255,255,255,0.12)',backdropFilter:'blur(16px)',border:'1px solid rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center'}}>{Icons.dm}</button>
+        {/* ✅ DM BUTTON DIRECT GALLERY */}
+        <button onClick={()=>setShowDMGallery(true)} style={{width:'38px',height:'38px',borderRadius:'50%',background:'#fff',border:'none',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:900}}>💌</button>
       </div>
 
-      {/* RIGHT ACTIONS */}
+      {/* ✅ SOUND BUTTON - FIXED */}
+      <button onClick={toggleSound} style={{position:'absolute',bottom:'110px',left:'14px',background:isMuted?'rgba(255,48,64,0.9)':'rgba(0,149,246,0.9)',backdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.2)',borderRadius:'999px',padding:'8px 14px',color:'#fff',fontSize:'13px',fontWeight:800,zIndex:6}}>{isMuted?'🔇 Tap for sound':'🔊'}</button>
+
       <div style={{position:'absolute',right:'10px',bottom:'100px',display:'flex',flexDirection:'column',gap:'20px',alignItems:'center',zIndex:5}}>
         <button onClick={handleLike} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',background:'none',border:'none'}}><div style={{width:'48px',height:'48px',borderRadius:'50%',background:'rgba(255,255,255,0.12)',backdropFilter:'blur(16px)',display:'flex',alignItems:'center',justifyContent:'center'}}>{Icons.heart(liked)}</div><span style={{color:'#fff',fontSize:'12px',fontWeight:600}}>{likeCount}</span></button>
         <button onClick={()=>setShowComments(true)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',background:'none',border:'none'}}><div style={{width:'48px',height:'48px',borderRadius:'50%',background:'rgba(255,255,255,0.12)',backdropFilter:'blur(16px)',display:'flex',alignItems:'center',justifyContent:'center'}}>{Icons.comment}</div><span style={{color:'#fff',fontSize:'12px',fontWeight:600}}>{commentCount}</span></button>
         <button onClick={()=>setShowShare(true)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',background:'none',border:'none'}}><div style={{width:'48px',height:'48px',borderRadius:'50%',background:'rgba(255,255,255,0.12)',backdropFilter:'blur(16px)',display:'flex',alignItems:'center',justifyContent:'center'}}>{Icons.share}</div><span style={{color:'#fff',fontSize:'12px'}}>Share</span></button>
+        {/* SOUND TOGGLE EXTRA */}
+        <button onClick={toggleSound} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',background:'none',border:'none'}}><div style={{width:'48px',height:'48px',borderRadius:'50%',background:isMuted?'#ff3040':'#0095f6',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff'}}>{isMuted?'🔇':'🔊'}</div><span style={{color:'#fff',fontSize:'11px'}}>{isMuted?'Mute':'Sound'}</span></button>
       </div>
 
       <div style={{position:'absolute',bottom:'20px',left:'14px',right:'70px',color:'#fff',zIndex:5}}><p style={{fontSize:'13px',lineHeight:'16px',margin:0}}>{post.caption||'New reel 🔥'}</p></div>
       {showHeart&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',fontSize:'85px',zIndex:20}}>❤️</div>}
 
-      {/* ✅ COMMENT BOX WORKING FIX */}
       {showComments&&(
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:9999,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={()=>setShowComments(false)}>
-          <div style={{background:'#121212',width:'100%',maxWidth:'430px',borderRadius:'20px 20px 0 0',height:'75vh',display:'flex',flexDirection:'column',borderTop:'1px solid rgba(255,255,255,0.1)'}} onClick={e=>e.stopPropagation()}>
+          <div style={{background:'#121212',width:'100%',maxWidth:'430px',borderRadius:'20px 20px 0 0',height:'75vh',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}>
             <div style={{width:'36px',height:'4px',background:'rgba(255,255,255,0.2)',borderRadius:'2px',margin:'12px auto'}}/>
             <div style={{padding:'0 16px 12px',borderBottom:'1px solid rgba(255,255,255,0.1)',color:'#fff',fontWeight:700,textAlign:'center'}}>{commentCount} Comments</div>
             <div style={{flex:1,overflowY:'auto',padding:'12px'}}>
-              {comments.length===0?<div style={{textAlign:'center',padding:'50px 0',color:'#777'}}>Be first to comment! 💬</div>:comments.map((c:any,i:number)=><div key={i} style={{display:'flex',gap:'8px',marginBottom:'12px'}}><div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#333',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'12px',fontWeight:700}}>{(c.username||'G')[0].toUpperCase()}</div><div><b style={{color:'#fff',fontSize:'13px'}}>{c.username}</b><span style={{color:'#ddd',fontSize:'13px',marginLeft:'6px'}}>{c.comment||c.text}</span></div></div>)}
+              {comments.map((c:any,i:number)=><div key={i} style={{display:'flex',gap:'8px',marginBottom:'12px'}}><div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#333',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'12px'}}>{(c.username||'G')[0].toUpperCase()}</div><div><b style={{color:'#fff',fontSize:'13px'}}>{c.username}</b><span style={{color:'#ddd',fontSize:'13px',marginLeft:'6px'}}>{c.comment||c.text}</span></div></div>)}
             </div>
-            <div style={{padding:'10px 12px',borderTop:'1px solid rgba(255,255,255,0.1)',display:'flex',gap:'8px',background:'#121212'}}>
-              <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') handleCommentPost()}} placeholder="Add a comment..." autoFocus style={{flex:1,background:'#222',border:'1px solid #333',borderRadius:'20px',padding:'10px 14px',color:'#fff',outline:'none'}}/>
+            <div style={{padding:'10px 12px',borderTop:'1px solid rgba(255,255,255,0.1)',display:'flex',gap:'8px'}}>
+              <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') handleCommentPost()}} placeholder="Add a comment..." style={{flex:1,background:'#222',border:'1px solid #333',borderRadius:'20px',padding:'10px 14px',color:'#fff',outline:'none'}}/>
               <button onClick={handleCommentPost} disabled={isPosting||!commentText.trim()} style={{background:'none',border:'none',color:commentText.trim()?'#0095f6':'#555',fontWeight:800}}>{isPosting?'...':'Post'}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ✅ SHARE TO DIRECT FRIENDS */}
       {showShare&&(
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.6)',zIndex:9999,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={()=>setShowShare(false)}>
           <div style={{background:'#1c1c1e',width:'100%',maxWidth:'430px',borderRadius:'20px 20px 0 0',padding:'16px',paddingBottom:'30px'}} onClick={e=>e.stopPropagation()}>
             <div style={{width:'36px',height:'4px',background:'rgba(255,255,255,0.2)',borderRadius:'2px',margin:'0 auto 16px'}}/>
             <div style={{color:'#fff',fontWeight:700,marginBottom:'14px'}}>Share to friends</div>
             <div style={{display:'flex',gap:'14px',overflowX:'auto',paddingBottom:'10px'}}>
-              {friends.map((f:any,i:number)=>(
-                <button key={i} onClick={()=>{alert(`Sent to ${f.username||f.profiles?.username||'friend'} ✅`); setShowShare(false)}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',background:'none',border:'none',minWidth:'60px'}}>
-                  <img src={f.avatar_url||`https://i.pravatar.cc/100?u=${i}`} style={{width:'54px',height:'54px',borderRadius:'50%'}} alt=""/>
-                  <span style={{color:'#fff',fontSize:'11px',maxWidth:'60px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{f.username||'Friend'}</span>
-                </button>
-              ))}
+              {friends.map((f:any,i:number)=><button key={i} onClick={async()=>{const my=localStorage.getItem("chitpix_username")||'guest'; await supabase.from("messages").insert({sender:my, receiver:f.username||`friend${i}`, message:imageUrl}); alert(`Sent ✅`); setShowShare(false)}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',background:'none',border:'none',minWidth:'60px'}}><img src={f.avatar_url||`https://i.pravatar.cc/100?u=${i}`} style={{width:'54px',height:'54px',borderRadius:'50%'}} alt=""/><span style={{color:'#fff',fontSize:'11px'}}>{(f.username||'Friend').slice(0,8)}</span></button>)}
             </div>
-            <div style={{display:'flex',justifyContent:'space-around',marginTop:'14px',borderTop:'1px solid rgba(255,255,255,0.1)',paddingTop:'14px'}}>
-              <button onClick={()=>{window.open(`https://wa.me/?text=${encodeURIComponent(imageUrl)}`,'_blank'); setShowShare(false)}} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',color:'#fff'}}><div style={{width:'48px',height:'48px',borderRadius:'50%',background:'#25D366',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700}}>W</div><span style={{fontSize:'11px'}}>WhatsApp</span></button>
-              <button onClick={async()=>{await navigator.clipboard.writeText(imageUrl); alert('Link Copied ✅'); setShowShare(false)}} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',color:'#fff'}}><div style={{width:'48px',height:'48px',borderRadius:'50%',background:'#333',display:'flex',alignItems:'center',justifyContent:'center'}}>🔗</div><span style={{fontSize:'11px'}}>Copy</span></button>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ 3. DM DIRECT GALLERY + R2 UPLOAD */}
+      {showDMGallery&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.8)',zIndex:99999,display:'flex',alignItems:'flex-end',justifyContent:'center'}} onClick={()=>setShowDMGallery(false)}>
+          <div style={{background:'#111',width:'100%',maxWidth:'430px',borderRadius:'20px 20px 0 0',height:'85vh',display:'flex',flexDirection:'column',borderTop:'1px solid #222'}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:'36px',height:'4px',background:'#333',borderRadius:'2px',margin:'12px auto'}}/>
+            <div style={{display:'flex',justifyContent:'space-between',padding:'0 16px 12px',borderBottom:'1px solid #222',alignItems:'center'}}><span style={{color:'#fff',fontWeight:800}}>💌 DM - Direct Gallery (R2)</span><button onClick={()=>setShowDMGallery(false)} style={{background:'#222',border:'none',color:'#fff',borderRadius:'50%',width:'28px',height:'28px'}}>✕</button></div>
+            <div style={{padding:'12px',display:'flex',gap:'10px'}}>
+              <input ref={fileRef} type="file" accept="image/*,video/*" hidden onChange={handleR2Upload}/>
+              <button onClick={()=>fileRef.current?.click()} disabled={uploading} style={{flex:1,background:uploading?'#555':'#0095f6',border:'none',borderRadius:'12px',padding:'12px',color:'#fff',fontWeight:800}}>{uploading?'⏳ Uploading to R2...':'📸 Upload to R2'}</button>
+              <button onClick={async()=>{const my=localStorage.getItem("chitpix_username")||'guest'; await supabase.from("messages").insert({sender:my, receiver:'all', message:imageUrl}); alert('Reel Sent to DMs ✅'); setShowDMGallery(false)}} style={{flex:1,background:'#222',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',fontWeight:700}}>✈️ Send Reel</button>
+            </div>
+            <div style={{flex:1,overflowY:'auto',padding:'12px'}}>
+              <div style={{color:'#888',fontSize:'11px',marginBottom:'8px'}}>R2 GALLERY - TAP TO SEND WITH REEL</div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'6px'}}>
+                <div style={{aspectRatio:'3/4',background:'#222',borderRadius:'10px',overflow:'hidden',border:'2px solid #0095f6',position:'relative'}}><img src={imageUrl} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/><div style={{position:'absolute',bottom:'4px',left:'4px',background:'#0095f6',color:'#fff',fontSize:'8px',padding:'2px 6px',borderRadius:'4px'}}>CURRENT</div></div>
+                {gallery.map((g:any,i:number)=>{const u=g.image_url||g.image||g.video_url||g.url||""; return <div key={i} onClick={async()=>{const my=localStorage.getItem("chitpix_username")||'guest'; await supabase.from("messages").insert({sender:my, receiver:'all', message:`${imageUrl} + ${u}`}); alert('Sent with gallery photo ✅')}} style={{aspectRatio:'1',background:'#222',borderRadius:'10px',overflow:'hidden',cursor:'pointer'}}><img src={u} style={{width:'100%',height:'100%',objectFit:'cover'}} alt=""/></div>})}
+              </div>
             </div>
           </div>
         </div>
       )}
     </div>
   )
-                 }
+      }
