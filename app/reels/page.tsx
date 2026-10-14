@@ -1,23 +1,6 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 
-// 15 FEATURES INCLUDED LIST:
-// 1. R2 Storage Direct Connect via /api/posts (data/posts.json)
-// 2. Auto Play / Pause with Intersection Observer
-// 3. Double Tap to Like with Heart Animation
-// 4. Like/Unlike with Local Persistence
-// 5. Mute / Unmute
-// 6. Progress Bar for Videos
-// 7. Comments Drawer UI
-// 8. Share Button (Web Share API + Copy)
-// 9. Download Button (R2 Direct)
-// 10. Save / Bookmark
-// 11. Hashtag + Mention Parser
-// 12. View Counter
-// 13. Playback Speed Control
-// 14. Swipe + Keyboard Navigation
-// 15. Fullscreen + Gallery Strip
-
 export default function ReelsPage() {
   const [posts, setPosts] = useState<any[]>([])
   const [filter, setFilter] = useState<'all'|'reels'|'posts'>('all')
@@ -32,70 +15,7 @@ export default function ReelsPage() {
   const [views, setViews] = useState<Record<string, number>>({})
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({})
 
-  // 1. R2 CONNECT - Fetch from R2 data/posts.json via /api/posts
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true)
-        const res = await fetch('/api/posts', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
-        if (!res.ok) throw new Error('Fetch failed')
-        const data = await res.json()
-        const list = Array.isArray(data)? data : data.posts || data.data || []
-        // Sort by created_at desc - newest first
-        const sorted = [...list].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-        setPosts(sorted)
-        // Init views
-        const v: any = {}
-        sorted.forEach((p: any) => v[p.id] = Math.floor(Math.random() * 5000) + 100)
-        setViews(v)
-      } catch (e) {
-        console.error("R2 FETCH ERROR", e)
-        setPosts([])
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
-
-  // 2. AUTO PLAY with IntersectionObserver
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        const video = entry.target as HTMLVideoElement
-        if (entry.isIntersecting) {
-          video.play().catch(()=>{})
-          const id = video.dataset.id
-          if (id) setCurrentIdx(posts.findIndex(p => p.id === id))
-        } else {
-          video.pause()
-        }
-      })
-    }, { threshold: 0.7 })
-
-    Object.values(videoRefs.current).forEach(v => v && observer.observe(v))
-    return () => observer.disconnect()
-  }, [posts, filteredPosts])
-
-  // 14. Keyboard Navigation
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') setCurrentIdx(i => Math.min(posts.length - 1, i + 1))
-      if (e.key === 'ArrowUp') setCurrentIdx(i => Math.max(0, i - 1))
-      if (e.key === 'm') setMuted(!muted)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [posts.length, muted])
-
   const getMediaUrl = (post: any) => post.image_url || post.url || post.video_url || post.publicUrl || post.image || ""
-  const isVideo = (url: string) => {
-    if (!url) return false
-    const u = url.toLowerCase()
-    return u.endsWith('.mp4') || u.endsWith('.mov') || u.endsWith('.webm') || u.includes('.mp4') || postTypeIsVideo
-  }
-  const postTypeIsVideo = false // placeholder for type check
-
   const checkIsVideo = (post: any) => {
     const url = getMediaUrl(post)
     return url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov') || url.toLowerCase().includes('.webm') || post.type === 'reel' || post.type === 'video'
@@ -109,7 +29,56 @@ export default function ReelsPage() {
     return true
   })
 
-  // 3 & 4. Double Tap Like + Like Persistence
+  useEffect(() => {
+    async function load() {
+      try {
+        setLoading(true)
+        const res = await fetch('/api/posts', { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+        if (!res.ok) throw new Error('Fetch failed')
+        const data = await res.json()
+        const list = Array.isArray(data)? data : data.posts || data.data || []
+        const sorted = [...list].sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        setPosts(sorted)
+        const v: any = {}
+        sorted.forEach((p: any) => v[p.id] = Math.floor(Math.random() * 5000) + 100)
+        setViews(v)
+      } catch (e) {
+        console.error("R2 FETCH ERROR", e)
+        setPosts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const video = entry.target as HTMLVideoElement
+        if (entry.isIntersecting) {
+          video.play().catch(()=>{})
+          const id = video.dataset.id
+          if (id) setCurrentIdx(posts.findIndex(p => p.id === id))
+        } else {
+          video.pause()
+        }
+      })
+    }, { threshold: 0.7 })
+    Object.values(videoRefs.current).forEach(v => v && observer.observe(v))
+    return () => observer.disconnect()
+  }, [posts])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') setCurrentIdx(i => Math.min(posts.length - 1, i + 1))
+      if (e.key === 'ArrowUp') setCurrentIdx(i => Math.max(0, i - 1))
+      if (e.key === 'm') setMuted(!muted)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [posts.length, muted])
+
   const handleDoubleTap = (post: any) => {
     const id = post.id
     setLiked(prev => {
@@ -119,7 +88,6 @@ export default function ReelsPage() {
     })
     setShowHeart(id)
     setTimeout(() => setShowHeart(null), 800)
-    // Haptic
     if (navigator.vibrate) navigator.vibrate(50)
   }
 
@@ -132,7 +100,6 @@ export default function ReelsPage() {
     })
   }
 
-  // 10. Save
   const toggleSave = (id: string) => {
     setSaved(prev => {
       const n = new Set(prev)
@@ -142,7 +109,6 @@ export default function ReelsPage() {
     })
   }
 
-  // 8. Share
   const handleShare = async (post: any) => {
     const url = getMediaUrl(post)
     if (navigator.share) {
@@ -153,7 +119,6 @@ export default function ReelsPage() {
     }
   }
 
-  // 9. Download from R2
   const handleDownload = async (post: any) => {
     const url = getMediaUrl(post)
     try {
@@ -168,7 +133,6 @@ export default function ReelsPage() {
     }
   }
 
-  // 11. Hashtag parser
   const parseCaption = (text: string) => {
     if (!text) return null
     const parts = text.split(/(\#\w+|\@\w+)/g)
@@ -185,14 +149,13 @@ export default function ReelsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-      {/* Filter */}
       <div className="flex justify-center pt-3 pb-2 sticky top-0 z-30 bg-black/80 backdrop-blur border-b border-zinc-900">
         <div className="flex bg-zinc-900 rounded-full p-1">
           {(['all','reels','posts'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} className={`px-6 py-2 rounded-full text-sm font-bold capitalize transition ${filter === f? 'bg-white text-black' : 'text-zinc-400'}`}>{f}</button>
           ))}
         </div>
-        <div className="absolute right-4 top-3 text-xs text-zinc-500">{filteredPosts.length} • R2 Connected</div>
+        <div className="absolute right-4 top-3 text-xs text-zinc-500">{filteredPosts.length} • R2</div>
       </div>
 
       <div className="max-w-[420px] mx-auto relative">
@@ -210,12 +173,10 @@ export default function ReelsPage() {
             const id = post.id || idx.toString()
             const isLiked = liked.has(id)
             const isSaved = saved.has(id)
-
             return (
               <div key={id} className="relative w-full h-[88vh] bg-zinc-950 mb-1 flex items-center justify-center overflow-hidden border-b border-zinc-900"
                    onDoubleClick={() => handleDoubleTap(post)}
               >
-                {/* Media - R2 URL */}
                 {video? (
                   <video
                     ref={el => { if (el) videoRefs.current[id] = el }}
@@ -226,27 +187,17 @@ export default function ReelsPage() {
                     loop
                     playsInline
                     preload="metadata"
-                    onTimeUpdate={(e) => {
-                      const v = e.target as HTMLVideoElement
-                      v.playbackRate = speed
-                    }}
-                    onClick={(e) => {
-                      const v = e.target as HTMLVideoElement
-                      v.paused? v.play() : v.pause()
-                    }}
+                    onTimeUpdate={(e) => { const v = e.target as HTMLVideoElement; v.playbackRate = speed }}
+                    onClick={(e) => { const v = e.target as HTMLVideoElement; v.paused? v.play() : v.pause() }}
                   />
                 ) : (
                   <img src={mediaUrl} alt={post.caption || ""} className="w-full h-full object-cover" loading="lazy" />
                 )}
-
-                {/* 3. Heart Animation */}
                 {showHeart === id && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="text-7xl animate-ping">❤️</div>
                   </div>
                 )}
-
-                {/* Top Bar - 12. Views + 5. Mute */}
                 <div className="absolute top-0 left-0 right-0 p-3 flex justify-between items-center bg-gradient-to-b from-black/70 to-transparent">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-yellow-500 flex items-center justify-center font-bold text-xs">{(post.username || 'C')[0].toUpperCase()}</div>
@@ -257,55 +208,36 @@ export default function ReelsPage() {
                     <button onClick={() => { const el: any = document.documentElement; el.requestFullscreen?.() }} className="w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-sm">⛶</button>
                   </div>
                 </div>
-
-                {/* 6. Progress Bar for Video */}
-                {video && (
-                  <div className="absolute top-[56px] left-0 right-0 h-[2px] bg-white/20">
-                    <div className="h-full bg-white animate-pulse w-full origin-left" style={{ animationDuration: '10s' }}></div>
-                  </div>
-                )}
-
-                {/* Bottom Info + 11. Hashtags */}
                 <div className="absolute bottom-0 left-0 right-[60px] p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
                   <p className="font-bold text-sm">@{post.username || 'knmaheshsravani'} • {new Date(post.created_at || Date.now()).toLocaleDateString()}</p>
                   <p className="text-[13px] mt-1 leading-snug line-clamp-2">{parseCaption(post.caption || post.content || '')}</p>
                   <p className="text-[11px] mt-2 text-zinc-400 truncate">R2: {mediaUrl.slice(0, 50)}... • Speed: {speed}x</p>
                 </div>
-
-                {/* Right Actions - 15 Features */}
                 <div className="absolute right-2 bottom-16 flex flex-col gap-5 items-center">
                   <button onClick={() => toggleLike(id)} className="flex flex-col items-center">
                     <div className={`w-12 h-12 rounded-full backdrop-blur flex items-center justify-center text-xl transition ${isLiked? 'bg-red-500 scale-110' : 'bg-white/15'}`}>{isLiked? '❤️' : '🤍'}</div>
-                    <span className="text-[11px] mt-1 font-bold">{isLiked? (parseInt(post.likes || '255') + 1) : (post.likes || '255K')}</span>
+                    <span className="text-[11px] mt-1 font-bold">{isLiked? '1' : (post.likes || '255K')}</span>
                   </button>
-
                   <button onClick={() => setShowComments(post)} className="flex flex-col items-center">
                     <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-xl">💬</div>
                     <span className="text-[11px] mt-1 font-bold">{post.comments || '535'}</span>
                   </button>
-
                   <button onClick={() => handleShare(post)} className="flex flex-col items-center">
                     <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-xl">↗️</div>
                     <span className="text-[11px] mt-1">Share</span>
                   </button>
-
                   <button onClick={() => toggleSave(id)} className="flex flex-col items-center">
                     <div className={`w-12 h-12 rounded-full backdrop-blur flex items-center justify-center text-xl ${isSaved? 'bg-yellow-500' : 'bg-white/15'}`}>{isSaved? '🔖' : '📑'}</div>
                   </button>
-
                   <button onClick={() => handleDownload(post)} className="flex flex-col items-center">
                     <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-xl">⬇️</div>
                   </button>
-
-                  {/* 13. Speed */}
                   <div className="flex flex-col items-center gap-1">
                     {[1, 1.5, 2].map(s => (
                       <button key={s} onClick={() => setSpeed(s)} className={`w-7 h-7 rounded-full text-[10px] font-bold ${speed === s? 'bg-white text-black' : 'bg-white/20'}`}>{s}x</button>
                     ))}
                   </div>
                 </div>
-
-                {/* 14. Swipe Indicator */}
                 <div className="absolute left-1/2 bottom-2 -translate-x-1/2 flex gap-1">
                   {filteredPosts.slice(0, 8).map((_, i) => (
                     <div key={i} className={`h-1 rounded-full transition-all ${i === currentIdx? 'w-6 bg-white' : 'w-1 bg-white/30'}`}></div>
@@ -316,8 +248,6 @@ export default function ReelsPage() {
           })
         )}
       </div>
-
-      {/* 7. Comments Drawer */}
       {showComments && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur flex items-end" onClick={() => setShowComments(null)}>
           <div className="w-full max-w-[420px] mx-auto bg-zinc-900 rounded-t-[20px] max-h-[60vh] overflow-auto p-4 border-t border-zinc-700" onClick={e => e.stopPropagation()}>
