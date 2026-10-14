@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-Line 3: import { supabase } from '../../lib/supabase'  // ✅ CORRECT
+import { supabase } from '../../lib/supabase'
 
 export default function ShareAZ({ post, onClose }: { post: any, onClose: () => void }) {
   const rawUrl = post?.image_url || post?.image || post?.video_url || post?.url || ""
