@@ -9,16 +9,18 @@ export default function ReelsPage() {
   const [liked, setLiked] = useState<Set<string>>(new Set())
   const [saved, setSaved] = useState<Set<string>>(new Set())
   const [muted, setMuted] = useState(true)
-  const [speed, setSpeed] = useState(1)
   const [showComments, setShowComments] = useState<any>(null)
   const [showHeart, setShowHeart] = useState<string | null>(null)
   const [views, setViews] = useState<Record<string, number>>({})
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({})
 
   const getMediaUrl = (post: any) => post.image_url || post.url || post.video_url || post.publicUrl || post.image || ""
+
+  // FIX 1: Black Screen Fix - Strict Check
   const checkIsVideo = (post: any) => {
-    const url = getMediaUrl(post)
-    return url.toLowerCase().includes('.mp4') || url.toLowerCase().includes('.mov') || url.toLowerCase().includes('.webm') || post.type === 'reel' || post.type === 'video'
+    const url = getMediaUrl(post).toLowerCase().split('?')[0].trim()
+    if (!url) return false
+    return url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm')
   }
 
   const filteredPosts = posts.filter((post) => {
@@ -68,16 +70,6 @@ export default function ReelsPage() {
     Object.values(videoRefs.current).forEach(v => v && observer.observe(v))
     return () => observer.disconnect()
   }, [posts])
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown') setCurrentIdx(i => Math.min(posts.length - 1, i + 1))
-      if (e.key === 'ArrowUp') setCurrentIdx(i => Math.max(0, i - 1))
-      if (e.key === 'm') setMuted(!muted)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [posts.length, muted])
 
   const handleDoubleTap = (post: any) => {
     const id = post.id
@@ -144,12 +136,12 @@ export default function ReelsPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen bg-black flex items-center justify-center text-white animate-pulse">Loading ChitPix R2...</div>
+    return <div className="min-h-screen bg-black flex items-center justify-center text-white animate-pulse">Loading ChitPix...</div>
   }
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
-      <div className="flex justify-center pt-3 pb-2 sticky top-0 z-30 bg-black/80 backdrop-blur border-b border-zinc-900">
+      <div className="flex justify-center pt-3 pb-2 sticky top-0 z-30 bg-black border-b border-zinc-900">
         <div className="flex bg-zinc-900 rounded-full p-1">
           {(['all','reels','posts'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} className={`px-6 py-2 rounded-full text-sm font-bold capitalize transition ${filter === f? 'bg-white text-black' : 'text-zinc-400'}`}>{f}</button>
@@ -161,10 +153,10 @@ export default function ReelsPage() {
       <div className="max-w-[420px] mx-auto relative">
         {filteredPosts.length === 0? (
           <div className="flex flex-col items-center justify-center h-[75vh] text-zinc-500">
-            <p className="text-2xl">📸</p>
+            <p className="text-3xl">📸</p>
             <p className="mt-2 font-bold">No {filter} found</p>
-            <p className="text-xs mt-1">Upload from home - stored in R2 data/posts.json</p>
-            <button onClick={()=>window.location.href='/'} className="mt-4 px-4 py-2 bg-white text-black rounded-full text-sm font-bold">Go Upload</button>
+            <p className="text-xs mt-1 text-center px-6">{filter === 'reels'? 'Reels lo only.mp4 videos vastayi' : filter === 'posts'? 'Photos kosam ikkada vasthayi' : 'Upload chey bro'}</p>
+            <button onClick={()=>setFilter('all')} className="mt-4 px-5 py-2 bg-white text-black rounded-full text-sm font-bold">Show All</button>
           </div>
         ) : (
           filteredPosts.map((post, idx) => {
@@ -174,9 +166,10 @@ export default function ReelsPage() {
             const isLiked = liked.has(id)
             const isSaved = saved.has(id)
             return (
-              <div key={id} className="relative w-full h-[88vh] bg-zinc-950 mb-1 flex items-center justify-center overflow-hidden border-b border-zinc-900"
+              <div key={id} className="relative w-full h-[88vh] bg-black mb-1 flex items-center justify-center overflow-hidden border-b border-zinc-900"
                    onDoubleClick={() => handleDoubleTap(post)}
               >
+                {/* FIX 1 - NO BLACK SCREEN */}
                 {video? (
                   <video
                     ref={el => { if (el) videoRefs.current[id] = el }}
@@ -187,20 +180,22 @@ export default function ReelsPage() {
                     loop
                     playsInline
                     preload="metadata"
-                    onTimeUpdate={(e) => { const v = e.target as HTMLVideoElement; v.playbackRate = speed }}
+                    autoPlay
                     onClick={(e) => { const v = e.target as HTMLVideoElement; v.paused? v.play() : v.pause() }}
                   />
                 ) : (
-                  <img src={mediaUrl} alt={post.caption || ""} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={mediaUrl} alt={post.caption || ""} className="w-full h-full object-contain bg-black" loading="lazy" />
                 )}
+
                 {showHeart === id && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div className="text-7xl animate-ping">❤️</div>
                   </div>
                 )}
+
                 <div className="absolute top-0 left-0 right-0 p-3 flex justify-between items-center bg-gradient-to-b from-black/70 to-transparent">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-yellow-500 flex items-center justify-center font-bold text-xs">{(post.username || 'C')[0].toUpperCase()}</div>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-yellow-500 flex items-center justify-center font-bold text-xs">{(post.username || 'K')[0].toUpperCase()}</div>
                     <span className="text-sm font-bold">@{post.username || 'knmahesh'} • {views[id] || 0} views</span>
                   </div>
                   <div className="flex gap-2">
@@ -208,36 +203,50 @@ export default function ReelsPage() {
                     <button onClick={() => { const el: any = document.documentElement; el.requestFullscreen?.() }} className="w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-sm">⛶</button>
                   </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-[60px] p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-                  <p className="font-bold text-sm">@{post.username || 'knmaheshsravani'} • {new Date(post.created_at || Date.now()).toLocaleDateString()}</p>
-                  <p className="text-[13px] mt-1 leading-snug line-clamp-2">{parseCaption(post.caption || post.content || '')}</p>
-                  <p className="text-[11px] mt-2 text-zinc-400 truncate">R2: {mediaUrl.slice(0, 50)}... • Speed: {speed}x</p>
+
+                <div className="absolute bottom-0 left-0 right-[68px] p-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                  <p className="font-bold text-[14px]">@{post.username || 'knmahesh'} • {new Date(post.created_at || Date.now()).toLocaleDateString()}</p>
+                  <p className="text-[13px] mt-1 leading-snug">{parseCaption(post.caption || post.content || 'New Reel 🔥 #chitpix')}</p>
                 </div>
-                <div className="absolute right-2 bottom-16 flex flex-col gap-5 items-center">
-                  <button onClick={() => toggleLike(id)} className="flex flex-col items-center">
-                    <div className={`w-12 h-12 rounded-full backdrop-blur flex items-center justify-center text-xl transition ${isLiked? 'bg-red-500 scale-110' : 'bg-white/15'}`}>{isLiked? '❤️' : '🤍'}</div>
-                    <span className="text-[11px] mt-1 font-bold">{isLiked? '1' : (post.likes || '255K')}</span>
+
+                {/* FIX 2 & 3: OLD ICONS + SAME SIZE */}
+                <div className="absolute right-3 bottom-20 flex flex-col gap-4 items-center">
+
+                  <button onClick={() => toggleLike(id)} className="flex flex-col items-center gap-1">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur border transition-all ${isLiked? 'bg-red-500/20 border-red-500' : 'bg-zinc-800/80 border-zinc-700'}`}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill={isLiked? "#ff3040" : "none"} stroke={isLiked? "#ff3040" : "white"} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    </div>
+                    <span className="text-[11px] font-bold">255K</span>
                   </button>
-                  <button onClick={() => setShowComments(post)} className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-xl">💬</div>
-                    <span className="text-[11px] mt-1 font-bold">{post.comments || '535'}</span>
+
+                  <button onClick={() => setShowComments(post)} className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur border border-zinc-700 flex items-center justify-center">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                    </div>
+                    <span className="text-[11px] font-bold">535</span>
                   </button>
-                  <button onClick={() => handleShare(post)} className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-xl">↗️</div>
-                    <span className="text-[11px] mt-1">Share</span>
+
+                  <button onClick={() => handleShare(post)} className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur border border-zinc-700 flex items-center justify-center">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    </div>
+                    <span className="text-[11px]">Share</span>
                   </button>
-                  <button onClick={() => toggleSave(id)} className="flex flex-col items-center">
-                    <div className={`w-12 h-12 rounded-full backdrop-blur flex items-center justify-center text-xl ${isSaved? 'bg-yellow-500' : 'bg-white/15'}`}>{isSaved? '🔖' : '📑'}</div>
+
+                  <button onClick={() => toggleSave(id)} className="flex flex-col items-center gap-1">
+                    <div className={`w-12 h-12 rounded-full backdrop-blur border flex items-center justify-center transition ${isSaved? 'bg-yellow-500/20 border-yellow-500' : 'bg-zinc-800/80 border-zinc-700'}`}>
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill={isSaved? "white" : "none"} stroke="white" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                    </div>
                   </button>
-                  <button onClick={() => handleDownload(post)} className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur flex items-center justify-center text-xl">⬇️</div>
+
+                  <button onClick={() => handleDownload(post)} className="flex flex-col items-center gap-1">
+                    <div className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur border border-zinc-700 flex items-center justify-center">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </div>
                   </button>
-                  <div className="flex flex-col items-center gap-1">
-                    {[1, 1.5, 2].map(s => (
-                      <button key={s} onClick={() => setSpeed(s)} className={`w-7 h-7 rounded-full text-[10px] font-bold ${speed === s? 'bg-white text-black' : 'bg-white/20'}`}>{s}x</button>
-                    ))}
-                  </div>
+
                 </div>
+
                 <div className="absolute left-1/2 bottom-2 -translate-x-1/2 flex gap-1">
                   {filteredPosts.slice(0, 8).map((_, i) => (
                     <div key={i} className={`h-1 rounded-full transition-all ${i === currentIdx? 'w-6 bg-white' : 'w-1 bg-white/30'}`}></div>
@@ -248,14 +257,14 @@ export default function ReelsPage() {
           })
         )}
       </div>
+
       {showComments && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur flex items-end" onClick={() => setShowComments(null)}>
           <div className="w-full max-w-[420px] mx-auto bg-zinc-900 rounded-t-[20px] max-h-[60vh] overflow-auto p-4 border-t border-zinc-700" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-zinc-600 rounded-full mx-auto mb-4"></div>
-            <h3 className="font-bold mb-3">Comments • R2 Post {showComments.id}</h3>
+            <h3 className="font-bold mb-3">Comments • {showComments.id}</h3>
             <div className="space-y-3">
               <div className="flex gap-2"><div className="w-7 h-7 rounded-full bg-pink-500"></div><div className="flex-1"><p className="text-sm font-bold">user_1 <span className="font-normal text-zinc-400 ml-2">Nice! 🔥</span></p></div></div>
-              <div className="flex gap-2"><div className="w-7 h-7 rounded-full bg-blue-500"></div><div className="flex-1"><p className="text-sm font-bold">knmahesh <span className="font-normal text-zinc-400 ml-2">{showComments.caption || 'Super!'}</span></p></div></div>
             </div>
             <div className="mt-4 flex gap-2">
               <input placeholder="Add comment..." className="flex-1 bg-zinc-800 rounded-full px-4 py-2 text-sm outline-none" />
