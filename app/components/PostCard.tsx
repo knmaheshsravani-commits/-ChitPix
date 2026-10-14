@@ -247,4 +247,3 @@ export default function PostCard({ post }: any) {
         </div>
   )
 }
-}
