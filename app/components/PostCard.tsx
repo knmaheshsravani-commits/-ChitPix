@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
-
+import ShareAZ from './ShareAZ'
 let activeVideoRef: HTMLVideoElement | null = null
 
 export default function PostCard({ post }: any) {
@@ -41,12 +41,14 @@ export default function PostCard({ post }: any) {
       try {
         if(!post?.id) return
         // LIFETIME COUNTS - Supabase
-        const { count: l } = await supabase.from("likes").select("*", { count: "exact", head: true }).eq("post_id", String(post.id))
-        const { count: c } = await supabase.from("comments").select("*", { count: "exact", head: true }).eq("post_id", String(post.id))
-        const { count: s } = await supabase.from("saves").select("*", { count: "exact", head: true }).eq("post_id", String(post.id))
-        setLikeCount(l || 0)
-        setCommentCount(c || 0)
-        setSaveCount(s || 0)
+            const { count: l } = await supabase.from("likes").select("*", { count: "exact", head: true }).eq("post_id", String(post.id))
+    const { count: c } = await supabase.from("comments").select("*", { count: "exact", head: true }).eq("post_id", String(post.id))
+    const { count: s } = await supabase.from("saves").select("*", { count: "exact", head: true }).eq("post_id", String(post.id))
+    const { count: sh } = await supabase.from("shares").select("*", { count: "exact", head: true }).eq("post_id", String(post.id))
+    setLikeCount(l || 0)
+    setCommentCount(c || 0)
+    setSaveCount(s || 0)
+    setShareCount(sh || 0)
 
         const myName = getMyName()
         const { data: myLike } = await supabase.from("likes").select("id").eq("post_id", String(post.id)).eq("username", myName).maybeSingle()
