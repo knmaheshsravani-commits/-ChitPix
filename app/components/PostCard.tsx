@@ -138,12 +138,16 @@ export default function PostCard({ post }: any) {
     }
   }
 
-  const handleSave = async () => {
+    const handleSave = async () => {
     const myName = getMyName()
     const idStr = String(post.id)
-    if (saved) { setSaved(false); setSaveCount(v => Math.max(0, v - 1)); await supabase.from("saves").delete().eq("post_id", idStr).eq("username", myName) }
-    else { setSaved(true); setSaveCount(v => v + 1); await supabase.from("saves").insert({ post_id: idStr, username: myName }) }
-  }
+    if (saved) {
+      setSaved(false); setSaveCount(v => Math.max(0, v - 1))
+      await supabase.from("saves").delete().eq("post_id", idStr).eq("username", myName)
+    } else {
+      setSaved(true); setSaveCount(v => v + 1)
+      await supabase.from("saves").insert({ post_id: idStr, username: myName })
+    }
 
   const handleCommentPost = async () => {
     if (!commentText.trim() || isPosting) return
