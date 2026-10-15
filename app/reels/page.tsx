@@ -8,15 +8,15 @@ export default function ReelsPage() {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [liked, setLiked] = useState<Set<string>>(new Set())
   const [saved, setSaved] = useState<Set<string>>(new Set())
-  const [muted, setMuted] = useState(true)
+  const [muted, setMuted] = useState(true) // Global mute - Instagram style
   const [showComments, setShowComments] = useState<any>(null)
   const [showHeart, setShowHeart] = useState<string | null>(null)
   const [views, setViews] = useState<Record<string, number>>({})
   const videoRefs = useRef<Record<string, HTMLVideoElement>>({})
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const getMediaUrl = (post: any) => post.image_url || post.url || post.video_url || post.publicUrl || post.image || ""
 
-  // FIX 1: Black Screen Fix - Strict Check
   const checkIsVideo = (post: any) => {
     const url = getMediaUrl(post).toLowerCase().split('?')[0].trim()
     if (!url) return false
@@ -30,6 +30,13 @@ export default function ReelsPage() {
     if (filter === 'posts') return!video
     return true
   })
+
+  // FIX: Global mute ni anni videos ki apply chey
+  useEffect(() => {
+    Object.values(videoRefs.current).forEach(v => {
+      if(v) v.muted = muted
+    })
+  }, [muted])
 
   useEffect(() => {
     async function load() {
@@ -59,17 +66,18 @@ export default function ReelsPage() {
       entries.forEach((entry) => {
         const video = entry.target as HTMLVideoElement
         if (entry.isIntersecting) {
+          video.muted = muted
           video.play().catch(()=>{})
           const id = video.dataset.id
-          if (id) setCurrentIdx(posts.findIndex(p => p.id === id))
+          if (id) setCurrentIdx(filteredPosts.findIndex(p => p.id === id))
         } else {
           video.pause()
         }
       })
-    }, { threshold: 0.7 })
+    }, { threshold: 0.6 })
     Object.values(videoRefs.current).forEach(v => v && observer.observe(v))
     return () => observer.disconnect()
-  }, [posts])
+  }, [posts, filteredPosts, muted])
 
   const handleDoubleTap = (post: any) => {
     const id = post.id
@@ -92,13 +100,22 @@ export default function ReelsPage() {
     })
   }
 
-  const toggleSave = (id: string) => {
+  const toggleSave = async (id: string) => {
+    const isSaved = saved.has(id)
     setSaved(prev => {
       const n = new Set(prev)
       if (n.has(id)) n.delete(id)
       else n.add(id)
       return n
     })
+    // DB Save
+    try{
+      if(!isSaved){
+        await fetch('/api/saves', {method:'POST', body: JSON.stringify({post_id: id, user_id: 'knmahesh'}), headers:{'Content-Type':'application/json'}})
+      } else {
+        await fetch(`/api/saves?post_id=${id}`, {method:'DELETE'})
+      }
+    } catch(e){ console.log(e) }
   }
 
   const handleShare = async (post: any) => {
@@ -140,8 +157,9 @@ export default function ReelsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-hidden">
-      <div className="flex justify-center pt-3 pb-2 sticky top-0 z-30 bg-black border-b border-zinc-900">
+    // FIXED: overflow-hidden -> flex column with 100dvh
+    <div className="h-[100dvh] bg-black text-white flex flex-col overflow-hidden">
+      <div className="flex justify-center pt-3 pb-2 sticky top-0 z-30 bg-black border-b border-zinc-900 shrink-0">
         <div className="flex bg-zinc-900 rounded-full p-1">
           {(['all','reels','posts'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)} className={`px-6 py-2 rounded-full text-sm font-bold capitalize transition ${filter === f? 'bg-white text-black' : 'text-zinc-400'}`}>{f}</button>
@@ -150,12 +168,16 @@ export default function ReelsPage() {
         <div className="absolute right-4 top-3 text-xs text-zinc-500">{filteredPosts.length} • R2</div>
       </div>
 
-      <div className="max-w-[420px] mx-auto relative">
+      {/* FIXED SCROLL CONTAINER */}
+      <div
+        ref={containerRef}
+        className="flex-1 w-full max-w-[420px] mx-auto overflow-y-scroll snap-y snap-mandatory scrollbar-hide touch-pan-y"
+        style={{ WebkitOverflowScrolling: 'touch' } as any}
+      >
         {filteredPosts.length === 0? (
           <div className="flex flex-col items-center justify-center h-[75vh] text-zinc-500">
             <p className="text-3xl">📸</p>
             <p className="mt-2 font-bold">No {filter} found</p>
-            <p className="text-xs mt-1 text-center px-6">{filter === 'reels'? 'Reels lo only.mp4 videos vastayi' : filter === 'posts'? 'Photos kosam ikkada vasthayi' : 'Upload chey bro'}</p>
             <button onClick={()=>setFilter('all')} className="mt-4 px-5 py-2 bg-white text-black rounded-full text-sm font-bold">Show All</button>
           </div>
         ) : (
@@ -166,10 +188,9 @@ export default function ReelsPage() {
             const isLiked = liked.has(id)
             const isSaved = saved.has(id)
             return (
-              <div key={id} className="relative w-full h-[88vh] bg-black mb-1 flex items-center justify-center overflow-hidden border-b border-zinc-900"
+              <div key={id} className="relative w-full h-[calc(100dvh-56px)] bg-black flex items-center justify-center overflow-hidden snap-start snap-always shrink-0 border-b border-zinc-900"
                    onDoubleClick={() => handleDoubleTap(post)}
               >
-                {/* FIX 1 - NO BLACK SCREEN */}
                 {video? (
                   <video
                     ref={el => { if (el) videoRefs.current[id] = el }}
@@ -200,7 +221,6 @@ export default function ReelsPage() {
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => setMuted(!muted)} className="w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-sm">{muted? '🔇' : '🔊'}</button>
-                    <button onClick={() => { const el: any = document.documentElement; el.requestFullscreen?.() }} className="w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-sm">⛶</button>
                   </div>
                 </div>
 
@@ -209,42 +229,35 @@ export default function ReelsPage() {
                   <p className="text-[13px] mt-1 leading-snug">{parseCaption(post.caption || post.content || 'New Reel 🔥 #chitpix')}</p>
                 </div>
 
-                {/* FIX 2 & 3: OLD ICONS + SAME SIZE */}
                 <div className="absolute right-3 bottom-20 flex flex-col gap-4 items-center">
-
                   <button onClick={() => toggleLike(id)} className="flex flex-col items-center gap-1">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur border transition-all ${isLiked? 'bg-red-500/20 border-red-500' : 'bg-zinc-800/80 border-zinc-700'}`}>
                       <svg width="24" height="24" viewBox="0 0 24 24" fill={isLiked? "#ff3040" : "none"} stroke={isLiked? "#ff3040" : "white"} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
                     </div>
                     <span className="text-[11px] font-bold">255K</span>
                   </button>
-
                   <button onClick={() => setShowComments(post)} className="flex flex-col items-center gap-1">
                     <div className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur border border-zinc-700 flex items-center justify-center">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
                     </div>
                     <span className="text-[11px] font-bold">535</span>
                   </button>
-
                   <button onClick={() => handleShare(post)} className="flex flex-col items-center gap-1">
                     <div className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur border border-zinc-700 flex items-center justify-center">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                     </div>
                     <span className="text-[11px]">Share</span>
                   </button>
-
                   <button onClick={() => toggleSave(id)} className="flex flex-col items-center gap-1">
                     <div className={`w-12 h-12 rounded-full backdrop-blur border flex items-center justify-center transition ${isSaved? 'bg-yellow-500/20 border-yellow-500' : 'bg-zinc-800/80 border-zinc-700'}`}>
                       <svg width="24" height="24" viewBox="0 0 24 24" fill={isSaved? "white" : "none"} stroke="white" strokeWidth="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
                     </div>
                   </button>
-
                   <button onClick={() => handleDownload(post)} className="flex flex-col items-center gap-1">
                     <div className="w-12 h-12 rounded-full bg-zinc-800/80 backdrop-blur border border-zinc-700 flex items-center justify-center">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     </div>
                   </button>
-
                 </div>
 
                 <div className="absolute left-1/2 bottom-2 -translate-x-1/2 flex gap-1">
@@ -275,4 +288,4 @@ export default function ReelsPage() {
       )}
     </div>
   )
-    }
+        }
