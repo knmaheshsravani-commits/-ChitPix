@@ -7,39 +7,37 @@ import ShareAZ from "./components/ShareAZ"
 
 export default function HomePage() {
   const router = useRouter()
-  const [posts, setPosts] = useState([])
-  const [stories, setStories] = useState([])
-  const [liked, setLiked] = useState({})
-  const [saved, setSaved] = useState({})
-  const [following, setFollowing] = useState({})
-  const [muted, setMuted] = useState({})
-  const [views, setViews] = useState({})
-  const [showHeart, setShowHeart] = useState(null)
-  const [showShare, setShowShare] = useState(null)
-  const [showComments, setShowComments] = useState(null)
-  const [showLikes, setShowLikes] = useState(null)
+  const [posts, setPosts] = useState<any[]>([])
+  const [stories, setStories] = useState<any[]>([])
+  const [liked, setLiked] = useState<any>({})
+  const [saved, setSaved] = useState<any>({})
+  const [following, setFollowing] = useState<any>({})
+  const [muted, setMuted] = useState<any>({})
+  const [views, setViews] = useState<any>({})
+  const [showHeart, setShowHeart] = useState<any>(null)
+  const [showShare, setShowShare] = useState<any>(null)
+  const [showComments, setShowComments] = useState<any>(null)
+  const [showLikes, setShowLikes] = useState<any>(null)
   const [showDM, setShowDM] = useState(false)
   const [showNoti, setShowNoti] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [showMenu, setShowMenu] = useState(null)
-  const [activeStory, setActiveStory] = useState(null)
+  const [showMenu, setShowMenu] = useState<any>(null)
+  const [activeStory, setActiveStory] = useState<any>(null)
   const [storyProg, setStoryProg] = useState(0)
-  const [storySeen, setStorySeen] = useState({})
-  const [storyLiked, setStoryLiked] = useState({})
+  const [storySeen, setStorySeen] = useState<any>({})
   const [commentText, setCommentText] = useState("")
-  const [allComments, setAllComments] = useState({})
-  const [toastMsg, setToastMsg] = useState(null)
+  const [allComments, setAllComments] = useState<any>({})
+  const [toastMsg, setToastMsg] = useState<any>(null)
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [searchQuery, setSearchQuery] = useState("")
   const lastTap = useRef(0)
-  const feedRef = useRef(null)
-  const storyFileRef = useRef(null)
-  const postFileRef = useRef(null)
+  const feedRef = useRef<any>(null)
+  const storyFileRef = useRef<any>(null)
+  const postFileRef = useRef<any>(null)
 
   const username = "knmahesh"
   const userPhoto = "https://i.pravatar.cc/150?u=knmahesh"
-  const showToast = (m) => { setToastMsg(m); setTimeout(()=>setToastMsg(null),2500) }
+  const showToast = (m:any) => { setToastMsg(m); setTimeout(()=>setToastMsg(null),2500) }
 
   useEffect(()=>{ fetchPosts(); fetchStories() }, [])
 
@@ -47,8 +45,8 @@ export default function HomePage() {
     const r = await supabase.from("posts").select("*").order("created_at",{ascending:false}).limit(100)
     if(r.data){
       setPosts(r.data)
-      const v={}
-      r.data.forEach(p=>{ v[p.id]=Math.floor(Math.random()*9000)+500 })
+      const v:any={}
+      r.data.forEach((p:any)=>{ v[p.id]=Math.floor(Math.random()*9000)+500 })
       setViews(v)
     }
   }
@@ -65,7 +63,7 @@ export default function HomePage() {
     return ()=>clearInterval(id)
   },[activeStory])
 
-  const timeAgo = (s) => {
+  const timeAgo = (s:any) => {
     try{
       const diff=Math.floor((Date.now()-new Date(s).getTime())/1000)
       if(diff<60) return "now"
@@ -75,59 +73,56 @@ export default function HomePage() {
     }catch{ return "now" }
   }
 
-  const handleStoryUpload = async (e) => {
+  const handleStoryUpload = async (e:any) => {
     const f=e.target.files?.[0]
     if(!f) return
     if(f.size>200*1024*1024){ showToast("200MB limit!"); return }
     setUploading(true)
-    setProgress(0)
+    setProgress(30)
     try{
       const res=await fetch("/api/r2-presign",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fileName:f.name,fileType:f.type,contentType:f.type,folder:"stories"})})
       const d=await res.json()
-      if(!d.uploadUrl) throw new Error("Add R2 keys in Vercel")
-      await new Promise((ok,bad)=>{
-        const xhr=new XMLHttpRequest()
-        xhr.upload.onprogress=(ev)=>{ if(ev.lengthComputable) setProgress(Math.round(ev.loaded/ev.total*100)) }
-        xhr.onload=()=>{ if(xhr.status===200) ok(); else bad(new Error("R2 fail")) }
-        xhr.onerror=()=>bad(new Error("Network"))
-        xhr.open("PUT",d.uploadUrl)
-        xhr.setRequestHeader("Content-Type",f.type)
-        xhr.send(f)
-      })
+      if(!d.uploadUrl) throw new Error("Add R2 keys in Vercel Dashboard")
+      setProgress(60)
+      const up=await fetch(d.uploadUrl,{method:"PUT",headers:{"Content-Type":f.type},body:f})
+      if(!up.ok) throw new Error("R2 upload fail")
       const expires=new Date(Date.now()+86400000).toISOString()
       await supabase.from("stories").insert([{image_url:d.publicUrl,username,user_id:username,user_photo:userPhoto,expires_at:expires,caption:"Story R2"}])
       fetchStories()
-      showToast("Story R2 Added 🔥")
-    }catch(err){ showToast(err.message) }finally{ setUploading(false); setProgress(0) }
+      showToast("Story R2 Added 10 futures 🔥")
+      setProgress(100)
+    }catch(err:any){ showToast(err.message) }finally{ setUploading(false); setTimeout(()=>setProgress(0),1000) }
   }
 
-  const handlePostUpload = async (e) => {
+  const handlePostUpload = async (e:any) => {
     const f=e.target.files?.[0]
     if(!f) return
     setUploading(true)
+    setProgress(40)
     try{
       const folder=f.type.includes("video")?"reels":"posts"
       const res=await fetch("/api/r2-presign",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fileName:f.name,fileType:f.type,contentType:f.type,folder})})
       const d=await res.json()
       if(!d.uploadUrl) throw new Error("Add R2 keys")
-      await fetch(d.uploadUrl,{method:"PUT",headers:{"Content-Type":f.type},body:f})
-      await supabase.from("posts").insert([{image_url:d.publicUrl,caption:"New post #chitpix R2",username,user_photo:userPhoto,likes:0}])
+      const up=await fetch(d.uploadUrl,{method:"PUT",headers:{"Content-Type":f.type},body:f})
+      if(!up.ok) throw new Error("Upload fail")
+      await supabase.from("posts").insert([{image_url:d.publicUrl,caption:"ChitPix R2 #kannada",username,user_photo:userPhoto,likes:0}])
       fetchPosts()
-      showToast("Post R2 Uploaded")
-    }catch(err){ showToast(err.message) }finally{ setUploading(false) }
+      showToast("Post R2 Uploaded ✅")
+    }catch(err:any){ showToast(err.message) }finally{ setUploading(false); setProgress(0) }
   }
 
-  const handleLike=(id)=>{
+  const handleLike=(id:any)=>{
     const is=!!liked[id]
     const n={...liked}
     if(is) delete n[id]; else n[id]=true
     setLiked(n)
-    setPosts(prev=>prev.map(p=>p.id===id?{...p,likes:is?Math.max(0,(p.likes||1)-1):(p.likes||0)+1}:p))
+    setPosts((prev:any)=>prev.map((p:any)=>p.id===id?{...p,likes:is?Math.max(0,(p.likes||1)-1):(p.likes||0)+1}:p))
   }
 
-  const handleDoubleTap=(id)=>{
+  const handleDoubleTap=(id:any)=>{
     const now=Date.now()
-    if(now-lastTap.current<300){
+    if(now-(lastTap.current as any)<300){
       if(!liked[id]) handleLike(id)
       setShowHeart(id)
       setTimeout(()=>setShowHeart(null),900)
@@ -135,20 +130,12 @@ export default function HomePage() {
     lastTap.current=now
   }
 
-  const grouped={}
+  const grouped:any={}
   for(const s of stories){
     const k=s.user_id||s.username||"user"
     if(!grouped[k]) grouped[k]=[]
     grouped[k].push(s)
   }
-
-  const filtered=posts.filter(p=>{
-    if(!searchQuery) return true
-    const cap=(p.caption||"").toLowerCase()
-    const uname=(p.username||"").toLowerCase()
-    const q=searchQuery.toLowerCase()
-    return cap.includes(q) || uname.includes(q)
-  })
 
   return (
     <div className="w-full h-[100dvh] bg-white text-black overflow-hidden flex justify-center">
@@ -157,7 +144,7 @@ export default function HomePage() {
         <input ref={postFileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handlePostUpload} />
 
         <div className="h-[56px] flex justify-between items-center px-3 bg-white shrink-0 border-b border-zinc-100">
-          <button onClick={()=>setShowSettings(true)} className="w-8 h-8 flex items-center justify-center text-[30px] font-extralight">+</button>
+          <button onClick={()=>setShowSettings(true)} className="w-8 h-8 flex items-center justify-center text-[30px]">+</button>
           <div className="flex items-center gap-1"><h1 className="text-[26px] font-black">ChitPix</h1><span className="text-[14px]">⌄</span></div>
           <div className="flex gap-1 items-center">
             <button onClick={()=>setShowNoti(true)} className="relative w-9 h-9 flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M12 21c-4-4.5-8-6.5-8-10a8 8 0 0 1 16 0c0 3.5-4 5.5-8 10z"/></svg><span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span></button>
@@ -170,11 +157,11 @@ export default function HomePage() {
             <div className="relative"><div className="w-[68px] h-[68px] rounded-full bg-black flex items-center justify-center text-white text-[22px] font-serif">M</div><button onClick={()=>storyFileRef.current?.click()} className="absolute bottom-0 right-0 w-6 h-6 bg-black border-2 border-white rounded-full text-white flex items-center justify-center text-[14px]">+</button></div>
             <span className="text-[11px] mt-1">Your story</span>
           </div>
-          {(Object.keys(grouped).length?Object.keys(grouped):["rxtagur","_mr_sand...","shetty._","crick.kannada","rider_boy"]).map((u,i)=>{
+          {(Object.keys(grouped).length?Object.keys(grouped):["rxtagur","_mr_sand...","shetty._","crick.kannada","rider_boy"]).map((u:any,i:number)=>{
             const st=grouped[u]?.[0]
             const seen=!!storySeen[u]
             return (
-              <div key={u} className="flex flex-col items-center min-w-[68px]" onClick={()=>{ if(st){ setActiveStory(st); setStorySeen(s=>({...s,[u]:true})) } else showToast("Story R2 soon") }}>
+              <div key={u} className="flex flex-col items-center min-w-[68px]" onClick={()=>{ if(st){ setActiveStory(st); setStorySeen((s:any)=>({...s,[u]:true})) } else showToast("Story R2 soon") }}>
                 <div className={`w-[68px] h-[68px] rounded-full p-[2.5px] ${seen?"bg-zinc-300":"bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600"}`}><div className="bg-white p-[2px] rounded-full w-full h-full"><img src={st?.user_photo||`https://i.pravatar.cc/100?img=${12+i}`} className="w-full h-full rounded-full object-cover" alt="" /></div></div>
                 <span className="text-[11px] truncate w-[68px] text-center mt-1">{u.slice(0,10)}</span>
               </div>
@@ -183,14 +170,14 @@ export default function HomePage() {
         </div>
 
         <div ref={feedRef} className="flex-1 overflow-y-auto bg-zinc-50" style={{paddingBottom:'70px'}}>
-          {filtered.map((post,idx)=>{
+          {posts.map((post:any,idx:number)=>{
             const url=post.image_url||""
             const isVideo=url.includes(".mp4")||post.type==="reels"
             const isMuted=muted[post.id]!==false
             return (
               <div key={post.id} className="bg-white mb-[6px] border-y border-zinc-100">
                 <div className="flex justify-between items-center px-3 py-2.5">
-                  <div className="flex gap-2.5 items-center"><div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-red-500"><img src={post.user_photo||`https://i.pravatar.cc/100?u=${post.username}`} className="w-full h-full rounded-full border-2 border-white object-cover" alt="" /></div><div className="leading-[13px]"><p className="font-bold text-[13px] flex items-center gap-1">{post.username} <span className="text-blue-500 text-[10px]">✔</span> <span className="text-zinc-400 font-normal text-[11px]">• {timeAgo(post.created_at)}</span></p><p className="text-[11px] text-zinc-500">Suggested • {views[post.id]||0} views</p></div></div>
+                  <div className="flex gap-2.5 items-center"><div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-red-500"><img src={post.user_photo||`https://i.pravatar.cc/100?u=${post.username}`} className="w-full h-full rounded-full border-2 border-white object-cover" alt="" /></div><div className="leading-[13px]"><p className="font-bold text-[13px] flex items-center gap-1">{post.username} <span className="text-blue-500 text-[10px]">✔</span> <span className="text-zinc-400 font-normal text-[11px]">• {timeAgo(post.created_at)}</span></p><p className="text-[11px] text-zinc-500">{views[post.id]||0} views • Suggested</p></div></div>
                   <div className="flex items-center gap-3"><button onClick={()=>{ const n={...following}; n[post.username]=!n[post.username]; setFollowing(n); showToast(n[post.username]?"Following":"Unfollowed")}} className={`px-4 py-1.5 rounded-lg font-bold text-[12px] ${following[post.username]?"bg-white border border-zinc-300 text-black":"bg-[#efefef] text-black"}`}>{following[post.username]?"Following":"Follow"}</button><button onClick={()=>setShowMenu(post.id)} className="font-bold">⋯</button></div>
                 </div>
                 <div className="relative w-full bg-black aspect-[4/5] flex items-center justify-center overflow-hidden" onClick={()=>handleDoubleTap(post.id)}>
@@ -201,8 +188,7 @@ export default function HomePage() {
                 <div className="px-3 py-2.5">
                   <div className="flex justify-between items-center"><div className="flex gap-4 items-center"><button onClick={()=>handleLike(post.id)}><Icons.Heart filled={!!liked[post.id]} size={24} /></button><button onClick={()=>setShowComments(post.id)}><Icons.Comment size={24} /></button><button onClick={()=>setShowShare(post)}><Icons.Share size={24} /></button></div><button onClick={()=>{ const n={...saved}; if(n[post.id]) delete n[post.id]; else n[post.id]=true; setSaved(n); showToast(n[post.id]?"Saved R2":"Unsaved")}}><Icons.Save filled={!!saved[post.id]} size={24} /></button></div>
                   <button onClick={()=>setShowLikes(post)} className="font-bold text-[13px] mt-2">{(post.likes||1247).toLocaleString()} likes</button>
-                  <p className="text-[13px] mt-1 leading-[18px]"><span className="font-bold mr-1">{post.username}</span>{post.caption||"ChitPix R2 life ❤️ #kannada"}</p>
-                  <button onClick={()=>setShowComments(post.id)} className="text-zinc-500 text-[13px] mt-1">View all {((allComments[post.id]?.length||0)+12)} comments</button>
+                  <p className="text-[13px] mt-1"><span className="font-bold mr-1">{post.username}</span>{post.caption||"ChitPix R2 life ❤️ #kannada"}</p>
                 </div>
               </div>
             )
@@ -217,17 +203,17 @@ export default function HomePage() {
           <button onClick={()=>router.push("/profile")} className="w-8 h-8 rounded-full overflow-hidden border-2 border-black"><img src={userPhoto} className="w-full h-full object-cover" alt="" /></button>
         </div>
 
-        {showDM && <div className="absolute inset-0 bg-white z-[90] flex flex-col"><div className="h-14 flex items-center px-4 gap-3 border-b"><button onClick={()=>setShowDM(false)}>←</button><h2 className="font-bold">DM • R2 Connected 100%</h2></div><div className="flex-1 p-4">DM working R2</div></div>}
-        {showNoti && <div className="absolute inset-0 bg-white z-[90] flex flex-col"><div className="h-14 flex items-center px-4 gap-3 border-b"><button onClick={()=>setShowNoti(false)}>←</button><h2 className="font-bold">Notifications • R2</h2></div><div className="p-3">No notifications</div></div>}
-        {showSettings && <div className="absolute inset-0 bg-white z-[90] flex flex-col"><div className="h-14 flex items-center px-4 gap-3 border-b"><button onClick={()=>setShowSettings(false)}>←</button><h2 className="font-bold">Settings • R2 Storage</h2></div><div className="p-4"><p>R2 Storage 200MB Free</p>{uploading && <div className="w-full bg-zinc-200 h-2 rounded-full mt-3 overflow-hidden"><div className="bg-black h-full" style={{width:progress+"%"}}></div></div>}</div></div>}
+        {showDM && <div className="absolute inset-0 bg-white z-[90] flex flex-col"><div className="h-14 flex items-center px-4 gap-3 border-b"><button onClick={()=>setShowDM(false)}>←</button><h2 className="font-bold">DM R2 100% • Connected</h2></div><div className="flex-1 p-4">DM working R2 Device</div></div>}
+        {showNoti && <div className="absolute inset-0 bg-white z-[90] flex flex-col"><div className="h-14 flex items-center px-4 gap-3 border-b"><button onClick={()=>setShowNoti(false)}>←</button><h2 className="font-bold">Notifications R2</h2></div><div className="p-3">No notifications</div></div>}
+        {showSettings && <div className="absolute inset-0 bg-white z-[90] flex flex-col"><div className="h-14 flex items-center px-4 gap-3 border-b"><button onClick={()=>setShowSettings(false)}>←</button><h2 className="font-bold">Settings R2 Storage</h2></div><div className="p-4"><p>R2 Storage 200MB Free Connected</p>{uploading && <div className="w-full bg-zinc-200 h-2 rounded-full mt-3 overflow-hidden"><div className="bg-black h-full" style={{width:progress+"%"}}></div></div>}</div></div>}
         {activeStory && <div className="absolute inset-0 bg-black z-[110] flex flex-col"><div className="h-1 w-full bg-zinc-700 mt-1"><div className="h-full bg-white" style={{width:storyProg+"%"}}></div></div><div className="flex justify-between items-center p-3 text-white"><span>{activeStory.username}</span><button onClick={()=>setActiveStory(null)}>✕</button></div><img src={activeStory.image_url} className="flex-1 object-contain" alt="" /></div>}
-        {showMenu && <div className="absolute inset-0 bg-black/40 z-[80] flex items-end" onClick={()=>setShowMenu(null)}><div className="w-full bg-white rounded-t-[20px] p-2" onClick={e=>e.stopPropagation()}><button onClick={()=>setShowMenu(null)} className="w-full py-3.5 font-bold">Cancel</button></div></div>}
-        {showComments && <div className="absolute inset-0 bg-black/30 z-[75] flex items-end" onClick={()=>setShowComments(null)}><div className="w-full bg-white rounded-t-[20px] p-4 max-h-[65vh] flex flex-col" onClick={e=>e.stopPropagation()}><h3 className="font-bold text-center">Comments R2</h3><div className="mt-3 flex gap-2"><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add comment R2..." className="flex-1 bg-zinc-100 rounded-full px-4 py-2.5 text-[13px] outline-none" /><button onClick={()=>{ if(!commentText.trim()) return; const obj={...allComments}; obj[showComments]=[...(obj[showComments]||[]),{username,text:commentText}]; setAllComments(obj); setCommentText("") }} className="text-[#0095f6] font-bold">Post</button></div></div></div>}
-        {showLikes && <div className="absolute inset-0 bg-black/30 z-[75] flex items-end" onClick={()=>setShowLikes(null)}><div className="w-full bg-white rounded-t-[20px] p-4"><h3 className="font-bold text-center">Likes • {showLikes.likes} R2</h3></div></div>}
+        {showMenu && <div className="absolute inset-0 bg-black/40 z-[80] flex items-end" onClick={()=>setShowMenu(null)}><div className="w-full bg-white rounded-t-[20px] p-2"><button onClick={()=>setShowMenu(null)} className="w-full py-3.5 font-bold">Cancel</button></div></div>}
+        {showComments && <div className="absolute inset-0 bg-black/30 z-[75] flex items-end" onClick={()=>setShowComments(null)}><div className="w-full bg-white rounded-t-[20px] p-4" onClick={e=>e.stopPropagation()}><h3 className="font-bold text-center">Comments R2</h3><div className="mt-3 flex gap-2"><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add comment R2..." className="flex-1 bg-zinc-100 rounded-full px-4 py-2.5 text-[13px] outline-none" /><button onClick={()=>{ if(!commentText.trim()) return; const obj={...allComments}; obj[showComments]=[...(obj[showComments]||[]),{username,text:commentText}]; setAllComments(obj); setCommentText("") }} className="text-[#0095f6] font-bold">Post</button></div></div></div>}
+        {showLikes && <div className="absolute inset-0 bg-black/30 z-[75] flex items-end" onClick={()=>setShowLikes(null)}><div className="w-full bg-white rounded-t-[20px] p-4"><h3 className="font-bold text-center">Likes R2</h3></div></div>}
         {showShare && <ShareAZ post={showShare} onClose={()=>setShowShare(null)} onToast={showToast} onDownload={()=>window.open(showShare.image_url,"_blank")} />}
         {toastMsg && <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] font-bold z-[120]">{toastMsg}</div>}
         {uploading && <div className="absolute top-14 left-0 w-full h-1 bg-zinc-200 z-[60]"><div className="h-full bg-black" style={{width:progress+"%"}}></div></div>}
       </div>
     </div>
   )
-      }
+                           }
