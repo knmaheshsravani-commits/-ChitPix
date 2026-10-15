@@ -83,7 +83,7 @@ export default function HomePage() {
       const res = await fetch("/api/r2-presign",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fileName:file.name,fileType:file.type,contentType:file.type,folder})})
       const d = await res.json()
       if(!d.uploadUrl) throw new Error("Add R2 keys in Vercel")
-      await new Promise((ok,bad)=>{
+       await new Promise<void>((ok: any, bad: any)=>{
         const xhr = new XMLHttpRequest()
         xhr.upload.onprogress = (e)=>{ if(e.lengthComputable) setProgress(Math.round(e.loaded/e.total*100)) }
         xhr.onload = ()=> xhr.status===200? ok() : bad(new Error("R2 fail"))
