@@ -157,13 +157,13 @@ export default function HomePage() {
           })}
         </div>
 
-        {/* BOTTOM 5 - NEW ICONS SVG SAME AS PROFILE */}
+                {/* BOTTOM 5 - SAME AS PROFILE - REELS VISIBLE */}
         <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[62px] bg-white border-t border-zinc-200 flex justify-around items-center z-[100]">
-          <button onClick={()=>feedRef.current?.scrollTo({top:0,behavior:'smooth'})} className="flex-1 h-full flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8" strokeLinejoin="round"><path d="M3 9L12 3l9 6v12H16v-6H8v6H3V9z" fill="black" stroke="none"/><path d="M3 9L12 3l9 6v12H16v-6H8v6H3V9z"/></svg></button>
-          <button onClick={()=>router.push("/search")} className="flex-1 h-full flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg></button>
-          <button onClick={()=>postFileRef.current?.click()} className="flex-1 h-full flex items-center justify-center"><div className="w-8 h-8 border-[2px] border-black rounded-[8px] flex items-center justify-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg></div></button>
-          <button onClick={()=>router.push("/reels")} className="flex-1 h-full flex items-center justify-center"><Icons.Reels size={26} /></button>
-          <button onClick={()=>router.push("/profile")} className="w-8 h-8 rounded-full overflow-hidden border border-zinc-300 flex-1 flex items-center justify-center max-w-[32px] mx-auto"><img src={userPhoto} className="w-full h-full object-cover" alt="" /></button>
+          <button onClick={()=>feedRef.current?.scrollTo({top:0,behavior:'smooth'})} className="flex-1 h-full flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="black"><path d="M12 2.5L3 9.5V20.5H9.5V14H14.5V20.5H21V9.5L12 2.5Z"/></svg></button>
+          <button onClick={()=>router.push("/search")} className="flex-1 h-full flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg></button>
+          <button onClick={()=>postFileRef.current?.click()} className="flex-1 h-full flex items-center justify-center"><div className="w-9 h-9 border-[2.5px] border-black rounded-[10px] flex items-center justify-center text-[22px] font-bold">+</div></button>
+          <button onClick={()=>router.push("/reels")} className="flex-1 h-full flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M10 8.5L16.5 12L10 15.5V8.5Z" fill="black" stroke="black" strokeLinejoin="round"/><rect x="3" y="3" width="18" height="18" rx="5"/></svg></button>
+          <button onClick={()=>router.push("/profile")} className="flex-1 h-full flex items-center justify-center"><div className="w-8 h-8 rounded-full overflow-hidden border"><img src={userPhoto} className="w-full h-full object-cover" alt="" /></div></button>
         </div>
 
         {showDM && (
