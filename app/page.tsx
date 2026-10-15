@@ -157,13 +157,28 @@ export default function HomePage() {
           })}
         </div>
 
-                {/* BOTTOM 5 - SAME AS PROFILE - REELS VISIBLE */}
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[62px] bg-white border-t border-zinc-200 flex justify-around items-center z-[100]">
-          <button onClick={()=>feedRef.current?.scrollTo({top:0,behavior:'smooth'})} className="flex-1 h-full flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="black"><path d="M12 2.5L3 9.5V20.5H9.5V14H14.5V20.5H21V9.5L12 2.5Z"/></svg></button>
-          <button onClick={()=>router.push("/search")} className="flex-1 h-full flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg></button>
-          <button onClick={()=>postFileRef.current?.click()} className="flex-1 h-full flex items-center justify-center"><div className="w-9 h-9 border-[2.5px] border-black rounded-[10px] flex items-center justify-center text-[22px] font-bold">+</div></button>
-          <button onClick={()=>router.push("/reels")} className="flex-1 h-full flex items-center justify-center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M10 8.5L16.5 12L10 15.5V8.5Z" fill="black" stroke="black" strokeLinejoin="round"/><rect x="3" y="3" width="18" height="18" rx="5"/></svg></button>
-          <button onClick={()=>router.push("/profile")} className="flex-1 h-full flex items-center justify-center"><div className="w-8 h-8 rounded-full overflow-hidden border"><img src={userPhoto} className="w-full h-full object-cover" alt="" /></div></button>
+                        {/* BOTTOM 5 ICONS - EXACT SAME AS PROFILE & SEARCH - 100% MATCH */}
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[60px] bg-black border-t border-zinc-800 flex justify-around items-center z-[100] text-white md:bg-white md:text-black md:border-zinc-200">
+          {/* HOME - filled in home, outline in profile/search */}
+          <button onClick={()=>{ router.push("/"); feedRef.current?.scrollTo({top:0,behavior:'smooth'}) }} className="flex-1 h-full flex items-center justify-center">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9.5L12 3l9 6.5V20H14V13H10V20H3V9.5Z" /></svg>
+          </button>
+          {/* SEARCH */}
+          <button onClick={()=>router.push("/search")} className="flex-1 h-full flex items-center justify-center">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="6"/><line x1="16" y1="16" x2="21" y2="21"/></svg>
+          </button>
+          {/* + POST */}
+          <button onClick={()=>postFileRef.current?.click()} className="flex-1 h-full flex items-center justify-center">
+            <div className="w-[34px] h-[34px] border-[2.2px] border-current rounded-[10px] flex items-center justify-center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+          </button>
+          {/* REELS - ▶️ */}
+          <button onClick={()=>router.push("/reels")} className="flex-1 h-full flex items-center justify-center">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><polygon points="9.5 7 18 12 9.5 17" fill="none" stroke="currentColor" strokeWidth="1.8"/></svg>
+          </button>
+          {/* PROFILE M */}
+          <button onClick={()=>router.push("/profile")} className="flex-1 h-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full overflow-hidden border border-zinc-600 flex items-center justify-center bg-white text-black font-serif font-bold"><img src={userPhoto} className="w-full h-full object-cover" alt="" onError={(e:any)=>{e.target.style.display='none'; e.target.parentElement.innerHTML='M'}}/></div>
+          </button>
         </div>
 
         {showDM && (
