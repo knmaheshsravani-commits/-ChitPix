@@ -2,7 +2,7 @@
 "use client"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import {
+import Link from "next/link"
   House, Search, Plus, Clapperboard, User, Heart, MessageCircle,
   Send, Bookmark, Crown, Eye, Clock, Sparkles, MoreHorizontal,
   X, Check, Volume2, VolumeX, Share2, Link2, QrCode, Flag,
@@ -29,6 +29,8 @@ export default function HomePage(){
   const [showNotif, setShowNotif] = useState(false)
   const [search, setSearch] = useState("")
   const [newComment, setNewComment] = useState("")
+  const [notifCount, setNotifCount] = useState(0)
+const [currentUser] = useState({username:'knmahesh'})
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [muted, setMuted] = useState<any>({})
@@ -84,7 +86,18 @@ export default function HomePage(){
     setLoading(false)
   }
   useEffect(()=>{ fetchFeed() },[])
-
+  useEffect(()=>{
+  const loadNotifs = async () => {
+    try{
+      const cur = await fetch("/api/users/current",{cache:"no-store"}).then(r=>r.json()).catch(()=>({username:'knmahesh'}))
+      const notifs = await fetch(`/api/notifications?user=${cur.username||'knmahesh'}`,{cache:"no-store"}).then(r=>r.json()).catch(()=>[])
+      setNotifCount(notifs.filter((n:any)=>!n.read).length)
+    }catch{}
+  }
+  loadNotifs()
+  const id = setInterval(loadNotifs, 5000) // 5 sec lo ventane notification
+  return ()=>clearInterval(id)
+},[])
   // STORY PROGRESS - ON TIME WORKING
   useEffect(()=>{
     if(!showStory) return
@@ -181,10 +194,10 @@ export default function HomePage(){
       <div className="flex justify-between items-center px-4 py-3 bg-white sticky top-0 z-20 border-b border-zinc-100 max-w-[470px] mx-auto w-full">
         <button onClick={handleTopPlusClick} className="w-9 h-9 bg-black text-white rounded-full flex items-center justify-center active:scale-90"><Plus size={20}/></button>
         <h1 className="font-extrabold text-[24px] tracking-tight flex items-center gap-1">ChitPix <Crown size={14} className="text-amber-500"/> <span className="text-[9px] bg-black text-white px-1.5 py-0.5 rounded-full">R2</span></h1>
-        <button onClick={()=>{setShowNotif(true); showToast("Notifications - R2")}} className="w-9 h-9 bg-zinc-100 rounded-full flex items-center justify-center relative active:scale-90">
-          <Heart size={22} />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-[18px] h-[18px] rounded-full flex items-center justify-center font-bold">3</span>
-        </button>
+        <Link href="/notifications" className="w-9 h-9 bg-zinc-100 rounded-full flex items-center justify-center relative active:scale-95">
+  <Heart size={22} />
+  {notifCount>0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-[18px] h-[18px] rounded-full flex items-center justify-center font-bold">{notifCount}</span>}
+</Link>
       </div>
       <input ref={fileInputRef} type="file" accept="image/*,video/*" hidden onChange={handleFileUpload}/>
 
