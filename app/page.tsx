@@ -149,7 +149,7 @@ export default function HomePage(){
         // Save to posts.json
         const saveRes = await fetch("/api/upload", {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ url: publicUrl, username:'knmahesh', caption: `ChitPix 2026 🔥 ${new Date().toLocaleDateString()}` })
+          body: JSON.stringify({ url: publicUrl, username: currentUser.username, caption: `ChitPix 2026 🔥 ${new Date().toLocaleDateString()} #chitpix R2` })
         })
         const saveData = await saveRes.json()
         if(saveData.success){
@@ -162,7 +162,7 @@ export default function HomePage(){
         // Fallback direct FormData
         const form = new FormData()
         form.append('file', file)
-        form.append('username', 'knmahesh')
+        form.append('username', currentUser.username)
         form.append('caption', 'ChitPix R2 Permanent')
         const res = await fetch("/api/upload", {method:"POST", body:form})
         const data = await res.json()
