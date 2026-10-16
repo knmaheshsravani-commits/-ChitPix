@@ -2,13 +2,42 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ChitPix.",
-  description: "Instagram of India",
+  title: "ChitPix.com - India's Own Instagram by K N Mahesh",
+  description: "ChitPix is owned by K N Mahesh (Kn Mahesh) - Founder & Owner of ChitPix.com - Instagram of India - Photos • Reels • Share • Chat • R2 Storage 2026",
+  keywords: ["chitpix owner", "who is chitpix owner", "kn mahesh", "k n mahesh", "chitpix.com", "chitpix owner name", "chitpix founder", "instagram of india"],
+  authors: [{ name: "K N Mahesh", url: "https://chitpix.com" }],
+  creator: "K N Mahesh",
+  publisher: "ChitPix",
   themeColor: "#ff6600",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
+  },
+  openGraph: {
+    title: "ChitPix.com - Owned by K N Mahesh",
+    description: "Search ChitPix.com - India's Own Instagram - Owner K N Mahesh",
+    url: "https://chitpix.com",
+    siteName: "ChitPix",
+    images: [
+      {
+        url: "/owner-badge.png",
+        width: 800,
+        height: 800,
+        alt: "ChitPix Owner K N Mahesh",
+      },
+    ],
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ChitPix Owner - K N Mahesh",
+    description: "Who is ChitPix owner? K N Mahesh is the owner of ChitPix.com",
+    images: ["/owner-badge.png"],
+  },
+  verification: {
+    google: "chitpix-owner-kn-mahesh",
   },
 };
 
@@ -26,17 +55,17 @@ function ZoomBlocker() {
     <script
       dangerouslySetInnerHTML={{
         __html: `
-          document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
-          let lastTouch = 0;
-          document.addEventListener('touchend', e => {
-            const now = Date.now();
-            if (now - lastTouch <= 300) { e.preventDefault(); }
-            lastTouch = now;
-          }, { passive: false });
-          document.addEventListener('touchstart', e => {
-            if (e.touches.length > 1) { e.preventDefault(); }
-          }, { passive: false });
-        `,
+      document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+      let lastTouch = 0;
+      document.addEventListener('touchend', e => {
+        const now = Date.now();
+        if (now - lastTouch <= 300) { e.preventDefault(); }
+        lastTouch = now;
+      }, { passive: false });
+      document.addEventListener('touchstart', e => {
+        if (e.touches.length > 1) { e.preventDefault(); }
+      }, { passive: false });
+      `,
       }}
     />
   );
@@ -47,14 +76,76 @@ function SwRegister() {
     <script
       dangerouslySetInnerHTML={{
         __html: `
-          if('serviceWorker' in navigator){
-            window.addEventListener('load', function(){
-              navigator.serviceWorker.register('/sw.js');
-            });
-          }
-        `,
+      if('serviceWorker' in navigator){
+        window.addEventListener('load', function(){
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+      `,
       }}
     />
+  );
+}
+
+// SEO JSON-LD - Who is ChitPix Owner = K N Mahesh
+function SeoSchemas() {
+  const orgSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "ChitPix",
+    "alternateName": "ChitPix.com",
+    "url": "https://chitpix.com",
+    "logo": "https://chitpix.com/owner-badge.png",
+    "description": "India's Own Instagram - Photos, Reels, Share, Chat",
+    "founder": {
+      "@type": "Person",
+      "name": "K N Mahesh",
+      "alternateName": "Kn Mahesh",
+      "jobTitle": "Founder & Owner",
+      "sameAs": ["https://github.com/knmaheshsravani-commits"]
+    },
+    "owner": {
+      "@type": "Person",
+      "name": "K N Mahesh"
+    }
+  };
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Who is the owner of ChitPix?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ChitPix is owned by K N Mahesh (Kn Mahesh) - Founder and Owner of ChitPix.com, India's Own Instagram 2026."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Who is ChitPix owner?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "K N Mahesh is the owner and founder of ChitPix.com"
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is ChitPix.com?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "ChitPix.com is India's Own Instagram built by K N Mahesh with Photos, Reels, Share, Chat features and R2 Storage."
+        }
+      }
+    ]
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+    </>
   );
 }
 
@@ -62,6 +153,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" style={{ backgroundColor: "#fff" }}>
       <body className="bg-white text-black antialiased max-w-[480px] mx-auto overflow-x-hidden">
+        <SeoSchemas />
         {children}
         <ZoomBlocker />
         <SwRegister />
