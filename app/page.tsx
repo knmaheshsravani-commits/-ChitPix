@@ -3,13 +3,12 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import {
   House, Search, Plus, Clapperboard, User, Heart, MessageCircle,
   Send, Bookmark, Crown, Eye, Clock, Sparkles, MoreHorizontal,
   X, Check, Volume2, VolumeX, Share2, Link2, QrCode, Flag,
   EyeOff, Radio, Layers, RefreshCw
 } from "lucide-react"
-
-export default function HomePage(){
   const router = useRouter()
   const [posts, setPosts] = useState<any[]>([])
   const [stories, setStories] = useState<any[]>([
