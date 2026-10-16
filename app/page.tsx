@@ -334,15 +334,15 @@ const [currentUser] = useState({username:'knmahesh'})
 
       {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-4 py-2 rounded-full text-[11px] z-[200] flex items-center gap-2"><Sparkles size={12}/> {toast}</div>}
 
-      <div className="bg-white border-t border-zinc-200 fixed bottom-0 w-full max-w-[470px] left-1/2 -translate-x-1/2">
+            <div className="bg-white border-t border-zinc-200 fixed bottom-0 w-full max-w-[470px] left-1/2 -translate-x-1/2">
         <div className="flex justify-between items-center px-2 h-[52px]">
-          <div className="w-12 h-12 flex items-center justify-center"><House size={24} className="fill-black"/></div>
-          <button onClick={()=>router.push('/search')} className="w-12 h-12 flex items-center justify-center"><Search size={22}/></button>
-          <button onClick={handleTopPlusClick} className="w-12 h-12 flex items-center justify-center"><div className="w-9 h-9 rounded-full bg-black flex items-center justify-center"><Plus size={20} className="text-white"/></div></button>
-          <button onClick={()=>router.push('/reels')} className="w-12 h-12 flex items-center justify-center"><Clapperboard size={22}/></button>
-          <button onClick={()=>router.push('/profile')} className="w-12 h-12 flex items-center justify-center"><div className="w-7 h-7 rounded-full bg-zinc-200 flex items-center justify-center"><User size={16}/></div></button>
+          <div className="w-12 h-12 flex items-center justify-center"><House size={24} className="fill-black" /></div>
+          <button onClick={()=>router.push('/search')} className="w-12 h-12 flex items-center justify-center"><Search size={24} /></button>
+          <button onClick={handleTopPlusClick} className="w-12 h-12 flex items-center justify-center"><Plus size={24} /></button>
+          <button onClick={()=>router.push('/reels')} className="w-12 h-12 flex items-center justify-center"><Clapperboard size={24} /></button>
+          <Link href="/profile" className="w-12 h-12 flex items-center justify-center"><User size={24} /></Link>
         </div>
       </div>
     </div>
   )
-                      }
+}
