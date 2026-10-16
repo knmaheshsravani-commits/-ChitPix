@@ -13,14 +13,14 @@ const R2 = new S3Client({
   },
 })
 
-const BUCKET = process.env.R2_BUCKET_NAME! || process.env.R2_BUCKET!
+const BUCKET = process.env.R2_BUCKET_NAME || process.env.R2_BUCKET || 'chitpix'
 const POSTS_KEY = "data/posts.json"
 
 async function getPosts() {
   try {
     const res = await R2.send(new GetObjectCommand({ Bucket: BUCKET, Key: POSTS_KEY }))
     const text = await res.Body?.transformToString()
-    return text ? JSON.parse(text) : []
+    return text? JSON.parse(text) : []
   } catch {
     return []
   }
@@ -28,8 +28,13 @@ async function getPosts() {
 
 export async function POST(req: NextRequest) {
   try {
+    // Check ENV first
+    if (!process.env.R2_ACCOUNT_ID ||!process.env.R2_ACCESS_KEY_ID ||!process.env.R2_SECRET_ACCESS_KEY) {
+      return NextResponse.json({ error: 'R2 ENV missing - Check Vercel settings' }, { status: 500 })
+    }
+
     const contentType = req.headers.get('content-type') || ''
-    
+
     let publicUrl = ''
     let username = 'knmahesh'
     let caption = ''
@@ -43,8 +48,8 @@ export async function POST(req: NextRequest) {
       caption = body.caption || ''
       fileName = body.fileName || ''
       if (!publicUrl) return NextResponse.json({ error: 'No URL provided' }, { status: 400 })
-    } 
-    // CASE 2: FormData with file (small files <4MB - OLD WAY)
+    }
+    // CASE 2: FormData with file (small files <4MB)
     else {
       const formData = await req.formData()
       const file = formData.get('file') as File | null
@@ -56,34 +61,41 @@ export async function POST(req: NextRequest) {
         publicUrl = urlFromForm
       } else {
         if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 })
-        // Size check
         if (file.size > 4 * 1024 * 1024) {
-          return NextResponse.json({ error: 'File too big for direct upload, use presigned URL. Size: ' + Math.round(file.size/1024/1024) + 'MB' }, { status: 413 })
+          return NextResponse.json({ error: `File too big (${Math.round(file.size/1024/1024)}MB). Use presigned URL` }, { status: 413 })
         }
         const ext = file.name.split('.').pop() || 'jpg'
         const key = `posts/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
         const buffer = Buffer.from(await file.arrayBuffer())
         await R2.send(new PutObjectCommand({ Bucket: BUCKET, Key: key, Body: buffer, ContentType: file.type }))
+
+        // FIXED: Public URL
         const baseUrl = (process.env.R2_PUBLIC_URL || '').replace(/\/$/, '')
-        publicUrl = baseUrl ? `${baseUrl}/${key}` : `https://pub-${process.env.R2_ACCOUNT_ID}.r2.dev/${key}`
+        if (!baseUrl) {
+          return NextResponse.json({ error: 'R2_PUBLIC_URL not set in Vercel' }, { status: 500 })
+        }
+        publicUrl = `${baseUrl}/${key}`
       }
     }
 
-    // Create post - FIXED to detect video properly
+    // FIXED: Video detection with query params
+    const cleanUrl = publicUrl.split('?')[0].toLowerCase()
+    const isVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.webm')
+
     const newPost = {
       id: Date.now().toString(),
       image_url: publicUrl,
       url: publicUrl,
-      video_url: publicUrl,
+      video_url: isVideo? publicUrl : undefined,
       username,
       caption,
       content: caption,
       created_at: new Date().toISOString(),
-      type: publicUrl.toLowerCase().endsWith('.mp4') || publicUrl.toLowerCase().endsWith('.mov') ? 'reel' : 'post'
+      type: isVideo? 'reel' : 'post'
     }
 
     const posts = await getPosts()
-    const updated = [newPost, ...posts].slice(0, 1000) // Keep 1000 max
+    const updated = [newPost,...posts].slice(0, 1000)
     await R2.send(new PutObjectCommand({
       Bucket: BUCKET,
       Key: POSTS_KEY,
@@ -95,11 +107,15 @@ export async function POST(req: NextRequest) {
 
   } catch (e: any) {
     console.error('UPLOAD ERROR:', e)
-    // ALWAYS return JSON - Fix for your screenshot error
     return NextResponse.json({ error: e.message || 'Upload failed', details: e.toString() }, { status: 500 })
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ status: 'upload endpoint ready', bucket: BUCKET, hasR2: !!process.env.R2_ACCOUNT_ID })
+  return NextResponse.json({
+    status: 'upload endpoint ready',
+    bucket: BUCKET,
+    hasR2:!!process.env.R2_ACCOUNT_ID,
+    hasPublicUrl:!!process.env.R2_PUBLIC_URL
+  })
 }
