@@ -1,4 +1,4 @@
-import { S3Client } from "@aws-sdk/client-s3";
+S3Client } from "@aws-sdk/client-s3";
 
 function getR2Client() {
   const accountId = process.env.R2_ACCOUNT_ID;
