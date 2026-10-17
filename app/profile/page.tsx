@@ -30,6 +30,8 @@ const uploadToR2 = async (file: File, folder: string = "posts") => {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const params = useParams() // <-- ADD 1
+  const usernameFromUrl = (params as any)?.username // <-- ADD 2
   const [posts, setPosts] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<"POSTS" | "REELS" | "TAGGED">("POSTS")
   const [followers, setFollowers] = useState(0)
@@ -61,7 +63,12 @@ export default function ProfilePage() {
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
 
   useEffect(()=>{
-    const saved = localStorage.getItem("posts")
+  // DYNAMIC USER - URL nundi vasthe ade user
+  if(usernameFromUrl){
+    setUsername(usernameFromUrl)
+    // URL user posts matrame filter
+  }
+  const saved = localStorage.getItem("posts")
     let localPosts: any[] = []
     if(saved){ try { localPosts = JSON.parse(saved) } catch {} }
     const fetchSupabasePosts = async () => {
