@@ -1,27 +1,26 @@
-PutObjectCommand } from "@aws-sdk/client-s3"
-import {  } from "@aws-sdk/s3-request-presigner"
-import { NextRequest, NextResponse } from "next/server"
-import { r2Client, R2_BUCKET, R2_PUBLIC_URL } from "../../../lib/r2"
+import { S3Client } from "@aws-sdk/client-s3";
 
-export async function POST(req: NextRequest) {
-  try {
-    const { fileName, fileType, folder } = await req.json()
-    if (!fileName || !fileType) {
-      return NextResponse.json({ error: "Missing fileName/fileType" }, { status: 400 })
-    }
-    const safeName = fileName.replace(/\s+/g, '_')
-    const key = `${folder || 'reels'}/${Date.now()}_${safeName}`
-    
-    const command = new PutObjectCommand({ 
-      Bucket: R2_BUCKET, 
-      Key: key, 
-      ContentType: fileType 
-    })
-    
-    const uploadUrl = await getSignedUrl(r2Client, command, { expiresIn: 3600 })
-    const publicUrl = `${R2_PUBLIC_URL}/${key}`
-    
-    return NextResponse.json({ uploadUrl, publicUrl, key, success: true })
-  } catch (e:any) {
-    console.error("Presign error:", e)
-    return NextResponse.js
+function getR2Client() {
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+
+  if (!accountId || !accessKeyId || !secretAccessKey) {
+    // Build time lo error raakunda empty client ivvadam
+    // Runtime lo matrame actual check
+    console.warn("R2 env missing at build time");
+  }
+
+  return new S3Client({
+    region: "auto",
+    endpoint: `https://${accountId || "dummy"}.r2.cloudflarestorage.com`,
+    credentials: {
+      accessKeyId: accessKeyId || "dummy",
+      secretAccessKey: secretAccessKey || "dummy",
+    },
+  });
+}
+
+export const r2Client = getR2Client();
+export const R2_BUCKET = process.env.R2_BUCKET_NAME || process.env.R2_BUCKET || "";
+export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || "";
