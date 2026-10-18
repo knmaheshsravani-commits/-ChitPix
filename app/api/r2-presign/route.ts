@@ -1,4 +1,4 @@
-import { r2Client, R2_BUCKET } from "@/lib/r2";
+import { r2Client, R2_BUCKET } from "../../../lib/r2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-presigner";
 
@@ -13,6 +13,6 @@ export async function POST(req: Request) {
     const url = await getSignedUrl(r2Client, command, { expiresIn: 3600 });
     return Response.json({ url });
   } catch (e) {
-    return Response.json({ error: "Failed to presign" }, { status: 500 });
+    return Response.json({ error: "Failed" }, { status: 500 });
   }
 }
