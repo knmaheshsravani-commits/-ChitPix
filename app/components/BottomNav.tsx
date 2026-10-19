@@ -31,11 +31,9 @@ export default function BottomNav(){
       formData.append("caption", file.type.startsWith("video/")? "New Reel #chitpix" : "New Post #chitpix")
       const storedUser = typeof window!== 'undefined'? localStorage.getItem("username") : null
       formData.append("username", storedUser || "knmahesh")
-
       const res = await fetch("/api/upload",{method:"POST", body:formData})
       const data = await res.json()
       if(!res.ok) throw new Error(data.error || "Upload failed")
-
       if(file.type.startsWith("video/")) router.push("/reels")
       else router.push("/")
       setTimeout(()=>window.location.reload(), 500)
@@ -53,13 +51,13 @@ export default function BottomNav(){
         <Link href="/" className="flex-1 flex justify-center py-3"><Icons.Home active={path==="/"} /></Link>
         <Link href="/search" className="flex-1 flex justify-center py-3"><Icons.Search active={path==="/search"} /></Link>
         <div className="flex-1 flex justify-center py-2">
-          <button onClick={()=>fileRef.current?.click()} className="active:scale-90 transition-all w-12 h-8 bg-white text-black rounded-full flex items-center justify-center">
-            {uploading? <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin bg-black"/> : <Icons.Plus/>}
+          <button onClick={()=>fileRef.current?.click()} className="active:scale-90 w-12 h-8 bg-white text-black rounded-full flex items-center justify-center font-bold text-[22px]">
+            {uploading? <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"/> : "+"}
           </button>
         </div>
         <Link href="/reels" className="flex-1 flex justify-center py-3"><Icons.Reels active={path==="/reels"} /></Link>
         <Link href="/profile" className="flex-1 flex justify-center py-3">
-          <div className={`w-7 h-7 rounded-full bg-zinc-800 border ${path==="/profile" ? "border-white" : "border-zinc-700"} flex items-center justify-center overflow-hidden`}>
+          <div className={`w-7 h-7 rounded-full bg-zinc-800 border ${path==="/profile" ? "border-white" : "border-zinc-700"} overflow-hidden`}>
             <img src={profilePhoto} className="w-full h-full object-cover" alt="profile"/>
           </div>
         </Link>
