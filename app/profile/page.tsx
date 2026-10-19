@@ -138,23 +138,28 @@ export default function ProfilePage() {
   }
 
   const handlePhotoChange = async (e: any) => {
-    const f = e.target.files?.[0]; if(!f) return; setUploading(true)
-    const url = await uploadToR2(f, "avatars")
-    if(url){
-      setPhoto(url)
-      document.cookie = `avatar=${url}; path=/; max-age=2592000`
-      try{
-        await fetch("/api/users",{
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({username, avatar_url: url, bio, link})
-        })
-        alert("Profile pic R2 Device lo permanent save ayindi! ✅")
-      }catch{}
-    } else {
-      alert("R2 Device upload failed - try again")
-    }
-    setUploading(false)
+  const f = e.target.files?.[0]; if(!f) return;
+  
+  // 1. INSTANT PREVIEW - R2 ki wait cheyaku!
+  const localPreview = URL.createObjectURL(f);
+  setPhoto(localPreview);
+  
+  setUploading(true)
+  const url = await uploadToR2(f, "avatars")
+  if(url){
+    setPhoto(url) // R2 URL vachaka overwrite
+    document.cookie = `avatar=${url}; path=/; max-age=2592000`
+    try{
+      await fetch("/api/users",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({username, avatar_url: url, bio, link})
+      })
+    }catch{}
+  } else {
+    alert("R2 upload failed - try again")
+  }
+  setUploading(false)
   }
 
   const handleProfileSave = async () => {
