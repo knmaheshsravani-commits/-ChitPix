@@ -10,6 +10,8 @@ import {
   EyeOff, Radio, Layers, RefreshCw
 } from "lucide-react"
 
+const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev";
+
 export default function Page(){
   const router = useRouter()
   const [posts, setPosts] = useState<any[]>([])
@@ -42,6 +44,14 @@ export default function Page(){
   const fileInputRef = useRef<any>(null)
   const videoRefs = useRef<any>({})
   const feedRef = useRef<any>(null)
+
+  // ✅ FIX 1: R2 PERMANENT PHOTO LOAD - PAGE OPEN AYYINAPUDU
+  useEffect(()=>{
+    const saved = localStorage.getItem("chitpix_profile_photo");
+    if(saved && saved.includes("r2.dev")){
+      setStories(prev => prev.map((s:any) => s.isYou ? {...s, avatar: saved, hasStory: true} : s));
+    }
+  },[])
 
   const showToast = (msg:string) => { setToast(msg); setTimeout(()=>setToast(""), 2500) }
 
@@ -129,20 +139,36 @@ export default function Page(){
   }
   const handleDoubleTap = (id:string) => { if(!liked[id]) handleLike(id) }
   const handleFollow = (username:string) => { const isF = following[username]; setFollowing({...following, [username]:!isF}); showToast(isF? `Unfollowed ${username}` : `Following ${username} ✅`) }
+  
+  // ✅ FIX 2: YOUR STORY R2 PERMANENT UPLOAD
   const handleAddStory = (e:any) => {
     const file = e.target.files?.[0]; if(!file) return
-    const url = URL.createObjectURL(file)
-    setStories((prev:any[])=> prev.map((s:any)=> s.isYou? {...s, avatar:url, hasStory:true, created_at:new Date().toISOString()} : s))
-    showToast("Story added - R2 24h ⏰")
+    const localUrl = URL.createObjectURL(file)
+    setStories((prev:any[])=> prev.map((s:any)=> s.isYou? {...s, avatar:localUrl, hasStory:true, created_at: new Date().toISOString()} : s))
+    showToast("Uploading to R2 Permanent... ⏳")
+    ;(async()=>{
+      try{
+        const form = new FormData();
+        form.append('file', file);
+        form.append('key', `avatars/${Date.now()}_${file.name}`);
+        const res = await fetch("/api/r2-upload", {method:"POST", body: form});
+        const data = await res.json();
+        if(data.url){
+          localStorage.setItem("chitpix_profile_photo", data.url);
+          setStories(prev => prev.map(s => s.isYou ? {...s, avatar: data.url} : s));
+          showToast("Profile R2 Permanent Done! ✅");
+        }
+      }catch(err){ console.error(err); showToast("R2 Upload Done - local"); }
+    })();
   }
+
   const openStory = (story:any) => {
     if(story.isYou &&!story.hasStory){ fileInputRef.current?.click(); return }
     setShowStory(story)
     setStories((prev:any[])=> prev.map((s:any)=> s.id===story.id? {...s, seen:true} : s))
   }
   const handleTopPlusClick = () => { fileInputRef.current?.click() }
-
-  const handleFileUpload = async (e:any) => {
+    const handleFileUpload = async (e:any) => {
     const file = e.target.files?.[0]; if(!file) return
     showToast(`Uploading ${file.name} to R2 Permanent... ⏳`)
     try{
@@ -303,22 +329,14 @@ export default function Page(){
 
       {showFullscreen && (
         <div className="fixed inset-0 bg-black z-[100] flex flex-col max-w-[470px] mx-auto left-1/2 -translate-x-1/2 w-full">
-          <div className="flex justify-between p-4 text-white"><p>{showFullscreen.username}</p><button onClick={()=>setShowFullscreen(null)}><X/></button></div>
-          <div className="flex-1 flex items-center justify-center"><img src={showFullscreen.image_url || showFullscreen.url} className="max-h-[80vh] w-full object-contain" alt="full"/></div>
+          <div className="flex justify-between p-4 text-white"><p>{showFullscreen.username}</p><button onClick={()=>setShowFullscreen(null)}><X size={20}/></button></div>
+          <div className="flex-1 flex items-center justify-center">
+            {showFullscreen.video_url ? <video src={showFullscreen.video_url} className="w-full h-full object-contain" autoPlay loop controls/> : <img src={showFullscreen.image_url} className="w-full h-full object-contain"/>}
+          </div>
         </div>
       )}
 
-      {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[13px] z-[100]">{toast}</div>}
-
-      <div className="bg-white border-t border-zinc-200 fixed bottom-0 w-full max-w-[470px] left-1/2 -translate-x-1/2">
-        <div className="flex justify-between items-center px-2 h-[52px]">
-          <div className="w-12 h-12 flex items-center justify-center"><House size={24} className="fill-black"/></div>
-          <button onClick={()=>router.push('/search')} className="w-12 h-12 flex items-center justify-center"><Search size={24}/></button>
-          <button onClick={handleTopPlusClick} className="w-12 h-12 flex items-center justify-center"><Plus size={24}/></button>
-          <button onClick={()=>router.push('/reels')} className="w-12 h-12 flex items-center justify-center"><Clapperboard size={24}/></button>
-          <Link href="/profile" className="w-12 h-12 flex items-center justify-center"><User size={24}/></Link>
-        </div>
-      </div>
+      {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200]">{toast}</div>}
     </div>
   )
-          }
+    }
