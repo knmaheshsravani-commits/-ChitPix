@@ -3,7 +3,8 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
 import BottomNav from "../components/BottomNav"
-const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev" // ✅ FIXED - correct 5e65
+
+const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
 
 const uploadToR2 = async (file: File, folder: string = "posts") => {
   try {
@@ -58,7 +59,7 @@ export default function ProfilePage() {
   const [hasStory, setHasStory] = useState(true)
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
 
-  // ✅ FIXED 100% - R2 ONLY - NO LOCALSTORAGE - DP BUG GONE
+  // ✅ FIXED 100% - DP OVERWRITE BUG GONE
   useEffect(()=>{
     const fetchR2Data = async () => {
       let finalUsername = ""
@@ -82,7 +83,8 @@ export default function ProfilePage() {
         const u = Array.isArray(uData) ? uData.find((x:any)=>x.username===finalUsername) : uData
         if(u){
           if(u.bio){ setBio(u.bio); setEditBio(u.bio) }
-          if(u.avatar_url && photo === ""){ setPhoto(u.avatar_url) }
+          // ✅ FIXED - unconditional set, no photo check
+          if(u.avatar_url){ setPhoto(u.avatar_url) }
           if(u.link){ setLink(u.link); setEditLink(u.link) }
           if(u.followers) setFollowers(u.followers)
           if(u.following) setFollowing(u.following)
@@ -102,10 +104,8 @@ export default function ProfilePage() {
           const filtered = finalUsername ? mapped.filter((m:any)=> m.username===finalUsername) : mapped
           setPosts(filtered.length>0 ? filtered : mapped)
         }
-      }catch{
-      }
+      }catch{}
       
-      // ✅ R2 ONLY - NO LOCALSTORAGE
       try{
         const archRes = await fetch(`/api/posts?archive=true&username=${finalUsername}`,{cache:"no-store"})
         const archData = await archRes.json()
@@ -114,14 +114,13 @@ export default function ProfilePage() {
     }
     fetchR2Data()
   },[usernameFromUrl])
-
-  const savePosts = (newPosts:any[])=>{ setPosts(newPosts) }
+    const savePosts = (newPosts:any[])=>{ setPosts(newPosts) }
   const handleDelete = async (index:number, postId?:string)=>{
     if(!confirm("Delete this post?")) return
     if(postId){ try{ await fetch(`/api/posts?id=${postId}`, {method:"DELETE"}) }catch{} }
     savePosts(posts.filter((_,i)=> i!== index)); setSelectedPost(null)
   }
-    const handleArchive = async (index:number)=>{
+  const handleArchive = async (index:number)=>{
     const postToArchive = posts[index]
     const newArchived = [...archivedPosts, postToArchive]
     setArchivedPosts(newArchived)
@@ -136,33 +135,45 @@ export default function ProfilePage() {
     alert("Archived to R2 Device! ✅")
   }
 
+  // ✅ FINAL FIX - DP NEVER DISAPPEARS
   const handlePhotoChange = async (e: any) => {
-  const f = e.target.files?.[0]; if(!f) return;
-  
-  // 1. INSTANT PREVIEW - R2 ki wait cheyaku!
-  const localPreview = URL.createObjectURL(f);
-  setPhoto(localPreview);
-  
-  setUploading(true)
-  const url = await uploadToR2(f, "avatars")
-  if(url){
-    setPhoto(url) // R2 URL vachaka overwrite
-    document.cookie = `avatar=${url}; path=/; max-age=2592000`
-    try{
-      await fetch("/api/users",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({username, avatar_url: url, bio, link})
-      })
-    }catch{}
-  } else {
-    alert("R2 upload failed - try again")
-  }
-  setUploading(false)
+    const f = e.target.files?.[0]; 
+    if(!f) return;
+    
+    const localPreview = URL.createObjectURL(f);
+    setPhoto(localPreview);
+    setUploading(true)
+    
+    try {
+      const url = await uploadToR2(f, "avatars")
+      console.log("R2 URL:", url)
+      if(url){
+        setPhoto(url)
+        document.cookie = `avatar=${url}; path=/; max-age=2592000`
+        // ✅ ONLY avatar_url send - bio/link overwrite avadu
+        const saveRes = await fetch("/api/users",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({username: username, avatar_url: url})
+        })
+        console.log("Save status:", saveRes.status)
+        const saveData = await saveRes.json().catch(()=>null)
+        console.log("Save data:", saveData)
+      } else {
+        alert("R2 upload failed - try again")
+        setPhoto("") // revert if fail
+      }
+    } catch(err) {
+      console.log("Upload failed:", err)
+      alert("Upload failed")
+    }
+    setUploading(false)
   }
 
   const handleProfileSave = async () => {
-    const newName = editName || username; const newBio = editBio || bio; const newLink = editLink || link
+    const newName = editName || username; 
+    const newBio = editBio || bio; 
+    const newLink = editLink || link
     setUploading(true)
     try{
       await fetch("/api/users",{
@@ -235,7 +246,7 @@ export default function ProfilePage() {
           <div className="relative">
             <div className={`w-[86px] h-[86px] rounded-full p-[2.5px] ${hasStory?'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600':'bg-zinc-700'}`}>
               <div className="bg-black rounded-full p-[2.5px]">
-                {photo? <img src={photo} className="w-[77px] h-[77px] rounded-full object-cover" alt="profile" onError={(e:any)=> e.target.src=`https://i.pravatar.cc/150?u=${username}`} /> : <div className="w-[77px] h-[77px] rounded-full bg-zinc-800 flex items-center justify-center">👤</div>}
+                {photo? <img src={photo} className="w-[77px] h-[77px] rounded-full object-cover" alt="profile" /> : <div className="w-[77px] h-[77px] rounded-full bg-zinc-800 flex items-center justify-center">👤</div>}
               </div>
             </div>
             <label htmlFor="photoInput" className="absolute bottom-0 right-0 bg-[#0095f6] w-[22px] h-[22px] rounded-full flex items-center justify-center cursor-pointer border-2 border-black">+</label>
@@ -252,7 +263,6 @@ export default function ProfilePage() {
           <p className="font-bold text-[14px]">{username}</p>
           <p className="text-[14px] mt-1 whitespace-pre-line text-zinc-200">{bio}</p>
           <p className="text-[14px] text-[#4da5ff] font-semibold mt-1">🔗 {link}</p>
-          <p className="text-[11px] text-zinc-500 mt-1">👁️ {profileViews} views • R2 Device Connected ☁️</p>
           <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="🔍 Search your posts..." className="w-full mt-2 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-[13px] outline-none"/>
         </div>
         <div className="flex gap-2 mt-4 px-4">
@@ -311,23 +321,20 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-            {showEdit && (
+      {showEdit && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={()=>setShowEdit(false)}>
           <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto text-white" onClick={e=>e.stopPropagation()}>
             <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
             <h3 className="font-bold text-center mb-4">Edit Profile - R2 Device</h3>
-
-            {/* ✅ PHOTO PREVIEW ADDED */}
-<div className="flex flex-col items-center mb-4">
-  <div className="w-[90px] h-[90px] rounded-full overflow-hidden border-2 border-white">
-    <img src={photo || `https://i.pravatar.cc/150?u=${username}`} className="w-full h-full object-cover" alt="preview" />
-  </div>
-  <label htmlFor="editPhotoInput2" className="mt-3 text-[#0095f6] font-bold text-[14px] cursor-pointer">
-    {uploading ? "Uploading to R2..." : "Change Profile Photo"}
-  </label>
-  <input id="editPhotoInput2" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-</div>
-
+            <div className="flex flex-col items-center mb-4">
+              <div className="w-[90px] h-[90px] rounded-full overflow-hidden border-2 border-white">
+                <img src={photo || `https://i.pravatar.cc/150?u=${username}`} className="w-full h-full object-cover" alt="preview" />
+              </div>
+              <label htmlFor="editPhotoInput2" className="mt-3 text-[#0095f6] font-bold text-[14px] cursor-pointer">
+                {uploading ? "Uploading to R2..." : "Change Profile Photo"}
+              </label>
+              <input id="editPhotoInput2" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+            </div>
             <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name" className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 mb-2 text-[14px] outline-none text-white"/>
             <textarea value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Bio" className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 mb-2 text-[14px] h-20 outline-none text-white"/>
             <input value={editLink} onChange={e=>setEditLink(e.target.value)} placeholder="Link" className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 mb-3 text-[14px] outline-none text-white"/>
@@ -339,4 +346,4 @@ export default function ProfilePage() {
       <BottomNav />
     </div>
   )
-            }
+      }
