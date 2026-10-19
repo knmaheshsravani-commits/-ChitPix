@@ -8,15 +8,44 @@ export default function BottomNav() {
   const pathname = usePathname()
   const [avatar, setAvatar] = useState("")
 
+  const getCookieAvatar = () => {
+    const match = document.cookie.match(/(?:^|; )avatar=([^;]*)/)
+    return match ? decodeURIComponent(match[1]) : ""
+  }
+
+  const loadR2Avatar = async () => {
+    try{
+      // 1. First check cookie - instant
+      const cookieAv = getCookieAvatar()
+      if(cookieAv) setAvatar(cookieAv)
+
+      // 2. Then check DB - latest
+      const res = await fetch("/api/users?username=knmahesh", {cache:"no-store"})
+      const data = await res.json()
+      if(data?.avatar_url){
+        setAvatar(data.avatar_url)
+        document.cookie = `avatar=${encodeURIComponent(data.avatar_url)}; path=/; max-age=2592000`
+      }
+    }catch{}
+  }
+
   useEffect(()=>{
-    const loadR2Avatar = async () => {
-      try{
-        const res = await fetch("/api/users?username=knmahesh", {cache:"no-store"})
-        const data = await res.json()
-        if(data?.avatar_url) setAvatar(data.avatar_url)
-      }catch{}
-    }
     loadR2Avatar()
+
+    // 🔥 MAIN FIX: Photo marinantha auto update avvali
+    const onAvatarUpdate = () => loadR2Avatar()
+    
+    window.addEventListener("avatarUpdated", onAvatarUpdate)
+    window.addEventListener("storage", onAvatarUpdate)
+    
+    // Every 2 sec check cookie - 100% sync
+    const interval = setInterval(loadR2Avatar, 2000)
+
+    return () => {
+      window.removeEventListener("avatarUpdated", onAvatarUpdate)
+      window.removeEventListener("storage", onAvatarUpdate)
+      clearInterval(interval)
+    }
   },[])
 
   const isHome = pathname === "/"
@@ -25,7 +54,7 @@ export default function BottomNav() {
   const isProfile = pathname?.startsWith("/profile")
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[62px] bg-white border-t border-zinc-200 flex justify-around items-center z-50">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[62px] bg-white border-t border-zinc-200 flex justify-around items-center z-[40]">
       <Link href="/" className="w-[52px] h-[52px] flex items-center justify-center active:scale-90">
         <House size={26} fill={isHome ? "black" : "none"} strokeWidth={isHome ? 2.8 : 2.2} className={isHome ? "text-black" : "text-black opacity-60"} />
       </Link>
