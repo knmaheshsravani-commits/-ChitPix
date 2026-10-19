@@ -326,13 +326,13 @@ export default function Page(){
           </div>
         </div>
       )}
-              {/* 🔥 FLOATING DOCK STYLE - MORE PREMIUM */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-black text-white rounded-full px-6 py-3 flex items-center gap-6 shadow-2xl shadow-black/30 z-30">
+              {/* ✅ BOTTOM 5 ICONS - FIXED LINKS */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] bg-black text-white rounded-full px-6 py-3 flex items-center justify-between mx-4 mb-4 shadow-2xl z-40">
         <Link href="/" className="active:scale-90"><House size={22} fill="white"/></Link>
         <Link href="/search" className="active:scale-90 opacity-60"><Search size={22}/></Link>
         <button onClick={handleTopPlusClick} className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center active:scale-90"><Plus size={18}/></button>
         <Link href="/reels" className="active:scale-90 opacity-60"><Clapperboard size={22}/></Link>
-        <Link href="/p" className="w-7 h-7 rounded-full overflow-hidden border border-white/30"><img src={typeof window !== 'undefined' ? localStorage.getItem("chitpix_profile_photo") || "" : ""} className="w-full h-full object-cover"/></Link>
+        <Link href="/profile/knmahesh" className="w-7 h-7 rounded-full overflow-hidden border border-white/30"><img src="https://i.pravatar.cc/100?u=knmahesh" className="w-full h-full object-cover" alt="you"/></Link>
       </div>
       {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200]">{toast}</div>}
     </div>
