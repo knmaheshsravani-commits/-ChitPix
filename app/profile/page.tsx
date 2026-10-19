@@ -102,9 +102,8 @@ export default function ProfilePage() {
           const filtered = finalUsername ? mapped.filter((m:any)=> m.username===finalUsername) : mapped
           setPosts(filtered.length>0 ? filtered : mapped)
         }
-      }catch{}
-
-      setProfileViews(prev => prev + Math.floor(Math.random()*10))
+      }catch{
+      }
       
       // ✅ R2 ONLY - NO LOCALSTORAGE
       try{
