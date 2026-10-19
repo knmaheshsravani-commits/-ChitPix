@@ -82,7 +82,7 @@ export default function ProfilePage() {
         const u = Array.isArray(uData) ? uData.find((x:any)=>x.username===finalUsername) : uData
         if(u){
           if(u.bio){ setBio(u.bio); setEditBio(u.bio) }
-          if(u.avatar_url){ setPhoto(u.avatar_url) } // ✅ R2 DP DIRECT
+          if(u.avatar_url && photo === ""){ setPhoto(u.avatar_url) }
           if(u.link){ setLink(u.link); setEditLink(u.link) }
           if(u.followers) setFollowers(u.followers)
           if(u.following) setFollowing(u.following)
