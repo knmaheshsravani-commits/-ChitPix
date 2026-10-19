@@ -326,13 +326,21 @@ export default function Page(){
           </div>
         </div>
       )}
-              {/* ✅ BOTTOM 5 ICONS - FIXED LINKS */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] bg-black text-white rounded-full px-6 py-3 flex items-center justify-between mx-4 mb-4 shadow-2xl z-40">
-        <Link href="/" className="active:scale-90"><House size={22} fill="white"/></Link>
-        <Link href="/search" className="active:scale-90 opacity-60"><Search size={22}/></Link>
-        <button onClick={handleTopPlusClick} className="w-8 h-8 bg-white text-black rounded-full flex items-center justify-center active:scale-90"><Plus size={18}/></button>
-        <Link href="/reels" className="active:scale-90 opacity-60"><Clapperboard size={22}/></Link>
-        <Link href="/profile/knmahesh" className="w-7 h-7 rounded-full overflow-hidden border border-white/30"><img src="https://i.pravatar.cc/100?u=knmahesh" className="w-full h-full object-cover" alt="you"/></Link>
+              {/* ✅ BOTTOM 5 ICONS - FIXED LINKS - SAME AS PROFILE */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[50px] bg-black border-t border-zinc-800 flex justify-around items-center z-50">
+        <Link href="/" className="active:scale-90 p-2">
+          <House size={26} fill="white" color="white" />
+        </Link>
+        <Link href="/search" className="active:scale-90 opacity-60 p-2">
+          <Search size={26} color="white" />
+        </Link>
+        <button onClick={()=>handleTopPlusClick()} className="active:scale-90 w-8 h-8 bg-white text-black rounded-lg flex items-center justify-center font-bold text-[20px]">+</button>
+        <Link href="/reels" className="active:scale-90 opacity-60 p-2">
+          <Clapperboard size={26} color="white" />
+        </Link>
+        <Link href="/profile" className="active:scale-90 w-7 h-7 rounded-full overflow-hidden border border-white">
+          <img src={photo || "/default-avatar.png"} className="w-full h-full object-cover" alt="profile" />
+        </Link>
       </div>
       {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200]">{toast}</div>}
     </div>
