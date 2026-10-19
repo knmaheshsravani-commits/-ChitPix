@@ -1,67 +1,27 @@
-'use client'
-import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useRef, useState, useEffect } from 'react'
-import { Icons } from './NewIcons'
+"use client"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
-export default function BottomNav(){
+export default function BottomNav() {
   const path = usePathname()
-  const router = useRouter()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [uploading, setUploading] = useState(false)
-  const [profilePhoto, setProfilePhoto] = useState("https://i.pravatar.cc/100?u=knmahesh")
-
-  useEffect(()=>{
-    const saved = localStorage.getItem("chitpix_profile_photo");
-    if(saved) setProfilePhoto(saved);
-  },[])
-
-  const handleUpload = async (e:any)=>{
-    const file = e.target.files?.[0]
-    if(!file) return
-    if(file.size > 200*1024*1024){
-      alert("Max 200MB bro!")
-      return
-    }
-    setUploading(true)
-    try{
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("type", file.type.startsWith("video/")? "reels" : "posts")
-      formData.append("caption", file.type.startsWith("video/")? "New Reel #chitpix" : "New Post #chitpix")
-      const storedUser = typeof window!== 'undefined'? localStorage.getItem("username") : null
-      formData.append("username", storedUser || "knmahesh")
-      const res = await fetch("/api/upload",{method:"POST", body:formData})
-      const data = await res.json()
-      if(!res.ok) throw new Error(data.error || "Upload failed")
-      if(file.type.startsWith("video/")) router.push("/reels")
-      else router.push("/")
-      setTimeout(()=>window.location.reload(), 500)
-    }catch(err:any){
-      alert("Upload failed: "+err.message)
-    }
-    setUploading(false)
-    if(fileRef.current) fileRef.current.value=""
-  }
+  const isActive = (p: string) => path === p
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-zinc-800 z-[100]">
-      <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={handleUpload}/>
-      <div className="max-w-[470px] mx-auto flex justify-around items-center py-2">
-        <Link href="/" className="flex-1 flex justify-center py-3"><Icons.Home active={path==="/"} /></Link>
-        <Link href="/search" className="flex-1 flex justify-center py-3"><Icons.Search active={path==="/search"} /></Link>
-        <div className="flex-1 flex justify-center py-2">
-          <button onClick={()=>fileRef.current?.click()} className="active:scale-90 w-12 h-8 bg-white text-black rounded-full flex items-center justify-center font-bold text-[22px]">
-            {uploading? <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"/> : "+"}
-          </button>
-        </div>
-        <Link href="/reels" className="flex-1 flex justify-center py-3"><Icons.Reels active={path==="/reels"} /></Link>
-        <Link href="/profile" className="flex-1 flex justify-center py-3">
-          <div className={`w-7 h-7 rounded-full bg-zinc-800 border ${path==="/profile" ? "border-white" : "border-zinc-700"} overflow-hidden`}>
-            <img src={profilePhoto} className="w-full h-full object-cover" alt="profile"/>
-          </div>
-        </Link>
-      </div>
-    </div>
-  )
-}
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-xl border border-white/10 rounded-full px-7 py-3.5 flex gap-8 items-center z-50 shadow-2xl">
+      <Link href="/">
+        <svg className={`w-6 h-6 ${isActive('/') ? 'fill-white stroke-white' : 'stroke-white/60 fill-none'}`} viewBox="0 0 24 24" strokeWidth={isActive('/') ? 2.5 : 2}><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </Link>
+
+      <Link href="/search">
+        <svg className={`w-6 h-6 ${isActive('/search') ? 'stroke-white' : 'stroke-white/60'}`} viewBox="0 0 24 24" fill="none" strokeWidth={isActive('/search') ? 2.5 : 2}><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      </Link>
+
+      <Link href="/create" className="bg-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg">
+        <svg className="w-5 h-5 stroke-black" viewBox="0 0 24 24" fill="none" strokeWidth={3}><path d="M12 5v14M5 12h14"/></svg>
+      </Link>
+
+      <Link href="/reels">
+        <svg className={`w-6 h-6 ${isActive('/reels') ? 'fill-white stroke-white' : 'stroke-white/60 fill-none'}`} viewBox="0 0 24 24" strokeWidth={isActive('/reels') ? 2.5 : 2}><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+      </Link>
+
+      <Link href="/profile" className={`w-7 h-7 rounded-full overflow-hidden ${isActive('/profile') ? 'ring-2 ring-white' : 'opacity-60'}`}>
