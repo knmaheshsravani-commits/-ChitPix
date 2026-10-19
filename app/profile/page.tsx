@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
-import BottomNav from "../components/BottomNav"
+import BottomNav from "../../components/BottomNav"
 
 const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
 
@@ -280,7 +280,7 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
-      {showMenu && (
+            {showMenu && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={()=>setShowMenu(false)}>
           <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto text-white" onClick={e=>e.stopPropagation()}>
             <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
@@ -288,6 +288,7 @@ export default function ProfilePage() {
             <button onClick={handleSettingsClick} className="w-full text-left p-3.5 hover:bg-zinc-800 rounded-xl text-[15px]">⚙️ Settings and privacy</button>
             <button onClick={()=>{setShowMenu(false); setShowArchive(true)}} className="w-full text-left p-3.5 hover:bg-zinc-800 rounded-xl text-[15px]">📦 Archive ({archivedPosts.length}) - R2</button>
             <button onClick={handleQRShare} className="w-full text-left p-3.5 hover:bg-zinc-800 rounded-xl text-[15px]">🔗 QR Code</button>
+            <button onClick={()=>{setShowMenu(false); setShowCloseFriends(true)}} className="w-full text-left p-3.5 hover:bg-zinc-800 rounded-xl text-[15px]">⭐ Close Friends</button>
             <button onClick={handleLogoutClick} className="w-full text-left p-3.5 hover:bg-red-900/30 rounded-xl text-[15px] text-red-400">🚪 Log out</button>
             <button onClick={()=>setShowMenu(false)} className="w-full mt-3 p-3.5 bg-zinc-800 rounded-xl font-bold">Cancel</button>
           </div>
@@ -307,6 +308,93 @@ export default function ProfilePage() {
             <button onClick={handleAIBio} className="w-full mb-3 bg-zinc-800 rounded-lg py-2.5 text-[12px]">✨ AI Bio Generate</button>
             <button onClick={handleProfileSave} className="w-full bg-white text-black rounded-full py-3 font-bold mb-2">{uploading?"Saving R2...":"Save - R2 Permanent ✅"}</button>
             <button onClick={()=>setShowEdit(false)} className="w-full bg-zinc-800 rounded-full py-3 font-bold">Cancel</button>
+          </div>
+        </div>
+      )}
+      {showQR && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4" onClick={()=>setShowQR(false)}>
+          <div className="bg-white rounded-[20px] p-6 max-w-[320px] w-full text-center text-black" onClick={e=>e.stopPropagation()}>
+            <h3 className="font-bold mb-2">{username} QR</h3>
+            <p className="text-[12px] text-zinc-500 mb-4">www.chitpix.com/{username}</p>
+            <div className="w-48 h-48 bg-zinc-100 mx-auto flex items-center justify-center rounded-xl text-[12px]">QR CODE - {username}</div>
+            <button onClick={()=>setShowQR(false)} className="w-full mt-4 bg-black text-white rounded-full py-3 font-bold">Close</button>
+          </div>
+        </div>
+      )}
+      {showFollowers && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-end" onClick={()=>setShowFollowers(false)}>
+          <div className="bg-zinc-900 w-full max-w-[470px] mx-auto rounded-t-[20px] p-4 h-[60vh] text-white" onClick={e=>e.stopPropagation()}>
+            <h3 className="font-bold text-center mb-4">{followers||129} Followers</h3>
+            <div className="space-y-3 overflow-y-auto">
+              {[1,2,3].map(i=><div key={i} className="flex items-center gap-3"><img src={`https://i.pravatar.cc/40?img=${i+10}`} className="w-10 h-10 rounded-full"/><p className="text-[14px]">user_{i} • ChitPix</p></div>)}
+            </div>
+            <button onClick={()=>setShowFollowers(false)} className="w-full mt-4 bg-zinc-800 rounded-full py-3 font-bold">Close</button>
+          </div>
+        </div>
+      )}
+      {showFollowing && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-end" onClick={()=>setShowFollowing(false)}>
+          <div className="bg-zinc-900 w-full max-w-[470px] mx-auto rounded-t-[20px] p-4 h-[60vh] text-white" onClick={e=>e.stopPropagation()}>
+            <h3 className="font-bold text-center mb-4">{following||205} Following</h3>
+            <div className="space-y-3 overflow-y-auto">
+              {[4,5,6].map(i=><div key={i} className="flex items-center gap-3"><img src={`https://i.pravatar.cc/40?img=${i+20}`} className="w-10 h-10 rounded-full"/><p className="text-[14px]">following_{i}</p></div>)}
+            </div>
+            <button onClick={()=>setShowFollowing(false)} className="w-full mt-4 bg-zinc-800 rounded-full py-3 font-bold">Close</button>
+          </div>
+        </div>
+      )}
+      {showInsights && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-end" onClick={()=>setShowInsights(false)}>
+          <div className="bg-zinc-900 w-full max-w-[470px] mx-auto rounded-t-[20px] p-6 text-white" onClick={e=>e.stopPropagation()}>
+            <h3 className="font-bold text-lg mb-4">Insights • R2 Analytics 📊</h3>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="bg-zinc-800 rounded-xl p-3"><p className="font-bold text-xl">{profileViews}</p><p className="text-[11px] text-zinc-400">Profile Views</p></div>
+              <div className="bg-zinc-800 rounded-xl p-3"><p className="font-bold text-xl">{posts.length*47}</p><p className="text-[11px] text-zinc-400">Post Reach</p></div>
+              <div className="bg-zinc-800 rounded-xl p-3"><p className="font-bold text-xl">2.1K</p><p className="text-[11px] text-zinc-400">R2 Requests</p></div>
+            </div>
+            <p className="text-[11px] text-zinc-500 mt-4">Error Rate 2.1% • CDN 2.2K • Functions 1K</p>
+            <button onClick={()=>setShowInsights(false)} className="w-full mt-5 bg-white text-black rounded-full py-3 font-bold">Close</button>
+          </div>
+        </div>
+      )}
+      {showArchive && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-end" onClick={()=>setShowArchive(false)}>
+          <div className="bg-zinc-900 w-full max-w-[470px] mx-auto rounded-t-[20px] p-4 h-[70vh] text-white" onClick={e=>e.stopPropagation()}>
+            <h3 className="font-bold mb-4">Archive • {archivedPosts.length} posts 📦</h3>
+            <div className="grid grid-cols-3 gap-[2px]">
+              {archivedPosts.map((p:any,i)=><img key={i} src={p.image||p.imageUrl} className="aspect-square object-cover" alt="arch"/>)}
+            </div>
+            {archivedPosts.length===0 && <p className="text-center py-20 text-zinc-500">No archived posts</p>}
+            <button onClick={()=>setShowArchive(false)} className="w-full mt-4 bg-zinc-800 rounded-full py-3 font-bold">Close</button>
+          </div>
+        </div>
+      )}
+      {showCloseFriends && (
+        <div className="fixed inset-0 bg-black/80 z-[60] flex items-end" onClick={()=>setShowCloseFriends(false)}>
+          <div className="bg-zinc-900 w-full max-w-[470px] mx-auto rounded-t-[20px] p-6 text-white" onClick={e=>e.stopPropagation()}>
+            <h3 className="font-bold mb-4">Close Friends ⭐</h3>
+            <p className="text-[13px] text-zinc-400">Add close friends to share exclusive R2 stories</p>
+            <button onClick={()=>setShowCloseFriends(false)} className="w-full mt-5 bg-white text-black rounded-full py-3 font-bold">Close</button>
+          </div>
+        </div>
+      )}
+      {selectedPost && (
+        <div className="fixed inset-0 bg-black z-[70] flex flex-col max-w-[470px] mx-auto">
+          <div className="flex justify-between items-center p-4 text-white">
+            <button onClick={()=>setSelectedPost(null)} className="text-[20px]">←</button>
+            <p className="font-bold">{username}</p>
+            <button onClick={()=>setSelectedPost(null)} className="text-[20px]">✕</button>
+          </div>
+          <div className="flex-1 flex items-center justify-center bg-zinc-900">
+            {selectedPost.isVideo? <video src={selectedPost.image||selectedPost.imageUrl} className="w-full h-full object-contain" controls autoPlay/> : <img src={selectedPost.image||selectedPost.imageUrl} className="w-full h-full object-contain" alt="selected"/>}
+          </div>
+          <div className="p-4 bg-black text-white">
+            <p className="text-[13px] mb-3">{selectedPost.caption||"ChitPix R2 Permanent ✨"}</p>
+            <div className="flex gap-3">
+              <button onClick={()=>handlePinPost(selectedPost.realIndex)} className="flex-1 bg-zinc-800 rounded-full py-2.5 text-[13px]">{pinnedPosts.includes(selectedPost.realIndex)? "Unpin 📌" : "Pin 📌"}</button>
+              <button onClick={()=>handleArchive(selectedPost.realIndex)} className="flex-1 bg-zinc-800 rounded-full py-2.5 text-[13px]">Archive 📦</button>
+              <button onClick={()=>handleDelete(selectedPost.realIndex, selectedPost.id)} className="flex-1 bg-red-600 rounded-full py-2.5 text-[13px]">Delete 🗑️</button>
+            </div>
           </div>
         </div>
       )}
