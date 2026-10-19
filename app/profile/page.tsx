@@ -307,15 +307,28 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-      {showEdit && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end">
-          <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto">
+            {showEdit && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={()=>setShowEdit(false)}>
+          <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto text-white" onClick={e=>e.stopPropagation()}>
+            <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
             <h3 className="font-bold text-center mb-4">Edit Profile - R2 Device</h3>
-            <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name" className="w-full bg-zinc-800 rounded-lg px-3 py-2 mb-2 text-[13px]"/>
-            <textarea value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Bio" className="w-full bg-zinc-800 rounded-lg px-3 py-2 mb-2 text-[13px] h-20"/>
-            <input value={editLink} onChange={e=>setEditLink(e.target.value)} placeholder="Link" className="w-full bg-zinc-800 rounded-lg px-3 py-2 mb-3 text-[13px]"/>
-            <button onClick={handleAIBio} className="w-full mb-2 bg-zinc-800 rounded-lg py-2 text-[12px]">✨ AI Bio Generate</button>
-            <button onClick={handleProfileSave} className="w-full bg-white text-black rounded-full py-2 font-bold">{uploading?"Saving R2 Device...":"Save - R2 Device Permanent"}</button>
+
+            {/* ✅ PHOTO PREVIEW ADDED */}
+            <div className="flex flex-col items-center mb-4">
+              <div className="w-[90px] h-[90px] rounded-full overflow-hidden border-2 border-white">
+                <img src={photo || `https://i.pravatar.cc/150?u=${username}`} className="w-full h-full object-cover" alt="preview"/>
+              </div>
+              <label htmlFor="editPhotoInput2" className="mt-3 text-[#0095f6] font-bold text-[14px] cursor-pointer">
+                {uploading ? "Uploading to R2..." : "Change Profile Photo"}
+              </label>
+              <input id="editPhotoInput2" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden"/>
+            </div>
+
+            <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name" className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 mb-2 text-[14px] outline-none text-white"/>
+            <textarea value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Bio" className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 mb-2 text-[14px] h-20 outline-none text-white"/>
+            <input value={editLink} onChange={e=>setEditLink(e.target.value)} placeholder="Link" className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 mb-3 text-[14px] outline-none text-white"/>
+            <button onClick={handleAIBio} className="w-full mb-3 bg-zinc-800 rounded-lg py-2.5 text-[13px] text-white">✨ AI Bio Generate</button>
+            <button onClick={handleProfileSave} className="w-full bg-white text-black rounded-full py-3 font-bold">{uploading?"Saving R2 Device...":"Save - R2 Device Permanent"}</button>
           </div>
         </div>
       )}
