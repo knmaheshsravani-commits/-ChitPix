@@ -325,8 +325,33 @@ export default function Page(){
             <button onClick={()=>{setShowMenu(null); showToast("Reported")}} className="w-full flex items-center gap-3 py-3 text-red-500"><Flag size={18}/> Report</button>
           </div>
         </div>
-      )}
+            )}
 
+      {/* ✅ BOTTOM 5 ICONS - ADD HERE (Line 339 ki mundu) */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] bg-white border-t border-zinc-100 px-2 py-2 flex justify-between items-center z-40">
+        <Link href="/" className="flex flex-col items-center w-[60px] py-1 active:scale-90">
+          <House size={24} fill="black" />
+          <span className="text-[9px] font-bold">Home</span>
+        </Link>
+        <Link href="/search" className="flex flex-col items-center w-[60px] py-1 opacity-60">
+          <Search size={24} />
+          <span className="text-[9px]">Search</span>
+        </Link>
+        <button onClick={handleTopPlusClick} className="flex flex-col items-center w-[60px]">
+          <div className="w-10 h-7 bg-black text-white rounded-full flex items-center justify-center"><Plus size={18}/></div>
+          <span className="text-[9px] font-bold">Create</span>
+        </button>
+        <Link href="/reels" className="flex flex-col items-center w-[60px] py-1 opacity-60">
+          <Clapperboard size={24} />
+          <span className="text-[9px]">Reels</span>
+        </Link>
+        <Link href="/p" className="flex flex-col items-center w-[60px] py-1 opacity-60">
+          <div className="w-7 h-7 rounded-full overflow-hidden border"><img src={typeof window !== 'undefined' ? localStorage.getItem("chitpix_profile_photo") || "https://i.pravatar.cc/100?u=kn" : ""} className="w-full h-full object-cover"/></div>
+          <span className="text-[9px]">You</span>
+        </Link>
+      </div>
+
+      {toast && <div className="fixed bottom-20 left-1/2 -tra
       {showFullscreen && (
         <div className="fixed inset-0 bg-black z-[100] flex flex-col max-w-[470px] mx-auto left-1/2 -translate-x-1/2 w-full">
           <div className="flex justify-between p-4 text-white"><p>{showFullscreen.username}</p><button onClick={()=>setShowFullscreen(null)}><X size={20}/></button></div>
@@ -336,6 +361,7 @@ export default function Page(){
         </div>
       )}
 
+      
       {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200]">{toast}</div>}
     </div>
   )
