@@ -3,7 +3,8 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
 import BottomNav from "../components/BottomNav"
-const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5cf9b2f55.r2.dev"
+
+const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
 
 const uploadToR2 = async (file: File, folder: string = "posts") => {
   try {
@@ -16,10 +17,11 @@ const uploadToR2 = async (file: File, folder: string = "posts") => {
         fileSize: file.size,
       }),
     })
-    const { url, publicUrl, key } = await presignRes.json()
-    if (!url) throw new Error("Presign failed")
+    const data = await presignRes.json()
+    const { url, publicUrl, key } = data
+    if (!url) throw new Error("Presign failed " + JSON.stringify(data))
     const uploadRes = await fetch(url, { method: "PUT", body: file, headers: { "Content-Type": file.type } })
-    if (!uploadRes.ok) throw new Error("R2 PUT failed")
+    if (!uploadRes.ok) throw new Error("R2 PUT failed " + uploadRes.status)
     return publicUrl || `${R2_PUBLIC_URL}/${key}`
   } catch (e) {
     console.error("R2 Upload Error:", e)
@@ -61,10 +63,8 @@ export default function ProfilePage() {
   const [hasStory, setHasStory] = useState(true)
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
 
-  // R2 FIX - 100% R2 - NO LOCAL POSTS
   useEffect(()=>{
     const fetchR2Data = async () => {
-      // FIX 1: LOGIN 100% WORKING - R2 CURRENT USER FIRST
       let finalUsername = ""
       if(usernameFromUrl){
         finalUsername = usernameFromUrl as string
@@ -80,7 +80,6 @@ export default function ProfilePage() {
       setUsername(finalUsername)
       setEditName(finalUsername)
 
-      // R2 USER PROFILE - PERMANENT
       try{
         const uRes = await fetch(`/api/users?username=${finalUsername}`,{cache:"no-store"})
         const uData = await uRes.json()
@@ -92,13 +91,11 @@ export default function ProfilePage() {
           if(u.followers) setFollowers(u.followers)
           if(u.following) setFollowing(u.following)
         } else {
-          // fallback from local cache
           const lp = localStorage.getItem("chitpix_profile_photo")
           if(lp && lp.startsWith("https://")) setPhoto(lp)
         }
       }catch{}
 
-      // R2 POSTS ONLY - NO LOCAL STORAGE POSTS
       try{
         const res = await fetch("/api/posts",{cache:"no-store"})
         const data = await res.json()
@@ -108,22 +105,19 @@ export default function ProfilePage() {
             type: p.type || (p.image_url?.includes(".mp4")?"reels":"post"),
             username: p.username, id: p.id, created_at: p.created_at, caption: p.caption
           }))
-          // Filter by username if URL
           const filtered = finalUsername && finalUsername!=="ChitPix User" ? mapped.filter((m:any)=> m.username===finalUsername) : mapped
           setPosts(filtered.length>0 ? filtered : mapped)
         }
       }catch{}
 
-      // Views - R2 count based
       setProfileViews(prev => prev + Math.floor(Math.random()*10))
-      // Pinned & Archive from R2/local cache
       const pinned = localStorage.getItem("chitpix_pinned"); if(pinned) try{setPinnedPosts(JSON.parse(pinned))}catch{}
       const archived = localStorage.getItem("chitpix_archived"); if(archived) try{setArchivedPosts(JSON.parse(archived))}catch{}
     }
     fetchR2Data()
   },[usernameFromUrl])
 
-  const savePosts = (newPosts:any[])=>{ setPosts(newPosts) } // R2 ONLY - NO LOCAL SAVE
+  const savePosts = (newPosts:any[])=>{ setPosts(newPosts) }
   const handleDelete = async (index:number, postId?:string)=>{
     if(!confirm("Delete this post?")) return
     if(postId){ try{ await fetch(`/api/posts?id=${postId}`, {method:"DELETE"}) }catch{} }
@@ -135,17 +129,15 @@ export default function ProfilePage() {
     setArchivedPosts(newArchived); localStorage.setItem("chitpix_archived", JSON.stringify(newArchived))
     savePosts(posts.filter((_,i)=> i!== index)); setSelectedPost(null)
     alert("Archived! Check Archive in menu")
-      }
-    // FIX 2: PROFILE PIC PERMANENT R2 FIX
+  }
   const handlePhotoChange = async (e: any) => {
     const f = e.target.files?.[0]; if(!f) return; setUploading(true)
-    const url = await uploadToR2(f, "avatars") // R2 PERMANENT
+    const url = await uploadToR2(f, "avatars")
     if(url){
       setPhoto(url)
       localStorage.setItem("chitpix_profile_photo", url)
       localStorage.setItem("chitpix_avatar", url)
       document.cookie = `avatar=${url}; path=/; max-age=2592000`
-      // Save to R2 users DB permanent
       try{
         await fetch("/api/users",{
           method:"POST",
@@ -158,9 +150,8 @@ export default function ProfilePage() {
       alert("R2 upload failed - try again")
     }
     setUploading(false)
-  }
-
-  const handleProfileSave = async () => {
+   }
+    const handleProfileSave = async () => {
     const newName = editName || username; const newBio = editBio || bio; const newLink = editLink || link
     setUploading(true)
     try{
@@ -303,18 +294,23 @@ export default function ProfilePage() {
         </div>
       )}
       {showEdit && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-end">
-          <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto">
-            <h3 className="font-bold text-center mb-4">Edit Profile - R2 Permanent</h3>
-            <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name" className="w-full bg-zinc-800 rounded-lg px-3 py-2 mb-2 text-[13px]"/>
-            <textarea value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Bio" className="w-full bg-zinc-800 rounded-lg px-3 py-2 mb-2 text-[13px] h-20"/>
-            <input value={editLink} onChange={e=>setEditLink(e.target.value)} placeholder="Link" className="w-full bg-zinc-800 rounded-lg px-3 py-2 mb-3 text-[13px]"/>
-            <button onClick={handleAIBio} className="w-full mb-2 bg-zinc-800 rounded-lg py-2 text-[12px]">✨ AI Bio Generate</button>
-            <button onClick={handleProfileSave} className="w-full bg-white text-black rounded-full py-2 font-bold">{uploading?"Saving R2...":"Save - R2 Permanent"}</button>
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={()=>setShowEdit(false)}>
+          <div className="bg-zinc-900 w-full max-w-[470px] mx-auto rounded-t-[20px] sm:rounded-[20px] p-4 max-h-[85vh] overflow-y-auto pb-[120px] sm:pb-6 text-white" onClick={e=>e.stopPropagation()}>
+            <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
+            <h3 className="font-bold text-center mb-2">Edit Profile - R2 Permanent</h3>
+            <p className="text-[11px] text-zinc-500 mb-2 text-center">{photo ? "✅ R2 Live" : "❌ No photo yet"}</p>
+            <label htmlFor="editPhotoInput" className="w-full mb-3 bg-[#0095f6] rounded-lg py-3 text-[14px] font-bold flex items-center justify-center cursor-pointer">📸 Upload New DP - R2 Permanent</label>
+            <input id="editPhotoInput" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+            <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name" className="w-full bg-zinc-800 rounded-lg px-3 py-3 mb-2 text-[13px] outline-none"/>
+            <textarea value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Bio" className="w-full bg-zinc-800 rounded-lg px-3 py-2 mb-2 text-[13px] h-20 outline-none"/>
+            <input value={editLink} onChange={e=>setEditLink(e.target.value)} placeholder="Link" className="w-full bg-zinc-800 rounded-lg px-3 py-3 mb-3 text-[13px] outline-none"/>
+            <button onClick={handleAIBio} className="w-full mb-3 bg-zinc-800 rounded-lg py-2.5 text-[12px]">✨ AI Bio Generate</button>
+            <button onClick={handleProfileSave} className="w-full bg-white text-black rounded-full py-3 font-bold mb-2">{uploading?"Saving R2...":"Save - R2 Permanent ✅"}</button>
+            <button onClick={()=>setShowEdit(false)} className="w-full bg-zinc-800 rounded-full py-3 font-bold">Cancel</button>
           </div>
         </div>
       )}
       <BottomNav />
     </div>
   )
-        }
+          }
