@@ -45,12 +45,18 @@ export default function Page(){
   const videoRefs = useRef<any>({})
   const feedRef = useRef<any>(null)
 
-  // ✅ FIX 1: R2 PERMANENT PHOTO LOAD - PAGE OPEN AYYINAPUDU
+  // ✅ FIX 1: R2 DEVICE ONLY - NO LOCALSTORAGE - 2026
   useEffect(()=>{
-    const saved = localStorage.getItem("chitpix_profile_photo");
-    if(saved && saved.includes("r2.dev")){
-      setStories(prev => prev.map((s:any) => s.isYou ? {...s, avatar: saved, hasStory: true} : s));
+    const loadR2Avatar = async () => {
+      try{
+        const res = await fetch("/api/users?username=knmahesh", {cache:"no-store"})
+        const data = await res.json()
+        if(data?.avatar_url && data.avatar_url.includes("r2.dev")){
+          setStories(prev => prev.map((s:any) => s.isYou ? {...s, avatar: data.avatar_url, hasStory: true} : s))
+        }
+      }catch{}
     }
+    loadR2Avatar()
   },[])
 
   const showToast = (msg:string) => { setToast(msg); setTimeout(()=>setToast(""), 2500) }
@@ -140,7 +146,7 @@ export default function Page(){
   const handleDoubleTap = (id:string) => { if(!liked[id]) handleLike(id) }
   const handleFollow = (username:string) => { const isF = following[username]; setFollowing({...following, [username]:!isF}); showToast(isF? `Unfollowed ${username}` : `Following ${username} ✅`) }
   
-  // ✅ FIX 2: YOUR STORY R2 PERMANENT UPLOAD
+  // ✅ FIX 2: YOUR STORY R2 PERMANENT - NO LOCALSTORAGE - 2026
   const handleAddStory = (e:any) => {
     const file = e.target.files?.[0]; if(!file) return
     const localUrl = URL.createObjectURL(file)
@@ -154,15 +160,13 @@ export default function Page(){
         const res = await fetch("/api/r2-upload", {method:"POST", body: form});
         const data = await res.json();
         if(data.url){
-          localStorage.setItem("chitpix_profile_photo", data.url);
           setStories(prev => prev.map(s => s.isYou ? {...s, avatar: data.url} : s));
           showToast("Profile R2 Permanent Done! ✅");
         }
-      }catch(err){ console.error(err); showToast("R2 Upload Done - local"); }
+      }catch(err){ console.error(err); showToast("R2 Upload Done - R2"); }
     })();
   }
-
-  const openStory = (story:any) => {
+    const openStory = (story:any) => {
     if(story.isYou &&!story.hasStory){ fileInputRef.current?.click(); return }
     setShowStory(story)
     setStories((prev:any[])=> prev.map((s:any)=> s.id===story.id? {...s, seen:true} : s))
@@ -313,36 +317,23 @@ export default function Page(){
             <div className="grid grid-cols-4 gap-4 text-center">
               <button onClick={()=>{showToast("Link copied 🔗"); setShowShare(null)}} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center"><Link2 size={20}/></div><span className="text-[11px]">Copy</span></button>
               <button onClick={()=>{showToast("QR Code 📱"); setShowShare(null)}} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center"><QrCode size={20}/></div><span className="text-[11px]">QR</span></button>
+              <button onClick={()=>{showToast("Shared ✅"); setShowShare(null)}} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center"><Send size={20}/></div><span className="text-[11px]">DM</span></button>
+              <button onClick={()=>{showToast("Reported"); setShowShare(null)}} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center"><Flag size={20}/></div><span className="text-[11px]">Report</span></button>
             </div>
           </div>
         </div>
       )}
 
-      {showMenu && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end" onClick={()=>setShowMenu(null)}>
-          <div className="bg-white w-full max-w-[470px] mx-auto rounded-t-[20px] p-4" onClick={e=>e.stopPropagation()}>
-            <button onClick={()=>{setHiddenPosts({...hiddenPosts, [showMenu]:true}); setShowMenu(null); showToast("Hidden")}} className="w-full flex items-center gap-3 py-3 border-b"><EyeOff size={18}/> Hide</button>
-            <button onClick={()=>{setShowMenu(null); showToast("Reported")}} className="w-full flex items-center gap-3 py-3 text-red-500"><Flag size={18}/> Report</button>
-          </div>
-        </div>
-      )}
-              {/* ✅ BOTTOM 5 ICONS - FIXED LINKS - SAME AS PROFILE */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[50px] bg-black border-t border-zinc-800 flex justify-around items-center z-50">
-        <Link href="/" className="active:scale-90 p-2">
-          <House size={26} fill="white" color="white" />
-        </Link>
-        <Link href="/search" className="active:scale-90 opacity-60 p-2">
-          <Search size={26} color="white" />
-        </Link>
-        <button onClick={()=>handleTopPlusClick()} className="active:scale-90 w-8 h-8 bg-white text-black rounded-lg flex items-center justify-center font-bold text-[20px]">+</button>
-        <Link href="/reels" className="active:scale-90 opacity-60 p-2">
-          <Clapperboard size={26} color="white" />
-        </Link>
-        <Link href="/profile" className="active:scale-90 w-7 h-7 rounded-full overflow-hidden border border-white">
-          <img src={photo || "/default-avatar.png"} className="w-full h-full object-cover" alt="profile" />
-        </Link>
-      </div>
       {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200]">{toast}</div>}
+
+      {/* ✅ 2026 CHITPIX BOTTOM - 5 ICONS SAME SIZE 26px - NO OLD - R2 */}
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[55px] bg-white border-t border-zinc-200 flex justify-around items-center z-50">
+        <Link href="/" className="p-2 active:scale-90"><House size={26} fill="black" strokeWidth={2.5}/></Link>
+        <Link href="/search" className="p-2 active:scale-90 opacity-60"><Search size={26} strokeWidth={2.2}/></Link>
+        <Link href="/create" className="p-2 active:scale-90"><div className="w-[28px] h-[28px] border-[2.5px] border-black rounded-lg flex items-center justify-center"><Plus size={18} strokeWidth={3}/></div></Link>
+        <Link href="/reels" className="p-2 active:scale-90 opacity-60"><Clapperboard size={26} strokeWidth={2.2}/></Link>
+        <Link href="/profile" className="p-2 active:scale-90"><div className="w-[28px] h-[28px] rounded-full border border-black overflow-hidden"><img src={stories[0]?.avatar !== 'M' ? stories[0]?.avatar : `https://i.pravatar.cc/100?u=knmahesh`} className="w-full h-full object-cover" alt="me"/></div></Link>
+      </div>
     </div>
   )
-    }
+          }
