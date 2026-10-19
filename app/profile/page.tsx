@@ -314,15 +314,15 @@ export default function ProfilePage() {
             <h3 className="font-bold text-center mb-4">Edit Profile - R2 Device</h3>
 
             {/* ✅ PHOTO PREVIEW ADDED */}
-            <div className="flex flex-col items-center mb-4">
-              <div className="w-[90px] h-[90px] rounded-full overflow-hidden border-2 border-white">
-                <img src={photo || `https://i.pravatar.cc/150?u=${username}`} className="w-full h-full object-cover" alt="preview"/>
-              </div>
-              <label htmlFor="editPhotoInput2" className="mt-3 text-[#0095f6] font-bold text-[14px] cursor-pointer">
-                {uploading ? "Uploading to R2..." : "Change Profile Photo"}
-              </label>
-              <input id="editPhotoInput2" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden"/>
-            </div>
+<div className="flex flex-col items-center mb-4">
+  <div className="w-[90px] h-[90px] rounded-full overflow-hidden border-2 border-white">
+    <img src={photo || `https://i.pravatar.cc/150?u=${username}`} className="w-full h-full object-cover" alt="preview" />
+  </div>
+  <label htmlFor="editPhotoInput2" className="mt-3 text-[#0095f6] font-bold text-[14px] cursor-pointer">
+    {uploading ? "Uploading to R2..." : "Change Profile Photo"}
+  </label>
+  <input id="editPhotoInput2" type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+</div>
 
             <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Name" className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 mb-2 text-[14px] outline-none text-white"/>
             <textarea value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Bio" className="w-full bg-zinc-800 rounded-lg px-3 py-2.5 mb-2 text-[14px] h-20 outline-none text-white"/>
