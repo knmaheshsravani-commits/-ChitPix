@@ -150,6 +150,7 @@ export default function ProfilePage() {
       if(url){
         setPhoto(url)
         document.cookie = `avatar=${url}; path=/; max-age=2592000`
+        window.dispatchEvent(new Event("avatarUpdated"))
         // ✅ ONLY avatar_url send - bio/link overwrite avadu
         const saveRes = await fetch("/api/users",{
           method:"POST",
@@ -183,6 +184,7 @@ export default function ProfilePage() {
       })
       setUsername(newName); setBio(newBio); setLink(newLink)
       document.cookie = `username=${newName}; path=/; max-age=2592000`
+      window.dispatchEvent(new Event("avatarUpdated"))
       alert("Profile R2 Device lo save ayindi! ✅")
     }catch(e){
       alert("R2 save failed")
