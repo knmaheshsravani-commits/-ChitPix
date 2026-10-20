@@ -4,79 +4,87 @@ import { usePathname } from "next/navigation"
 import { House, Search, Plus, Clapperboard } from "lucide-react"
 import { useState, useEffect } from "react"
 
-export default function BottomNav() {
+type BottomNavProps = {
+  active?: string
+  avatar?: string
+}
+
+export default function BottomNav({ active, avatar: propAvatar }: BottomNavProps) {
   const pathname = usePathname()
-  const [avatar, setAvatar] = useState("")
+  const [avatar, setAvatar] = useState(propAvatar || "")
 
   const getCookieAvatar = () => {
+    if(typeof document === 'undefined') return ""
     const match = document.cookie.match(/(?:^|; )avatar=([^;]*)/)
     return match ? decodeURIComponent(match[1]) : ""
   }
 
   const loadR2Avatar = async () => {
     try{
-      // 1. First check cookie - instant
+      // If prop avatar vachindi - Adi vaduko - 100% latest
+      if(propAvatar){
+        setAvatar(propAvatar)
+        return
+      }
       const cookieAv = getCookieAvatar()
       if(cookieAv) setAvatar(cookieAv)
 
-      // 2. Then check DB - latest
-      const res = await fetch("/api/users?username=knmahesh", {cache:"no-store"})
-      const data = await res.json()
-      if(data?.avatar_url){
-        setAvatar(data.avatar_url)
-        document.cookie = `avatar=${encodeURIComponent(data.avatar_url)}; path=/; max-age=2592000`
+      const res = await fetch("/api/users?username=knmahesh", {cache:"no-store"}).then(r=>r.json()).catch(()=>null)
+      const u = Array.isArray(res) ? res.find((x:any)=>x.username==="knmahesh") : res
+      if(u?.avatar_url){
+        setAvatar(u.avatar_url)
+        document.cookie = `avatar=${encodeURIComponent(u.avatar_url)}; path=/; max-age=2592000`
       }
     }catch{}
   }
 
   useEffect(()=>{
-    loadR2Avatar()
-
-    // 🔥 MAIN FIX: Photo marinantha auto update avvali
-    const onAvatarUpdate = () => loadR2Avatar()
-    
-    window.addEventListener("avatarUpdated", onAvatarUpdate)
-    window.addEventListener("storage", onAvatarUpdate)
-    
-    // Every 2 sec check cookie - 100% sync
-    const interval = setInterval(loadR2Avatar, 2000)
-
-    return () => {
-      window.removeEventListener("avatarUpdated", onAvatarUpdate)
-      window.removeEventListener("storage", onAvatarUpdate)
-      clearInterval(interval)
+    if(propAvatar){
+      setAvatar(propAvatar)
+    } else {
+      loadR2Avatar()
     }
-  },[])
+    const onAvatarUpdate = () => loadR2Avatar()
+    window.addEventListener("avatarUpdated", onAvatarUpdate)
+    return () => window.removeEventListener("avatarUpdated", onAvatarUpdate)
+  },[propAvatar])
 
-  const isHome = pathname === "/"
-  const isSearch = pathname === "/search"
-  const isReels = pathname === "/reels"
-  const isProfile = pathname?.startsWith("/profile")
+  const isHome = active ? active==="home" : pathname === "/"
+  const isSearch = active ? active==="search" : pathname === "/search"
+  const isReels = active ? active==="reels" : pathname === "/reels"
+  const isProfile = active ? active==="profile" : pathname?.startsWith("/profile")
+  const isCreate = active ? active==="create" : pathname === "/create"
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[62px] bg-white border-t border-zinc-200 flex justify-around items-center z-[40]">
-      <Link href="/" className="w-[52px] h-[52px] flex items-center justify-center active:scale-90">
-        <House size={26} fill={isHome ? "black" : "none"} strokeWidth={isHome ? 2.8 : 2.2} className={isHome ? "text-black" : "text-black opacity-60"} />
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[52px] bg-black border-t border-zinc-800 flex justify-around items-center z-50">
+      
+      {/* 1. HOME - 24px - Equal */}
+      <Link href="/" className="w-[48px] h-[48px] flex items-center justify-center">
+        <House size={24} fill={isHome ? "white" : "none"} strokeWidth={isHome ? 2.7 : 1.8} className="text-white" />
       </Link>
 
-      <Link href="/search" className="w-[52px] h-[52px] flex items-center justify-center active:scale-90">
-        <Search size={26} strokeWidth={isSearch ? 2.8 : 2.2} className={isSearch ? "text-black" : "text-black opacity-60"} />
+      {/* 2. SEARCH - 24px - Equal */}
+      <Link href="/search" className="w-[48px] h-[48px] flex items-center justify-center">
+        <Search size={24} strokeWidth={isSearch ? 2.7 : 1.8} className="text-white" />
       </Link>
 
-      <Link href="/create" className="w-[52px] h-[52px] flex items-center justify-center active:scale-90">
-        <div className="w-[30px] h-[30px] border-[2.5px] border-black rounded-[8px] flex items-center justify-center">
-          <Plus size={18} strokeWidth={3} />
+      {/* 3. CREATE + - 24px box - Equal */}
+      <Link href="/create" className="w-[48px] h-[48px] flex items-center justify-center">
+        <div className={`w-[24px] h-[24px] border-[1.6px] rounded-[6px] flex items-center justify-center ${isCreate ? "bg-white border-white" : "border-white"}`}>
+          <Plus size={16} strokeWidth={2.8} className={isCreate ? "text-black" : "text-white"} />
         </div>
       </Link>
 
-      <Link href="/reels" className="w-[52px] h-[52px] flex items-center justify-center active:scale-90">
-        <Clapperboard size={26} strokeWidth={isReels ? 2.8 : 2.2} className={isReels ? "text-black" : "text-black opacity-60"} />
+      {/* 4. REELS - 24px - Equal */}
+      <Link href="/reels" className="w-[48px] h-[48px] flex items-center justify-center">
+        <Clapperboard size={24} strokeWidth={isReels ? 2.7 : 1.8} className="text-white" />
       </Link>
 
-      <Link href="/profile" className="w-[52px] h-[52px] flex items-center justify-center active:scale-90">
-        <div className={`w-[28px] h-[28px] rounded-full overflow-hidden ${isProfile ? "ring-2 ring-black" : "border border-zinc-300"}`}>
+      {/* 5. PROFILE - DP - 26px - Equal - R2 DP */}
+      <Link href="/profile" className="w-[48px] h-[48px] flex items-center justify-center">
+        <div className={`w-[26px] h-[26px] rounded-full overflow-hidden ${isProfile ? "ring-[1.5px] ring-white ring-offset-1 ring-offset-black" : "border border-zinc-600"}`}>
           <img 
-            src={avatar || "https://i.pravatar.cc/100?u=knmahesh"} 
+            src={avatar || propAvatar || "https://i.pravatar.cc/100?u=knmahesh"} 
             alt="profile" 
             className="w-full h-full object-cover"
             onError={(e:any)=> e.target.src="https://i.pravatar.cc/100?u=knmahesh"}
