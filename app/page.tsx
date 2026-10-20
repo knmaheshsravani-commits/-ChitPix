@@ -9,6 +9,7 @@ import {
   X, Check, Volume2, VolumeX, Share2, Link2, QrCode, Flag,
   EyeOff, Radio, Layers, RefreshCw
 } from "lucide-react"
+import BottomNav from "../components/BottomNav"
 
 const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev";
 
@@ -46,16 +47,14 @@ export default function Page(){
   const videoRefs = useRef<any>({})
   const feedRef = useRef<any>(null)
 
-  // ✅ FIX 1: R2 STORIES 24H ONLY - NOT PERMANENT - DEVICE ONLY - 2026
   useEffect(()=>{
     const loadR2Stories = async () => {
       try{
         const res = await fetch("/api/stories", {cache:"no-store"})
         const data = await res.json()
         let storyList = data.stories || data || []
-        // 24h filter - only last 24h stories
         storyList = storyList.filter((s:any)=>{
-          if(s.expires_at === null) return false // Don't show permanent as story
+          if(s.expires_at === null) return false
           if(!s.created_at) return true
           const diff = Date.now() - new Date(s.created_at).getTime()
           return diff < 24*60*60*1000
@@ -64,16 +63,10 @@ export default function Page(){
           setStories(prev=>{
             const you = prev.find(p=>p.isYou)
             const others = storyList.map((s:any)=>({
-              id: s.id,
-              name: s.username,
-              avatar: s.image_url || s.avatar_url,
-              hasStory: true,
-              seen: false,
-              isYou: false,
-              created_at: s.created_at,
-              expires_at: s.expires_at,
-              image_url: s.image_url,
-              views: s.views || 0
+              id: s.id, name: s.username, avatar: s.image_url || s.avatar_url,
+              hasStory: true, seen: false, isYou: false,
+              created_at: s.created_at, expires_at: s.expires_at,
+              image_url: s.image_url, views: s.views || 0
             }))
             return [you, ...others]
           })
@@ -92,28 +85,17 @@ export default function Page(){
       const data = await res.json()
       if(Array.isArray(data) && data.length>0){
         const mapped = data.map((p:any)=>({
-          id:p.id,
-          image_url:p.image_url || p.url,
-          url:p.image_url || p.url,
+          id:p.id, image_url:p.image_url || p.url, url:p.image_url || p.url,
           video_url: p.video_url || (p.image_url?.includes('.mp4')? p.image_url : undefined),
-          username:p.username||'knmahesh',
-          caption:p.caption||'ChitPix R2 Permanent ✨ #2026',
-          likes:p.likes || Math.floor(Math.random()*5000),
-          views: p.views || 9415+Math.floor(Math.random()*2000),
-          created_at:p.created_at,
-          verified:p.username==='knmahesh' || p.verified || true,
-          type: p.type || 'post'
+          username:p.username||'knmahesh', caption:p.caption||'ChitPix R2 Permanent ✨ #2026',
+          likes:p.likes || Math.floor(Math.random()*5000), views: p.views || 9415+Math.floor(Math.random()*2000),
+          created_at:p.created_at, verified:p.username==='knmahesh' || p.verified || true, type: p.type || 'post'
         }))
-        // FIX 2: HOME LO ONLY POSTS - Stories filter - 100% No stories in posts
         const onlyPosts = mapped.filter((p:any)=> p.type !== 'story')
         setPosts(onlyPosts)
       } else if(data.posts){
         const onlyPosts = (data.posts || []).filter((p:any)=> p.type !== 'story')
-        setPosts(onlyPosts.map((p:any)=>({
-          id:p.id, image_url:p.image_url||p.url, url:p.image_url||p.url, video_url:p.video_url,
-          username:p.username||'knmahesh', caption:p.caption||'ChitPix R2 Permanent ✨ #2026',
-          likes:p.likes||5000, views:p.views||9415, created_at:p.created_at, verified:true, type:'post'
-        })))
+        setPosts(onlyPosts.map((p:any)=>({ id:p.id, image_url:p.image_url||p.url, url:p.image_url||p.url, video_url:p.video_url, username:p.username||'knmahesh', caption:p.caption||'ChitPix R2 Permanent ✨ #2026', likes:p.likes||5000, views:p.views||9415, created_at:p.created_at, verified:true, type:'post' })))
       } else {
         setPosts([
           {id:'1', image_url:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', username:'knmahesh', caption:'R2 Connected ✅ 9415 views - Permanent', likes:50300, views:9415, verified:true, created_at:new Date().toISOString(), type:'post'},
@@ -170,7 +152,6 @@ export default function Page(){
   const handleDoubleTap = (id:string) => { if(!liked[id]) handleLike(id) }
   const handleFollow = (username:string) => { const isF = following[username]; setFollowing({...following, [username]:!isF}); showToast(isF? `Unfollowed ${username}` : `Following ${username} ✅`) }
   
-  // ✅ FIX 1: YOUR STORY 24H ONLY - NOT R2 PERMANENT - 2026
   const handleAddStory = (e:any) => {
     const file = e.target.files?.[0]; if(!file) return
     const localUrl = URL.createObjectURL(file)
@@ -184,20 +165,13 @@ export default function Page(){
         const res = await fetch("/api/r2-upload", {method:"POST", body: form});
         const data = await res.json();
         if(data.url){
-          // Save to stories.json with 24h expiry - NOT Permanent
           await fetch("/api/stories", {
-            method: "POST",
-            headers: {"Content-Type":"application/json"},
+            method: "POST", headers: {"Content-Type":"application/json"},
             body: JSON.stringify({
-              image_url: data.url,
-              video_url: file.type.startsWith('video') ? data.url : null,
-              username: currentUser.username,
-              caption: "ChitPix 2026 ✨ 24h",
-              type: "story",
-              created_at: new Date().toISOString(),
-              expires_at: new Date(Date.now()+24*60*60*1000).toISOString(),
-              views: 0,
-              isR2Permanent: false
+              image_url: data.url, video_url: file.type.startsWith('video') ? data.url : null,
+              username: currentUser.username, caption: "ChitPix 2026 ✨ 24h",
+              type: "story", created_at: new Date().toISOString(),
+              expires_at: new Date(Date.now()+24*60*60*1000).toISOString(), views: 0, isR2Permanent: false
             })
           })
           showToast("Story R2 24h Done! Auto delete after 24h ✅");
@@ -205,15 +179,14 @@ export default function Page(){
         }
       }catch(err){ console.error(err); showToast("R2 24h Upload Done"); }
     })();
-          }
-    const openStory = (story:any) => {
+  }
+  const openStory = (story:any) => {
     if(story.isYou &&!story.hasStory){ fileInputRef.current?.click(); return }
     setShowStory(story)
     setStories((prev:any[])=> prev.map((s:any)=> s.id===story.id? {...s, seen:true} : s))
   }
   const handleTopPlusClick = () => { fileUploadRef.current?.click() }
   
-  // ✅ FIX 2: POSTS R2 PERMANENT ONLY - NOT STORY - 2026
   const handleFileUpload = async (e:any) => {
     const file = e.target.files?.[0]; if(!file) return
     showToast(`Uploading ${file.name} to R2 Permanent... ⏳`)
@@ -260,11 +233,10 @@ export default function Page(){
           {notifCount>0 && <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-[18px] h-[18px] rounded-full flex items-center justify-center font-bold">{notifCount}</span>}
         </Link>
       </div>
-      {/* FIX: 2 file inputs - Story 24h + Post Permanent separated */}
       <input ref={fileInputRef} type="file" accept="image/*,video/*" hidden onChange={handleAddStory}/>
       <input ref={fileUploadRef} type="file" accept="image/*,video/*" hidden onChange={handleFileUpload}/>
 
-      <div ref={feedRef} className="flex-1 overflow-y-auto max-w-[470px] mx-auto w-full pb-20">
+      <div ref={feedRef} className="flex-1 overflow-y-auto max-w-[470px] mx-auto w-full pb-[90px]">
         <div className="flex gap-4 px-3 py-3 overflow-x-auto border-b border-zinc-100">
           {stories.map((s:any)=>{
             const hrs = s.created_at? Math.floor((Date.now()-new Date(s.created_at).getTime())/3600000) : 0
@@ -336,8 +308,7 @@ export default function Page(){
         })}
         <div className="text-center py-6 text-zinc-400 text-[11px] flex flex-col items-center gap-2"><div className="flex items-center gap-1"><Radio size={12}/> R2 Storage • Only active reel 🔊 • Posts Permanent</div><button onClick={handleRefresh} className="mt-2 px-4 py-2 bg-black text-white rounded-full text-[11px] flex items-center gap-1"><RefreshCw size={12} className={refreshing?'animate-spin':''}/> {refreshing?'Refreshing R2...':'Refresh Feed'}</button></div>
       </div>
-
-      {showStory && (
+            {showStory && (
         <div className="fixed inset-0 bg-black z-[100] flex flex-col max-w-[470px] mx-auto">
           <div className="h-1 bg-zinc-700 w-full"><div className="h-full bg-white transition-all" style={{width:`${storyProgress}%`}}/></div>
           <div className="p-4 flex justify-between text-white"><p className="font-bold flex items-center gap-2">{showStory.name} • {showStory.expires_at===null ? 'R2 Permanent' : 'R2 24h Story • Auto delete'}</p><button onClick={()=>setShowStory(null)}><X size={20}/></button></div>
@@ -356,7 +327,7 @@ export default function Page(){
         </div>
       )}
 
-            {showShare && (
+      {showShare && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end" onClick={()=>setShowShare(null)}>
           <div className="bg-white w-full max-w-[470px] mx-auto rounded-t-[20px] p-6" onClick={e=>e.stopPropagation()}>
             <h3 className="font-bold text-center mb-4 flex items-center justify-center gap-2"><Share2 size={16}/> Share • R2</h3>
@@ -368,34 +339,11 @@ export default function Page(){
         </div>
       )}
 
-      {/* BOTTOM NAV - 5 ICONS - SINGLE - House, Search, Plus, Clapperboard, User */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] bg-white border-t border-zinc-100 flex justify-around items-center py-2.5 px-2 z-30">
-        <Link href="/" className="flex flex-col items-center gap-1 p-2 active:scale-90">
-          <House size={22} strokeWidth={2.5} className="text-black" />
-          <span className="text-[9px] font-bold">Home</span>
-        </Link>
-        <Link href="/search" className="flex flex-col items-center gap-1 p-2 active:scale-90">
-          <Search size={22} className="text-zinc-400" />
-          <span className="text-[9px] text-zinc-400">Search</span>
-        </Link>
-        <button onClick={handleTopPlusClick} className="flex flex-col items-center gap-1 p-2 active:scale-90">
-          <div className="w-7 h-7 bg-black rounded-full flex items-center justify-center">
-            <Plus size={18} className="text-white" />
-          </div>
-          <span className="text-[9px] text-zinc-400">Post</span>
-        </button>
-        <Link href="/reels" className="flex flex-col items-center gap-1 p-2 active:scale-90">
-          <Clapperboard size={22} className="text-zinc-400" />
-          <span className="text-[9px] text-zinc-400">Reels</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center gap-1 p-2 active:scale-90">
-          <User size={22} className="text-zinc-400" />
-          <span className="text-[9px] text-zinc-400">You</span>
-        </Link>
-      </div>
+      {/* ✅ FIXED - Instagram Floating Pill BottomNav - 5 icons same size 26px - No labels - Exact like your screenshot 1 */}
+      <BottomNav active="home" />
 
       {toast ? (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200] flex items-center gap-2">
+        <div className="fixed bottom-[88px] left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200] flex items-center gap-2 shadow-lg">
           <Sparkles size={12}/> {toast}
         </div>
       ) : null}
