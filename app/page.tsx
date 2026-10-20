@@ -9,7 +9,7 @@ import {
   X, Check, Volume2, VolumeX, Share2, Link2, QrCode, Flag,
   EyeOff, Radio, Layers, RefreshCw
 } from "lucide-react"
-import BottomNav from "../components/BottomNav"
+import BottomNav from "@/components/BottomNav"
 
 const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev";
 
