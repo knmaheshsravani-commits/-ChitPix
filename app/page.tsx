@@ -9,9 +9,26 @@ import {
   X, Check, Volume2, VolumeX, Share2, Link2, QrCode, Flag,
   EyeOff, Radio, Layers, RefreshCw
 } from "lucide-react"
-import BottomNav from "@/components/BottomNav"
 
 const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev";
+
+// ✅ Instagram Floating Pill - 5 icons 26px oke size - Inline
+function BottomNav({ active, avatar: propAvatar }: any) {
+  const [avatar, setAvatar] = useState(propAvatar || "")
+  useEffect(()=>{ if(propAvatar) setAvatar(propAvatar) },[propAvatar])
+  const isActive = (n:string) => active===n
+  return (
+    <div className="fixed bottom-[18px] left-1/2 -translate-x-1/2 z-[100] w-full max-w-[360px] px-4">
+      <div className="bg-white rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-zinc-200 flex justify-around items-center h-[56px] px-2">
+        <Link href="/" className="w-[52px] h-[44px] flex items-center justify-center"><div className={`w-[42px] h-[36px] flex items-center justify-center rounded-full ${isActive("home")?"bg-[#f2f2f2]":""}`}><svg width="26" height="26" viewBox="0 0 24 24" fill={isActive("home")?"black":"none"} stroke="black" strokeWidth="1.8"><path d="M12 3L3 9v11h6v-6h6v6h6V9L12 3z"/></svg></div></Link>
+        <Link href="/reels" className="w-[52px] h-[44px] flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M10 8l6 4-6 4V8z"/></svg></Link>
+        <Link href="/messages" className="w-[52px] h-[44px] flex items-center justify-center relative"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2z"/></svg><span className="absolute top-[6px] right-[8px] w-[7px] h-[7px] bg-red-500 rounded-full border border-white"></span></Link>
+        <Link href="/search" className="w-[52px] h-[44px] flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><circle cx="11" cy="11" r="6"/><line x1="17" y1="17" x2="21" y2="21"/></svg></Link>
+        <Link href="/profile" className="w-[52px] h-[44px] flex items-center justify-center relative"><div className="w-[28px] h-[28px] rounded-full overflow-hidden"><img src={avatar || propAvatar || "https://i.pravatar.cc/150?u=knmahesh"} alt="you" className="w-full h-full object-cover"/></div><span className="absolute top-[6px] right-[8px] w-[7px] h-[7px] bg-red-500 rounded-full border-2 border-white"></span></Link>
+      </div>
+    </div>
+  )
+}
 
 export default function Page(){
   const router = useRouter()
