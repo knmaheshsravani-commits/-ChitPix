@@ -356,7 +356,7 @@ export default function Page(){
         </div>
       )}
 
-      {showShare && (
+            {showShare && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end" onClick={()=>setShowShare(null)}>
           <div className="bg-white w-full max-w-[470px] mx-auto rounded-t-[20px] p-6" onClick={e=>e.stopPropagation()}>
             <h3 className="font-bold text-center mb-4 flex items-center justify-center gap-2"><Share2 size={16}/> Share • R2</h3>
@@ -367,11 +367,8 @@ export default function Page(){
           </div>
         </div>
       )}
-      {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200] flex items-center gap-2"><Sparkles size={12}/> {toast}</div>}
-    </div>
-  )
-        }
-      {/* FIXED BOTTOM NAV - 5 ICONS - House, Search, Plus, Clapperboard, User */}
+
+      {/* BOTTOM NAV - 5 ICONS - SINGLE - House, Search, Plus, Clapperboard, User */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] bg-white border-t border-zinc-100 flex justify-around items-center py-2.5 px-2 z-30">
         <Link href="/" className="flex flex-col items-center gap-1 p-2 active:scale-90">
           <House size={22} strokeWidth={2.5} className="text-black" />
@@ -397,7 +394,11 @@ export default function Page(){
         </Link>
       </div>
 
-      {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200] flex items-center gap-2"><Sparkles size={12}/> {toast}</div>}
+      {toast ? (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200] flex items-center gap-2">
+          <Sparkles size={12}/> {toast}
+        </div>
+      ) : null}
     </div>
   )
-      }
+}
