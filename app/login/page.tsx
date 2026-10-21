@@ -1,8 +1,14 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
 import { Mail, Phone, ShieldCheck, Crown } from "lucide-react"
+import { createClient } from "@supabase/supabase-js"
+
+// Supabase Client - Supabase Auth kosam
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export default function Login(){
   const router = useRouter()
@@ -60,9 +66,18 @@ export default function Login(){
   }
 
   const googleLogin = async () => {
-    // FIXED: next-auth google login
+    // FIXED: Supabase Google Login - NextAuth kadu!
     setLoading(true)
-    await signIn("google", { callbackUrl: "/" })
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`
+      }
+    })
+    if(error){
+      alert("Google login fail: " + error.message)
+      setLoading(false)
+    }
   }
 
   return(
