@@ -6,11 +6,14 @@ const handler = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true, // <--- IDI ADD CHESA
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
+    async signIn() {
+      return true
+    },
     async jwt({ token, account }: any) {
       if (account) token.accessToken = account.access_token
       return token
