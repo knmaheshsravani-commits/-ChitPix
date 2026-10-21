@@ -21,19 +21,22 @@ export default function BottomNav({ active, avatar: propAvatar }: BottomNavProps
 
   const loadR2Avatar = async () => {
     try{
-      // If prop avatar vachindi - Adi vaduko - 100% latest
       if(propAvatar){
         setAvatar(propAvatar)
         return
       }
       const cookieAv = getCookieAvatar()
       if(cookieAv) setAvatar(cookieAv)
-
-      const res = await fetch("/api/users?username=knmahesh", {cache:"no-store"}).then(r=>r.json()).catch(()=>null)
-      const u = Array.isArray(res) ? res.find((x:any)=>x.username==="knmahesh") : res
-      if(u?.avatar_url){
-        setAvatar(u.avatar_url)
-        document.cookie = `avatar=${encodeURIComponent(u.avatar_url)}; path=/; max-age=2592000`
+      
+      // ✅ FIX - current user - not hardcoded knmahesh
+      const sessionMatch = document.cookie.match(/chitpix_session=([^;]+)/)
+      const sessionId = sessionMatch?.[1]
+      if(sessionId){
+        const res = await fetch(`/api/users/current?sessionId=${sessionId}`, {cache:"no-store"}).then(r=>r.json()).catch(()=>null)
+        if(res?.photo || res?.avatar_url){
+          setAvatar(res.photo || res.avatar_url)
+          document.cookie = `avatar=${encodeURIComponent(res.photo || res.avatar_url)}; path=/; max-age=2592000`
+        }
       }
     }catch{}
   }
@@ -56,33 +59,34 @@ export default function BottomNav({ active, avatar: propAvatar }: BottomNavProps
   const isCreate = active ? active==="create" : pathname === "/create"
 
   return (
-    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[52px] bg-black border-t border-zinc-800 flex justify-around items-center z-50">
+    // ✅ FIX - Full black - No white pill - No red dots - Profile style = Home style
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[470px] h-[56px] bg-black border-t border-zinc-800 flex justify-around items-center z-[100]">
       
-      {/* 1. HOME - 24px - Equal */}
-      <Link href="/" className="w-[48px] h-[48px] flex items-center justify-center">
-        <House size={24} fill={isHome ? "white" : "none"} strokeWidth={isHome ? 2.7 : 1.8} className="text-white" />
+      {/* 1. HOME */}
+      <Link href="/" className="w-[48px] h-[48px] flex items-center justify-center active:scale-90">
+        <House size={26} fill={isHome ? "white" : "none"} strokeWidth={isHome ? 2.7 : 1.8} className="text-white" />
       </Link>
 
-      {/* 2. SEARCH - 24px - Equal */}
-      <Link href="/search" className="w-[48px] h-[48px] flex items-center justify-center">
-        <Search size={24} strokeWidth={isSearch ? 2.7 : 1.8} className="text-white" />
+      {/* 2. SEARCH */}
+      <Link href="/search" className="w-[48px] h-[48px] flex items-center justify-center active:scale-90">
+        <Search size={26} strokeWidth={isSearch ? 2.7 : 1.8} className="text-white" />
       </Link>
 
-      {/* 3. CREATE + - 24px box - Equal */}
-      <Link href="/create" className="w-[48px] h-[48px] flex items-center justify-center">
-        <div className={`w-[24px] h-[24px] border-[1.6px] rounded-[6px] flex items-center justify-center ${isCreate ? "bg-white border-white" : "border-white"}`}>
+      {/* 3. CREATE + */}
+      <Link href="/create" className="w-[48px] h-[48px] flex items-center justify-center active:scale-90">
+        <div className={`w-[26px] h-[26px] border-[1.8px] rounded-[7px] flex items-center justify-center ${isCreate ? "bg-white border-white" : "border-white"}`}>
           <Plus size={16} strokeWidth={2.8} className={isCreate ? "text-black" : "text-white"} />
         </div>
       </Link>
 
-      {/* 4. REELS - 24px - Equal */}
-      <Link href="/reels" className="w-[48px] h-[48px] flex items-center justify-center">
-        <Clapperboard size={24} strokeWidth={isReels ? 2.7 : 1.8} className="text-white" />
+      {/* 4. REELS */}
+      <Link href="/reels" className="w-[48px] h-[48px] flex items-center justify-center active:scale-90">
+        <Clapperboard size={26} strokeWidth={isReels ? 2.7 : 1.8} className="text-white" />
       </Link>
 
-      {/* 5. PROFILE - DP - 26px - Equal - R2 DP */}
-      <Link href="/profile" className="w-[48px] h-[48px] flex items-center justify-center">
-        <div className={`w-[26px] h-[26px] rounded-full overflow-hidden ${isProfile ? "ring-[1.5px] ring-white ring-offset-1 ring-offset-black" : "border border-zinc-600"}`}>
+      {/* 5. PROFILE - R2 DP - NO RED DOT */}
+      <Link href="/profile" className="w-[48px] h-[48px] flex items-center justify-center active:scale-90">
+        <div className={`w-[28px] h-[28px] rounded-full overflow-hidden ${isProfile ? "ring-[2px] ring-white ring-offset-2 ring-offset-black" : "border border-zinc-600"}`}>
           <img 
             src={avatar || propAvatar || "https://i.pravatar.cc/100?u=knmahesh"} 
             alt="profile" 
