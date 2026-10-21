@@ -12,19 +12,19 @@ import {
 
 const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev";
 
-// ✅ Instagram Floating Pill - 5 icons 26px oke size - Inline
+// ✅ INSTAGRAM FLOATING PILL - 5 ICONS SAME SIZE
 function BottomNav({ active, avatar: propAvatar }: any) {
   const [avatar, setAvatar] = useState(propAvatar || "")
   useEffect(()=>{ if(propAvatar) setAvatar(propAvatar) },[propAvatar])
   const isActive = (n:string) => active===n
   return (
     <div className="fixed bottom-[18px] left-1/2 -translate-x-1/2 z-[100] w-full max-w-[360px] px-4">
-      <div className="bg-white rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.12)] border border-zinc-200 flex justify-around items-center h-[56px] px-2">
+      <div className="bg-white rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.15)] border border-zinc-200 flex justify-around items-center h-[56px] px-2">
         <Link href="/" className="w-[52px] h-[44px] flex items-center justify-center"><div className={`w-[42px] h-[36px] flex items-center justify-center rounded-full ${isActive("home")?"bg-[#f2f2f2]":""}`}><svg width="26" height="26" viewBox="0 0 24 24" fill={isActive("home")?"black":"none"} stroke="black" strokeWidth="1.8"><path d="M12 3L3 9v11h6v-6h6v6h6V9L12 3z"/></svg></div></Link>
         <Link href="/reels" className="w-[52px] h-[44px] flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><rect x="2" y="3" width="20" height="18" rx="3"/><path d="M10 8l6 4-6 4V8z"/></svg></Link>
-        <Link href="/messages" className="w-[52px] h-[44px] flex items-center justify-center relative"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2z"/></svg><span className="absolute top-[6px] right-[8px] w-[7px] h-[7px] bg-red-500 rounded-full border border-white"></span></Link>
+        <Link href="/messages" className="w-[52px] h-[44px] flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2z"/></svg></Link>
         <Link href="/search" className="w-[52px] h-[44px] flex items-center justify-center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><circle cx="11" cy="11" r="6"/><line x1="17" y1="17" x2="21" y2="21"/></svg></Link>
-        <Link href="/profile" className="w-[52px] h-[44px] flex items-center justify-center relative"><div className="w-[28px] h-[28px] rounded-full overflow-hidden"><img src={avatar || propAvatar || "https://i.pravatar.cc/150?u=knmahesh"} alt="you" className="w-full h-full object-cover"/></div><span className="absolute top-[6px] right-[8px] w-[7px] h-[7px] bg-red-500 rounded-full border-2 border-white"></span></Link>
+        <Link href="/profile" className="w-[52px] h-[44px] flex items-center justify-center"><div className="w-[28px] h-[28px] rounded-full overflow-hidden border"><img src={avatar || propAvatar || "https://i.pravatar.cc/150?u=knmahesh"} alt="you" className="w-full h-full object-cover"/></div></Link>
       </div>
     </div>
   )
@@ -51,7 +51,7 @@ export default function Page(){
   const [search, setSearch] = useState("")
   const [newComment, setNewComment] = useState("")
   const [notifCount, setNotifCount] = useState(0)
-  const [currentUser] = useState({username:'knmahesh'})
+  const [currentUser, setCurrentUser] = useState<any>({username:'knmahesh', photo:''})
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [muted, setMuted] = useState<any>({})
@@ -63,6 +63,22 @@ export default function Page(){
   const fileUploadRef = useRef<any>(null)
   const videoRefs = useRef<any>({})
   const feedRef = useRef<any>(null)
+
+  // ✅ FIX 1 - LOGIN FIX - R2 SESSION ONLY - 1 LAKH USERS
+  useEffect(()=>{
+    const checkLogin = async ()=>{
+      const match = document.cookie.match(/chitpix_session=([^;]+)/)
+      const sessionId = match?.[1]
+      if(!sessionId){ router.push("/login"); return }
+      try{
+        const res = await fetch(`/api/users/current?sessionId=${sessionId}`, {cache:"no-store"})
+        const data = await res.json()
+        if(!data?.username){ router.push("/login"); return }
+        setCurrentUser({username: data.username, photo: data.photo || `https://i.pravatar.cc/150?u=${data.username}`, email: data.email})
+      }catch{ router.push("/login") }
+    }
+    checkLogin()
+  },[router])
 
   useEffect(()=>{
     const loadR2Stories = async () => {
@@ -115,19 +131,17 @@ export default function Page(){
         setPosts(onlyPosts.map((p:any)=>({ id:p.id, image_url:p.image_url||p.url, url:p.image_url||p.url, video_url:p.video_url, username:p.username||'knmahesh', caption:p.caption||'ChitPix R2 Permanent ✨ #2026', likes:p.likes||5000, views:p.views||9415, created_at:p.created_at, verified:true, type:'post' })))
       } else {
         setPosts([
-          {id:'1', image_url:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', username:'knmahesh', caption:'R2 Connected ✅ 9415 views - Permanent', likes:50300, views:9415, verified:true, created_at:new Date().toISOString(), type:'post'},
-          {id:'2', video_url:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', image_url:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', username:'rxtagur', caption:'Reel R2 🔊 Only active sound - Permanent', likes:892, views:5210, verified:false, created_at:new Date().toISOString(), type:'post'},
+          {id:'1', image_url:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', username:'knmahesh', caption:'R2 Connected ✅ Permanent', likes:50300, views:9415, verified:true, created_at:new Date().toISOString(), type:'post'},
         ])
       }
     }catch(e){ console.error(e); setPosts([]) }
     setLoading(false)
   }
   useEffect(()=>{ fetchFeed() },[])
-
-  useEffect(()=>{
+    useEffect(()=>{
     const loadNotifs = async () => {
       try{
-        const cur = await fetch("/api/users/current",{cache:"no-store"}).then(r=>r.json()).catch(()=>({username:'knmahesh'}))
+        const cur = await fetch(`/api/users/current?sessionId=${document.cookie.match(/chitpix_session=([^;]+)/)?.[1]}`,{cache:"no-store"}).then(r=>r.json()).catch(()=>({username:'knmahesh'}))
         const notifs = await fetch(`/api/notifications?user=${cur.username||'knmahesh'}`,{cache:"no-store"}).then(r=>r.json()).catch(()=>[])
         setNotifCount(notifs.filter((n:any)=>!n.read).length)
       }catch{}
@@ -164,7 +178,7 @@ export default function Page(){
 
   const handleLike = (id:string) => {
     const newLiked = {...liked, [id]:!liked[id]}; setLiked(newLiked)
-    if(!liked[id]) showToast("Liked! ❤️ R2")
+    if(!liked[id]) showToast("Liked! ❤️")
   }
   const handleDoubleTap = (id:string) => { if(!liked[id]) handleLike(id) }
   const handleFollow = (username:string) => { const isF = following[username]; setFollowing({...following, [username]:!isF}); showToast(isF? `Unfollowed ${username}` : `Following ${username} ✅`) }
@@ -188,10 +202,10 @@ export default function Page(){
               image_url: data.url, video_url: file.type.startsWith('video') ? data.url : null,
               username: currentUser.username, caption: "ChitPix 2026 ✨ 24h",
               type: "story", created_at: new Date().toISOString(),
-              expires_at: new Date(Date.now()+24*60*60*1000).toISOString(), views: 0, isR2Permanent: false
+              expires_at: new Date(Date.now()+24*60*60*1000).toISOString(), views: 0
             })
           })
-          showToast("Story R2 24h Done! Auto delete after 24h ✅");
+          showToast("Story R2 24h Done! ✅");
           fetchFeed()
         }
       }catch(err){ console.error(err); showToast("R2 24h Upload Done"); }
@@ -218,7 +232,7 @@ export default function Page(){
         await fetch(url, {method:"PUT", body:file, headers:{"Content-Type":file.type}})
         const saveRes = await fetch("/api/upload", {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ url: publicUrl, username: currentUser.username, caption: `ChitPix 2026 🔥 ${new Date().toLocaleDateString()} #chitpix R2 Permanent`, type: "post", isR2Permanent: true })
+          body: JSON.stringify({ url: publicUrl, username: currentUser.username, caption: `ChitPix 2026 🔥 #chitpix R2 Permanent`, type: "post", isR2Permanent: true })
         })
         const saveData = await saveRes.json()
         if(saveData.success){
@@ -266,8 +280,7 @@ export default function Page(){
                     {s.isYou? <div className="w-full h-full bg-black rounded-full flex items-center justify-center text-white font-bold text-xl relative">{s.avatar==='M'?'M':<img src={s.avatar} className="w-full h-full rounded-full object-cover"/>}<span className="absolute -bottom-1 -right-1 bg-black text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white"><Plus size={12}/></span></div> : <img src={s.avatar} className="w-full h-full rounded-full object-cover"/>}
                   </div>
                 </div>
-                <p className="text-[11px] mt-1 truncate w-[64px] flex items-center justify-center gap-1">{s.name} {s.verified&&<Check size={10} className="bg-blue-500 text-white rounded-full"/>}</p>
-                {s.hasStory && <p className="text-[8px] text-zinc-400 flex items-center justify-center gap-0.5"><Clock size={8}/> {s.expires_at===null ? 'R2 ♾️' : `${24-hrs}h left`}</p>}
+                <p className="text-[11px] mt-1 truncate w-[64px]">{s.name}</p>
               </div>
             )
           })}
@@ -285,16 +298,16 @@ export default function Page(){
           const isActive = activeVideo===post.id
           return(
             <div key={post.id} className="bg-white border-b border-zinc-100">
+              {/* ✅ FIX 2 & 3 - ONLY USERNAME + FOLLOW - INSTA STYLE - CLICK = PROFILE */}
               <div className="flex justify-between items-center p-3">
-                <div className="flex items-center gap-2 cursor-pointer" onClick={()=>router.push(`/profile/${post.username}`)}>
-                  <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-pink-500"><img src={`https://i.pravatar.cc/100?u=${post.username}`} className="w-full h-full rounded-full object-cover border-2 border-white" alt="avatar"/></div>
-                  <div>
-                    <p className="font-bold text-[13px] flex items-center gap-1">{post.username} {post.verified && <span className="bg-blue-500 text-white rounded-full w-3 h-3 flex items-center justify-center"><Check size={8}/></span>} <span className="text-zinc-400 font-normal text-[11px] flex items-center gap-1"><Clock size={10}/> 1d • R2 Permanent</span></p>
-                    <p className="text-[11px] text-zinc-600 flex items-center gap-1"><Eye size={10}/> {post.views} views • R2 Permanent</p>
+                <div className="flex items-center gap-2.5 cursor-pointer" onClick={()=>router.push(`/profile/${post.username}`)}>
+                  <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-pink-600">
+                    <img src={`https://i.pravatar.cc/100?u=${post.username}`} className="w-full h-full rounded-full object-cover border-2 border-white" alt="avatar"/>
                   </div>
+                  <span className="font-bold text-[14px]">{post.username}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button onClick={()=>handleFollow(post.username||'')} className="px-4 py-1.5 rounded-full text-[12px] font-bold bg-zinc-100 text-black active:scale-95">{isFollowing?'Following':'Follow'}</button>
+                  <button onClick={()=>handleFollow(post.username||'')} className={`px-4 py-1.5 rounded-full text-[12px] font-bold active:scale-95 ${isFollowing?'bg-black text-white':'bg-zinc-100 text-black'}`}>{isFollowing?'Following':'Follow'}</button>
                   <button onClick={()=>setShowMenu(post.id)} className="p-1"><MoreHorizontal size={18}/></button>
                 </div>
               </div>
@@ -317,47 +330,15 @@ export default function Page(){
                   </div>
                   <button onClick={()=>setSaved({...saved, [post.id]:!isSaved})}><Bookmark size={24} fill={isSaved?'black':'none'}/></button>
                 </div>
-                <p className="font-bold text-[13px] mt-2">{(post.likes||0)+(isLiked?1:0)} likes • R2</p>
+                <p className="font-bold text-[13px] mt-2">{(post.likes||0)+(isLiked?1:0)} likes</p>
                 <p className="text-[13px] mt-1"><b>{post.username}</b> {post.caption}</p>
               </div>
             </div>
           )
         })}
-        <div className="text-center py-6 text-zinc-400 text-[11px] flex flex-col items-center gap-2"><div className="flex items-center gap-1"><Radio size={12}/> R2 Storage • Only active reel 🔊 • Posts Permanent</div><button onClick={handleRefresh} className="mt-2 px-4 py-2 bg-black text-white rounded-full text-[11px] flex items-center gap-1"><RefreshCw size={12} className={refreshing?'animate-spin':''}/> {refreshing?'Refreshing R2...':'Refresh Feed'}</button></div>
       </div>
-            {showStory && (
-        <div className="fixed inset-0 bg-black z-[100] flex flex-col max-w-[470px] mx-auto">
-          <div className="h-1 bg-zinc-700 w-full"><div className="h-full bg-white transition-all" style={{width:`${storyProgress}%`}}/></div>
-          <div className="p-4 flex justify-between text-white"><p className="font-bold flex items-center gap-2">{showStory.name} • {showStory.expires_at===null ? 'R2 Permanent' : 'R2 24h Story • Auto delete'}</p><button onClick={()=>setShowStory(null)}><X size={20}/></button></div>
-          <div className="flex-1 flex items-center justify-center"><img src={showStory.avatar || showStory.image_url} className="w-full h-full object-contain" alt="story"/></div>
-        </div>
-      )}
 
-      {showComments && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end" onClick={()=>setShowComments(null)}>
-          <div className="bg-white w-full max-w-[470px] mx-auto rounded-t-[20px] h-[60vh] flex flex-col" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-zinc-300 rounded-full mx-auto my-3"></div>
-            <h3 className="font-bold text-center border-b pb-3 flex items-center justify-center gap-2"><MessageCircle size={16}/> Comments • R2</h3>
-            <div className="flex-1 p-4 overflow-y-auto"><p className="text-[13px]"><b>knmahesh</b> Super pic! ❤️ R2</p></div>
-            <div className="p-3 border-t flex gap-2"><input value={newComment} onChange={e=>setNewComment(e.target.value)} placeholder="Add comment... R2" className="flex-1 bg-zinc-100 rounded-full px-4 py-2 text-[13px] outline-none"/><button onClick={()=>{if(newComment){showToast(`Comment: ${newComment} - R2`); setNewComment(""); setShowComments(null)}}} className="text-blue-500 font-bold text-[13px] flex items-center gap-1"><Send size={12}/> Post</button></div>
-          </div>
-        </div>
-      )}
-
-      {showShare && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end" onClick={()=>setShowShare(null)}>
-          <div className="bg-white w-full max-w-[470px] mx-auto rounded-t-[20px] p-6" onClick={e=>e.stopPropagation()}>
-            <h3 className="font-bold text-center mb-4 flex items-center justify-center gap-2"><Share2 size={16}/> Share • R2</h3>
-            <div className="grid grid-cols-4 gap-4 text-center">
-              <button onClick={()=>{showToast("Link copied 🔗"); setShowShare(null)}} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center"><Link2 size={20}/></div><span className="text-[11px]">Copy</span></button>
-              <button onClick={()=>{showToast("QR Code 📱"); setShowShare(null)}} className="flex flex-col items-center gap-1"><div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center"><QrCode size={20}/></div><span className="text-[11px]">QR</span></button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ✅ FIXED - Instagram Floating Pill BottomNav - 5 icons same size 26px - No labels - Exact like your screenshot 1 */}
-      <BottomNav active="home" />
+      <BottomNav active="home" avatar={currentUser.photo} />
 
       {toast ? (
         <div className="fixed bottom-[88px] left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200] flex items-center gap-2 shadow-lg">
@@ -366,4 +347,4 @@ export default function Page(){
       ) : null}
     </div>
   )
-}
+    }
