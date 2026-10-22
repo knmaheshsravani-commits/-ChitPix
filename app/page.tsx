@@ -45,48 +45,43 @@ export default function Page() {
   const fileUploadRef = useRef<any>(null)
   const feedRef = useRef<any>(null)
 
+  // FIXED LOGIN LOGIC - NO MORE LOOP
   useEffect(() => {
     let mounted = true
     const checkLogin = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (mounted && session?.user) {
+      // 1. Try supabase session
+      const { data: { session } } = await supabase.auth.getSession()
+      if (mounted && session?.user) {
+        setCurrentUser({
+          username: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'user',
+          photo: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.email}`,
+          email: session.user.email
+        })
+        setLoading(false)
+        return
+      }
+      // 2. Listen for auth change (important for SSR cookie)
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, sess) => {
+        if (sess?.user && mounted) {
           setCurrentUser({
-            username: session.user.user_metadata?.user_name || session.user.email?.split('@')[0] || 'user',
-            photo: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.email}`,
-            email: session.user.email
+            username: sess.user.email?.split('@')[0] || 'user',
+            photo: sess.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${sess.user.email}`,
+            email: sess.user.email
           })
           setLoading(false)
-          return
         }
-      } catch {}
-      try {
-        const match = document.cookie.match(/chitpix_session=([^;]+)/)
-        const sessionId = match?.[1]
-        if (sessionId) {
-          const res = await fetch(`/api/users/current?sessionId=${sessionId}`, { cache: "no-store" })
-          const data = await res.json()
-          if (mounted && data?.username) {
-            setCurrentUser({ username: data.username, photo: data.photo, email: data.email })
-            setLoading(false)
-            return
-          }
-        }
-      } catch {}
-      await new Promise(r => setTimeout(r, 800))
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (mounted && session?.user) {
-          setCurrentUser({
-            username: session.user.user_metadata?.user_name || session.user.email?.split('@')[0] || 'user',
-            photo: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.email}`,
-            email: session.user.email
-          })
+      })
+      
+      // 3. Wait 2 sec then check again, if no session -> login
+      setTimeout(async () => {
+        if (!mounted) return
+        const { data: { session: s2 } } = await supabase.auth.getSession()
+        if (!s2?.user && mounted) {
           setLoading(false)
-          return
+          router.replace("/login")
         }
-      } catch {}
-      if (mounted) { setLoading(false); router.replace("/login") }
+        subscription.unsubscribe()
+      }, 2000)
     }
     checkLogin()
     return () => { mounted = false }
@@ -95,15 +90,13 @@ export default function Page() {
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2500) }
 
   const fetchFeed = async () => {
-    setLoading(true)
     try {
       const res = await fetch("/api/posts", { cache: "no-store" })
       const data = await res.json()
       if (Array.isArray(data) && data.length > 0) setPosts(data)
       else if (data.posts) setPosts(data.posts)
-      else setPosts([{ id: '1', image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', username: 'knmahesh', caption: 'R2 Connected', likes: 50300, views: 9415, verified: true, created_at: new Date().toISOString() }])
+      else setPosts([{ id: '1', image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', username: 'knmahesh', caption: 'R2 Connected Gmail Only ✅', likes: 50300, views: 9415, verified: true, created_at: new Date().toISOString() }])
     } catch { setPosts([]) }
-    setLoading(false)
   }
   useEffect(() => { fetchFeed() }, [])
 
@@ -160,7 +153,7 @@ export default function Page() {
             <div key={s.id} className="text-center min-w-[64px] cursor-pointer" onClick={() => openStory(s)}>
               <div className={`w-[62px] h-[62px] rounded-full p-[2.5px] ${s.hasStory && !s.seen ? 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600' : 'bg-zinc-200'}`}>
                 <div className="bg-white rounded-full p-[2.5px] w-full h-full">
-                  {s.isYou ? <div className="w-full h-full bg-black rounded-full flex items-center justify-center text-white font-bold text-xl relative">{s.avatar === 'M' ? 'M' : <img src={s.avatar} className="w-full h-full rounded-full object-cover" />}<span className="absolute -bottom-1 -right-1 bg-black text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white"><Plus size={12} /></span></div> : <img src={s.avatar} className="w-full h-full rounded-full object-cover" />}
+                  {s.isYou ? <div className="w-full h-full bg-black rounded-full flex items-center justify-center text-white font-bold text-xl relative">{s.avatar === 'M' ? currentUser.username[0]?.toUpperCase() : <img src={s.avatar} className="w-full h-full rounded-full object-cover" />}<span className="absolute -bottom-1 -right-1 bg-black text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white"><Plus size={12} /></span></div> : <img src={s.avatar} className="w-full h-full rounded-full object-cover" />}
                 </div>
               </div>
               <p className="text-[11px] mt-1 truncate w-[64px]">{s.name}</p>
@@ -171,6 +164,7 @@ export default function Page() {
           <div className="space-y-6 p-4"><div className="animate-pulse"><div className="w-full h-[400px] bg-zinc-200" /></div></div>
         ) : filtered.map((post: any) => {
           const isLiked = !!liked[post.id]
+          const isSaved = !!saved[post.id]
           return (
             <div key={post.id} className="bg-white border-b border-zinc-100">
               <div className="flex justify-between items-center p-3">
@@ -193,7 +187,7 @@ export default function Page() {
                     <button><MessageCircle size={24} /></button>
                     <button><Send size={24} /></button>
                   </div>
-                  <button onClick={() => setSaved({ ...saved, [post.id]: !isSaved })}><Bookmark size={24} fill={saved[post.id] ? "black" : "none"} /></button>
+                  <button onClick={() => setSaved({ ...saved, [post.id]: !saved[post.id] })}><Bookmark size={24} fill={isSaved ? "black" : "none"} /></button>
                 </div>
                 <div className="mt-2 font-bold text-[14px]">{post.likes || 5000} likes</div>
                 <div className="text-[14px] mt-1"><span className="font-bold">{post.username}</span> {post.caption}</div>
@@ -221,4 +215,4 @@ export default function Page() {
       )}
     </div>
   )
-      }
+          }
