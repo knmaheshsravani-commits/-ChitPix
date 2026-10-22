@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Heart, MessageCircle, Send, Bookmark, Plus, Crown, MoreHorizontal, X, Volume2, VolumeX } from "lucide-react"
-import { createClient } from "../lib/supabase/client"
+import { supabase } from "../lib/supabase"
 
 function BottomNav({ active, avatar }: any) {
   const isActive = (n: string) => active === n
@@ -23,7 +23,7 @@ function BottomNav({ active, avatar }: any) {
 
 export default function Page() {
   const router = useRouter()
-  const supabase = createClient()
+    const supabase = createClient()
   const [posts, setPosts] = useState<any[]>([])
   const [stories, setStories] = useState<any[]>([
     { id: 'you', name: 'Your story', avatar: 'M', isYou: true, hasStory: false, seen: false },
