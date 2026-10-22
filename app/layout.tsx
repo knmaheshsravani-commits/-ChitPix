@@ -32,7 +32,6 @@ export const metadata: Metadata = {
   verification: { google: "chitpix-owner-kn-mahesh" },
 };
 
-// FIX 1: Scroll lifetime working + bottom red line fix - viewport
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -42,27 +41,32 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-// FIX 2: ScrollFix - 100% scroll allow - old pinch blocker teesesa
+// SCROLL 100% FIX - Old blocking logic removed
 function ScrollFix() {
   return (
     <script
       dangerouslySetInnerHTML={{
         __html: `
-          // Lifetime scroll fix - no blocking
           (function(){
-            var html = document.documentElement;
-            var body = document.body;
-            html.style.overflowY = 'auto';
-            html.style.overflowX = 'hidden';
-            html.style.height = 'auto';
-            html.style.backgroundColor = '#080b14';
-            body.style.overflowY = 'auto';
-            body.style.overflowX = 'hidden';
-            body.style.height = 'auto';
-            body.style.backgroundColor = '#080b14';
-            body.style.position = 'relative';
-            // Allow all touch scroll
-            body.style.touchAction = 'pan-y';
+            function unlock(){
+              var de = document.documentElement;
+              var b = document.body;
+              de.style.setProperty('height','auto','important');
+              de.style.setProperty('overflow','auto','important');
+              de.style.setProperty('overflow-y','auto','important');
+              de.style.setProperty('overflow-x','hidden','important');
+              b.style.setProperty('height','auto','important');
+              b.style.setProperty('overflow','auto','important');
+              b.style.setProperty('overflow-y','auto','important');
+              b.style.setProperty('overflow-x','hidden','important');
+              b.style.setProperty('position','relative','important');
+              b.style.setProperty('touch-action','pan-y','important');
+            }
+            unlock();
+            document.addEventListener('DOMContentLoaded', unlock);
+            window.addEventListener('load', unlock);
+            setTimeout(unlock, 100);
+            setTimeout(unlock, 500);
           })();
         `,
       }}
@@ -117,9 +121,9 @@ function SeoSchemas() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full" style={{ backgroundColor: "#080b14" }}>
-      <body className="bg-[#080b14] text-white antialiased min-h-screen w-full overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' } as any}>
-        <div className="max-w-[480px] mx-auto min-h-screen bg-[#080b14] relative">
+    <html lang="en" style={{ backgroundColor: "#080b14", height: "auto", overflowY: "auto", overflowX: "hidden" }}>
+      <body className="bg-[#080b14] text-white antialiased" style={{ backgroundColor: "#080b14", height: "auto", minHeight: "100vh", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' } as any}>
+        <div className="max-w-[480px] mx-auto bg-[#080b14] relative" style={{ minHeight: "100vh", height: "auto" }}>
           <SeoSchemas />
           {children}
           <ScrollFix />
