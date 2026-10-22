@@ -132,15 +132,16 @@ export default function HomePage(){
           ))}
         </div>
 
-        {/* BOTTOM 5 ICONS - SAME SIZE 24px - ALL WORKING */}
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] h-[58px] bg-white border-t border-black/10 flex items-center justify-around z-30">
+                {/* BOTTOM 5 ICONS - FIXED DOWN - RED LINE REMOVED - KINDHAKI */}
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-black/10 flex items-center justify-around z-50" style={{ height: '82px', paddingBottom: '18px', paddingTop: '10px' }}>
           <button onClick={()=>window.scrollTo({top:0,behavior:'smooth'})} className="p-3 bg-black/10 rounded-full"><Icon.Home active={true}/></button>
           <button onClick={()=>setShowReels(true)} className="p-3"><Icon.Reels/></button>
-          <button onClick={()=>setShowDM(true)} className="p-3 relative"><Icon.DM/><span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span></button>
+          <button onClick={()=>setShowDM(true)} className="p-3 relative"><Icon.DM/><span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span></button>
           <button onClick={()=>setShowSearch(true)} className="p-3"><Icon.Search/></button>
-          <button onClick={()=>setShowProfile(true)} className="p-3 relative"><img src="https://picsum.photos/100?1" className="w-6 h-6 rounded-full"/><span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span></button>
+          <button onClick={()=>setShowProfile(true)} className="p-3 relative"><img src="https://picsum.photos/100?1" className="w-7 h-7 rounded-full"/><span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span></button>
         </nav>
-
+        <div style={{ height: '90px' }}></div>
+        
         {/* ALL MODALS WORKING */}
         {activeStory && <div className="fixed inset-0 z-50 bg-black flex flex-col"><div className="p-4 flex justify-between text-white"><span>Story - Working</span><button onClick={()=>setActiveStory(null)} className="text-white">X</button></div><img src={activeStory.imageUrl} className="flex-1 object-contain"/></div>}
         {showComments && <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"><div className="bg-white w-full max-w-[480px] rounded-t-[16px] max-h-[70vh] flex flex-col"><div className="p-4 flex justify-between border-b"><b>Comments - Working</b><button onClick={()=>setShowComments(null)}>X</button></div><div className="flex-1 overflow-auto p-4 space-y-2">{posts.find(p=>p.id===showComments)?.comments.map((c,i)=><div key={i} className="text-sm bg-black/5 p-2 rounded">{c}</div>)}<div className="text-sm text-black/40">No more comments</div></div><div className="p-3 flex gap-2 border-t"><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add comment..." className="flex-1 bg-black/5 rounded-full px-4 py-2 text-sm outline-none"/><button onClick={()=>addComment(showComments)} className="text-blue-500 font-bold px-3">Post</button></div></div></div>}
