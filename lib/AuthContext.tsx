@@ -1,5 +1,4 @@
 "use client";
-
 import { createContext, useEffect, useState } from "react";
 import { supabase } from "./supabase";
 import type { User } from "@supabase/supabase-js";
@@ -17,21 +16,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. First existing session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let mounted = true
 
-    // 2. Login / Logout live listen
+    const init = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!mounted) return
+        setUser(session?.user ?? null)
+      } catch (e) {
+        console.log("session error", e)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    init()
+
+    const timer = setTimeout(() => {
+      if (mounted) setLoading(false)
+    }, 3000)
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        if (!mounted) return
         setUser(session?.user ?? null);
         setLoading(false);
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false
+      clearTimeout(timer)
+      subscription.unsubscribe()
+    }
   }, []);
 
   return (
