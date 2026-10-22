@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Heart, MessageCircle, Send, Bookmark, Plus, Crown, MoreHorizontal, X, Volume2, VolumeX } from "lucide-react"
+import { Heart, MessageCircle, Send, Bookmark, Plus, Crown, MoreHorizontal, X } from "lucide-react"
 import { supabase } from "../lib/supabase"
 
 function BottomNav({ active, avatar }: any) {
@@ -23,7 +23,6 @@ function BottomNav({ active, avatar }: any) {
 
 export default function Page() {
   const router = useRouter()
-    const supabase = createClient()
   const [posts, setPosts] = useState<any[]>([])
   const [stories, setStories] = useState<any[]>([
     { id: 'you', name: 'Your story', avatar: 'M', isYou: true, hasStory: false, seen: false },
@@ -36,17 +35,14 @@ export default function Page() {
   const [following, setFollowing] = useState<any>({})
   const [showStory, setShowStory] = useState<any>(null)
   const [storyProgress, setStoryProgress] = useState(0)
-  const [notifCount, setNotifCount] = useState(0)
   const [currentUser, setCurrentUser] = useState<any>({ username: 'knmahesh', photo: '' })
   const [loading, setLoading] = useState(true)
   const [muted, setMuted] = useState<any>({})
-  const [activeVideo, setActiveVideo] = useState<string | null>(null)
   const [showFullscreen, setShowFullscreen] = useState<any>(null)
   const [toast, setToast] = useState("")
   const [hiddenPosts] = useState<any>({})
   const fileInputRef = useRef<any>(null)
   const fileUploadRef = useRef<any>(null)
-  const videoRefs = useRef<any>({})
   const feedRef = useRef<any>(null)
 
   useEffect(() => {
@@ -94,7 +90,7 @@ export default function Page() {
     }
     checkLogin()
     return () => { mounted = false }
-  }, [router, supabase])
+  }, [router])
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(""), 2500) }
 
@@ -103,13 +99,12 @@ export default function Page() {
     try {
       const res = await fetch("/api/posts", { cache: "no-store" })
       const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) { setPosts(data) }
-      else if (data.posts) { setPosts(data.posts) }
-      else { setPosts([{ id: '1', image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', username: 'knmahesh', caption: 'R2 Connected', likes: 50300, views: 9415, verified: true, created_at: new Date().toISOString() }]) }
+      if (Array.isArray(data) && data.length > 0) setPosts(data)
+      else if (data.posts) setPosts(data.posts)
+      else setPosts([{ id: '1', image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600', username: 'knmahesh', caption: 'R2 Connected', likes: 50300, views: 9415, verified: true, created_at: new Date().toISOString() }])
     } catch { setPosts([]) }
     setLoading(false)
   }
-
   useEffect(() => { fetchFeed() }, [])
 
   useEffect(() => {
@@ -148,15 +143,14 @@ export default function Page() {
       if (data.success) { showToast("Upload Done"); fetchFeed() }
     } catch { showToast("Upload failed") }
   }
-
   const filtered = posts.filter((p: any) => !hiddenPosts[p.id])
 
   return (
     <div className="h-[100dvh] bg-white text-black overflow-hidden flex flex-col">
       <div className="flex justify-between items-center px-4 py-3 bg-white sticky top-0 z-20 border-b border-zinc-100 max-w-[470px] mx-auto w-full">
-        <button onClick={handleTopPlusClick} className="w-9 h-9 bg-black text-white rounded-full flex items-center justify-center active:scale-90"><Plus size={20} /></button>
+        <button onClick={handleTopPlusClick} className="w-9 h-9 bg-black text-white rounded-full flex items-center justify-center"><Plus size={20} /></button>
         <h1 className="font-extrabold text-[24px] tracking-tight flex items-center gap-1">ChitPix <Crown size={14} className="text-amber-500" /> <span className="text-[9px] bg-black text-white px-1.5 py-0.5 rounded-full">R2</span></h1>
-        <Link href="/notifications" className="w-9 h-9 bg-zinc-100 rounded-full flex items-center justify-center relative active:scale-95"><Heart size={22} /></Link>
+        <Link href="/notifications" className="w-9 h-9 bg-zinc-100 rounded-full flex items-center justify-center"><Heart size={22} /></Link>
       </div>
       <input ref={fileInputRef} type="file" accept="image/*,video/*" hidden onChange={handleAddStory} />
       <input ref={fileUploadRef} type="file" accept="image/*,video/*" hidden onChange={handleFileUpload} />
@@ -176,7 +170,6 @@ export default function Page() {
         {loading ? (
           <div className="space-y-6 p-4"><div className="animate-pulse"><div className="w-full h-[400px] bg-zinc-200" /></div></div>
         ) : filtered.map((post: any) => {
-          const isVideo = !!post.video_url
           const isLiked = !!liked[post.id]
           return (
             <div key={post.id} className="bg-white border-b border-zinc-100">
@@ -191,7 +184,7 @@ export default function Page() {
                 </div>
               </div>
               <div className="relative bg-black w-full aspect-[4/5] overflow-hidden cursor-pointer" onDoubleClick={() => handleDoubleTap(post.id)} onClick={() => setShowFullscreen(post)}>
-                {isVideo ? <video src={post.video_url} className="w-full h-full object-cover" autoPlay loop muted={muted[post.id] !== false} playsInline /> : <img src={post.image_url || post.url} alt="post" className="w-full h-full object-cover" />}
+                {post.video_url ? <video src={post.video_url} className="w-full h-full object-cover" autoPlay loop muted={muted[post.id] !== false} playsInline /> : <img src={post.image_url || post.url} alt="post" className="w-full h-full object-cover" />}
               </div>
               <div className="px-3 py-3">
                 <div className="flex justify-between items-center">
@@ -228,4 +221,4 @@ export default function Page() {
       )}
     </div>
   )
-        }
+      }
