@@ -2,13 +2,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Mail, Phone, ShieldCheck, Crown } from "lucide-react"
-import { createClient } from "@supabase/supabase-js"
-
-// Supabase Client - Supabase Auth kosam
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { supabase } from "@/lib/supabase" // FIXED: Shared client!
 
 export default function Login(){
   const router = useRouter()
@@ -55,6 +49,9 @@ export default function Login(){
         const username = (tab==='gmail'? gmail.split('@')[0] : `user${mobile.slice(-4)}`).toLowerCase().replace(/[^a-z0-9_]/g,'')
         await fetch("/api/users",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username, name:username, email:gmail, mobile, photo:`https://i.pravatar.cc/150?u=${username}`})})
         await fetch("/api/users/current",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username, email:gmail, mobile})})
+        
+        // FIXED: OTP tarvata localStorage flag pettali - AuthContext kosam
+        localStorage.setItem('chitpix_custom_user', JSON.stringify({username, email:gmail, mobile}))
         router.push("/")
       } else {
         alert("Wrong OTP bro!")
@@ -66,7 +63,6 @@ export default function Login(){
   }
 
   const googleLogin = async () => {
-    // FIXED: Supabase Google Login - NextAuth kadu!
     setLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
