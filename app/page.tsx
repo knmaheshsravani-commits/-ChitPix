@@ -287,7 +287,7 @@ export default function Page(){
     }
   }
   const handleRefresh = async () => { setRefreshing(true); await fetchFeed(); setRefreshing(false); showToast("Feed refreshed - R2 ✅") }
-  const filtered = posts.filter((p:any)=>!hiddenPosts[p.id] && (search? (p.caption||"").toLowerCase().includes(search.toLowerCase()) : true))
+    const filtered = posts.filter((p:any)=>!hiddenPosts[p.id])
 
   return(
     <div className="h-[100dvh] bg-white text-black overflow-hidden flex flex-col">
