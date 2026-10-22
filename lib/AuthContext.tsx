@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useEffect, useState } from "react";
-import { auth } from "./firebase";
-import { onAuthStateChanged, User, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { supabase } from "./supabase";
+import type { User } from "@supabase/supabase-js";
 
 export const AuthContext = createContext<{
   user: User | null;
@@ -17,21 +17,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // First persistence set chesi tarvata listener start chey
-    setPersistence(auth, browserLocalPersistence).then(() => {
-      const unsub = onAuthStateChanged(auth, (u) => {
-        setUser(u);
-        setLoading(false);
-      });
-      return () => unsub();
-    }).catch(() => {
-      // fallback
-      const unsub = onAuthStateChanged(auth, (u) => {
-        setUser(u);
-        setLoading(false);
-      });
-      return () => unsub();
+    // 1. First existing session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
     });
+
+    // 2. Login / Logout live listen
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
