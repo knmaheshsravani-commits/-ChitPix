@@ -2,7 +2,7 @@
 
 import { createContext, useEffect, useState } from "react";
 import { auth } from "./firebase";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { onAuthStateChanged, User, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 export const AuthContext = createContext<{
   user: User | null;
@@ -17,11 +17,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
+    // First persistence set chesi tarvata listener start chey
+    setPersistence(auth, browserLocalPersistence).then(() => {
+      const unsub = onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        setLoading(false);
+      });
+      return () => unsub();
+    }).catch(() => {
+      // fallback
+      const unsub = onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        setLoading(false);
+      });
+      return () => unsub();
     });
-    return () => unsub();
   }, []);
 
   return (
