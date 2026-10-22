@@ -9,10 +9,12 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: false, // ChitPix custom login - R2 + Supabase lifetime kosam
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
   },
 })
 
 // R2 + Supabase Combo - ChitPix A to Z
-// R2 = Posts 200MB Original Quality (Cloudflare)
+// R2 = Posts 300MB Original Quality (Cloudflare)
 // Supabase = comments, comment_likes, post_likes - Lifetime!
