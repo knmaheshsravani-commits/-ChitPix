@@ -5,7 +5,7 @@ import { cookies } from 'next/headers'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const redirectTo = searchParams.get('next') ?? '/'
+  const next = searchParams.get('next') ?? '/'
 
   if (code) {
     const cookieStore = await cookies()
@@ -16,27 +16,17 @@ export async function GET(request: Request) {
         cookies: {
           getAll() { return cookieStore.getAll() },
           setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              )
-            } catch {}
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
           },
         },
       }
     )
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      const forwardedHost = request.headers.get('x-forwarded-host')
-      const isLocalEnv = process.env.NODE_ENV === 'development'
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${redirectTo}`)
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${redirectTo}`)
-      } else {
-        return NextResponse.redirect(`${origin}${redirectTo}`)
-      }
+      return NextResponse.redirect(`${origin}${next}`)
     }
   }
-  return NextResponse.redirect(`${origin}/?error=auth-code-error`)
+  return NextResponse.redirect(`${origin}/login?error=auth`)
 }
