@@ -9,11 +9,10 @@ import {
   X, Check, Volume2, VolumeX, Share2, Link2, QrCode, Flag,
   EyeOff, Radio, Layers, RefreshCW
 } from "lucide-react"
-import { supabase } from "../lib/supabase"
+import { createClient } from "../lib/supabase/client"
 
 const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev";
 
-// ✅ INSTAGRAM FLOATING PILL - 5 ICONS SAME SIZE
 function BottomNav({ active, avatar: propAvatar }: any) {
   const [avatar, setAvatar] = useState(propAvatar || "")
   useEffect(()=>{ if(propAvatar) setAvatar(propAvatar) },[propAvatar])
@@ -64,24 +63,38 @@ export default function Page(){
   const fileUploadRef = useRef<any>(null)
   const videoRefs = useRef<any>({})
   const feedRef = useRef<any>(null)
+  const supabase = createClient()
 
-      // ✅ FINAL FIX - NO MORE LOOP - BULLETPROOF
   useEffect(()=>{
     let mounted = true
     const checkLogin = async ()=>{
-      const match = document.cookie.match(/chitpix_session=([^;]+)/)
-      const sessionId = match?.[1]
-      if(sessionId){
-        try{
+      try{
+        const { data: { session } } = await supabase.auth.getSession()
+        if(mounted && session?.user){
+          setCurrentUser({
+            username: session.user.user_metadata?.user_name || session.user.email?.split('@')[0] || 'user',
+            photo: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.email}`,
+            email: session.user.email
+          })
+          setLoading(false)
+          return
+        }
+      }catch{}
+      try{
+        const match = document.cookie.match(/chitpix_session=([^;]+)/)
+        const sessionId = match?.[1]
+        if(sessionId){
           const res = await fetch(`/api/users/current?sessionId=${sessionId}`, {cache:"no-store"})
           const data = await res.json()
           if(mounted && data?.username){
             setCurrentUser({username: data.username, photo: data.photo || `https://i.pravatar.cc/150?u=${data.username}`, email: data.email})
+            setLoading(false)
             return
           }
-        }catch{}
-      }
-      for(let i=0; i<3; i++){
+        }
+      }catch{}
+      for(let i=0; i<2; i++){
+        await new Promise(r=>setTimeout(r, 800))
         try{
           const { data: { session } } = await supabase.auth.getSession()
           if(mounted && session?.user){
@@ -90,16 +103,16 @@ export default function Page(){
               photo: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.email}`,
               email: session.user.email
             })
+            setLoading(false)
             return
           }
-          await new Promise(r=>setTimeout(r, 700))
         }catch{}
       }
-      if(mounted) router.push("/login")
+      if(mounted){ setLoading(false); router.replace("/login") }
     }
     checkLogin()
     return ()=>{ mounted = false }
-  },[router])
+  },[router, supabase])
 
   useEffect(()=>{
     const loadR2Stories = async () => {
@@ -159,7 +172,7 @@ export default function Page(){
     setLoading(false)
   }
   useEffect(()=>{ fetchFeed() },[])
-    useEffect(()=>{
+  useEffect(()=>{
     const loadNotifs = async () => {
       try{
         const cur = await fetch(`/api/users/current?sessionId=${document.cookie.match(/chitpix_session=([^;]+)/)?.[1]}`,{cache:"no-store"}).then(r=>r.json()).catch(()=>({username:'knmahesh'}))
@@ -275,7 +288,8 @@ export default function Page(){
   }
   const handleRefresh = async () => { setRefreshing(true); await fetchFeed(); setRefreshing(false); showToast("Feed refreshed - R2 ✅") }
   const filtered = posts.filter((p:any)=>!hiddenPosts[p.id] && (search? (p.caption||"").toLowerCase().includes(search.toLowerCase()) : true))
-    return(
+
+  return(
     <div className="h-[100dvh] bg-white text-black overflow-hidden flex flex-col">
       <div className="flex justify-between items-center px-4 py-3 bg-white sticky top-0 z-20 border-b border-zinc-100 max-w-[470px] mx-auto w-full">
         <button onClick={handleTopPlusClick} className="w-9 h-9 bg-black text-white rounded-full flex items-center justify-center active:scale-90"><Plus size={20}/></button>
@@ -319,7 +333,6 @@ export default function Page(){
           const isActive = activeVideo===post.id
           return(
             <div key={post.id} className="bg-white border-b border-zinc-100">
-              {/* ✅ FIX 2 & 3 - ONLY USERNAME + FOLLOW - INSTA STYLE - CLICK = PROFILE */}
               <div className="flex justify-between items-center p-3">
                 <div className="flex items-center gap-2.5 cursor-pointer" onClick={()=>router.push(`/profile/${post.username}`)}>
                   <div className="w-8 h-8 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-pink-600">
@@ -336,36 +349,5 @@ export default function Page(){
                 {isVideo? (
                   <>
                     <video src={post.video_url} className="w-full h-full object-cover" autoPlay={isActive} loop muted={!isActive || muted[post.id]!==false} playsInline/>
-                    <button onClick={(e)=>{e.stopPropagation(); setMuted({...muted, [post.id]:!muted[post.id]})}} className="absolute bottom-3 right-3 bg-black/60 text-white w-8 h-8 rounded-full flex items-center justify-center">
-                      {isActive && muted[post.id]===false? <Volume2 size={16}/> : <VolumeX size={16}/>}
-                    </button>
-                  </>
-                ) : <img src={post.image_url||post.url} alt="post" className="w-full h-full object-cover" loading="lazy"/>}
-              </div>
-              <div className="px-3 py-3">
-                <div className="flex justify-between items-center">
-                  <div className="flex gap-4 items-center">
-                    <button onClick={()=>handleLike(post.id)} className="active:scale-125 transition"><Heart size={24} fill={isLiked?'red':'none'} stroke={isLiked?'red':'black'}/></button>
-                    <button onClick={()=>setShowComments(post.id)} className="active:scale-90"><MessageCircle size={24}/></button>
-                    <button onClick={()=>setShowShare(post.id)} className="active:scale-90"><Send size={24}/></button>
-                  </div>
-                  <button onClick={()=>setSaved({...saved, [post.id]:!isSaved})}><Bookmark size={24} fill={isSaved?'black':'none'}/></button>
-                </div>
-                <p className="font-bold text-[13px] mt-2">{(post.likes||0)+(isLiked?1:0)} likes</p>
-                <p className="text-[13px] mt-1"><b>{post.username}</b> {post.caption}</p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <BottomNav active="home" avatar={currentUser.photo} />
-
-      {toast ? (
-        <div className="fixed bottom-[88px] left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-full text-[12px] z-[200] flex items-center gap-2 shadow-lg">
-          <Sparkles size={12}/> {toast}
-        </div>
-      ) : null}
-    </div>
-  )
-    }
+                    <button onClick={(e)=>{e.stopPropagation(); setMuted({...muted, [post.id]:!muted[post.id]})}} className="absolute bottom-3 rig
+                    
