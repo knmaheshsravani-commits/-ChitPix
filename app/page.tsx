@@ -65,37 +65,40 @@ export default function Page(){
   const videoRefs = useRef<any>({})
   const feedRef = useRef<any>(null)
 
-    // ✅ FIX 1 - LOGIN FIX - DUAL AUTH - R2 + Google Both
+      // ✅ FINAL FIX - NO MORE LOOP - BULLETPROOF
   useEffect(()=>{
+    let mounted = true
     const checkLogin = async ()=>{
-      // 1. R2 session check
       const match = document.cookie.match(/chitpix_session=([^;]+)/)
       const sessionId = match?.[1]
       if(sessionId){
         try{
           const res = await fetch(`/api/users/current?sessionId=${sessionId}`, {cache:"no-store"})
           const data = await res.json()
-          if(data?.username){
+          if(mounted && data?.username){
             setCurrentUser({username: data.username, photo: data.photo || `https://i.pravatar.cc/150?u=${data.username}`, email: data.email})
             return
           }
         }catch{}
       }
-      // 2. Google session check - IDHI LEKA 2 SEC BUG VACHINDI!
-      try{
-        const { data: { session } } = await supabase.auth.getSession()
-        if(session?.user){
-          setCurrentUser({
-            username: session.user.user_metadata?.user_name || session.user.email?.split('@')[0] || 'user',
-            photo: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.email}`,
-            email: session.user.email
-          })
-          return
-        }
-      }catch{}
-      router.push("/login")
+      for(let i=0; i<3; i++){
+        try{
+          const { data: { session } } = await supabase.auth.getSession()
+          if(mounted && session?.user){
+            setCurrentUser({
+              username: session.user.user_metadata?.user_name || session.user.email?.split('@')[0] || 'user',
+              photo: session.user.user_metadata?.avatar_url || `https://i.pravatar.cc/150?u=${session.user.email}`,
+              email: session.user.email
+            })
+            return
+          }
+          await new Promise(r=>setTimeout(r, 700))
+        }catch{}
+      }
+      if(mounted) router.push("/login")
     }
     checkLogin()
+    return ()=>{ mounted = false }
   },[router])
 
   useEffect(()=>{
