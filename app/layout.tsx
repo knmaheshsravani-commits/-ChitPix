@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   verification: { google: "chitpix-owner-kn-mahesh" },
 };
 
-// FIX 1: Scroll ki lifetime working viewport
+// FIX 1: Scroll lifetime working + bottom red line fix - viewport
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -42,18 +42,28 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-// FIX 2: ZoomBlocker ni remove chesa - idi scroll ni champestundi
-// Pinch zoom mathrame block, scroll allow
+// FIX 2: ScrollFix - 100% scroll allow - old pinch blocker teesesa
 function ScrollFix() {
   return (
     <script
       dangerouslySetInnerHTML={{
         __html: `
-          // Allow scroll, block only pinch zoom
-          document.addEventListener('touchstart', function(e){
-            if(e.touches.length > 1){ e.preventDefault(); }
-          }, { passive: false });
-          // Remove double tap blocker - it was killing scroll
+          // Lifetime scroll fix - no blocking
+          (function(){
+            var html = document.documentElement;
+            var body = document.body;
+            html.style.overflowY = 'auto';
+            html.style.overflowX = 'hidden';
+            html.style.height = 'auto';
+            html.style.backgroundColor = '#080b14';
+            body.style.overflowY = 'auto';
+            body.style.overflowX = 'hidden';
+            body.style.height = 'auto';
+            body.style.backgroundColor = '#080b14';
+            body.style.position = 'relative';
+            // Allow all touch scroll
+            body.style.touchAction = 'pan-y';
+          })();
         `,
       }}
     />
@@ -108,7 +118,7 @@ function SeoSchemas() {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full" style={{ backgroundColor: "#080b14" }}>
-      <body className="bg-[#080b14] text-white antialiased min-h-screen w-full overflow-y-auto overflow-x-hidden overscroll-y-auto" style={{ WebkitOverflowScrolling: 'touch' } as any}>
+      <body className="bg-[#080b14] text-white antialiased min-h-screen w-full overflow-y-auto overflow-x-hidden" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' } as any}>
         <div className="max-w-[480px] mx-auto min-h-screen bg-[#080b14] relative">
           <SeoSchemas />
           {children}
