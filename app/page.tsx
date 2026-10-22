@@ -10,20 +10,20 @@ async function uploadToR2(file: File, folder: string) {
   return `${R2_URL}/${name}`
 }
 
-// 10 ICONS - SAME SIZE 24px - WORKING
+// FIXED: 10 ICONS - ALL SAME SIZE 26px - strokeWidth 2 - OKE SIZE
 const Icon = {
-  Heart: (p:any) => <svg width="24" height="24" viewBox="0 0 24 24" fill={p.filled?"#ff3040":"none"} stroke={p.filled?"#ff3040":"black"} strokeWidth="1.8"><path d="M12 20.5s-6.5-4.2-8.5-8.2A5 5 0 0 1 8 4a4.5 4.5 0 0 1 4 2A4.5 4.5 0 0 1 16 4a5 5 0 0 1 4.5 8.3C18.5 16.3 12 20.5 12 20.5z"/></svg>,
-  Comment: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H9l-4 2 1-4A8.5 8.5 0 0 1 21 11.5z"/></svg>,
-  Share: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>,
-  Download: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M12 3v13M5 16l7 5 7-5M3 21h18"/></svg>,
-  Save: (p:any) => <svg width="24" height="24" viewBox="0 0 24 24" fill={p.filled?"black":"none"} stroke="black" strokeWidth="1.8"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>,
-  Home: (p:any) => <svg width="24" height="24" viewBox="0 0 24 24" fill={p.active?"black":"none"} stroke="black" strokeWidth="1.8"><path d="M12 3L4 9v11h5v-6h6v6h5V9l-8-6z"/></svg>,
-  Reels: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M10 8l6 4-6 4V8z"/></svg>,
-  DM: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>,
-  Search: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><circle cx="11" cy="11" r="5"/><path d="M21 21l-4-4"/></svg>,
-  Profile: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><circle cx="12" cy="7" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>,
+  Heart: (p:any) => <svg width="26" height="26" viewBox="0 0 24 24" fill={p.filled?"#ff3040":"none"} stroke={p.filled?"#ff3040":"black"} strokeWidth="2"><path d="M12 20.5s-6.5-4.2-8.5-8.2A5 5 0 0 1 8 4a4.5 4.5 0 0 1 4 2A4.5 4.5 0 0 1 16 4a5 5 0 0 1 4.5 8.3C18.5 16.3 12 20.5 12 20.5z"/></svg>,
+  Comment: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H9l-4 2 1-4A8.5 8.5 0 0 1 21 11.5z"/></svg>,
+  Share: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>,
+  Download: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><path d="M12 3v13M5 16l7 5 7-5M3 21h18"/></svg>,
+  Save: (p:any) => <svg width="26" height="26" viewBox="0 0 24 24" fill={p.filled?"black":"none"} stroke="black" strokeWidth="2"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>,
+  Home: (p:any) => <svg width="26" height="26" viewBox="0 0 24 24" fill={p.active?"black":"none"} stroke="black" strokeWidth="2"><path d="M12 3L4 9v11h5v-6h6v6h5V9l-8-6z"/></svg>,
+  Reels: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M10 8l6 4-6 4V8z"/></svg>,
+  DM: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>,
+  Search: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><circle cx="11" cy="11" r="5"/><path d="M21 21l-4-4"/></svg>,
+  Profile: () => <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M4 20a8 8 0 0 1 16 0"/></svg>,
   Dots: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="black"><circle cx="12" cy="12" r="1.6"/><circle cx="19.5" cy="12" r="1.6"/><circle cx="4.5" cy="12" r="1.6"/></svg>,
-  Add: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 5v14M5 12h14" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>,
+  Add: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>,
 }
 
 type Post = { id:string; user:string; location:string; imageUrl:string; likes:number; liked:boolean; saved:boolean; followed:boolean; comments:string[]; shares:number }
@@ -62,20 +62,17 @@ export default function HomePage(){
   const downloadPost=async(url:string)=>{const a=document.createElement('a');a.href=url;a.download='chitpix.jpg';a.target='_blank';a.click()}
   const sharePost=async(p:Post)=>{if(navigator.share){try{await navigator.share({title:'ChitPix',url:p.imageUrl})}catch{}}else{navigator.clipboard.writeText(p.imageUrl);alert('Link copied - Working!')} setPosts(ps=>ps.map(x=>x.id===p.id?{...x,shares:x.shares+1}:x))}
   const deletePost=(id:string)=>{setPosts(ps=>ps.filter(p=>p.id!==id));setShowOptions(null)}
-
   const filtered=posts.filter(p=>p.user.toLowerCase().includes(searchQ.toLowerCase()))
 
   return(
     <div className="bg-white text-black w-full min-h-screen">
       <div className="max-w-[480px] mx-auto bg-white min-h-screen pb-[80px]">
-        {/* TOP LOGO - CHITPIX */}
         <header className="sticky top-0 z-20 bg-white p-3 flex justify-between items-center border-b border-black/5">
           <h1 className="text-[26px] font-black tracking-tight">Chit<span className="text-blue-500">Pix</span>.com</h1>
           <div className="flex items-center gap-3"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div><span className="text-[11px] bg-black/5 px-2 py-1 rounded-full">{posts.length} posts</span></div>
         </header>
         {uploading && <div className="mx-3 mt-2 bg-blue-50 text-blue-600 p-2 rounded text-sm">Uploading to R2...</div>}
 
-        {/* STORIES - WORKING */}
         <div className="flex gap-4 p-3 overflow-x-auto bg-white border-b border-black/5">
           <label className="flex flex-col items-center gap-1 shrink-0 cursor-pointer">
             <div className="w-[64px] h-[64px] rounded-full bg-black flex items-center justify-center relative border-2 border-dashed border-black/20"><Icon.Add/><div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center"><Icon.Add/></div></div>
@@ -87,7 +84,6 @@ export default function HomePage(){
           {[{n:'p_v_n_18'},{n:'_mr_sand..'},{n:'abhicha'}].map((s,i)=><div key={i} className="flex flex-col items-center gap-1 shrink-0"><div className="w-[64px] h-[64px] rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 to-pink-600"><img src={`https://picsum.photos/100?${i}`} className="w-full h-full rounded-full border-2 border-white object-cover"/></div><span className="text-[11px]">{s.n}</span></div>)}
         </div>
 
-        {/* POSTS */}
         <div className="flex flex-col">
           {filtered.map((post)=>(
             <div key={post.id} className="bg-white border-b border-black/5">
@@ -112,15 +108,15 @@ export default function HomePage(){
 
               <div className="flex justify-center gap-1 py-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div><div className="w-1 h-1 bg-black/20 rounded-full"></div><div className="w-1 h-1 bg-black/20 rounded-full"></div></div>
 
-              {/* POST 5 ICONS - SAME SIZE 24px - ALL WORKING */}
+              {/* FIXED POST 5 ICONS - ALL SAME SIZE 26px - SIMPLY WORKING */}
               <div className="px-3 pb-1 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <button onClick={()=>toggleLike(post.id)} className="flex items-center gap-1.5"><Icon.Heart filled={post.liked}/><span className="text-[15px] font-medium">{post.likes}</span></button>
-                  <button onClick={()=>setShowComments(post.id)} className="flex items-center gap-1.5"><Icon.Comment/><span className="text-[15px] font-medium">7</span></button>
-                  <button onClick={()=>sharePost(post)} className="flex items-center gap-1.5"><Icon.Share/><span className="text-[15px] font-medium">{post.shares}</span></button>
-                  <button onClick={()=>downloadPost(post.imageUrl)}><Icon.Download/></button>
+                <div className="flex items-center gap-5">
+                  <button onClick={()=>toggleLike(post.id)} className="flex items-center gap-1"><Icon.Heart filled={post.liked}/><span className="text-[15px] font-medium">{post.likes}</span></button>
+                  <button onClick={()=>setShowComments(post.id)} className="flex items-center gap-1"><Icon.Comment/><span className="text-[15px] font-medium">7</span></button>
+                  <button onClick={()=>sharePost(post)} className="flex items-center gap-1"><Icon.Share/><span className="text-[15px] font-medium">{post.shares}</span></button>
+                  <button onClick={()=>downloadPost(post.imageUrl)} className="flex items-center justify-center"><Icon.Download/></button>
                 </div>
-                <button onClick={()=>toggleSave(post.id)}><Icon.Save filled={post.saved}/></button>
+                <button onClick={()=>toggleSave(post.id)} className="flex items-center justify-center"><Icon.Save filled={post.saved}/></button>
               </div>
 
               <div className="px-3 pb-3">
@@ -132,17 +128,16 @@ export default function HomePage(){
           ))}
         </div>
 
-                {/* BOTTOM 5 ICONS - FIXED DOWN - RED LINE REMOVED - KINDHAKI */}
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-black/10 flex items-center justify-around z-50" style={{ height: '82px', paddingBottom: '18px', paddingTop: '10px' }}>
-          <button onClick={()=>window.scrollTo({top:0,behavior:'smooth'})} className="p-3 bg-black/10 rounded-full"><Icon.Home active={true}/></button>
-          <button onClick={()=>setShowReels(true)} className="p-3"><Icon.Reels/></button>
-          <button onClick={()=>setShowDM(true)} className="p-3 relative"><Icon.DM/><span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span></button>
-          <button onClick={()=>setShowSearch(true)} className="p-3"><Icon.Search/></button>
-          <button onClick={()=>setShowProfile(true)} className="p-3 relative"><img src="https://picsum.photos/100?1" className="w-7 h-7 rounded-full"/><span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span></button>
+        {/* FIXED BOTTOM 5 ICONS - NO BIG BORDER - ALL SAME SIZE 26px - SIMPLE */}
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-black/10 flex items-center justify-around z-50" style={{ height: '60px' }}>
+          <button onClick={()=>window.scrollTo({top:0,behavior:'smooth'})} className="w-11 h-11 flex items-center justify-center"><Icon.Home active={true}/></button>
+          <button onClick={()=>setShowReels(true)} className="w-11 h-11 flex items-center justify-center"><Icon.Reels/></button>
+          <button onClick={()=>setShowDM(true)} className="w-11 h-11 flex items-center justify-center relative"><Icon.DM/><span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span></button>
+          <button onClick={()=>setShowSearch(true)} className="w-11 h-11 flex items-center justify-center"><Icon.Search/></button>
+          <button onClick={()=>setShowProfile(true)} className="w-11 h-11 flex items-center justify-center relative"><img src="https://picsum.photos/100?1" className="w-[26px] h-[26px] rounded-full object-cover"/><span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span></button>
         </nav>
-        <div style={{ height: '90px' }}></div>
+        <div style={{ height: '60px' }}></div>
         
-        {/* ALL MODALS WORKING */}
         {activeStory && <div className="fixed inset-0 z-50 bg-black flex flex-col"><div className="p-4 flex justify-between text-white"><span>Story - Working</span><button onClick={()=>setActiveStory(null)} className="text-white">X</button></div><img src={activeStory.imageUrl} className="flex-1 object-contain"/></div>}
         {showComments && <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"><div className="bg-white w-full max-w-[480px] rounded-t-[16px] max-h-[70vh] flex flex-col"><div className="p-4 flex justify-between border-b"><b>Comments - Working</b><button onClick={()=>setShowComments(null)}>X</button></div><div className="flex-1 overflow-auto p-4 space-y-2">{posts.find(p=>p.id===showComments)?.comments.map((c,i)=><div key={i} className="text-sm bg-black/5 p-2 rounded">{c}</div>)}<div className="text-sm text-black/40">No more comments</div></div><div className="p-3 flex gap-2 border-t"><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add comment..." className="flex-1 bg-black/5 rounded-full px-4 py-2 text-sm outline-none"/><button onClick={()=>addComment(showComments)} className="text-blue-500 font-bold px-3">Post</button></div></div></div>}
         {showSearch && <div className="fixed inset-0 z-40 bg-white p-4"><div className="flex gap-2"><input autoFocus value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="Search - Working" className="flex-1 bg-black/5 rounded-full px-4 py-3 text-sm outline-none"/><button onClick={()=>setShowSearch(false)} className="px-4 py-2 bg-black/10 rounded-full">Close</button></div><p className="mt-4 text-sm">{filtered.length} results - Working</p></div>}
@@ -152,4 +147,4 @@ export default function HomePage(){
       </div>
     </div>
   )
-    }
+                                                                                                                            }
