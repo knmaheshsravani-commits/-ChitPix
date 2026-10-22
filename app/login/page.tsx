@@ -1,42 +1,59 @@
 "use client"
-import { useState } from "react"
-import { Crown } from "lucide-react"
+import { useState, useEffect } from "react"
 import { supabase } from "../../lib/supabase"
+import { useRouter } from "next/navigation"
 
-export default function Login(){
+export default function LoginPage() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
 
-  const googleLogin = async () => {
+  // AUTO REDIRECT - already logged in ante direct home ki
+  useEffect(() => {
+    const check = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        router.replace("/")
+      }
+    }
+    check()
+  }, [router])
+
+  const handleGmailLogin = async () => {
     setLoading(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: 'select_account' } // direct gmail chooser
       }
     })
-    if(error){
-      alert("Google login fail: " + error.message)
+    if (error) {
+      alert(error.message)
       setLoading(false)
     }
   }
 
-  return(
-    <div className="min-h-[100dvh] bg-white max-w-[470px] mx-auto flex flex-col items-center px-6 py-10">
-      <h1 className="text-[36px] font-black flex items-center gap-2">ChitPix <Crown className="text-amber-500"/></h1>
-      <p className="text-[12px] text-zinc-500 mt-1">R2 Permanent • Gmail Only</p>
-
-      <div className="w-full mt-10 space-y-4">
-        <div className="bg-zinc-50 border border-zinc-200 rounded-2xl p-4">
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
+      <div className="w-full max-w-[360px] text-center">
+        <h1 className="text-[32px] font-extrabold tracking-tight">ChitPix <span className="text-[10px] bg-black text-white px-2 py-1 rounded-full ml-1">R2</span></h1>
+        <p className="text-[13px] text-zinc-500 mt-2">R2 Permanent • Gmail Only</p>
+        
+        <div className="mt-10 p-4 border rounded-2xl bg-zinc-50">
           <p className="text-[13px] font-bold">Username + Gmail Only</p>
-          <p className="text-[11px] text-zinc-500 mt-1">Login ayyaka ne Gmail nundi username auto-create avthadi. Ex: knmaheshsravani@gmail.com → knmaheshsravani</p>
+          <p className="text-[12px] text-zinc-500 mt-1">knmaheshsravani@gmail.com → knmaheshsravani</p>
+          <p className="text-[11px] text-zinc-400 mt-2">Only Gmail • No OTP • No Mobile • R2 Permanent • Username Auto</p>
         </div>
 
-        <button onClick={googleLogin} disabled={loading} className="w-full bg-black text-white py-4 rounded-full font-bold text-[14px] flex items-center justify-center gap-2 active:scale-95">
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5 bg-white rounded-full p-0.5"/> 
-          {loading ? "Redirecting..." : "Continue with Gmail"}
+        <button 
+          onClick={handleGmailLogin}
+          disabled={loading}
+          className="mt-8 w-full h-[52px] bg-black text-white rounded-full font-bold text-[15px] flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {loading ? "Opening Gmail..." : "Continue with Gmail"}
         </button>
-
-        <p className="text-[10px] text-zinc-400 text-center mt-8">🔒 Only Gmail • No OTP • No Mobile • R2 Permanent • Username Auto</p>
+        
+        <p className="text-[11px] text-zinc-400 mt-4">Direct Gmail • Auto login next time</p>
       </div>
     </div>
   )
