@@ -2,32 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
-  touch-action: manipulation;
-  overscroll-behavior: none;
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: transparent;
-  background: #fff;
-  color: #000;
+html {
+  height: auto !important;
+  min-height: 100%;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #080b14;
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  height: auto !important;
+  min-height: 100vh;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #080b14;
+  color: #ffffff;
   margin: 0;
   padding: 0;
   width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y !important;
+  overscroll-behavior-y: auto !important;
+  position: relative !important;
 }
 
 * {
   scrollbar-width: none;
-  touch-action: manipulation;
+  -ms-overflow-style: none;
 }
 
-*::-webkit-scrollbar { display: none; }
+*::-webkit-scrollbar { 
+  display: none; 
+}
 
-img, video {
-  touch-action: manipulation;
+img, video { 
+  max-width: 100%; 
   -webkit-user-drag: none;
   user-select: none;
-  max-width: 100%;
 }
 
-input, textarea { font-size: 16px!important; }
+input, textarea { 
+  font-size: 16px !important; 
+}
