@@ -33,6 +33,8 @@ export default function ReelsPage(){
   const [progress, setProgress] = useState(0)
   const [isPlaying, setIsPlaying] = useState(true)
   const [commentText, setCommentText] = useState("")
+  const [commentLikes, setCommentLikes] = useState<Record<number, boolean>>({})
+  const [replyTo, setReplyTo] = useState<string | null>(null)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [isLongPressing, setIsLongPressing] = useState(false)
   const [comments, setComments] = useState<any[]>([
@@ -225,7 +227,11 @@ export default function ReelsPage(){
     setCommentText("")
     fetch('/api/comment', { method: 'POST', body: JSON.stringify({ postId: posts[currentIndex]?.id, text: commentText }) }).catch(()=>{})
   }
-
+    const toggleCommentLike = (id: number) => {
+    const isLiked = commentLikes[id]
+    setCommentLikes(p => ({ ...p, [id]: !isLiked }))
+    setComments(prev => prev.map(c => c.id === id ? { ...c, likes: isLiked ? c.likes - 1 : c.likes + 1 } : c))
+    }
   // FEATURE 26: LONG PRESS 2X SPEED
   const handleLongPressStart = () => {
     longPressTimer.current = setTimeout(() => {
@@ -447,49 +453,65 @@ export default function ReelsPage(){
         })}
       </div>
 
-      {/* FEATURE 7 & 8: COMMENTS DRAWER - DIRECT OPEN */}
+            {/* FEATURE 7 & 8: COMMENTS DRAWER - DIRECT OPEN */}
       {showComments && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm" onClick={() => setShowComments(false)}>
-          <div className="bg-white rounded-t-[20px] h-[70%] flex flex-col animate-slideUp" onClick={e => e.stopPropagation()}>
+        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60" onClick={()=>setShowComments(false)}>
+          <div className="bg-white rounded-t-[20px] h-[70%] flex flex-col" onClick={e=>e.stopPropagation()}>
             <div className="p-4 border-b border-neutral-100">
               <div className="w-10 h-1 bg-neutral-300 rounded-full mx-auto mb-3" />
               <h3 className="font-bold text-center text-[16px]">{comments.length} Comments</h3>
+              {replyTo && <p className="text-[11px] text-blue-600 mt-2">Replying to {replyTo} <button onClick={()=>{setReplyTo(null); setCommentText("")}} className="ml-2 text-black font-bold">✕ Cancel</button></p>}
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {comments.map((c) => (
+              {comments.map((c:any)=>(
                 <div key={c.id} className="flex gap-3">
                   <img src={c.avatar} className="w-8 h-8 rounded-full" alt="" />
                   <div className="flex-1">
                     <p className="text-[13px]"><span className="font-bold">{c.user}</span> <span className="text-neutral-500 text-[11px] ml-2">{c.time}</span></p>
                     <p className="text-[13px] mt-0.5">{c.text}</p>
-                    <p className="text-[11px] text-neutral-500 mt-1">Like • Reply</p>
+                    <div className="flex gap-4 mt-1">
+                      <button onClick={()=>toggleCommentLike(c.id)} className={`text-[12px] ${commentLikes[c.id]?'text-red-500 font-bold':'text-neutral-500'}`}>{commentLikes[c.id]?'❤️':'🤍'} {c.likes} Like</button>
+                      <button onClick={()=>{ setReplyTo(c.user); setCommentText(`@${c.user} `) }} className="text-[11px] text-neutral-500 font-bold">Reply</button>
+                    </div>
                   </div>
-                  <button className="text-[12px]">❤️ {c.likes}</button>
                 </div>
               ))}
             </div>
             <div className="p-3 border-t flex gap-2 items-center bg-white">
               <img src="https://i.pravatar.cc/100?u=you" className="w-8 h-8 rounded-full" alt="" />
-              <input value={commentText} onChange={e => setCommentText(e.target.value)} onKeyDown={e => e.key==='Enter' && postComment()} placeholder="Add a comment..." className="flex-1 border border-neutral-200 rounded-full px-4 py-2 text-[13px] outline-none focus:border-black" />
+              <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=> e.key==='Enter' && postComment()} placeholder={replyTo ? `Reply to ${replyTo}...` : "Add a comment..."} className="flex-1 border border-neutral-200 rounded-full px-4 py-2 text-[13px] outline-none focus:border-black" />
               <button onClick={postComment} className="text-blue-600 font-bold text-[13px] px-2">Post</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* FEATURE 9,10,11,12: SHARE SHEET - DIRECT OPEN */}
+            {/* FEATURE 9,10,11,12: SHARE SHEET - DIRECT OPEN */}
       {showShare && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm" onClick={() => setShowShare(false)}>
-          <div className="bg-white rounded-t-[20px] p-5 animate-slideUp" onClick={e => e.stopPropagation()}>
+        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm" onClick={()=>setShowShare(false)}>
+          <div className="bg-white rounded-t-[20px] p-5 animate-slideUp" onClick={e=>e.stopPropagation()}>
             <div className="w-10 h-1 bg-neutral-300 rounded-full mx-auto mb-4" />
             <h3 className="font-bold mb-5 text-center">Share</h3>
             <div className="grid grid-cols-4 gap-4">
-              <button onClick={() => doShare('whatsapp')} className="flex flex-col items-center gap-2"><div className="w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center text-white font-bold text-xl">W</div><span className="text-[11px]">WhatsApp</span></button>
-              <button onClick={() => doShare('copy')} className="flex flex-col items-center gap-2"><div className="w-14 h-14 bg-black rounded-full flex items-center justify-center text-white">🔗</div><span className="text-[11px]">Copy link</span></button>
-              <button onClick={() => doShare('download')} className="flex flex-col items-center gap-2"><div className="w-14 h-14 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl">↓</div><span className="text-[11px]">Download</span></button>
-              <button onClick={() => doShare('facebook')} className="flex flex-col items-center gap-2"><div className="w-14 h-14 bg-[#1877F2] rounded-full flex items-center justify-center text-white font-bold">f</div><span className="text-[11px]">Facebook</span></button>
+              <button onClick={() => doShare('whatsapp')} className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-[20px]">💬</div>
+                <span className="text-[11px] font-medium">WhatsApp</span>
+              </button>
+              <button onClick={() => doShare('copy')} className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 bg-neutral-900 rounded-full flex items-center justify-center text-white text-[20px]">🔗</div>
+                <span className="text-[11px] font-medium">Copy Link</span>
+              </button>
+              <button onClick={() => doShare('download')} className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-[20px]">⬇️</div>
+                <span className="text-[11px] font-medium">Download</span>
+              </button>
+              <button onClick={() => doShare('facebook')} className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-[20px]">f</div>
+                <span className="text-[11px] font-medium">Facebook</span>
+              </button>
             </div>
-            <button onClick={() => setShowShare(false)} className="w-full mt-6 py-3 rounded-full bg-neutral-100 font-semibold text-[14px]">Cancel</button>
+            <button onClick={()=> doShare('native')} className="w-full mt-6 py-3 rounded-full bg-neutral-100 font-bold text-[14px]">More Options 📤</button>
+            <button onClick={() => setShowShare(false)} className="w-full mt-2 py-3 rounded-full bg-black text-white font-bold text-[14px]">Close</button>
           </div>
         </div>
       )}
