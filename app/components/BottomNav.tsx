@@ -4,69 +4,68 @@ import { usePathname } from 'next/navigation'
 
 export default function BottomNav({activeTab,setActiveTab}:any){
   const pathname = usePathname()
-  
+  const isHome = activeTab === 'home' || pathname === '/'
+  const isReels = pathname === '/reels'
+  const isSearch = activeTab === 'search'
+  const isDM = pathname === '/messages'
+  const isProfile = pathname === '/profile'
+
+  const IconWrap = ({active, children, onClick, href}:any)=>{
+    const content = (
+      <div className={`flex items-center justify-center w-[56px] h-[36px] rounded-full transition ${active ? 'bg-[#f2f2f2]' : 'bg-transparent'}`}>
+        {children}
+      </div>
+    )
+    if(href){
+      return <Link href={href} className="flex items-center justify-center">{content}</Link>
+    }
+    return <button onClick={onClick} className="flex items-center justify-center">{content}</button>
+  }
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 flex justify-around items-center max-w-[480px] mx-auto z-30 h-[60px] px-2">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-neutral-200 flex justify-around items-center h-[56px] z-[9999] pb-[2px]">
       
       {/* 1. HOME */}
-      <button 
-        onClick={()=>setActiveTab && setActiveTab('home')} 
-        className="flex items-center justify-center w-[48px] h-[48px]"
-        aria-label="Home"
-      >
-        {activeTab==='home' ? (
-          <svg aria-label="Home" height="24" width="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12.001.4a5.39 5.39 0 0 0-3.71 1.43L1.9 8.06A1 1 0 0 0 2 9.5V19a2 2 0 0 0 2 2h5V13h4v8h5a2 2 0 0 0 2-2V9.5a1 1 0 0 0-.1-.44L15.71 1.83A5.39 5.39 0 0 0 12 0Zm0 1.2a4.18 4.18 0 0 1 2.89 1.12l6.4 6.23V19a1 1 0 0 1-1 1h-4v-7H8v7H4a1 1 0 0 1-1-1V8.94l6.4-6.23A4.18 4.18 0 0 1 12.001 1.6Z"/></svg>
+      <IconWrap active={isHome} onClick={()=>setActiveTab?.('home')}>
+        {isHome ? (
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="black"><path d="M12.004 3.004L4 9.5V20H9V14H15V20H20V9.5L12.004 3.004Z"/></svg>
         ) : (
-          <svg aria-label="Home" height="24" width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9.005 16.175H4.987V12.02L12 4.5l7.013 7.52v4.155h-4.015v-4.04h-6Z"/><path d="M12 21V13"/></svg>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><path d="M9 21V13H15V21"/><path d="M4 10L12 3L20 10V20H4V10Z"/></svg>
         )}
-      </button>
+      </IconWrap>
 
-      {/* 2. SEARCH */}
-      <button 
-        onClick={()=>setActiveTab && setActiveTab('search')} 
-        className="flex items-center justify-center w-[48px] h-[48px]"
-        aria-label="Search"
-      >
-        <svg aria-label="Search" height="24" width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M15.5 15.5 19 19"/></svg>
-      </button>
-
-      {/* 3. DM - MESSAGES */}
-      <Link 
-        href="/messages" 
-        className="flex items-center justify-center w-[48px] h-[48px] relative"
-        aria-label="Messages"
-      >
-        <svg aria-label="Direct" height="24" width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 10.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7"/><path d="m16 19 3 3 3-3"/><path d="M18 11v6"/></svg>
-      </Link>
-
-      {/* 4. REELS */}
-      <Link 
-        href="/reels" 
-        className="flex items-center justify-center w-[48px] h-[48px]"
-        aria-label="Reels"
-      >
-        {pathname === '/reels' ? (
-          <svg aria-label="Reels" height="24" width="24" viewBox="0 0 24 24" fill="currentColor"><path d="M14.717 0H9.283A2.28 2.28 0 0 0 7 2.283V21.72A2.28 2.28 0 0 0 9.283 24h5.434A2.28 2.28 0 0 0 17 21.72V2.283A2.28 2.28 0 0 0 14.717 0ZM13 20H11V4h2Z"/></svg>
+      {/* 2. REELS */}
+      <IconWrap active={isReels} href="/reels">
+        {isReels ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="black"><path d="M3 5C3 3.34315 4.34315 2 6 2H18C19.6569 2 21 3.34315 21 5V19C21 20.6569 19.6569 22 18 22H6C4.34315 22 3 20.6569 3 19V5ZM9.5 8.5V15.5L15 12L9.5 8.5Z"/></svg>
         ) : (
-          <svg aria-label="Reels" height="24" width="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M9.5 9.5v5L14 12z" fill="currentColor" stroke="none"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M10 8.5V15.5L14.5 12L10 8.5Z" strokeLinejoin="round"/></svg>
         )}
-      </Link>
+      </IconWrap>
+
+      {/* 3. DM */}
+      <IconWrap active={isDM} href="/messages">
+        <div className="relative">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M22 3L11.5 13"/><path d="M22 3L15 22L11.5 13L2 9L22 3Z"/></svg>
+          <span className="absolute -top-1 -right-1 w-[8px] h-[8px] bg-red-500 rounded-full border border-white"></span>
+        </div>
+      </IconWrap>
+
+      {/* 4. SEARCH */}
+      <IconWrap active={isSearch} onClick={()=>setActiveTab?.('search')}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8"><circle cx="11" cy="11" r="6"/><path d="M16 16L20 20"/></svg>
+      </IconWrap>
 
       {/* 5. PROFILE */}
-      <Link 
-        href="/profile" 
-        className="flex items-center justify-center w-[48px] h-[48px]"
-        aria-label="Profile"
-      >
-        <div className={`w-[28px] h-[28px] rounded-full overflow-hidden ${pathname === '/profile' ? 'ring-2 ring-black ring-offset-1' : 'border border-neutral-300'}`}>
-          <img 
-            src="https://picsum.photos/seed/profile/100/100" 
-            alt="Profile" 
-            className="w-full h-full object-cover"
-          />
+      <IconWrap active={isProfile} href="/profile">
+        <div className="relative">
+          <div className={`w-[26px] h-[26px] rounded-full overflow-hidden ${isProfile ? 'ring-[1.5px] ring-black' : ''}`}>
+            <img src="https://i.pravatar.cc/100?img=5" alt="profile" className="w-full h-full object-cover" />
+          </div>
+          <span className="absolute -bottom-0.5 -right-0.5 w-[9px] h-[9px] bg-red-500 rounded-full border-2 border-white"></span>
         </div>
-      </Link>
+      </IconWrap>
 
-    </div>
+    </nav>
   )
 }
