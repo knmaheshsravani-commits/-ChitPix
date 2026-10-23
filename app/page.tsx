@@ -1,5 +1,4 @@
 "use client"
-export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
 import Header from './components/Header'
@@ -13,7 +12,7 @@ export default function HomePage(){
   const [searchQ,setSearchQ]=useState('')
 
   useEffect(()=>{
-    fetch('/api/posts?limit=10').then(r=>r.json()).then(d=>setPosts(d.posts||[]))
+    fetch('/api/posts?limit=64').then(r=>r.json()).then(d=>setPosts(d.posts||[]))
   },[])
 
   const filtered = posts.filter(p=> 
