@@ -37,6 +37,9 @@ export default function ReelsPage(){
   const [replyTo, setReplyTo] = useState<string | null>(null)
   const [playbackRate, setPlaybackRate] = useState(1)
   const [isLongPressing, setIsLongPressing] = useState(false)
+  const [sortBy, setSortBy] = useState<'top' | 'new'>('new')
+  const [pinnedId, setPinnedId] = useState<number | null>(null)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [comments, setComments] = useState<any[]>([
     { id: 1, user: 'user1', avatar: 'https://i.pravatar.cc/100?u=user1', text: '🔥🔥 ChitPix is fire bro!', likes: 12, time: '2h' },
     { id: 2, user: 'knmahesh', avatar: 'https://i.pravatar.cc/100?u=knmahesh', text: 'Thanks bro! R2 300MB support added 🚀', likes: 5, time: '1h' },
@@ -453,68 +456,119 @@ export default function ReelsPage(){
         })}
       </div>
 
-            {/* FEATURE 7 & 8: COMMENTS DRAWER - DIRECT OPEN */}
-      {showComments && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60" onClick={()=>setShowComments(false)}>
-          <div className="bg-white rounded-t-[20px] h-[70%] flex flex-col" onClick={e=>e.stopPropagation()}>
-            <div className="p-4 border-b border-neutral-100">
-              <div className="w-10 h-1 bg-neutral-300 rounded-full mx-auto mb-3" />
-              <h3 className="font-bold text-center text-[16px]">{comments.length} Comments</h3>
-              {replyTo && <p className="text-[11px] text-blue-600 mt-2">Replying to {replyTo} <button onClick={()=>{setReplyTo(null); setCommentText("")}} className="ml-2 text-black font-bold">✕ Cancel</button></p>}
+                {/* FEATURE 7 & 8: COMMENTS DRAWER - 10 FUTURES */}
+    {showComments && (
+      <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60" onClick={()=>setShowComments(false)}>
+        <div className="bg-white rounded-t-[20px] h-[76%] flex flex-col" onClick={e=>e.stopPropagation()}>
+          <div className="p-4 border-b border-neutral-100">
+            <div className="w-10 h-1 bg-neutral-300 rounded-full mx-auto mb-3" />
+            <h3 className="font-bold text-center text-[16px] text-black">{comments.length} Comments</h3>
+            {replyTo && <p className="text-[11px] text-blue-600 mt-2 text-center">Replying to {replyTo} <button onClick={()=>{setReplyTo(null); setCommentText("")}} className="ml-2 font-bold text-black">✕ Cancel</button></p>}
+            {/* SORT */}
+            <div className="flex gap-2 mt-3 justify-center">
+              <button onClick={()=>setSortBy('top')} className={`px-4 py-1 rounded-full text-[11px] font-bold ${sortBy==='top'?'bg-black text-white':'bg-neutral-100 text-black'}`}>🔝 Top</button>
+              <button onClick={()=>setSortBy('new')} className={`px-4 py-1 rounded-full text-[11px] font-bold ${sortBy==='new'?'bg-black text-white':'bg-neutral-100 text-black'}`}>✨ Newest</button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {comments.map((c:any)=>(
-                <div key={c.id} className="flex gap-3">
-                  <img src={c.avatar} className="w-8 h-8 rounded-full" alt="" />
-                  <div className="flex-1">
-                    <p className="text-[13px]"><span className="font-bold">{c.user}</span> <span className="text-neutral-500 text-[11px] ml-2">{c.time}</span></p>
-                    <p className="text-[13px] mt-0.5">{c.text}</p>
-                    <div className="flex gap-4 mt-1">
-                      <button onClick={()=>toggleCommentLike(c.id)} className={`text-[12px] ${commentLikes[c.id]?'text-red-500 font-bold':'text-neutral-500'}`}>{commentLikes[c.id]?'❤️':'🤍'} {c.likes} Like</button>
-                      <button onClick={()=>{ setReplyTo(c.user); setCommentText(`@${c.user} `) }} className="text-[11px] text-neutral-500 font-bold">Reply</button>
-                    </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-4">
+            {comments
+              .sort((a:any,b:any)=>{
+                if(pinnedId===a.id) return -1
+                if(pinnedId===b.id) return 1
+                return sortBy==='top' ? b.likes - a.likes : b.id - a.id
+              })
+              .map((c:any)=>(
+              <div key={c.id} className={`flex gap-3 ${pinnedId===c.id?'bg-yellow-50 p-2 rounded-xl':''}`}>
+                <img src={c.avatar} className="w-8 h-8 rounded-full" alt="" />
+                <div className="flex-1">
+                  <p className="text-[13px] text-black"><span className="font-bold">{c.user}</span> {pinnedId===c.id && <span className="ml-2 text-[9px] bg-black text-white px-2 py-0.5 rounded-full">📌 PINNED</span>} <span className="text-neutral-400 text-[11px] ml-2">{c.time}</span></p>
+                  <p className="text-[13px] mt-0.5 text-black">{c.text}</p>
+                  <div className="flex gap-3 mt-2 items-center flex-wrap">
+                    <button onClick={()=>toggleCommentLike(c.id)} className={`text-[12px] ${commentLikes[c.id]?'text-red-500 font-bold':'text-neutral-500'}`}>{commentLikes[c.id]?'❤️':'🤍'} {c.likes}</button>
+                    <button onClick={()=>{setReplyTo(c.user); setCommentText(`@${c.user} `)}} className="text-[12px] font-bold text-neutral-500">Reply</button>
+                    <span className="flex gap-1">{['❤️','😂','🔥','😍'].map(em=><button key={em} onClick={()=>setCommentText(p=>p+em)} className="text-[13px]">{em}</button>)}</span>
+                    <button onClick={()=>setPinnedId(pinnedId===c.id?null:c.id)} className="text-[11px]">📌</button>
+                    <button onClick={()=>{navigator.clipboard.writeText(c.text); alert('Copied!')}} className="text-[11px] text-neutral-400">Copy</button>
+                    <button onClick={()=>setComments(prev=>prev.filter((x:any)=>x.id!==c.id))} className="text-[11px] text-red-400">Delete</button>
                   </div>
                 </div>
-              ))}
-            </div>
-            <div className="p-3 border-t flex gap-2 items-center bg-white">
-              <img src="https://i.pravatar.cc/100?u=you" className="w-8 h-8 rounded-full" alt="" />
-              <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=> e.key==='Enter' && postComment()} placeholder={replyTo ? `Reply to ${replyTo}...` : "Add a comment..."} className="flex-1 border border-neutral-200 rounded-full px-4 py-2 text-[13px] outline-none focus:border-black" />
-              <button onClick={postComment} className="text-blue-600 font-bold text-[13px] px-2">Post</button>
-            </div>
+              </div>
+            ))}
           </div>
+          <div className="p-3 border-t flex gap-2 items-center bg-white pb-7">
+            <button onClick={()=>setShowEmojiPicker(!showEmojiPicker)} className="text-[22px]">😀</button>
+            <img src="https://i.pravatar.cc/100?u=you" className="w-8 h-8 rounded-full" alt="" />
+            <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=> e.key==='Enter' && postComment()} placeholder={replyTo?`Reply to ${replyTo}...`:"Add a comment..."} className="flex-1 border rounded-full px-4 py-2.5 text-[13px] bg-neutral-50 outline-none text-black" />
+            <button onClick={postComment} className="bg-blue-600 text-white font-bold text-[13px] px-5 py-2.5 rounded-full">Post</button>
+          </div>
+          {showEmojiPicker && <div className="p-3 grid grid-cols-8 gap-2 bg-neutral-50 border-t"><span className="text-[20px]">{['❤️','😂','🔥','😍','👏','💯','😎','🥺','🤩','🙏','😭','😅','❤️‍🔥','💀','😊','🥰'].map(e=><button key={e} onClick={()=>{setCommentText(t=>t+e); setShowEmojiPicker(false)}}>{e}</button>)}</span></div>}
         </div>
-      )}
+      </div>
+    )}
 
-            {/* FEATURE 9,10,11,12: SHARE SHEET - DIRECT OPEN */}
-      {showShare && (
-        <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm" onClick={()=>setShowShare(false)}>
-          <div className="bg-white rounded-t-[20px] p-5 animate-slideUp" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-neutral-300 rounded-full mx-auto mb-4" />
-            <h3 className="font-bold mb-5 text-center">Share</h3>
-            <div className="grid grid-cols-4 gap-4">
-              <button onClick={() => doShare('whatsapp')} className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-[20px]">💬</div>
-                <span className="text-[11px] font-medium">WhatsApp</span>
-              </button>
-              <button onClick={() => doShare('copy')} className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 bg-neutral-900 rounded-full flex items-center justify-center text-white text-[20px]">🔗</div>
-                <span className="text-[11px] font-medium">Copy Link</span>
-              </button>
-              <button onClick={() => doShare('download')} className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-[20px]">⬇️</div>
-                <span className="text-[11px] font-medium">Download</span>
-              </button>
-              <button onClick={() => doShare('facebook')} className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-[20px]">f</div>
-                <span className="text-[11px] font-medium">Facebook</span>
-              </button>
-            </div>
-            <button onClick={()=> doShare('native')} className="w-full mt-6 py-3 rounded-full bg-neutral-100 font-bold text-[14px]">More Options 📤</button>
-            <button onClick={() => setShowShare(false)} className="w-full mt-2 py-3 rounded-full bg-black text-white font-bold text-[14px]">Close</button>
+               {/* FEATURE 9,10,11,12 + 10 NEW: SHARE SHEET - 10 FUTURES VIRAL */}
+    {showShare && (
+      <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60" onClick={()=>setShowShare(false)}>
+        <div className="bg-white rounded-t-[20px] p-5 animate-slideUp" onClick={e=>e.stopPropagation()}>
+          <div className="w-10 h-1 bg-neutral-300 rounded-full mx-auto mb-4" />
+          <h3 className="font-bold mb-1 text-center text-[16px] text-black">Share</h3>
+          <p className="text-[11px] text-center text-neutral-500 mb-4">Share & Earn ₹0.10 per view 🔥</p>
+          
+          {/* GRID 4x3 - 10 FUTURES */}
+          <div className="grid grid-cols-4 gap-4">
+            <button onClick={()=>doShare('whatsapp')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-[20px]">💬</div>
+              <span className="text-[11px] font-medium text-black">WhatsApp</span>
+            </button>
+            <button onClick={()=>doShare('instagram')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-[20px]">📸</div>
+              <span className="text-[11px] font-medium text-black">Instagram</span>
+            </button>
+            <button onClick={()=>doShare('telegram')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-[20px]">✈️</div>
+              <span className="text-[11px] font-medium text-black">Telegram</span>
+            </button>
+            <button onClick={()=>doShare('facebook')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white text-[20px]">f</div>
+              <span className="text-[11px] font-medium text-black">Facebook</span>
+            </button>
+            <button onClick={()=>doShare('copy')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-neutral-900 rounded-full flex items-center justify-center text-white text-[18px]">🔗</div>
+              <span className="text-[11px] font-medium text-black">Copy Link</span>
+            </button>
+            <button onClick={()=>doShare('download')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white text-[18px]">⬇️</div>
+              <span className="text-[11px] font-medium text-black">Download</span>
+            </button>
+            <button onClick={()=>doShare('qr')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white text-[18px]">🔳</div>
+              <span className="text-[11px] font-medium text-black">QR Code</span>
+            </button>
+            <button onClick={()=>doShare('clip')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white text-[18px]">✂️</div>
+              <span className="text-[11px] font-medium text-black">Clip 15s</span>
+            </button>
+            <button onClick={()=>doShare('chitpix')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white text-[18px]">👥</div>
+              <span className="text-[11px] font-medium text-black">ChitPix DM</span>
+            </button>
+            <button onClick={()=>doShare('private')} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center text-white text-[18px]">👻</div>
+              <span className="text-[11px] font-medium text-black">Private 24h</span>
+            </button>
           </div>
+
+          {/* EXTRA INFO */}
+          <div className="mt-5 bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center gap-2">
+            <span className="text-[16px]">🎁</span>
+            <p className="text-[11px] text-black font-medium">Share cheste neeku earning! Download lo watermark auto add avthundi - Free promotion!</p>
+          </div>
+
+          <button onClick={()=>doShare('native')} className="w-full mt-4 py-3.5 bg-black text-white rounded-full font-bold text-[14px]">More Options...</button>
+          <button onClick={()=>setShowShare(false)} className="w-full mt-2 py-3.5 bg-neutral-100 text-black rounded-full font-bold text-[14px]">Cancel</button>
         </div>
-      )}
+      </div>
+    )} 
 
       {/* FEATURE 28: MORE OPTIONS - REPORT, NOT INTERESTED */}
       {showMore && (
