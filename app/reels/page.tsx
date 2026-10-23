@@ -183,7 +183,7 @@ export default function ReelsPage(){
       containerRef.current.scrollTo({
         top: (currentIndex + 1) * window.innerHeight,
         behavior: 'smooth'
-      })
+      }
     }
   }
 
@@ -278,6 +278,7 @@ export default function ReelsPage(){
       </div>
     )
   }
+  
   return (
     <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
       {/* HEADER - FEATURE 29 */}
