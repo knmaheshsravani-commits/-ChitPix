@@ -268,11 +268,11 @@ export default function ReelsPage(){
       v.pause()
       setIsPlaying(false)
     }
-  }
+    }
 
-    if (posts.length === 0) {
+  if (posts.length === 0) {
     return (
-      <div className="max-w-[480px] mx-auto h-screen bg-black text-white flex flex-col items-center justify-center">
+      <div className="max-w-[480px] mx-auto h-screen bg-black text-white flex flex-col items-center justify-center gap-4">
         <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         <p className="text-sm">Loading R2 reels...</p>
       </div>
@@ -282,11 +282,11 @@ export default function ReelsPage(){
   return (
     <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
       {/* HEADER - FEATURE 29 */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center px-4 py-3 bg-gradient-to-b from-black/70 to-transparent">
+      <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4">
         <h1 className="text-white font-bold text-[18px] tracking-wide">Reels</h1>
         <div className="flex gap-2 items-center">
-          <button onClick={() => router.push('/create-reel')} className="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center text-[18px] font-bold">+</button>
-          <button onClick={() => router.push('/')} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white">✕</button>
+          <button onClick={() => router.push('/create-reel')} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">+</button>
+          <button onClick={() => router.push('/')} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">x</button>
         </div>
       </div>
 
