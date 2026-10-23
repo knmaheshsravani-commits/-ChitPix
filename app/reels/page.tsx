@@ -495,7 +495,7 @@ export default function ReelsPage(){
               </div>
             ))}
           </div>
-          <div className="p-3 border-t flex gap-2 items-center bg-white pb-7">
+          <div className="p-3 border-t flex gap-2 items-center bg-white shrink-0 pb-3 mb-[70px] sticky bottom-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.08)]">
             <button onClick={()=>setShowEmojiPicker(!showEmojiPicker)} className="text-[22px]">😀</button>
             <img src="https://i.pravatar.cc/100?u=you" className="w-8 h-8 rounded-full" alt="" />
             <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=> e.key==='Enter' && postComment()} placeholder={replyTo?`Reply to ${replyTo}...`:"Add a comment..."} className="flex-1 border rounded-full px-4 py-2.5 text-[13px] bg-neutral-50 outline-none text-black" />
