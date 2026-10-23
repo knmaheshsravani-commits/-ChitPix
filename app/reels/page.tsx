@@ -395,7 +395,15 @@ export default function ReelsPage(){
               </div>
 
               {/* RIGHT - FEATURE 6,7,9,10,11,12,13,15,28 */}
-              <div className="absolute bottom-[90px] right-2 flex flex-col items-center gap-5 z-10">
+<div className="absolute bottom-[90px] right-2 flex flex-col items-center gap-5 z-10">
+
+              {/* HIDDEN GALLERY FOR DM DIRECT OPEN */}
+<input type="file" id="dmGalleryInput" accept="image/*,video/*" style={{display:'none'}} onChange={(e:any)=>{
+  const file = e.target.files?.[0];
+  if(file){
+    setShowShare(true);
+  }
+}} />
 
                 {/* LIKE */}
                 <button onClick={() => toggleLike(post.id)} className="flex flex-col items-center active:scale-90 transition-transform">
@@ -495,12 +503,16 @@ export default function ReelsPage(){
               </div>
             ))}
           </div>
-          <div className="p-3 border-t flex gap-2 items-center bg-white shrink-0 pb-3 mb-[70px] sticky bottom-0 z-20 shadow-[0_-4px_10px_rgba(0,0,0,0.08)]">
-            <button onClick={()=>setShowEmojiPicker(!showEmojiPicker)} className="text-[22px]">😀</button>
-            <img src="https://i.pravatar.cc/100?u=you" className="w-8 h-8 rounded-full" alt="" />
-            <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=> e.key==='Enter' && postComment()} placeholder={replyTo?`Reply to ${replyTo}...`:"Add a comment..."} className="flex-1 border rounded-full px-4 py-2.5 text-[13px] bg-neutral-50 outline-none text-black" />
-            <button onClick={postComment} className="bg-blue-600 text-white font-bold text-[13px] px-5 py-2.5 rounded-full">Post</button>
-          </div>
+<div className="p-3 border-t flex gap-2 items-center bg-white shrink-0 sticky bottom-0 z-20 pb-4 mb-[75px] shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+  <button onClick={()=>setShowEmojiPicker(!showEmojiPicker)} className="text-[24px] shrink-0 w-8 h-8 flex items-center justify-center">😀</button>
+  <img src="https://i.pravatar.cc/100?u=you" className="w-8 h-8 rounded-full shrink-0" alt="" />
+  <div className="flex-1 flex items-center gap-2 border rounded-full px-3 py-1.5 bg-neutral-50 min-w-0">
+    <input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=> e.key==='Enter' && postComment()} placeholder={replyTo?`Reply to ${replyTo}...`:"Add a comment..."} className="flex-1 bg-transparent outline-none text-[14px] text-black min-w-0" />
+    {commentText.trim() && (
+      <button onClick={postComment} className="bg-blue-600 text-white font-bold text-[13px] px-5 py-2 rounded-full shrink-0">Post</button>
+    )}
+  </div>
+</div>
           {showEmojiPicker && <div className="p-3 grid grid-cols-8 gap-2 bg-neutral-50 border-t"><span className="text-[20px]">{['❤️','😂','🔥','😍','👏','💯','😎','🥺','🤩','🙏','😭','😅','❤️‍🔥','💀','😊','🥰'].map(e=><button key={e} onClick={()=>{setCommentText(t=>t+e); setShowEmojiPicker(false)}}>{e}</button>)}</span></div>}
         </div>
       </div>
