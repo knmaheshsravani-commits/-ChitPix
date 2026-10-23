@@ -279,8 +279,6 @@ export default function ReelsPage(){
     )
   }
 
-  // PART 2 CONTINUES - NEXT MESSAGE LO FULL REMAINING CODE
-
   return (
     <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
       {/* HEADER - FEATURE 29 */}
