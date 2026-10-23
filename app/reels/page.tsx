@@ -268,17 +268,18 @@ export default function ReelsPage(){
       v.pause()
       setIsPlaying(false)
     }
-
-  if (posts.length === 0) {
+  }
+  
+    if (posts.length === 0) {
   return (
-    <div className="max-w-[400px] mx-auto relative h-screen bg-black overflow-hidden">
-      <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+    <div className="max-w-[400px] mx-auto relative h-screen bg-black overflow-hidden flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
       <p className="text-sm">Loading R2 reels...</p>
     </div>
-  );
-  }
+  )
+}
 
-  return (
+return (
     <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
       {/* HEADER - FEATURE 29 */}
       <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4">
