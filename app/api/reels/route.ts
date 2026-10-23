@@ -1,58 +1,59 @@
 import { NextResponse } from 'next/server'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
-export async function GET(req: Request) {
+const R2 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+  },
+})
+
+export async function POST(req: Request) {
   try {
-    const { searchParams } = new URL(req.url)
-    const limit = searchParams.get('limit') || '20'
-
-    // Directly fetch from your existing /api/posts endpoint
-    // Vercel URL handling
-    const protocol = req.headers.get('x-forwarded-proto') || 'https'
-    const host = req.headers.get('host') || 'www.chitpix.com'
-    const baseUrl = `${protocol}://${host}`
-
-    try {
-      const postsRes = await fetch(`${baseUrl}/api/posts?limit=100`, {
-        cache: 'no-store',
-        headers: { 'Content-Type': 'application/json' }
-      })
-
-      if (postsRes.ok) {
-        const postsData = await postsRes.json()
-        const allPosts = postsData.posts || postsData || []
-        
-        // Filter only R2 reels - video URLs
-        const reels = allPosts.filter((p: any) => {
-          const v = (p.videoUrl || p.video_url || p.url || '').toLowerCase()
-          const img = (p.imageUrl || '').toLowerCase()
-          // Check if it's video
-          return (
-            p.type === 'reel' ||
-            p.type === 'video' ||
-            v.endsWith('.mp4') ||
-            v.endsWith('.mov') ||
-            v.includes('.mp4') ||
-            v.includes('r2') ||
-            img.includes('.mp4') ||
-            p.videoUrl ||
-            p.video_url
-          )
-        })
-
-        // If no video reels found, take first 10 posts as reels (so page doesn't break)
-        const finalReels = reels.length > 0 ? reels.slice(0, parseInt(limit)) : allPosts.slice(0, 10)
-        
-        return NextResponse.json({ reels: finalReels })
-      }
-    } catch (err) {
-      console.log('Fetch error:', err)
+    const form = await req.formData()
+    const file = form.get('file') as File
+    const caption = form.get('caption') as string || ''
+    
+    if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 })
+    
+    // 300MB check
+    if (file.size > 300 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Max 300MB allowed' }, { status: 400 })
     }
 
-    // Absolute fallback
-    return NextResponse.json({ reels: [] })
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const fileName = `reels/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g,'')}`
     
-  } catch (error) {
-    console.error('Reels API error:', error)
-    return NextResponse.json({ reels: [] }, { status: 200 })
+    await R2.send(new PutObjectCommand({
+      Bucket: process.env.R2_BUCKET_NAME!,
+      Key: fileName,
+      Body: buffer,
+      ContentType: file.type,
+    }))
+
+    const publicUrl = `${process.env.R2_PUBLIC_URL}/${fileName}`
+
+    // Save to DB - your existing logic
+    // If you have supabase:
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      await supabase.from('posts').insert({
+        type: 'reel',
+        videoUrl: publicUrl,
+        video_url: publicUrl,
+        url: publicUrl,
+        caption,
+        user: 'knmahesh',
+        likes: 0,
+      })
+    } catch {}
+
+    return NextResponse.json({ success: true, url: publicUrl, videoUrl: publicUrl })
+  } catch (e:any) {
+    console.error(e)
+    return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
