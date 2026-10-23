@@ -268,8 +268,7 @@ export default function ReelsPage(){
       v.pause()
       setIsPlaying(false)
     }
-  }
-  
+
   return (
     <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
       {/* HEADER - FEATURE 29 */}
