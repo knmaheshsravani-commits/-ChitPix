@@ -281,8 +281,6 @@ export default function ReelsPage(){
 
   return (
     <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
-  return (
-    <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
       {/* HEADER - FEATURE 29 */}
       <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center px-4 py-3 bg-gradient-to-b from-black/70 to-transparent">
         <h1 className="text-white font-bold text-[18px] tracking-wide">Reels</h1>
