@@ -277,7 +277,6 @@ export default function ReelsPage(){
         <p className="text-sm">Loading R2 reels...</p>
       </div>
     )
-  }
 
   return (
     <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
