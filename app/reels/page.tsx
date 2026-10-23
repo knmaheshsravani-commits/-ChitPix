@@ -27,14 +27,14 @@ export default function ReelsPage() {
   const checkIsVideo = (post: any) => {
     const url = getMediaUrl(post).toLowerCase().split('?')[0].trim()
     if (!url) return false
-    return url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm') || post.type === 'video' || post.is_video
+    return url.endsWith('.mp4') || url.endsWith('.mov') || url.endsWith('.webm') || post.type === 'video' || post.is_video || post.type === 'reel'
   }
 
   const filteredPosts = posts.filter((post) => {
     const video = checkIsVideo(post)
     if (filter === 'all') return true
     if (filter === 'reels') return video
-    if (filter === 'posts') return!video
+    if (filter === 'posts') return !video
     return true
   })
 
@@ -162,11 +162,10 @@ export default function ReelsPage() {
     } catch (e) {
       console.log(e)
     }
-  }
-
-  // COMMENT POST 100% WORKING - BOX LOCK
+                                              }
+    // COMMENT POST 100% WORKING - BOX LOCK
   const handleAddComment = async () => {
-    if (!commentText.trim() ||!showComments) return
+    if (!commentText.trim() || !showComments) return
     const postId = showComments.id
     const newComment = {
       id: Date.now().toString(),
@@ -287,7 +286,13 @@ export default function ReelsPage() {
                 {showHeart === id && (<div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="text-7xl animate-[ping_0.8s_ease-out]">❤️</div></div>)}
 
                 <div className="absolute top-0 left-0 right-0 p-3 flex justify-between items-center bg-gradient-to-b from-black/70 to-transparent">
-                  <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-yellow-500 flex items-center justify-center font-bold text-xs">{(post.username || 'K')[0].toUpperCase()}</div><span className="text-sm font-bold">@{post.username || 'knmahesh'} • {views[id] || 0} views</span></div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-yellow-500 flex items-center justify-center font-bold text-xs">{(post.username || 'K')[0].toUpperCase()}</div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold flex items-center gap-1">@{post.username || 'knmahesh'} {post.fromStory && <span className="text-[10px] bg-purple-600 px-1.5 py-0.5 rounded-full">From Story</span>}</span>
+                      <span className="text-[10px] text-zinc-300">{post.views?.includes('Permanent') ? '♾️ R2 Permanent' : `${views[id] || 0} views`} {post.fromStory ? '• To Reel ✅' : ''}</span>
+                    </div>
+                  </div>
                   <div className="flex gap-2"><button onClick={() => setMuted(!muted)} className="w-8 h-8 rounded-full bg-black/50 backdrop-blur flex items-center justify-center text-sm">{muted? '🔇' : '🔊'}</button></div>
                 </div>
 
@@ -332,4 +337,4 @@ export default function ReelsPage() {
       )}
     </div>
   )
-        }
+              }
