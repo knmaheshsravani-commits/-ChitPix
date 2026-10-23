@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
     let caption = ''
     let fileName = ''
     let uploadType = 'post'
+    let isPermanentRaw: any = null
 
     if (contentType.includes('application/json')) {
       const body = await req.json()
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest) {
       username = body.username || 'knmahesh'
       caption = body.caption || ''
       uploadType = body.type || body.uploadType || 'post'
+      isPermanentRaw = body.isPermanent ?? body.isR2Permanent ?? null
     } else {
       const formData = await req.formData()
       const file = formData.get('file') as File | null
@@ -50,6 +52,7 @@ export async function POST(req: NextRequest) {
       caption = (formData.get('caption') as string) || ''
       uploadType = (formData.get('type') as string) || (formData.get('uploadType') as string) || 'post'
       const urlFromForm = (formData.get('url') as string) || (formData.get('publicUrl') as string)
+      isPermanentRaw = formData.get('isPermanent') || formData.get('isR2Permanent')
 
       if (urlFromForm) {
         publicUrl = urlFromForm
@@ -72,18 +75,36 @@ export async function POST(req: NextRequest) {
     const cleanUrl = publicUrl.split('?')[0].toLowerCase()
     const isVideo = cleanUrl.endsWith('.mp4') || cleanUrl.endsWith('.mov') || cleanUrl.endsWith('.webm')
 
+    // FIXED: Permanent logic - string 'true' / boolean true support
+    const isPermanent = isPermanentRaw === true || isPermanentRaw === 'true' || isPermanentRaw === '1'
+
     if (uploadType === 'story') {
+      const now = new Date()
       const newStory = {
-        id: Date.now().toString(), image_url: publicUrl, url: publicUrl,
+        id: Date.now().toString(), 
+        image_url: publicUrl, 
+        url: publicUrl,
         video_url: isVideo ? publicUrl : undefined,
-        username: username.toLowerCase(), caption, fileName,
-        created_at: new Date().toISOString(), expires_at: null,
-        type: 'story', views: 0, isR2Permanent: true, viewsText: '0 views • R2 Permanent views'
+        username: username.toLowerCase(), 
+        caption, 
+        fileName,
+        created_at: now.toISOString(), 
+        // FIXED: Permanent = null, 24h = +24h
+        expires_at: isPermanent ? null : new Date(now.getTime() + 24*60*60*1000).toISOString(),
+        type: 'story', 
+        views: 0, 
+        isR2Permanent: isPermanent,
+        viewsText: isPermanent ? '0 views • R2 Permanent ♾️' : '0 views • 24h left'
       }
       const stories = await getData(STORIES_KEY)
       const updatedStories = [newStory, ...stories].slice(0, 500)
       await R2.send(new PutObjectCommand({ Bucket: BUCKET, Key: STORIES_KEY, Body: JSON.stringify(updatedStories, null, 2), ContentType: "application/json", CacheControl: 'no-cache' }))
-      return NextResponse.json({ success: true, url: publicUrl, story: newStory, message: 'Story saved - NOT in Home!' })
+      return NextResponse.json({ 
+        success: true, 
+        url: publicUrl, 
+        story: newStory, 
+        message: isPermanent ? 'R2 Permanent Saved ♾️ - Never deletes!' : '24h Story Saved ⏳ Auto delete after 24h' 
+      })
     } else {
       const newPost = {
         id: Date.now().toString(), image_url: publicUrl, url: publicUrl,
@@ -98,10 +119,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, url: publicUrl, post: newPost })
     }
   } catch (e: any) {
+    console.error("Upload error:", e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ status: 'Ready ✅ Stories + Posts separated' })
-}
+  return NextResponse.json({ status: 'Ready ✅ Stories + Posts separated - Permanent + 24h both working' })
+                           }
