@@ -1,4 +1,4 @@
-"use client"
+see"use client"
 import { useEffect, useState, useRef } from 'react'
 import BottomNav from '../components/BottomNav'
 import { useRouter } from 'next/navigation'
@@ -270,16 +270,16 @@ export default function ReelsPage(){
     }
   }
   
-    if (posts.length === 0) {
-  return (
-    <div className="max-w-[400px] mx-auto relative h-screen bg-black overflow-hidden flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-      <p className="text-sm">Loading R2 reels...</p>
-    </div>
-  )
-}
+      if (posts.length === 0) {
+    return (
+      <div className="max-w-[400px] mx-auto relative h-screen bg-black overflow-hidden flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        <p className="text-sm">Loading R2 reels...</p>
+      </div>
+    )
+  }
 
-return (
+  return (
     <div className="max-w-[480px] mx-auto relative h-screen bg-black overflow-hidden">
       {/* HEADER - FEATURE 29 */}
       <div className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4">
@@ -418,8 +418,8 @@ return (
                 </button>
 
                 {/* SHARE - DIRECT OPEN */}
-                <button onClick={()=>{const i=document.getElementById('dmGalleryInput') as HTMLInputElement; if(i) i.click();}} className="flex flex-col items-center active:scale-90
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" fill="white" fillOpacity="0.1" /></svg>
+                <button onClick={()=>{const i=document.getElementById('dmGalleryInput') as HTMLInputElement; if(i) i.click();}} className="flex flex-col items-center active:scale-90 transition-transform">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.7"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" fill="white" fillOpacity="0.1" /></svg>
                   <span className="text-white text-[11px] mt-1 font-bold">Share</span>
                 </button>
 
@@ -606,6 +606,6 @@ return (
         .scrollbar-hide::-webkit-scrollbar{display:none}
         .scrollbar-hide{-ms-overflow-style:none; scrollbar-width:none}
       `}</style>
-    </div>
+        </div>
   )
-                  }
+}
