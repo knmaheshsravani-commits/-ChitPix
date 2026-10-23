@@ -268,7 +268,6 @@ export default function ReelsPage(){
       v.pause()
       setIsPlaying(false)
     }
-    }
 
   if (posts.length === 0) {
   return (
