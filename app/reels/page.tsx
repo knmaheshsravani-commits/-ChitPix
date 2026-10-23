@@ -183,7 +183,7 @@ export default function ReelsPage(){
       containerRef.current.scrollTo({
         top: (currentIndex + 1) * window.innerHeight,
         behavior: 'smooth'
-      }
+      })
     }
   }
 
