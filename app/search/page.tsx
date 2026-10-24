@@ -2,15 +2,38 @@
 "use client"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import {
-  Search, X, Clock, Heart, Eye, Play, Hash,
-  Music, MapPin, User, Crown, Sparkles, Bot,
-  Mic, Filter, TrendingUp, Flame, Compass,
-  ShoppingBag, Clapperboard, Bookmark, Send,
-  BarChart3, House, Plus, Radio, Languages
-} from "lucide-react"
 
 const R2_PUBLIC_URL = "https://pub-62904f82f9ea4d4ebf8da6283b4e5cf9b2f55.r2.dev"
+
+// ✅ OLD ICONS REMOVE - LIGHT EMOJI ICONS - NO lucide-react
+const I = ({c,s}:{c:string,s?:number}) => <span style={{fontSize:s||16, lineHeight:1}}>{c}</span>
+const Search = (p:any) => <I c="🔍" s={p.size}/>
+const X = (p:any) => <I c="✕" s={p.size}/>
+const Clock = (p:any) => <I c="🕒" s={p.size}/>
+const Heart = (p:any) => <span style={{fontSize:p.size||16}}>{p.fill && p.fill!=="none" ? "❤️" : "🤍"}</span>
+const Eye = (p:any) => <I c="👁️" s={p.size}/>
+const Play = (p:any) => <I c="▶️" s={p.size}/>
+const Hash = (p:any) => <I c="#" s={p.size}/>
+const Music = (p:any) => <I c="🎵" s={p.size}/>
+const MapPin = (p:any) => <I c="📍" s={p.size}/>
+const User = (p:any) => <I c="👤" s={p.size}/>
+const Crown = (p:any) => <I c="👑" s={p.size}/>
+const Sparkles = (p:any) => <I c="✨" s={p.size}/>
+const Bot = (p:any) => <I c="🤖" s={p.size}/>
+const Mic = (p:any) => <I c="🎙️" s={p.size}/>
+const Filter = (p:any) => <I c="⚙️" s={p.size}/>
+const TrendingUp = (p:any) => <I c="📈" s={p.size}/>
+const Flame = (p:any) => <I c="🔥" s={p.size}/>
+const Compass = (p:any) => <I c="🧭" s={p.size}/>
+const ShoppingBag = (p:any) => <I c="🛍️" s={p.size}/>
+const Clapperboard = (p:any) => <I c="🎬" s={p.size}/>
+const Bookmark = (p:any) => <I c="🔖" s={p.size}/>
+const Send = (p:any) => <I c="↗️" s={p.size}/>
+const BarChart3 = (p:any) => <I c="📊" s={p.size}/>
+const House = (p:any) => <I c="🏠" s={p.size}/>
+const Plus = (p:any) => <I c="➕" s={p.size}/>
+const Radio = (p:any) => <I c="📻" s={p.size}/>
+const Languages = (p:any) => <I c="🌐" s={p.size}/>
 
 const MOCK_USERS = [
   { username:"knmahesh", name:"K N Mahesh", photo:"", verified:true, followers:"10K" },
@@ -84,7 +107,6 @@ export default function SearchPage(){
     localStorage.setItem("search_recent", JSON.stringify(newR))
   }
 
-  // AI SEARCH - Feature 21
   const handleAISearch = ()=>{
     setAiSearching(true)
     setTimeout(()=>{
@@ -93,7 +115,6 @@ export default function SearchPage(){
     },1200)
   }
 
-  // Voice Search - Feature 23
   const handleVoice = ()=>{
     setShowVoice(true)
     setTimeout(()=>{setShowVoice(false); setQuery("trending"); showToast("Voice: trending 🎙️")},1500)
@@ -133,7 +154,6 @@ export default function SearchPage(){
             </div>
           )}
         </div>
-        {/* TABS - NEW ICONS */}
         <div className="flex gap-5 mt-3 overflow-x-auto scrollbar-none">
           {[
             {id:"Top", icon: Compass},
@@ -154,7 +174,6 @@ export default function SearchPage(){
         </div>
       </div>
 
-      {/* CONTENT - R2 ONLY */}
       <div className="flex-1 overflow-y-auto bg-white">
         {loading && <div className="p-10 text-center text-zinc-400 flex flex-col items-center gap-2"><Sparkles size={24}/> Loading R2 Permanent...</div>}
         {aiSearching && <div className="p-2 bg-black text-white text-center text-[12px] flex items-center justify-center gap-2"><Bot size={14}/> AI Searching R2...</div>}
@@ -237,7 +256,6 @@ export default function SearchPage(){
         )}
       </div>
 
-      {/* DETAIL MODAL - NEW ICONS */}
       {selected && (
         <div className="fixed inset-0 bg-black z-[60] flex flex-col max-w-[470px] mx-auto">
           <div className="flex justify-between items-center p-3 text-white shrink-0">
@@ -263,7 +281,6 @@ export default function SearchPage(){
         </div>
       )}
 
-      {/* VOICE MODAL */}
       {showVoice && (
         <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center">
           <div className="bg-white rounded-[20px] p-6 text-center"><Mic size={40} className="mx-auto animate-pulse"/><p className="mt-3 font-bold">Listening... 🎙️</p><p className="text-[12px] text-zinc-500">Say "trending" • R2 Voice Search</p></div>
@@ -272,7 +289,6 @@ export default function SearchPage(){
 
       {toast && <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-zinc-900 text-white px-4 py-2 rounded-full text-[11px] z-[200] flex items-center gap-2"><Sparkles size={12}/> {toast}</div>}
 
-      {/* BOTTOM NAV - NEW ICONS */}
       <div className="bg-white border-t border-zinc-200 shrink-0">
         <div className="max-w-md mx-auto flex justify-between items-center px-2 h-[52px]">
           <Link href="/" className="w-12 h-12 flex items-center justify-center"><House size={22}/></Link>
@@ -287,5 +303,5 @@ export default function SearchPage(){
 }
 
 function MessageCircle(props:any){
-  return <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                                                                                                                                         }
+  return <span style={{fontSize:props.size||22}}>💬</span>
+      }
