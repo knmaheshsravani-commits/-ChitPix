@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/'
 
   if (code) {
-    // Response ni mundhe create cheyali - cookie set avvadaniki
+    // FIX - Idi comment tisesa
     const response = NextResponse.redirect(`${origin}${next}`)
     
     const supabase = createServerClient(
