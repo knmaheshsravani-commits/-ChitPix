@@ -257,8 +257,11 @@ export default function HomePage(){
 
       <div className="flex-1 bg-white">
         {posts.map((post:any)=>(<PostCard key={post.id} post={post} />))}
-        {posts.length===0 && (<div className="p-10 text-center text-zinc-400 text-[13px]">Loading R2 posts... If empty, check /api/posts -> fixR2Url()</div>)}
-      </div>
+        {posts.length===0 && (
+  <div className="p-10 text-center text-zinc-400 text-[13px]">
+    Loading R2 posts... If empty, check /api/posts
+  </div>
+)}
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
