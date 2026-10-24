@@ -55,6 +55,7 @@ export default function SearchPage(){
   const [loading, setLoading] = useState(true)
   const [aiSearching, setAiSearching] = useState(false)
   const [showVoice, setShowVoice] = useState(false)
+  const [realUsers, setRealUsers] = useState<any[]>([]) // ✅ FIX 1: Real R2 Users
 
   const showToast = (m:string)=>{ setToast(m); setTimeout(()=>setToast(""),2500) }
 
@@ -100,6 +101,24 @@ export default function SearchPage(){
     if(r) try{setRecent(JSON.parse(r))}catch{}
   },[])
 
+  // ✅ FIX 2: Real Users Fetch - 5 Lakhs Search
+  useEffect(()=>{
+    if(query.trim().length < 1){
+      setRealUsers([])
+      return
+    }
+    const t = setTimeout(async ()=>{
+      try{
+        const res = await fetch(`/api/users?search=${query.toLowerCase()}`, {cache:"no-store"})
+        const data = await res.json()
+        if(data.users && Array.isArray(data.users)){
+          setRealUsers(data.users)
+        }
+      }catch(e){ console.log("users fetch error", e) }
+    },300)
+    return ()=> clearTimeout(t)
+  },[query])
+
   const saveRecent = (q:string)=>{
     if(!q.trim()) return
     const newR = [q,...recent.filter(r=>r!==q)].slice(0,10)
@@ -132,7 +151,7 @@ export default function SearchPage(){
     return 0
   })
 
-  const filteredUsers = MOCK_USERS.filter(u=> u.username.toLowerCase().includes(query.toLowerCase()) || u.name.toLowerCase().includes(query.toLowerCase()))
+  const filteredUsers = (realUsers.length>0 ? realUsers : MOCK_USERS).filter(u=> u.username.toLowerCase().includes(query.toLowerCase()) || (u.name||"").toLowerCase().includes(query.toLowerCase()))
 
   return (
     <div className="w-full bg-white flex flex-col h-[100dvh] overflow-hidden max-w-[470px] mx-auto">
@@ -240,11 +259,11 @@ export default function SearchPage(){
             )}
             {activeTab==="Accounts" && (
               <div className="divide-y divide-zinc-100">{filteredUsers.map((u:any,i:number)=>(
-                <div key={i} onClick={()=>{saveRecent(u.username); showToast(`Followed ${u.username}`)}} className="flex items-center gap-3 p-3 hover:bg-zinc-50 cursor-pointer">
-                  <img src={u.photo||`https://i.pravatar.cc/100?u=${u.username}`} alt="" className="w-11 h-11 rounded-full"/>
-                  <div className="flex-1"><div className="flex items-center gap-1"><p className="font-semibold text-[13px]">{u.username}</p>{u.verified&&<Crown size={12} className="text-amber-500"/>}</div><p className="text-[12px] text-zinc-500">{u.name} • {u.followers} • R2</p></div>
+                <Link key={i} href={`/profile/${u.username}`} onClick={()=>saveRecent(u.username)} className="flex items-center gap-3 p-3 hover:bg-zinc-50 cursor-pointer">
+                  <img src={u.avatar_url || u.photo || `https://i.pravatar.cc/100?u=${u.username}`} alt="" className="w-11 h-11 rounded-full object-cover bg-zinc-100"/>
+                  <div className="flex-1"><div className="flex items-center gap-1"><p className="font-semibold text-[13px]">{u.username}</p>{(u.verified || u.username==="knmahesh")&&<Crown size={12} className="text-amber-500"/>}</div><p className="text-[12px] text-zinc-500">{u.name || u.bio || "ChitPix User 🔥"} • {u.followers || "0"} • R2</p></div>
                   <button className="bg-black text-white px-4 py-1 rounded-full text-[11px] font-bold">Follow</button>
-                </div>
+                </Link>
               ))}</div>
             )}
             {activeTab==="Audio" && <div className="p-10 text-center text-zinc-500"><Music size={24} className="mx-auto mb-2"/> Audio • R2 • Working</div>}
@@ -294,14 +313,4 @@ export default function SearchPage(){
           <Link href="/" className="w-12 h-12 flex items-center justify-center"><House size={22}/></Link>
           <Link href="/search" className="w-12 h-12 flex items-center justify-center"><div className="bg-black rounded-full w-9 h-9 flex items-center justify-center"><Search size={18} className="text-white"/></div></Link>
           <Link href="/" className="w-12 h-12 flex items-center justify-center"><div className="w-9 h-9 rounded-full bg-black flex items-center justify-center"><Plus size={20} className="text-white"/></div></Link>
-          <Link href="/reels" className="w-12 h-12 flex items-center justify-center"><Clapperboard size={22}/></Link>
-          <Link href="/profile" className="w-12 h-12 flex items-center justify-center"><div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-200 flex items-center justify-center">{photo? <img src={photo} alt="" className="w-full h-full object-cover"/> : <User size={16}/>}</div></Link>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MessageCircle(props:any){
-  return <span style={{fontSize:props.size||22}}>💬</span>
-      }
+          <Link href="/reels" className="w-12 h-12 flex items-center justify-center"><Clapper
