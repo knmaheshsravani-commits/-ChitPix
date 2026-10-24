@@ -149,8 +149,8 @@ export default function SearchPage(){
     return 0
   })
 
-  const baseUsers = realUsers.length ? realUsers : MOCK_USERS
-  const filteredUsers = baseUsers.filter((u:any)=> (u.username||"").toLowerCase().includes(query.toLowerCase()))
+    const baseUsers = realUsers.length ? realUsers : MOCK_USERS
+  const filteredUsers = baseUsers
 
   return (
     <div className="w-full bg-white flex flex-col h-[100dvh] overflow-hidden max-w-[470px] mx-auto">
@@ -313,3 +313,5 @@ export default function SearchPage(){
           <Link href="/" className="w-12 h-12 flex items-center justify-center"><div className="w-9 h-9 rounded-full bg-black flex items-center justify-center"><Plus size={20} className="text-white"/></div></Link>
           <Link href="/reels" className="w-12 h-12 flex items-center justify-center"><Clapperboard size={22}/></Link>
           <Link href="/profile" className="w-12 h-12 flex items-center justify-center"><div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-200 flex
+            }
+          
