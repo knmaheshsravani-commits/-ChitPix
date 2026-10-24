@@ -151,7 +151,7 @@ export default function SearchPage(){
     return 0
   })
 
-  const filteredUsers = (realUsers.length>0 ? realUsers : MOCK_USERS).filter(u=> u.username.toLowerCase().includes(query.toLowerCase()) || (u.name||"").toLowerCase().includes(query.toLowerCase()))
+  const filteredUsers = (realUsers.length>0 ? realUsers : MOCK_USERS).filter((u:any)=>{ const q=query.toLowerCase(); return (u.username||"").toLowerCase().includes(q) || (u.name||u.bio||"").toLowerCase().includes(q) })
 
   return (
     <div className="w-full bg-white flex flex-col h-[100dvh] overflow-hidden max-w-[470px] mx-auto">
