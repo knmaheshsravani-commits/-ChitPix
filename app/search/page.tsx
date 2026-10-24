@@ -150,7 +150,7 @@ export default function SearchPage(){
     if(sort==="likes") return (b.likes||0)-(a.likes||0)
     return 0
   })
-
+const filteredUsers = baseUsers.filter...
       const filteredUsers = baseUsers.filter((u:any)=> (u.username||"").toLowerCase().includes(query.toLowerCase()))
 
   return (
