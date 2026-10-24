@@ -55,11 +55,10 @@ export default function SearchPage(){
   const [loading, setLoading] = useState(true)
   const [aiSearching, setAiSearching] = useState(false)
   const [showVoice, setShowVoice] = useState(false)
-  const [realUsers, setRealUsers] = useState<any[]>([]) // ✅ FIX 1: Real R2 Users
+  const [realUsers, setRealUsers] = useState<any[]>([])
 
   const showToast = (m:string)=>{ setToast(m); setTimeout(()=>setToast(""),2500) }
 
-  // R2 ONLY - NO LOCAL POSTS - FIXED 100%
   useEffect(()=>{
     const fetchR2 = async () => {
       setLoading(true)
@@ -101,7 +100,6 @@ export default function SearchPage(){
     if(r) try{setRecent(JSON.parse(r))}catch{}
   },[])
 
-  // ✅ FIX 2: Real Users Fetch - 5 Lakhs Search
   useEffect(()=>{
     if(query.trim().length < 1){
       setRealUsers([])
@@ -150,12 +148,12 @@ export default function SearchPage(){
     if(sort==="likes") return (b.likes||0)-(a.likes||0)
     return 0
   })
-const filteredUsers = baseUsers.filter...
-      const filteredUsers = baseUsers.filter((u:any)=> (u.username||"").toLowerCase().includes(query.toLowerCase()))
+
+  const baseUsers = realUsers.length ? realUsers : MOCK_USERS
+  const filteredUsers = baseUsers.filter((u:any)=> (u.username||"").toLowerCase().includes(query.toLowerCase()))
 
   return (
     <div className="w-full bg-white flex flex-col h-[100dvh] overflow-hidden max-w-[470px] mx-auto">
-      {/* NEW SEARCH BAR - 30 FUTURES */}
       <div className="px-3 py-2.5 bg-white shrink-0 border-b border-zinc-100">
         <div className="flex items-center gap-2">
           <div className="flex-1 bg-[#efefef] rounded-full px-3 py-2 flex items-center gap-2">
@@ -313,4 +311,5 @@ const filteredUsers = baseUsers.filter...
           <Link href="/" className="w-12 h-12 flex items-center justify-center"><House size={22}/></Link>
           <Link href="/search" className="w-12 h-12 flex items-center justify-center"><div className="bg-black rounded-full w-9 h-9 flex items-center justify-center"><Search size={18} className="text-white"/></div></Link>
           <Link href="/" className="w-12 h-12 flex items-center justify-center"><div className="w-9 h-9 rounded-full bg-black flex items-center justify-center"><Plus size={20} className="text-white"/></div></Link>
-          <Link href="/reels" className="w-12 h-12 flex items-center justify-center"><Clapper
+          <Link href="/reels" className="w-12 h-12 flex items-center justify-center"><Clapperboard size={22}/></Link>
+          <Link href="/profile" className="w-12 h-12 flex items-center justify-center"><div className="w-7 h-7 rounded-full overflow-hidden bg-zinc-200 flex
