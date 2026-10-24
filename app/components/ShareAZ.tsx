@@ -1,9 +1,12 @@
+'use client';
 import { useState } from "react";
-type Post = any
+
+// ✅ BUILD FIX - type any tho error pothundi
+type Post = any;
 
 const NewIcons = {
   Copy: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V7a2 2 0 0 1 2-2h8"/></svg>,
-  WhatsApp: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M8.5 13.5c.5 1 2 2.5 4.5 2.5"/></svg>,
+  WhatsApp: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#25D366" strokeWidth="1.6"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M8.5 13.5c.5 1 2 2.5 4.5 2.5"/></svg>,
   Download: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M12 3v13"/><path d="m6 12 6 6 6-6"/><path d="M3 21h18"/></svg>,
   QR: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>,
   Story: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>,
@@ -13,155 +16,103 @@ const NewIcons = {
 };
 
 export default function ShareAZ({ post, onClose, onDownload, onShare, onToast }: any) {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleAction = (type: string) => {
+    const url = post?.image_url || window.location.href;
+    
     if(type === 'copy') {
-      navigator.clipboard.writeText(post.image_url);
-      onToast?.('Link Copied!');
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      onToast?.('Link Copied! ✅');
+      setTimeout(()=>setCopied(false), 2000);
+      return;
     }
     if(type === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(post.image_url)}`, '_blank');
+      window.open(`https://wa.me/?text=${encodeURIComponent(url)}`, '_blank');
     }
     if(type === 'download') {
       onDownload?.(post);
-      onToast?.('Downloading...');
+      onToast?.('Downloading... ⬇️');
     }
-    if(type === 'qr') onToast?.('QR Code Opening...');
-    if(type === 'story') { onToast?.('Added to Story!'); onClose(); }
-    if(type === 'remix') onToast?.('Remix Opening...');
-    if(type === 'feed') { onShare?.({id:'feed'}); onToast?.('Shared to Feed'); }
-    if(type === 'repost') { onShare?.({id:'repost'}); onToast?.('Reposted!'); }
-    // migilina 22 features ki same logic - anni working
-    onClose();
+    if(type === 'qr') onToast?.('QR Code Opening... 🔳');
+    if(type === 'story') { onToast?.('Added to Story! ✨'); onClose?.(); return; }
+    if(type === 'remix') onToast?.('Remix Opening... ♻️');
+    if(type === 'feed') { onShare?.(post); onToast?.('Shared to Feed ✅'); }
+    if(type === 'repost') { onShare?.(post); onToast?.('Reposted! 🔁'); }
+    
+    onClose?.();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-      <div className="w-full max-w-[420px] bg-white rounded-t-[24px] p-5 max-h-[90vh] overflow-y-auto">
-        {/* Recent Chats */}
-        <div className="flex gap-3 overflow-x-auto pb-3">
-          {['Rithu','Harish','Bhanu','Ammu'].map(n => (
-            <div key={n} onClick={()=>handleAction('dm')} className="flex flex-col items-center cursor-pointer">
-              <div className="w-14 h-14 rounded-full bg-zinc-200 border-2 border-white shadow" />
-              <span className="text-[11px] mt-1">{n}</span>
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end justify-center" onClick={onClose}>
+      <div className="w-full max-w-[420px] bg-white rounded-t-[28px] p-5 max-h-[90vh] overflow-y-auto animate-slide-up" onClick={e=>e.stopPropagation()}>
+        
+        {/* Handle */}
+        <div className="flex justify-center pb-3"><div className="w-10 h-1 bg-zinc-300 rounded-full"/></div>
+        
+        {/* Header like your photo */}
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="font-bold text-[18px]">Share</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center">✕</button>
+        </div>
+        <p className="text-[12px] text-zinc-500 text-center mb-4">1.2M shares · 320K saves · Share this reel</p>
+
+        {/* Recent Chats - Like your photo */}
+        <p className="font-semibold text-[13px] mb-2">Recent Chats</p>
+        <div className="flex gap-3 overflow-x-auto pb-3 no-scrollbar">
+          {[
+            {n:'Alex', c:'bg-orange-200'}, {n:'Mia', c:'bg-blue-200'}, 
+            {n:'Jordan', c:'bg-pink-200'}, {n:'Priya', c:'bg-green-200'},
+            {n:'Sam', c:'bg-purple-200'}, {n:'Rohan', c:'bg-yellow-200'},
+            {n:'Tara', c:'bg-red-200'}
+          ].map(p => (
+            <div key={p.n} onClick={()=>handleAction('dm')} className="flex flex-col items-center gap-1 min-w-[56px] cursor-pointer active:scale-95">
+              <div className={`w-14 h-14 rounded-full ${p.c} border-2 border-white shadow flex items-center justify-center font-bold text-xs`}>{p.n[0]}</div>
+              <span className="text-[11px]">{p.n}</span>
             </div>
+          ))}
+          <div className="flex flex-col items-center gap-1 min-w-[56px]">
+            <div className="w-14 h-14 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-xs">+36</div>
+            <span className="text-[11px]">More</span>
+          </div>
+        </div>
+
+        {/* Search bar - Like your photo */}
+        <div className="mt-2 bg-zinc-100 rounded-full flex items-center px-4 py-2.5 gap-2">
+          <span className="text-zinc-400">🔍</span>
+          <input placeholder="Search people, apps, or places" className="bg-transparent w-full outline-none text-[13px] placeholder:text-zinc-400" />
+          <span>🎤</span>
+        </div>
+
+        {/* Quick Actions - 8 GRID - Your NewIcons */}
+        <p className="font-semibold text-[13px] mt-5 mb-3">✨ Quick Actions</p>
+        <div className="grid grid-cols-4 gap-4">
+          <button onClick={()=>handleAction('copy')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Copy/></div><span className="text-[10px] text-center">{copied ? 'Copied!' : 'Copy Link'}</span></button>
+          <button onClick={()=>handleAction('whatsapp')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center"><NewIcons.WhatsApp/></div><span className="text-[10px]">WhatsApp</span></button>
+          <button onClick={()=>handleAction('download')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Download/></div><span className="text-[10px]">Download</span></button>
+          <button onClick={()=>handleAction('qr')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.QR/></div><span className="text-[10px]">QR Code</span></button>
+          <button onClick={()=>handleAction('story')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Story/></div><span className="text-[10px]">Add to Story</span></button>
+          <button onClick={()=>handleAction('remix')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center relative"><NewIcons.Remix/><span className="absolute -top-1 -right-1 bg-black text-white text-[7px] px-1 rounded">PRO</span></div><span className="text-[10px]">Remix</span></button>
+          <button onClick={()=>handleAction('feed')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Feed/></div><span className="text-[10px]">Add to Feed</span></button>
+          <button onClick={()=>handleAction('repost')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Repost/></div><span className="text-[10px]">Repost</span></button>
+        </div>
+
+        {/* More Options - Extra 22 */}
+        <p className="font-semibold text-[13px] mt-5 mb-3">More Options</p>
+        <div className="grid grid-cols-4 gap-4 opacity-80">
+          {['Telegram','TikTok','Facebook','Email','Save Files','AI Caption','Embed','Message','Link Bio','Schedule','Collab','More...'].map(l=>(
+            <button key={l} onClick={()=>{onToast?.(`${l} - Coming soon!`);}} className="flex flex-col items-center gap-1.5">
+              <div className="w-12 h-12 rounded-full bg-zinc-50 flex items-center justify-center text-[10px]">🔗</div>
+              <span className="text-[9px] text-center">{l}</span>
+            </button>
           ))}
         </div>
 
-        {/* 8 Quick Actions - GRID */}
-        <div className="grid grid-cols-4 gap-4 py-4">
-          <button onClick={()=>handleAction('copy')} className="flex flex-col items-center gap-1"><NewIcons.Copy/> <span className="text-[11px]">Copy Link</span></button>
-          <button onClick={()=>handleAction('whatsapp')} className="flex flex-col items-center gap-1"><NewIcons.WhatsApp/> <span className="text-[11px]">WhatsApp</span></button>
-          <button onClick={()=>handleAction('download')} className="flex flex-col items-center gap-1"><NewIcons.Download/> <span className="text-[11px]">Download</span></button>
-          <button onClick={()=>handleAction('qr')} className="flex flex-col items-center gap-1"><NewIcons.QR/> <span className="text-[11px]">QR Code</span></button>
-          <button onClick={()=>handleAction('story')} className="flex flex-col items-center gap-1"><NewIcons.Story/> <span className="text-[11px]">Add to Story</span></button>
-          <button onClick={()=>handleAction('remix')} className="flex flex-col items-center gap-1"><NewIcons.Remix/> <span className="text-[11px]">Remix</span></button>
-          <button onClick={()=>handleAction('feed')} className="flex flex-col items-center gap-1"><NewIcons.Feed/> <span className="text-[11px]">Add to Feed</span></button>
-          <button onClick={()=>handleAction('repost')} className="flex flex-col items-center gap-1"><NewIcons.Repost/> <span className="text-[11px]">Repost</span></button>
-        </div>
-
-        <p className="text-[12px] text-zinc-400 mt-2">+22 more options working - AI Sticker, Dreamboard, Group, Schedule, etc. anni same handleAction lo add chesa</p>
-
-        <button onClick={onClose} className="w-full mt-5 bg-black text-white py-3 rounded-full">Close</button>
+        <button onClick={onClose} className="w-full mt-6 bg-black text-white py-3.5 rounded-full font-semibold active:scale-95 transition">Close</button>
+        
+        <p className="text-[10px] text-zinc-400 text-center mt-3">🔒 Privacy: Everyone can view and remix</p>
       </div>
     </div>
   );
-}
-// PART 2 - Continue after PART 1
-  const close = () => setOpen(false);
-
-  return (
-    <>
-      <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={close}>
-        <div className="bg-white w-full max-w-[420px] max-h-[92vh] rounded-t-[28px] sm:rounded-[28px] overflow-hidden flex flex-col" onClick={e=>e.stopPropagation()}>
-          
-          {/* Header */}
-          <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 bg-zinc-300 rounded-full"/></div>
-          <div className="flex items-center justify-between px-5 py-2 border-b border-zinc-100">
-            <h2 className="font-bold text-[17px]">Share</h2>
-            <button onClick={close} className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center"><XIcon/></button>
-          </div>
-
-          {/* Post Preview */}
-          <div className="flex gap-3 p-4">
-            <img src={post.image_url} className="w-12 h-12 rounded-xl object-cover"/>
-            <div className="flex-1"><p className="text-[13px] font-medium line-clamp-2">{post.caption || "Chitpix post"}</p><p className="text-[11px] text-zinc-500">by {post.username || "user"}</p></div>
-          </div>
-
-          {/* Recent */}
-          <p className="px-5 text-[13px] font-semibold mb-2">Recent</p>
-          <div className="flex gap-3 overflow-x-auto px-5 pb-3 no-scrollbar">
-            {recentChats.map(c=>(
-              <button key={c.id} onClick={()=>{onShare?.(c); onToast?.(`Sent to ${c.name}`); close();}} className="flex flex-col items-center gap-1 min-w-[56px]">
-                <div className="relative"><img src={c.avatar} className="w-12 h-12 rounded-full"/><div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${c.dot==="green"?"bg-green-500":c.dot==="yellow"?"bg-yellow-400":"bg-red-500"}`}/></div>
-                <span className="text-[11px]">{c.name}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* GRID - All 30 Features Working */}
-          <div className="overflow-y-auto px-2 pb-2">
-            <div className="grid grid-cols-4 gap-1">
-              
-              {/* 8 QUICK */}
-              <Btn icon={<CopyIcon/>} label="Copy Link" onClick={handleCopy}/>
-              <Btn icon={<WhatsAppIcon/>} label="WhatsApp" onClick={handleWhatsApp}/>
-              <Btn icon={<DownloadIcon/>} label="Download" onClick={()=>{onDownload?.(post); close();}}/>
-              <Btn icon={<QRIcon/>} label="QR Code" onClick={handleQR}/>
-
-              <Btn icon={<StoryIcon/>} label="Add Story" onClick={()=>{onToast?.("Added to story"); close();}}/>
-              <Btn icon={<RemixIcon/>} label="Remix" onClick={()=>{onToast?.("Remix editor"); close();}}/>
-              <Btn icon={<BoardIcon/>} label="Dreamboard" onClick={()=>{onToast?.("Added to Dreamboard"); close();}}/>
-              <Btn icon={<GroupIcon/>} label="Create Group" onClick={()=>{onToast?.("Group created"); close();}}/>
-
-              {/* 8 SOCIAL */}
-              <Btn icon={<FeedIcon/>} label="Add to Feed" onClick={()=>{onShare?.(post); close();}}/>
-              <Btn icon={<RepostIcon/>} label="Repost" onClick={()=>{onToast?.("Reposted"); close();}}/>
-              <Btn icon={<DMIcon/>} label="Share DM" onClick={()=>{onToast?.("Shared in DM"); close();}}/>
-              <Btn icon={<InstaIcon/>} label="Instagram" onClick={()=>window.open(`https://instagram.com`)}/>
-
-              <Btn icon={<FBIcon/>} label="Facebook" onClick={()=>window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`)}/>
-              <Btn icon={<TGIcon/>} label="Telegram" onClick={()=>window.open(`https://t.me/share/url?url=${url}`)}/>
-              <Btn icon={<XIcon2/>} label="Twitter" onClick={()=>window.open(`https://twitter.com/intent/tweet?url=${url}`)}/>
-              <Btn icon={<ThreadsIcon/>} label="Threads" onClick={()=>window.open(`https://threads.net`)}/>
-
-              {/* 7 ADVANCED */}
-              <Btn icon={<AIStickerIcon/>} label="AI Sticker" onClick={()=>{onToast?.("AI Sticker creating"); close();}}/>
-              <Btn icon={<AICreateIcon/>} label="Create AI" onClick={()=>{onToast?.("Create with AI"); close();}}/>
-              <Btn icon={<SaveIcon/>} label="Save" onClick={()=>{onToast?.("Saved"); close();}}/>
-              <Btn icon={<ReportIcon/>} label="Report" onClick={()=>{onToast?.("Reported"); close();}}/>
-
-              <Btn icon={<NotInterestedIcon/>} label="Not Interested" onClick={()=>{onToast?.("Hidden"); close();}}/>
-              <Btn icon={<MuteIcon/>} label="Mute" onClick={()=>{onToast?.("User muted"); close();}}/>
-              <Btn icon={<BlockIcon/>} label="Block" onClick={()=>{onToast?.("User blocked"); close();}}/>
-
-              {/* 7 PRO */}
-              <Btn icon={<ScheduleIcon/>} label="Schedule" onClick={()=>{onToast?.("Scheduled"); close();}}/>
-              <Btn icon={<LocationIcon/>} label="Location" onClick={()=>{onToast?.("Location added"); close();}}/>
-              <Btn icon={<CollabIcon/>} label="Collab" onClick={()=>{onToast?.("Collab invite sent"); close();}}/>
-              <Btn icon={<MusicIcon/>} label="Music" onClick={()=>{onToast?.("Music added"); close();}}/>
-              <Btn icon={<CommentOffIcon/>} label="Comments Off" onClick={()=>{onToast?.("Comments off"); close();}}/>
-              <Btn icon={<HideLikeIcon/>} label="Hide Likes" onClick={()=>{onToast?.("Likes hidden"); close();}}/>
-              <Btn icon={<PinIcon/>} label="Pin Profile" onClick={()=>{onToast?.("Pinned to profile"); close();}}/>
-
-            </div>
-          </div>
-
-          <div className="p-4 border-t border-zinc-100">
-            <button onClick={handleMainSend} className="w-full h-12 bg-black text-white rounded-full font-semibold">Send to R2</button>
-          </div>
-
-        </div>
-      </div>
-
-      {/* QR Modal */}
-      {showQR && <div className="fixed inset-0 z-[110] bg-black/70 flex items-center justify-center p-6" onClick={()=>setShowQR(false)}><div className="bg-white p-6 rounded-2xl" onClick={e=>e.stopPropagation()}><p className="text-center font-bold mb-3">QR Code</p><div className="w-48 h-48 bg-zinc-100 flex items-center justify-center text-xs">{url}</div></div></div>}
-    </>
-  );
-}
-
-// Small Button Component
-function Btn({icon, label, onClick}:{icon:any, label:string, onClick:()=>void}){
-  return <button onClick={onClick} className="flex flex-col items-center gap-1.5 py-3 rounded-2xl hover:bg-zinc-50 active:scale-95 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">{icon}</div><span className="text-[10px] text-center leading-tight">{label}</span></button>
 }
