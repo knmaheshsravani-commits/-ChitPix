@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { supabase } from "../../../lib/supabase" // ✅ FIX 1 - ID FILTER IMPORT - RELATIVE PATH
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-// 5 KEYS
+// 5 KEYS - Nee logic same - No cut!
 const R2_CONFIGS = [1,2,3,4,5].map(i=>({
   id: i,
   accountId: process.env[`R2_ACCOUNT_ID_${i}`] || process.env.R2_ACCOUNT_ID,
@@ -86,16 +87,68 @@ export async function POST(req: NextRequest) {
     const isVideo = publicUrl.toLowerCase().split('?')[0].match(/\.(mp4|mov|webm)$/)
     const isPermanent = isPermanentRaw === true || isPermanentRaw === 'true' || isPermanentRaw === '1'
 
+    // ✅ FIX 2 - GET REAL USER ID - ID FILTER CORE!
+    let realUserId: string | null = null
+    let realUsername = username.toLowerCase()
+    try {
+      const authHeader = req.headers.get('authorization')
+      if(authHeader){
+        const token = authHeader.replace('Bearer ','')
+        const { data: { user } } = await supabase.auth.getUser(token)
+        if(user){ realUserId = user.id; realUsername = user.email?.split('@')[0] || realUsername }
+      } else {
+        // Try to get from cookies/session
+        const { data: { user } } = await supabase.auth.getUser()
+        if(user){ realUserId = user.id }
+      }
+    } catch {}
+
     if (uploadType === 'story') {
       const now = new Date()
-      const newStory = { id: Date.now().toString(), image_url: publicUrl, url: publicUrl, video_url: isVideo ? publicUrl : undefined, username: username.toLowerCase(), caption, fileName, created_at: now.toISOString(), expires_at: isPermanent ? null : new Date(now.getTime()+24*60*60*1000).toISOString(), type: 'story', views: 0, isR2Permanent: isPermanent, viewsText: isPermanent ? '0 views • R2 Permanent ♾️' : '0 views • 24h left' }
+      const newStory = { 
+        id: Date.now().toString(), 
+        image_url: publicUrl, url: publicUrl, video_url: isVideo ? publicUrl : undefined, 
+        username: realUsername, 
+        user_id: realUserId, // ✅ ID FILTER
+        caption, fileName, created_at: now.toISOString(), 
+        expires_at: isPermanent ? null : new Date(now.getTime()+24*60*60*1000).toISOString(), 
+        type: 'story', views: 0, isR2Permanent: isPermanent, 
+        viewsText: isPermanent ? '0 views • R2 Permanent ♾️' : '0 views • 24h left' 
+      }
       const stories = await getData(STORIES_KEY)
       await saveData(STORIES_KEY, [newStory, ...stories].slice(0,500))
+      
+      // ✅ ALSO SAVE TO SUPABASE WITH USER_ID
+      if(realUserId){
+        try { await supabase.from('stories').insert({ user_id: realUserId, image_url: publicUrl, caption, expires_at: newStory.expires_at }) } catch {}
+      }
+      
       return NextResponse.json({ success: true, url: publicUrl, story: newStory, keys_active: R2_CONFIGS.length })
     } else {
-      const newPost = { id: Date.now().toString(), image_url: publicUrl, url: publicUrl, video_url: isVideo ? publicUrl : undefined, username: username.toLowerCase(), caption, content: caption, fileName, created_at: new Date().toISOString(), type: isVideo ? 'reel' : 'post', likes: 0, views: '0 views • R2 Permanent' }
+      const newPost = { 
+        id: Date.now().toString(), 
+        image_url: publicUrl, url: publicUrl, video_url: isVideo ? publicUrl : undefined, 
+        username: realUsername, 
+        user_id: realUserId, // ✅ ID FILTER - MAIN FIX!
+        caption, content: caption, fileName, created_at: new Date().toISOString(), 
+        type: isVideo ? 'reel' : 'post', likes: 0, views: '0 views • R2 Permanent' 
+      }
       const posts = await getData(POSTS_KEY)
       await saveData(POSTS_KEY, [newPost, ...posts].slice(0,1000))
+      
+      // ✅ ALSO SAVE TO SUPABASE POSTS TABLE WITH USER_ID - ANDARIKI OKKATE BUG FIX!
+      if(realUserId){
+        try {
+          await supabase.from('posts').insert({ 
+            user_id: realUserId, 
+            image_url: publicUrl, 
+            caption, 
+            type: isVideo ? 'reel' : 'post',
+            username: realUsername
+          })
+        } catch(e){ console.log("Supabase insert skip:", e) }
+      }
+      
       return NextResponse.json({ success: true, url: publicUrl, post: newPost, keys_active: R2_CONFIGS.length })
     }
   } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }) }
