@@ -8,11 +8,11 @@ export const metadata: Metadata = {
   authors: [{ name: "K N Mahesh", url: "https://chitpix.com" }],
   creator: "K N Mahesh",
   publisher: "ChitPix",
-  themeColor: "#080b14",
+  themeColor: "#ffffff",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
   },
   openGraph: {
     title: "ChitPix.com - Owned by K N Mahesh",
@@ -37,11 +37,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#080b14",
+  themeColor: "#ffffff",
   viewportFit: "cover",
 };
 
-// SCROLL 100% FIX - Old blocking logic removed
 function ScrollFix() {
   return (
     <script
@@ -61,6 +60,8 @@ function ScrollFix() {
               b.style.setProperty('overflow-x','hidden','important');
               b.style.setProperty('position','relative','important');
               b.style.setProperty('touch-action','pan-y','important');
+              b.style.setProperty('background','white','important');
+              de.style.setProperty('background','white','important');
             }
             unlock();
             document.addEventListener('DOMContentLoaded', unlock);
@@ -121,9 +122,9 @@ function SeoSchemas() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" style={{ backgroundColor: "#080b14", height: "auto", overflowY: "auto", overflowX: "hidden" }}>
-      <body className="bg-[#080b14] text-white antialiased" style={{ backgroundColor: "#080b14", height: "auto", minHeight: "100vh", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' } as any}>
-        <div className="max-w-[480px] mx-auto bg-[#080b14] relative" style={{ minHeight: "100vh", height: "auto" }}>
+    <html lang="en" style={{ backgroundColor: "#ffffff", height: "auto", overflowY: "auto", overflowX: "hidden" }}>
+      <body className="bg-white text-black antialiased" style={{ backgroundColor: "#ffffff", height: "auto", minHeight: "100vh", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' } as any}>
+        <div className="max-w-[480px] mx-auto bg-white relative" style={{ minHeight: "100vh", height: "auto" }}>
           <SeoSchemas />
           {children}
           <ScrollFix />
