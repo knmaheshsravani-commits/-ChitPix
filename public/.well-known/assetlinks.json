@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.chitpix.app",
+        "sha256_cert_fingerprints": ["A9:13:EE:73:D6:0C:78:04:61:E4:DB:10:E5:3D:25:0B:27:B4:DF:DA:41:69:B6:15:CA:75:1A:9E:02:F9:0F:75"]
+      }
+    }]
