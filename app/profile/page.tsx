@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
 import BottomNav from "../components/BottomNav"
+import { supabase } from "@/lib/supabase" // ✅ FIX 1 - ID FILTER IMPORT
 
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_URL || "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
 
@@ -47,7 +48,7 @@ export default function ProfilePage() {
   const [editLink, setEditLink] = useState("")
   const [selectedPost, setSelectedPost] = useState<any>(null)
   const [uploading, setUploading] = useState(false)
-  const [pinnedPosts, setPinnedPosts] = useState<string[]>([]) // FIXED: id base
+  const [pinnedPosts, setPinnedPosts] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [highlights, setHighlights] = useState(["ChitPix","My Work","Travel","Friends"])
   const [hasStory, setHasStory] = useState(true)
@@ -59,47 +60,85 @@ export default function ProfilePage() {
   const [showArchive, setShowArchive] = useState(false)
   const [showInsights, setShowInsights] = useState(false)
 
-  // ✅ FIXED - 1 API CALL ONLY - FAST + R2 ONLY
+  // ✅ FIXED - ID FILTER + R2 ONLY - 10 DAYS BUG FIX!
   useEffect(()=>{
     const fetchR2Data = async () => {
       setLoading(true)
-      let finalUsername = (usernameFromUrl as string) || "knmahesh"
       try{
-        const cur = await fetch("/api/users/current",{cache:"no-store"}).then(r=>r.json()).catch(()=>null)
-        if(cur?.username && !usernameFromUrl) finalUsername = cur.username
-      }catch{}
-      setUsername(finalUsername)
-      setEditName(finalUsername)
+        // ✅ MAIN FIX - GET MY REAL ID - NOT USERNAME!
+        const { data: { user } } = await supabase.auth.getUser()
+        if(!user) { setLoading(false); return }
 
-      try{
-        const [uRes, pRes] = await Promise.all([
-          fetch(`/api/users?username=${finalUsername}`,{cache:"no-store"}).catch(()=>null),
-          fetch(`/api/posts?username=${finalUsername}`,{cache:"no-store"}).catch(()=>null)
-        ])
-        if(uRes){
-          const uData = await uRes.json().catch(()=>null)
-          const u = Array.isArray(uData) ? uData.find((x:any)=>x.username===finalUsername) : uData
-          if(u){
-            if(u.bio){ setBio(u.bio); setEditBio(u.bio) }
-            if(u.avatar_url){ setPhoto(u.avatar_url) } // ✅ DP FIX - R2 URL direct
-            if(u.link){ setLink(u.link); setEditLink(u.link) }
-            if(u.followers) setFollowers(u.followers)
-            if(u.following) setFollowing(u.following)
-            if(u.pinned_posts) setPinnedPosts(u.pinned_posts)
+        const myId = user.id // <- ID FILTER CORE!
+        let finalUsername = (usernameFromUrl as string) || user.email?.split('@')[0] || "knmahesh"
+        
+        // If viewing other user's profile, keep that username
+        // If viewing own, use my ID
+        const isOwnProfile = !usernameFromUrl
+
+        if(isOwnProfile){
+          // ✅ OWN PROFILE - ID FILTER - NAAVI MATHRAME!
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', myId)
+            .single()
+          
+          if(profile){
+            setUsername(profile.username)
+            setEditName(profile.username)
+            if(profile.bio){ setBio(profile.bio); setEditBio(profile.bio) }
+            if(profile.avatar_url){ setPhoto(profile.avatar_url) }
           }
-        }
-        if(pRes){
-          const data = await pRes.json().catch(()=>[])
-          if(Array.isArray(data)){
-            const mapped = data.map((p:any)=>({
+
+          // ✅ POSTS - ID FILTER - MAIN BUG FIX!
+          const { data: myPosts } = await supabase
+            .from('posts')
+            .select('*')
+            .eq('user_id', myId) // <- ANDARIKI OKKATE PROFILE BUG FIX!
+            .order('created_at', { ascending: false })
+
+          if(myPosts){
+            const mapped = myPosts.map((p:any)=>({
               image: p.image_url, imageUrl: p.image_url, r2Url: p.image_url, url: p.image_url,
               type: p.type || (p.image_url?.includes(".mp4")?"reels":"post"),
-              username: p.username, id: p.id, created_at: p.created_at, caption: p.caption
+              username: profile?.username || finalUsername, id: p.id, created_at: p.created_at, caption: p.caption
             }))
             setPosts(mapped)
           }
+        } else {
+          // Other user's profile - username filter ok
+          finalUsername = usernameFromUrl as string
+          setUsername(finalUsername)
+          setEditName(finalUsername)
+          try{
+            const [uRes, pRes] = await Promise.all([
+              fetch(`/api/users?username=${finalUsername}`,{cache:"no-store"}).catch(()=>null),
+              fetch(`/api/posts?username=${finalUsername}`,{cache:"no-store"}).catch(()=>null)
+            ])
+            if(uRes){
+              const uData = await uRes.json().catch(()=>null)
+              const u = Array.isArray(uData) ? uData.find((x:any)=>x.username===finalUsername) : uData
+              if(u){
+                if(u.bio){ setBio(u.bio); setEditBio(u.bio) }
+                if(u.avatar_url){ setPhoto(u.avatar_url) }
+                if(u.link){ setLink(u.link); setEditLink(u.link) }
+              }
+            }
+            if(pRes){
+              const data = await pRes.json().catch(()=>[])
+              if(Array.isArray(data)){
+                const mapped = data.map((p:any)=>({
+                  image: p.image_url, imageUrl: p.image_url, r2Url: p.image_url, url: p.image_url,
+                  type: p.type || (p.image_url?.includes(".mp4")?"reels":"post"),
+                  username: p.username, id: p.id, created_at: p.created_at, caption: p.caption
+                }))
+                setPosts(mapped)
+              }
+            }
+          }catch{}
         }
-      }catch{}
+      }catch(e){ console.error(e) }
       setLoading(false)
     }
     fetchR2Data()
@@ -116,6 +155,11 @@ export default function ProfilePage() {
         setPhoto(url)
         document.cookie = `avatar=${url}; path=/; max-age=2592000`
         window.dispatchEvent(new Event("avatarUpdated"))
+        // ✅ FIX - Save to Supabase profiles with ID
+        const { data: { user } } = await supabase.auth.getUser()
+        if(user){
+          await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id)
+        }
         await fetch("/api/users",{
           method:"POST",
           headers:{"Content-Type":"application/json"},
@@ -134,6 +178,10 @@ export default function ProfilePage() {
     const newName = editName || username; const newBio = editBio || bio; const newLink = editLink || link
     setUploading(true)
     try{
+      const { data: { user } } = await supabase.auth.getUser()
+      if(user){
+        await supabase.from('profiles').update({ username: newName, bio: newBio, avatar_url: photo }).eq('id', user.id)
+      }
       await fetch("/api/users",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
@@ -145,11 +193,14 @@ export default function ProfilePage() {
       alert("Profile R2 lo save ayindi! ✅")
     }catch{ alert("R2 save failed") }
     setUploading(false); setShowEdit(false)
-  }
-
-  const handleDelete = async (post:any)=>{
+                }
+    const handleDelete = async (post:any)=>{
     if(!confirm("Delete this post?")) return
-    try{ if(post.id) await fetch(`/api/posts?id=${post.id}`, {method:"DELETE"}) }catch{}
+    try{ 
+      const { data: { user } } = await supabase.auth.getUser()
+      if(user) await supabase.from('posts').delete().eq('id', post.id).eq('user_id', user.id)
+      if(post.id) await fetch(`/api/posts?id=${post.id}`, {method:"DELETE"}) 
+    }catch{}
     setPosts(posts.filter(p=> p.id!==post.id)); setSelectedPost(null)
   }
 
@@ -201,7 +252,7 @@ export default function ProfilePage() {
             {uploading && <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-[10px]">R2...</div>}
           </div>
           <div className="flex gap-6 text-center flex-1 justify-around">
-            <div><b className="block text-[18px]">{posts.filter(p=>!p.type.includes("mp4") && p.type!=="reels").length}</b><span className="text-[14px] text-zinc-400">posts</span></div>
+            <div><b className="block text-[18px]">{posts.filter(p=>!p.type?.includes("mp4") && p.type!=="reels").length}</b><span className="text-[14px] text-zinc-400">posts</span></div>
             <div className="cursor-pointer" onClick={()=>setShowFollowers(true)}><b className="block text-[18px]">{followers}</b><span className="text-[14px] text-zinc-400">followers</span></div>
             <div className="cursor-pointer" onClick={()=>setShowFollowing(true)}><b className="block text-[18px]">{following}</b><span className="text-[14px] text-zinc-400">following</span></div>
           </div>
@@ -251,11 +302,7 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-
-      {/* ✅ FIXED - BottomNav Added - DP kuda kanipistundi */}
       <BottomNav active="profile" avatar={photo} />
-
-      {/* Selected Post Modal */}
       {selectedPost && (
         <div className="fixed inset-0 bg-black z-[60] flex flex-col max-w-[470px] mx-auto">
           <div className="flex justify-between p-4 border-b border-zinc-800">
@@ -272,7 +319,7 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-            {showEdit && (
+      {showEdit && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={()=>setShowEdit(false)}>
           <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto text-white" onClick={e=>e.stopPropagation()}>
             <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
@@ -297,7 +344,6 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
       {showMenu && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-end" onClick={()=>setShowMenu(false)}>
           <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto text-white" onClick={e=>e.stopPropagation()}>
@@ -312,59 +358,16 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
       {showQR && (
         <div className="fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-6" onClick={()=>setShowQR(false)}>
           <div className="bg-white rounded-[20px] p-6 max-w-[300px] w-full text-black text-center" onClick={e=>e.stopPropagation()}>
             <h3 className="font-bold text-[18px] mb-4">{username} - ChitPix</h3>
             <div className="w-[200px] h-[200px] bg-black mx-auto rounded-xl flex items-center justify-center text-white text-[40px]">QR</div>
             <p className="text-[12px] text-zinc-500 mt-3 break-all">{typeof window !== 'undefined' ? window.location.href : ''}</p>
-            <button onClick={async()=>{await navigator.clipboard.writeText(window.location.href); alert("Link Copied! 🔗")}} className="w-full mt-4 bg-black text-white py-2.5 rounded-xl font-bold">Copy Link</button>
-            <button onClick={()=>setShowQR(false)} className="w-full mt-2 bg-zinc-100 py-2.5 rounded-xl font-bold">Close</button>
-          </div>
-        </div>
-      )}
-
-      {showArchive && (
-        <div className="fixed inset-0 bg-black z-[70] flex flex-col max-w-[470px] mx-auto text-white">
-          <div className="flex justify-between p-4 border-b border-zinc-800"><button onClick={()=>setShowArchive(false)}>✕</button><span className="font-bold">Archive - R2 ({archivedPosts.length})</span><span></span></div>
-          <div className="grid grid-cols-3 gap-[2px] p-[2px]">
-            {archivedPosts.length>0 ? archivedPosts.map((p,i)=>(
-              <div key={i} className="aspect-square bg-zinc-900"><img src={p.image || p.url} className="w-full h-full object-cover"/></div>
-            )) : <div className="col-span-3 py-20 text-center text-zinc-500">No archived posts - R2</div>}
-          </div>
-        </div>
-      )}
-
-      {showFollowers && (
-        <div className="fixed inset-0 bg-black z-[70] flex flex-col max-w-[470px] mx-auto text-white">
-          <div className="flex justify-between p-4 border-b border-zinc-800"><button onClick={()=>setShowFollowers(false)}>✕</button><span className="font-bold">{followers} Followers</span><span></span></div>
-          <div className="p-4 text-center text-zinc-500 py-20">Followers list - R2 API - Coming soon - {followers} users</div>
-        </div>
-      )}
-
-      {showFollowing && (
-        <div className="fixed inset-0 bg-black z-[70] flex flex-col max-w-[470px] mx-auto text-white">
-          <div className="flex justify-between p-4 border-b border-zinc-800"><button onClick={()=>setShowFollowing(false)}>✕</button><span className="font-bold">{following} Following</span><span></span></div>
-          <div className="p-4 text-center text-zinc-500 py-20">Following list - R2 API - {following} users</div>
-        </div>
-      )}
-
-      {showInsights && (
-        <div className="fixed inset-0 bg-black/80 z-[70] flex items-end" onClick={()=>setShowInsights(false)}>
-          <div className="bg-zinc-900 w-full rounded-t-[20px] p-5 max-w-[470px] mx-auto text-white" onClick={e=>e.stopPropagation()}>
-            <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
-            <h3 className="font-bold text-[18px] mb-4">Insights - R2 Permanent ♾️</h3>
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              <div className="bg-zinc-800 rounded-xl p-3 text-center"><p className="text-[20px] font-bold">{posts.length}</p><p className="text-[11px] text-zinc-400">Posts - R2</p></div>
-              <div className="bg-zinc-800 rounded-xl p-3 text-center"><p className="text-[20px] font-bold">3.4K</p><p className="text-[11px] text-zinc-400">Profile Views</p></div>
-              <div className="bg-zinc-800 rounded-xl p-3 text-center"><p className="text-[20px] font-bold">{pinnedPosts.length}/3</p><p className="text-[11px] text-zinc-400">Pinned</p></div>
-            </div>
-            <p className="text-[12px] text-zinc-400">All data stored in R2 - Permanent - No LocalStorage ✅</p>
-            <button onClick={()=>setShowInsights(false)} className="w-full mt-4 bg-zinc-800 py-3 rounded-xl font-bold">Close</button>
+            <button onClick={()=>setShowQR(false)} className="mt-4 w-full bg-black text-white py-2.5 rounded-xl font-bold">Close</button>
           </div>
         </div>
       )}
     </div>
   )
-}
+            }
