@@ -25,7 +25,6 @@ export default function BottomNav({activeTab,setActiveTab}:any){
 
       <button onClick={()=>router.push('/messages')} className="flex items-center justify-center w-[56px] h-[36px] rounded-full relative" style={{background: isDM ? '#f2f2f2' : 'transparent'}}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.7"><path d="M22 3L11.5 13M22 3L15 22L11.5 13L2 9L22 3Z"/></svg>
-        <span className="absolute top-1 right-3 w-[6px] h-[6px] bg-red-500 rounded-full"></span>
       </button>
 
       <button onClick={()=>{ if(pathname!=='/'){ router.push('/'); setTimeout(()=>setActiveTab('search'),100)} else { setActiveTab('search') } window.scrollTo(0,0) }} className="flex items-center justify-center w-[56px] h-[36px] rounded-full" style={{background: isSearch ? '#f2f2f2' : 'transparent'}}>
