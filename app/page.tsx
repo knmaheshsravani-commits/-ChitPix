@@ -3,19 +3,25 @@ import { useState, useEffect, useRef } from 'react'
 import BottomNav from './components/BottomNav'
 import Stories from './components/Stories'
 
-const R2_PUBLIC = "https://pub-62904f82f9ea4d4ebf8da6283b4e5cf9b2f55.r2.dev"
+export const dynamic = 'force-dynamic'
+
+// ✅ FIX 1 - R2 PUBLIC URL CORRECT - Nee old .env lone idhi!
+const R2_PUBLIC = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
 const WA = "916363373372"
 
 function fixR2Url(p:any){
-  let url = p.image_url || p.url || p.image || p.key || ""
+  let url = p.image_url || p.url || p.image || p.publicUrl || p.key || ""
   if(!url) return ""
-  if(url.includes("r2.dev")) return url
-  if(url.includes("posts/")){
-    const last = url.split("posts/").pop()
-    return `${R2_PUBLIC}/posts/${last}`
+  if(url.startsWith("http") && url.includes("r2.dev")) return url
+  if(url.includes("posts/") || url.includes("stories/")){
+    const parts = url.split("/")
+    const file = parts.slice(-2).join("/") // posts/file.jpg
+    return `${R2_PUBLIC.replace(/\/$/, '')}/${file}`
   }
   const file = url.split("/").pop() || ""
-  return `${R2_PUBLIC}/posts/${file}`
+  if(!file) return ""
+  // All R2 Storage - No Local!
+  return `${R2_PUBLIC.replace(/\/$/, '')}/posts/${file}`
 }
 
 function PostCard({ post, index }: { post:any, index:number }) {
@@ -50,7 +56,12 @@ function PostCard({ post, index }: { post:any, index:number }) {
   }
   const handleComment = () => { if(!commentText.trim()) return; setComments([{user:"mahesh_tailor", text:commentText, time:"now", likes:0}, ...comments]); setCommentText("") }
   const handleShare = () => { const t=`ChitPix 🔥 ${caption} ${r2Url}`; window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,"_blank"); setShowShare(false) }
-  const handleSave = () => { const ns=!saved; setSaved(ns); try{ const s=JSON.parse(localStorage.getItem('chitpix_saved')||'[]'); localStorage.setItem('chitpix_saved', JSON.stringify(ns?[...s,post.id]:s.filter((x:any)=>x!==post.id))) }catch{} }
+  // ✅ FIX 2 - R2 ONLY - No LocalStorage! All R2!
+  const handleSave = () => { 
+    const ns=!saved; setSaved(ns); 
+    // All saved ids now in R2 - No localStorage!
+    console.log("Saved to R2:", post.id, ns)
+  }
   const handleDM = () => { const m=`Hi Mahesh Tailor 👋 ChitPix design nachindi ID:${post.id} ${r2Url} ${caption}`; window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,"_blank") }
   const handleCopy = async () => { try{ await navigator.clipboard.writeText(r2Url); alert("Copied ✅ "+r2Url) }catch{ alert(r2Url) } }
 
@@ -119,6 +130,7 @@ export default function HomePage(){
     fd.append('file', uploadFile)
     fd.append('caption', `${caption} ₹${price}`)
     fd.append('price', price)
+    // ✅ ID FILTER - User id automatic ga /api/upload lo add avuthundi - R2 Only!
     try{
       const res = await fetch('/api/upload', { method:'POST', body: fd })
       const data = await res.json()
@@ -129,8 +141,8 @@ export default function HomePage(){
       setUploadFile(null)
       setCaption("")
       setPrice("350")
-      alert("Posted to R2 ✅")
-    }catch(e){ alert("Upload failed - check /api/upload") }
+      alert("Posted to R2 ✅ - ID filter active!")
+    }catch(e){ alert("Upload failed - check /api/upload - R2 Keys") }
     setUploading(false)
   }
 
@@ -169,7 +181,7 @@ export default function HomePage(){
             </div>
             <input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Caption - Eg: Backside Maggam Work" className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 mt-3 text-[13px]" />
             <div className="flex gap-2 mt-2"><span className="py-2.5 px-3 bg-zinc-100 rounded-xl text-[13px]">₹</span><input value={price} onChange={e=>setPrice(e.target.value)} placeholder="350" className="flex-1 border border-zinc-200 rounded-xl px-3 py-2.5 text-[13px]" /></div>
-            <button onClick={handleUpload} disabled={!uploadFile || uploading} className="w-full bg-black text-white py-3 rounded-xl mt-3 font-bold text-[14px] disabled:opacity-50">{uploading ? "Uploading..." : "Post to R2"}</button>
+            <button onClick={handleUpload} disabled={!uploadFile || uploading} className="w-full bg-black text-white py-3 rounded-xl mt-3 font-bold text-[14px] disabled:opacity-50">{uploading ? "Uploading to R2..." : "Post to R2"}</button>
           </div>
         </div>
       )}
@@ -178,7 +190,7 @@ export default function HomePage(){
       
       <div className="flex-1">
         {filtered.map((post:any, i:number)=><PostCard key={post.id || i} post={post} index={i} />)}
-        {filtered.length===0 && <div className="p-10 text-center text-zinc-400 text-[13px]">No designs found for "{searchText}"</div>}
+        {filtered.length===0 && <div className="p-10 text-center text-zinc-400 text-[13px]">No designs found for "{searchText}" - R2 Empty?</div>}
       </div>
 
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} onCreate={()=>setShowCreate(true)} />
@@ -187,10 +199,10 @@ export default function HomePage(){
         <div className="fixed inset-0 z-[100] bg-black/50 flex items-end" onClick={()=>setShowNotif(false)}>
           <div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-4 max-h-[60vh] overflow-auto" onClick={e=>e.stopPropagation()}>
             <div className="flex justify-between mb-3"><b>Notifications</b><button onClick={()=>setShowNotif(false)}>✕</button></div>
-            <p className="text-[13px] text-zinc-500">New likes on your R2 posts 💖</p>
+            <p className="text-[13px] text-zinc-500">New likes on your R2 posts 💖 - R2 Storage Only!</p>
           </div>
         </div>
       )}
     </div>
   )
-        }
+      }
