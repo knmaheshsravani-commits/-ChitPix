@@ -9,6 +9,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
 
-// R2 + Supabase Combo - ChitPix A to Z
-// R2 = Posts 300MB Original Quality (Cloudflare)
-// Supabase = comments, comment_likes, post_likes - Lifetime!
+// --- CHITPIX A TO Z SETUP ---
+// R2 = Posts 300MB Original Quality (Cloudflare) - /lib/r2.js lo
+// Supabase = profiles, posts, comments, likes - Lifetime!
+
+// Helper - Gmail to username (knmaheshsravani@gmail.com -> knmaheshsravani)
+export const getUsernameFromEmail = (email) => {
+  return email.split('@')[0].toLowerCase()
+}
+
+// Helper - Get My ID Filter (Main bug fix!)
+export const getMyUser = async () => {
+  const { data: { user } } = await supabase.auth.getUser()
+  return user // user.id tho filter cheyali prathi chota!
+}
