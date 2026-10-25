@@ -1,5 +1,4 @@
 "use client"
-import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 
 export default function BottomNav({activeTab,setActiveTab}:any){
@@ -13,7 +12,7 @@ export default function BottomNav({activeTab,setActiveTab}:any){
   const isProfile = pathname === '/profile'
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-neutral-200 flex justify-around items-center h-[60px] z-[9999]">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-neutral-200 flex justify-around items-center h-[60px] z-[9999] mb-0 pb-0" style={{borderBottom:'none', marginBottom:0, paddingBottom:0, backgroundColor:'white'}}>
       
       <button onClick={()=>{ if(pathname!=='/'){ router.push('/'); } setActiveTab('home'); window.scrollTo(0,0) }} className="flex items-center justify-center w-[56px] h-[36px] rounded-full transition" style={{background: isHome ? '#f2f2f2' : 'transparent'}}>
         <svg width="26" height="26" viewBox="0 0 24 24" fill={isHome ? 'black' : 'none'} stroke="black" strokeWidth="1.7"><path d={isHome ? "M12.004 3L4 9.5V20H9V14H15V20H20V9.5L12.004 3Z" : "M9 21V13H15V21M4 10L12 3L20 10V20H4V10Z"}/></svg>
