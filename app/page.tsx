@@ -13,9 +13,7 @@ function fixR2Url(p:any){
   if(url.includes("posts/")){
     const last = url.split("posts/").pop()
     return `${R2_PUBLIC}/posts/${last}`
-  }
-  const file = url.split("/").pop() || ""
-  return `${R2_PUBLIC}/posts/${file}`
+return `${R2_PUBLIC}/posts/${file}`
 }
 
 function PostCard({ post, index }: { post:any, index:number }) {
@@ -140,10 +138,9 @@ export default function HomePage(){
     return c.includes(searchText.toLowerCase()) || String(p.id).includes(searchText)
   })
 
-  return (
+    return (
     <div className="min-h-screen bg-white max-w-[480px] mx-auto relative pb-[70px] flex flex-col">
       <div className="sticky top-0 z-30 bg-white px-3 py-2.5 flex justify-between items-center border-b border-zinc-100">
-        <button onClick={()=>setShowCreate(true)} className="w-8 h-8 border-2 border-black rounded-lg flex items-center justify-center font-bold">+</button>
         <div className="flex items-center gap-1">
           <h1 className="text-[22px] font-black tracking-tight">ChitPix</h1>
           <span className="text-[12px]">▼</span>
