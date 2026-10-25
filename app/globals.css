@@ -2,32 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
+html {
   background: #ffffff !important;
-  background-color: #ffffff !important;
-  border: none !important;
-  border-bottom: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overscroll-behavior: none !important;
+  height: auto !important;
+  min-height: 100%;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
+  background: #ffffff !important;
+  height: auto !important;
   min-height: 100vh;
-  color: #000000;
+  overflow-y: auto !important;
   overflow-x: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  padding-bottom: 90px !important;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* NUVVU CHUSTUNNA RED LINE IDHE - Force ga white chestunna */
+/* RED STRIP NI PERMANENT GA CHAMPEY - Bottom lo em red unna white ayipothadi */
+body::after {
+  content: "";
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 35px;
+  background: #ffffff !important;
+  z-index: 99990;
+  pointer-events: none;
+}
+
 * {
-  border-bottom-color: transparent !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-
-div[style*="red"], div[style*="Red"], div[style*="#ff"], div[style*="#f00"] {
-  display: none !important;
-  background: white !important;
-}
-
 *::-webkit-scrollbar { display: none; }
-img, video { max-width: 100%; user-select: none; }
+img, video { max-width: 100%; }
 input, textarea { font-size: 16px !important; }
