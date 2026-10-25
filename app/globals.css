@@ -7,7 +7,6 @@ html {
   height: auto !important;
   min-height: 100%;
   overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -15,30 +14,35 @@ body {
   height: auto !important;
   min-height: 100vh;
   overflow-y: auto !important;
-  overflow-x: hidden !important;
   margin: 0 !important;
   padding: 0 !important;
   padding-bottom: 90px !important;
-  -webkit-overflow-scrolling: touch;
 }
 
-/* RED STRIP NI PERMANENT GA CHAMPEY - Bottom lo em red unna white ayipothadi */
 body::after {
   content: "";
   position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100vw;
-  height: 35px;
+  bottom: -2px;
+  left: -2px;
+  width: 110vw;
+  height: 50px;
   background: #ffffff !important;
-  z-index: 99990;
+  z-index: 2147483647;
   pointer-events: none;
 }
 
-* {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+html::after {
+  content: "";
+  position: fixed;
+  bottom: -2px;
+  left: 0;
+  width: 100vw;
+  height: 50px;
+  background: #ffffff !important;
+  z-index: 2147483646;
+  pointer-events: none;
 }
+
 *::-webkit-scrollbar { display: none; }
 img, video { max-width: 100%; }
 input, textarea { font-size: 16px !important; }
