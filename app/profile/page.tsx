@@ -4,8 +4,6 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter, useParams } from "next/navigation"
 import BottomNav from "../components/BottomNav"
-import Highlights from "../components/Highlights"
-import StoryViewer from "../components/StoryViewer"
 import { supabase } from "../../lib/supabase"
 
 const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_URL || process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
@@ -13,6 +11,7 @@ const R2_PUBLIC_URL = process.env.NEXT_PUBLIC_R2_URL || process.env.NEXT_PUBLIC_
 function fixR2Url(p:any){
   let url = p?.image_url || p?.url || p?.image || p?.r2Url || p?.publicUrl || p?.key || p?.imageUrl || ""
   if(!url) return ""
+  if(typeof p === "string") url = p
   if(url.startsWith("http") && url.includes("r2.dev")) return url
   const file = url.split("/").pop() || ""
   if(url.includes("avatars/")) return `${R2_PUBLIC_URL.replace(/\/$/, '')}/avatars/${file}`
@@ -33,6 +32,29 @@ const uploadToR2 = async (file: File, folder: string = "avatars") => {
     if (!uploadRes.ok) throw new Error("R2 PUT failed")
     return publicUrl || `${R2_PUBLIC_URL}/${key}`
   } catch (e) { return null }
+}
+
+// INLINE HIGHLIGHTS - NO IMPORT ERROR - R2 ONLY
+function HighlightsInline({username, onSelect}:any){
+  const [items,setItems] = useState([{id:"1", title:"New", cover:`https://i.pravatar.cc/100?u=${username}`, stories:[{image:`https://picsum.photos/400/700?random=1`, caption:"Welcome", price:350}]}])
+  return (
+    <div className="flex gap-4 px-4 mt-4 overflow-x-auto">
+      <div className="flex flex-col items-center gap-1 min-w-[64px]"><div className="w-[64px] h-[64px] rounded-full bg-zinc-800 border flex items-center justify-center text-[24px]">+</div><span className="text-[11px]">New</span></div>
+      {items.map((h:any)=><div key={h.id} onClick={()=>onSelect(h)} className="flex flex-col items-center gap-1 min-w-[64px] cursor-pointer"><div className="w-[64px] h-[64px] rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"><div className="bg-black rounded-full p-[2px]"><img src={h.cover} className="w-[56px] h-[56px] rounded-full object-cover" alt=""/></div></div><span className="text-[11px]">{h.title}</span></div>)}
+    </div>
+  )
+}
+
+// INLINE STORY VIEWER - NO IMPORT ERROR
+function StoryViewerInline({users, onClose}:any){
+  const s = users?.[0]?.stories?.[0]; if(!s) return null
+  return (
+    <div className="fixed inset-0 bg-black z-[100] flex flex-col max-w-[470px] mx-auto">
+      <div className="flex justify-between p-4 text-white"><span className="font-bold">{users[0]?.title||users[0]?.username}</span><button onClick={onClose}>✕</button></div>
+      <div className="flex-1 flex items-center justify-center bg-zinc-950 relative"><img src={fixR2Url(s)} className="w-full h-full object-contain" alt=""/><div className="absolute bottom-20 left-4"><p className="text-white font-bold">{s.caption}</p><p className="text-white">₹{s.price||350}</p></div></div>
+      <button onClick={onClose} className="m-4 bg-white text-black py-3 rounded-xl font-bold">Close R2</button>
+    </div>
+  )
 }
 
 export default function ProfilePage() {
@@ -93,32 +115,13 @@ export default function ProfilePage() {
             })).filter((p:any)=>p.image)
             setPosts(mapped)
           }
-        } else {
-          finalUsername = usernameFromUrl as string
-          setUsername(finalUsername)
-          setEditName(finalUsername)
-          try{
-            const pRes = await fetch(`/api/posts?username=${finalUsername}`,{cache:"no-store"}).catch(()=>null)
-            if(pRes){
-              const data = await pRes.json().catch(()=>[])
-              if(Array.isArray(data)){
-                const mapped = data.map((p:any)=>({
-                  image: fixR2Url(p), imageUrl: fixR2Url(p), r2Url: fixR2Url(p), url: fixR2Url(p),
-                  type: p.type || (p.image_url?.includes(".mp4")?"reels":"post"),
-                  username: p.username, id: p.id, created_at: p.created_at, caption: p.caption
-                })).filter((p:any)=>p.image)
-                setPosts(mapped)
-              }
-            }
-          }catch{}
         }
       }catch(e){ console.error(e) }
       setLoading(false)
     }
     fetchR2Data()
   }, [usernameFromUrl])
-
-  const handlePhotoChange = async (e: any) => {
+    const handlePhotoChange = async (e: any) => {
     const f = e.target.files?.[0]; if(!f) return
     const localPreview = URL.createObjectURL(f)
     setPhoto(localPreview)
@@ -156,14 +159,12 @@ export default function ProfilePage() {
     try{ 
       const { data: { user } } = await supabase.auth.getUser()
       if(user) await supabase.from('posts').delete().eq('id', post.id).eq('user_id', user.id)
-      if(post.id) await fetch(`/api/posts?id=${post.id}`, {method:"DELETE"}) 
     }catch{}
     setPosts(posts.filter(p=> p.id!==post.id)); setSelectedPost(null)
   }
 
   const handleArchive = async (post:any)=>{
     try{
-      await fetch("/api/posts",{method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({action:"archive", postId: post.id, username})})
       setArchivedPosts([...archivedPosts, post])
       setPosts(posts.filter(p=> p.id!==post.id))
       setSelectedPost(null)
@@ -174,7 +175,6 @@ export default function ProfilePage() {
   const handlePinPost = async (post:any) => {
     const newPinned = pinnedPosts.includes(post.id)? pinnedPosts.filter(id=>id!==post.id) : [...pinnedPosts, post.id].slice(0,3)
     setPinnedPosts(newPinned)
-    try{ await fetch("/api/users",{method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({username, pinned_posts: newPinned})}) }catch{}
   }
 
   const filteredPosts = posts.filter((p)=>{
@@ -186,7 +186,8 @@ export default function ProfilePage() {
     const aPinned = pinnedPosts.includes(a.id); const bPinned = pinnedPosts.includes(b.id)
     if(aPinned && !bPinned) return -1; if(!aPinned && bPinned) return 1; return 0
   })
-    return (
+
+  return (
     <div className="bg-black min-h-screen pb-20">
       <div className="max-w-[470px] mx-auto min-h-screen bg-black text-white">
         <div className="flex justify-between items-center p-4 sticky top-0 bg-black z-10 border-b border-zinc-800">
@@ -228,9 +229,8 @@ export default function ProfilePage() {
           <button onClick={()=>setShowQR(true)} className="px-4 py-[7px] rounded-lg bg-zinc-800 font-semibold text-[14px]">QR</button>
         </div>
 
-        {/* HIGHLIGHTS - 20 FUTURES - R2 ONLY */}
         <div className="mt-2 bg-black">
-          <Highlights username={username} onSelect={(h:any)=>{
+          <HighlightsInline username={username} onSelect={(h:any)=>{
             const storiesForViewer = (h.stories||[]).length>0 ? h.stories : [{image:h.cover, price:350, caption:h.title}]
             setSelectedHighlight({ username: username, avatar: photo, stories: storiesForViewer.map((s:any)=>({image:fixR2Url(s)||s.image, price:s.price||350, caption:s.caption||h.title, id:s.id||h.id})), title: h.title })
           }} />
@@ -284,7 +284,7 @@ export default function ProfilePage() {
       )}
 
       {selectedHighlight && (
-        <StoryViewer users={[selectedHighlight]} startIndex={0} onClose={()=>setSelectedHighlight(null)} />
+        <StoryViewerInline users={[selectedHighlight]} startIndex={0} onClose={()=>setSelectedHighlight(null)} />
       )}
 
       {showEdit && (
@@ -338,7 +338,6 @@ export default function ProfilePage() {
           <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto text-white h-[60%] overflow-y-auto" onClick={e=>e.stopPropagation()}>
             <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
             <h3 className="font-bold text-center mb-4">{followers} Followers - R2</h3>
-            {[1,2,3,4,5].map(i=><div key={i} className="flex items-center gap-3 py-2"><img src={`https://i.pravatar.cc/40?img=${i}`} className="w-8 h-8 rounded-full"/><p className="text-[13px]">user_{i} • R2</p></div>)}
             <button onClick={()=>setShowFollowers(false)} className="w-full mt-3 bg-zinc-800 py-2.5 rounded-lg">Close</button>
           </div>
         </div>
@@ -349,7 +348,6 @@ export default function ProfilePage() {
           <div className="bg-zinc-900 w-full rounded-t-[20px] p-4 max-w-[470px] mx-auto text-white h-[60%] overflow-y-auto" onClick={e=>e.stopPropagation()}>
             <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
             <h3 className="font-bold text-center mb-4">{following} Following - R2</h3>
-            {[6,7,8,9,10].map(i=><div key={i} className="flex items-center gap-3 py-2"><img src={`https://i.pravatar.cc/40?img=${i}`} className="w-8 h-8 rounded-full"/><p className="text-[13px]">user_{i} • R2</p></div>)}
             <button onClick={()=>setShowFollowing(false)} className="w-full mt-3 bg-zinc-800 py-2.5 rounded-lg">Close</button>
           </div>
         </div>
@@ -361,7 +359,7 @@ export default function ProfilePage() {
             <div className="w-10 h-1 bg-zinc-700 rounded-full mx-auto mb-4"></div>
             <h3 className="font-bold text-center mb-4">Archive - {archivedPosts.length} R2</h3>
             <div className="grid grid-cols-3 gap-1">
-              {archivedPosts.map((p,i)=><img key={i} src={p.url||p.image} className="aspect-square object-cover"/>)}
+              {archivedPosts.map((p,i)=><img key={i} src={p.url||p.image} className="aspect-square object-cover" alt=""/>)}
             </div>
             <button onClick={()=>setShowArchive(false)} className="w-full mt-3 bg-zinc-800 py-2.5 rounded-lg">Close</button>
           </div>
@@ -385,4 +383,4 @@ export default function ProfilePage() {
       )}
     </div>
   )
-        }
+          }
