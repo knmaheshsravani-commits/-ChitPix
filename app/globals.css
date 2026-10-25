@@ -2,55 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  height: auto !important;
-  min-height: 100%;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
+html, body {
   background: #ffffff !important;
-  -webkit-overflow-scrolling: touch;
+  background-color: #ffffff !important;
+  border: none !important;
+  border-bottom: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overscroll-behavior: none !important;
 }
 
 body {
-  height: auto !important;
   min-height: 100vh;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  background: #ffffff !important;
   color: #000000;
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100%;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-y !important;
-  overscroll-behavior-y: auto !important;
-  position: relative !important;
-  border-bottom: none !important;
+  overflow-x: hidden !important;
 }
 
-/* RED DOTS ANNI TEESIVEY - Top heart dot + Bottom strip */
-.bg-red-500 {
-  display: none !important;
-}
-.absolute.-top-1.-right-1 {
-  display: none !important;
-}
-
+/* NUVVU CHUSTUNNA RED LINE IDHE - Force ga white chestunna */
 * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  border-bottom-color: transparent !important;
 }
 
-*::-webkit-scrollbar { 
-  display: none; 
+div[style*="red"], div[style*="Red"], div[style*="#ff"], div[style*="#f00"] {
+  display: none !important;
+  background: white !important;
 }
 
-img, video { 
-  max-width: 100%; 
-  -webkit-user-drag: none;
-  user-select: none;
-}
-
-input, textarea { 
-  font-size: 16px !important; 
-}
+*::-webkit-scrollbar { display: none; }
+img, video { max-width: 100%; user-select: none; }
+input, textarea { font-size: 16px !important; }
