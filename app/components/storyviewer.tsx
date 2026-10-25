@@ -120,11 +120,25 @@ export default function StoryViewer({ users, startIndex, onClose }: any){
         <div className="flex justify-center mt-2"><div className="w-10 h-1 bg-white/40 rounded-full" /></div>
         <p className="text-white/50 text-[9px] text-center mt-1">↗️ Swipe Up • Hold to Pause • Tap sides • Double tap ❤️ • R2</p>
         <div className="flex gap-2 mt-2 justify-center">
-          <button onClick={()=>{ const a=document.createElement('a'); a.href=currentStory.image; a.download=`r2-story-${currentStory.id}.jpg`; a.click() }} className="text-white/70 text-[10px] border border-white/20 rounded-full px-3 py-1">⬇️ Download R2</button>
-          <button onClick={()=>{ navigator.clipboard.writeText(currentStory.image); alert("R2 link copied") }} className="text-white/70 text-[10px] border border-white/20 rounded-full px-3 py-1">↗️ Share</button>
-          <button onClick={()=>{ fetch("/api/posts",{method:"POST", body:JSON.stringify({image_url:currentStory.image, caption:currentStory.caption+" #StoryToPost"}}).then(()=>alert("Converted to Post R2!")) }} className="text-white/70 text-[10px] border border-white/20 rounded-full px-3 py-1">📌 To Post</button>
+                <div className="flex gap-2 mt-2 justify-center">
+          <button onClick={()=>{
+            const link = document.createElement('a')
+            link.href = currentStory.image
+            link.download = `r2-story-${currentStory.id}.jpg`
+            link.click()
+          }} className="text-white/70 text-[10px] border border-white/20 rounded-full px-3 py-1">⬇️ Download R2</button>
+          
+          <button onClick={async ()=>{
+            try{ await navigator.clipboard.writeText(currentStory.image); alert("R2 link copied") } catch{}
+          }} className="text-white/70 text-[10px] border border-white/20 rounded-full px-3 py-1">↗️ Share</button>
+          
+          <button onClick={async ()=>{
+            try{
+              await fetch("/api/posts",{method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({image_url:currentStory.image, caption:currentStory.caption+" #StoryToPost"})})
+              alert("Converted to Post R2!")
+            } catch{}
+          }} className="text-white/70 text-[10px] border border-white/20 rounded-full px-3 py-1">📌 To Post</button>
         </div>
-      </div>
 
       {/* 18. Seen List Bottom Sheet */}
       {showSeenList && (
