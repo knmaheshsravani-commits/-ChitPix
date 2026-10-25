@@ -79,7 +79,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any){
           {uploading ? "⏳" : "＋"}
         </div>
         <p className="text-[11px] mt-1 select-none">Your Story</p>
-        <p className="text-[9px] text-zinc-400 select-none">R2 HD</p>
+        <p className="text-[9px] text-zinc-400">Kadur • HD</p>
       </div>
 
       {stories.map((user:any, i:number)=>{
