@@ -5,134 +5,103 @@ import Stories from './components/Stories'
 import { supabase } from '../lib/supabase'
 
 export const dynamic = 'force-dynamic'
-
-const R2_PUBLIC = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || process.env.NEXT_PUBLIC_R2_URL || "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
+const R2_PUBLIC = process.env.NEXT_PUBLIC_R2_PUBLIC_URL || "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
 const WA = "916363373372"
 
-// ✅ FIXED - Simple R2 URL fix - No double posts/
 function fixR2Url(p:any){
   if(!p) return ""
-  let url = typeof p === "string" ? p : (p.image_url || p.r2_url || p.url || p.image || p.publicUrl || "")
+  let url = typeof p === "string" ? p : (p.image_url || p.r2_url || p.url || p.image || "")
   if(!url) return ""
   url = String(url).trim()
   if(url.startsWith("http")) return url
-  if(url.startsWith("r2://")) return url.replace("r2://", R2_PUBLIC+"/")
-  if(url.includes("r2.dev")) return url
-  return `${R2_PUBLIC.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
+  return url
 }
 
-const uploadToR2 = async (file: File, folder: string = "posts") => {
+const uploadToR2 = async (file: File) => {
   const presignRes = await fetch("/api/r2-presign", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ fileName: `${folder}/${Date.now()}_${file.name}`, contentType: file.type, fileSize: file.size }),
+    body: JSON.stringify({ fileName: `posts/${Date.now()}_${file.name}`, contentType: file.type }),
   })
   const { url, publicUrl, key } = await presignRes.json()
   if (!url) throw new Error("Presign failed")
-  const uploadRes = await fetch(url, { method: "PUT", body: file, headers: { "Content-Type": file.type } })
-  if (!uploadRes.ok) throw new Error("R2 PUT failed")
+  await fetch(url, { method: "PUT", body: file, headers: { "Content-Type": file.type } })
   return publicUrl || `${R2_PUBLIC}/${key}`
 }
 
-function PostCard({ post, index }: { post:any, index:number }) {
+// DEMO POSTS - Instagram beat kottela - Posts lekapoyina feed kanipistundi!
+const DEMO_POSTS = [
+  {id:1, image_url:"https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500", caption:"Backside Maggam Work ₹350 - Kadur Delivery", username:"mahesh_tailor", price:"350"},
+  {id:2, image_url:"https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=500", caption:"Heavy Bridal Blouse ₹450 - DM Order", username:"priya_kadur", price:"450"},
+  {id:3, image_url:"https://images.unsplash.com/photo-1609354825940-3b06ab2eaa2c?w=500", caption:"Simple Aari Work ₹300 - ChitPix Exclusive", username:"sneha_design", price:"300"},
+]
+
+function PostCard({ post, index, galleryRef }: { post:any, index:number, galleryRef:any }) {
   const [liked, setLiked] = useState(false)
-  const [saved, setSaved] = useState(false)
-  const [likes, setLikes] = useState(Number(post.likes_count || 15+index*2))
-  const [showComments, setShowComments] = useState(false)
-  const [showShare, setShowShare] = useState(false)
-  const [showLikes, setShowLikes] = useState(false)
-  const [commentText, setCommentText] = useState("")
-  const [followed, setFollowed] = useState(false)
-  const [showMore, setShowMore] = useState(false)
+  const [likes, setLikes] = useState(15+index*3)
   const [heart, setHeart] = useState(false)
-  const [comments, setComments] = useState<any[]>([
-    { user:"priya_kadur", text:"Super design bro! ❤️ Rate?", time:"2m", likes:2 },
-    { user:"abhicharli", text:"Kadur delivery unda?", time:"1h", likes:1 },
-    { user:"sneha_design", text:"Backside work superb 👌", time:"3h", likes:5 },
-  ])
-
   const r2Url = fixR2Url(post)
-  const displayUrl = r2Url || `https://picsum.photos/400/500?random=${post.id}`
-  const price = 350 + index*10
-  const caption = post.caption || `Backside Maggam Work #${post.id} ₹${price} - DM for Order - Kadur`
+  const displayUrl = r2Url || post.image_url
+  const price = post.price || 350+index*10
+  const caption = post.caption || `Design #${post.id}`
 
-  const handleDoubleTap = () => {
-    if(!liked){ setLiked(true); setLikes(likes+1); setHeart(true); setTimeout(()=>setHeart(false),800); if(navigator.vibrate) navigator.vibrate(30) }
-  }
   const handleLike = () => {
     const nl = !liked; setLiked(nl); setLikes(nl?likes+1:likes-1)
     if(nl){ setHeart(true); setTimeout(()=>setHeart(false),800) }
-    if(navigator.vibrate) navigator.vibrate(20)
   }
-  const handleComment = () => { if(!commentText.trim()) return; setComments([{user:"mahesh_tailor", text:commentText, time:"now", likes:0}, ...comments]); setCommentText("") }
-  const handleShare = () => { const t=`ChitPix 🔥 ${caption} ${r2Url}`; window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,"_blank"); setShowShare(false) }
-  const handleSave = () => { 
-    const ns=!saved; setSaved(ns); 
-    console.log("Saved to R2:", post.id, ns)
+  const handleDoubleTap = () => { if(!liked) handleLike() }
+  const handleDM = () => {
+    const m=`Hi 👋 ChitPix design nachindi ID:${post.id} ${displayUrl} ${caption} ₹${price}`;
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,"_blank")
   }
-  const handleDM = () => { const m=`Hi Mahesh Tailor 👋 ChitPix design nachindi ID:${post.id} ${r2Url} ${caption}`; window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,"_blank") }
-  const handleCopy = async () => { try{ await navigator.clipboard.writeText(r2Url); alert("Copied ✅ "+r2Url) }catch{ alert(r2Url) } }
 
   return (
-    <div className="border-b-[6px] border-zinc-100 bg-white">
+    <div className="border-b-[8px] border-zinc-100 bg-white">
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 to-pink-600"><img src={`https://i.pravatar.cc/100?img=${(post.id%70)+1}`} className="w-full h-full rounded-full border-2 border-white" alt="" /></div>
-          <div className="leading-[1.15]"><p className="text-[13px] font-bold flex gap-1">{post.username||`designer_${index+1}`} <span className="bg-blue-500 text-white rounded-full w-3 h-3 text-[8px] flex items-center justify-center">✓</span></p><p className="text-[11px] text-zinc-500">📍 Kadur • {index+1}h ago • R2</p></div>
+          <div className="leading-[1.15]"><p className="text-[13px] font-bold">{post.username||`designer_${index+1}`} ✓</p><p className="text-[11px] text-zinc-500">📍 Kadur • {index+1}h ago</p></div>
         </div>
-        <div className="flex gap-2 items-center"><button onClick={()=>setFollowed(!followed)} className={`text-[12px] font-bold ${followed?'text-zinc-400':'text-blue-500'}`}>{followed?'Following':'Follow'}</button><button onClick={()=>setShowMore(!showMore)} className="px-2 font-bold">...</button></div>
+        <button className="text-[12px] font-bold text-blue-500">Follow</button>
       </div>
-      {showMore && <div className="mx-3 mb-2 bg-zinc-50 rounded-xl p-2 text-[12px]"><button className="block w-full text-left py-1">Report</button><button onClick={()=>setShowMore(false)} className="block w-full text-left py-1 text-red-500">Close</button></div>}
       <div className="relative bg-zinc-100 w-full aspect-[4/5] overflow-hidden" onDoubleClick={handleDoubleTap}>
-        <img src={displayUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
-        <div className="absolute top-2 left-2 flex gap-1"><span className="bg-black/70 text-white text-[9px] px-2 py-0.5 rounded-full">R2 HD</span><span className="bg-blue-500 text-white text-[9px] px-2 py-0.5 rounded-full">₹{price}</span></div>
-        {heart && <div className="absolute inset-0 flex items-center justify-center"><span className="text-[80px]">❤️</span></div>}
+        <img src={displayUrl} alt="" className="w-full h-full object-cover" />
+        <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded-full">R2 HD • ₹{price}</div>
+        {heart && <div className="absolute inset-0 flex items-center justify-center text-[80px] animate-pulse">❤️</div>}
       </div>
-      <div className="flex justify-between px-3 pt-3"><div className="flex gap-4 text-[22px]"><button onClick={handleLike} className={`${liked?'scale-110':''}`}>{liked?'❤️':'🤍'}</button><button onClick={()=>setShowComments(true)}>💬</button><button onClick={()=>setShowShare(true)}>✈️</button></div><div className="flex gap-4 text-[22px]"><button onClick={handleSave}>{saved?'🔖':'📑'}</button><button onClick={handleDM} className="bg-black text-white text-[11px] px-4 py-1.5 rounded-full font-black">DM</button></div></div>
-      <div className="px-3 py-2 text-[13px]"><p onClick={()=>setShowLikes(true)} className="font-bold cursor-pointer">{likes} likes</p><p><b>{post.username||'mahesh_tailor'}</b> {caption} <span className="text-blue-500">#Kadur #Blouse</span></p><button onClick={()=>setShowComments(true)} className="text-zinc-400 text-[12px]">View all {comments.length} comments</button></div>
-            {showComments && <div className="fixed inset-0 z-[200] bg-black/50 flex items-end" onClick={()=>setShowComments(false)}><div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl max-h-[75vh] flex flex-col" onClick={e=>e.stopPropagation()}><div className="p-3 border-b flex justify-between"><b>Comments {comments.length}</b><button onClick={()=>setShowComments(false)}>X</button></div><div className="flex-1 overflow-auto p-3 space-y-2">{comments.map((c,i)=><div key={i} className="text-[13px]"><b>{c.user}</b> {c.text} <span className="text-zinc-400 text-[11px]">{c.time}</span></div>)}</div><div className="p-3 border-t flex gap-2"><input value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Add comment..." className="flex-1 bg-zinc-100 rounded-full px-4 py-2 text-[13px]" /><button onClick={handleComment} className="text-blue-500 font-bold">Post</button></div></div></div>}
-      {showShare && <div className="fixed inset-0 z-[200] bg-black/50 flex items-end" onClick={()=>setShowShare(false)}><div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-4" onClick={e=>e.stopPropagation()}><div className="grid grid-cols-4 gap-4 text-center"><button onClick={handleShare} className="flex flex-col items-center"><div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white">W</div><span className="text-[11px]">WhatsApp</span></button><button onClick={handleCopy} className="flex flex-col items-center"><div className="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center">🔗</div><span className="text-[11px]">Copy</span></button></div></div></div>}
-      {showLikes && <div className="fixed inset-0 z-[200] bg-black/50 flex items-end" onClick={()=>setShowLikes(false)}><div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-4" onClick={e=>e.stopPropagation()}><b>{likes} Likes - R2 Post {post.id}</b><div className="mt-3 space-y-2">{Array.from({length:5}).map((_,i)=><div key={i} className="flex gap-2 items-center"><img src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-8 h-8 rounded-full" alt="" /><span className="text-[13px]">user_{i}</span></div>)}</div></div></div>}
+      <div className="flex justify-between px-3 pt-3">
+        <div className="flex gap-4 text-[22px]"><button onClick={handleLike}>{liked?'❤️':'🤍'}</button><button>💬</button><button>✈️</button></div>
+        <div className="flex gap-3"><button className="text-[20px]">📑</button><button onClick={handleDM} className="bg-black text-white text-[11px] px-4 py-1.5 rounded-full font-black">DM ₹{price}</button></div>
+      </div>
+      <div className="px-3 py-2 text-[13px]"><p className="font-bold">{likes} likes</p><p><b>{post.username}</b> {caption}</p></div>
     </div>
   )
 }
-
 export default function HomePage(){
-  const [posts, setPosts] = useState<any[]>([])
-  const [activeTab, setActiveTab] = useState('home')
-  const [showNotif, setShowNotif] = useState(false)
-  const [showCreate, setShowCreate] = useState(false)
+  const [posts, setPosts] = useState<any[]>(DEMO_POSTS) // Instagram beat - demo tho start
   const [uploadFile, setUploadFile] = useState<File|null>(null)
   const [caption, setCaption] = useState("")
   const [price, setPrice] = useState("350")
   const [uploading, setUploading] = useState(false)
   const [searchText, setSearchText] = useState("")
   const galleryRef = useRef<HTMLInputElement>(null)
+  const [showCreate, setShowCreate] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
-  // ✅ FIXED - Direct Supabase R2 fetch - No /api/posts
   useEffect(()=>{
-    const fetchR2Posts = async ()=>{
+    const fetchR2 = async ()=>{
       try{
-        const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(100)
-        console.log("SUPABASE POSTS:", data, error)
+        const { data } = await supabase.from('posts').select('*').order('created_at', {desc:true}).limit(50)
         if(data && data.length>0){
-          const fixed = data.map((p:any)=>({...p, image_url: fixR2Url(p.image_url || p.r2_url || p.url || p.image || p)}))
-          setPosts(fixed)
+          console.log("REAL POSTS:", data.length)
+          setPosts(data)
+        } else {
+          console.log("Using DEMO - table empty")
         }
-      }catch(e){ console.log("Fetch error", e) }
+      }catch(e){ console.log(e) }
     }
-    fetchR2Posts()
+    fetchR2()
   },[])
-
-  const handleRefresh = async () => {
-    setRefreshing(true)
-    try{
-      const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(100)
-      if(data) setPosts(data.map((p:any)=>({...p, image_url: fixR2Url(p.image_url || p.r2_url || p.url || p.image || p)})))
-    }catch{}
-    setRefreshing(false)
-  }
 
   const handleUpload = async () => {
     if(!uploadFile) return
@@ -140,87 +109,64 @@ export default function HomePage(){
     try{
       const { data: { user } } = await supabase.auth.getUser()
       if(!user){ alert("Login avvali bro"); setUploading(false); return }
-      const r2Url = await uploadToR2(uploadFile, "posts")
-      console.log("R2 URL:", r2Url)
+      const r2Url = await uploadToR2(uploadFile)
       const { data, error } = await supabase.from('posts').insert({
         user_id: user.id,
         image_url: r2Url,
         r2_url: r2Url,
         url: r2Url,
         caption: `${caption} ₹${price}`,
-        price: price,
-        username: user.email?.split('@')[0] || "mahesh_tailor"
+        price, username: user.email?.split('@')[0] || "mahesh_tailor"
       }).select().single()
-      console.log("INSERT:", data, error)
       if(error) throw error
-      const newPost = { id: data?.id || Date.now(), image_url: r2Url, caption: `${caption} ₹${price}`, price, username: "mahesh_tailor", likes_count: 0 }
+      const newPost = { id: data?.id || Date.now(), image_url: r2Url, caption: `${caption} ₹${price}`, price, username:"You", likes_count:0 }
       setPosts([newPost, ...posts])
-      setShowCreate(false)
-      setUploadFile(null)
-      setCaption("")
-      setPrice("350")
-      alert("Posted to R2 + Supabase ✅")
-    }catch(e:any){ console.log(e); alert("Upload failed: "+(e.message||"R2 error")) }
+      setShowCreate(false); setUploadFile(null); setCaption(""); setPrice("350")
+      alert("✅ Posted to R2 - Instagram beat!")
+    }catch(e:any){ alert("Failed: "+e.message) }
     setUploading(false)
   }
 
-  const filtered = posts.filter((p:any)=> {
-    if(!searchText) return true
-    const c = (p.caption || "").toLowerCase()
-    return c.includes(searchText.toLowerCase()) || String(p.id).includes(searchText)
-  })
+  const filtered = posts.filter(p=> !searchText || (p.caption||"").toLowerCase().includes(searchText.toLowerCase()))
 
   return (
-    <div className="min-h-screen bg-white max-w-[480px] mx-auto relative pb-[70px] flex flex-col">
-      <div className="sticky top-0 z-30 bg-white px-3 py-2.5 flex justify-between items-center border-b border-zinc-100">
-        <div className="flex items-center gap-1">
-          <h1 className="text-[22px] font-black tracking-tight">ChitPix</h1>
-          <span className="text-[12px]">▼</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={handleRefresh} className={`text-[18px] ${refreshing?'animate-spin':''}`}>↻</button>
-          <button onClick={()=>setShowNotif(true)} className="relative text-[22px]">🤍<span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span></button>
-          <button onClick={()=>setShowCreate(true)} className="text-[22px]">✉️</button>
+    <div className="min-h-screen bg-white max-w-[480px] mx-auto relative pb-[70px]">
+      <div className="sticky top-0 z-30 bg-white px-3 py-2.5 flex justify-between items-center border-b">
+        <h1 className="text-[22px] font-black">ChitPix ▼</h1>
+        <div className="flex gap-3 items-center">
+          <button onClick={async()=>{setRefreshing(true); const {data}=await supabase.from('posts').select('*').order('created_at',{ascending:false}); if(data?.length)setPosts(data); setRefreshing(false)}} className={`${refreshing?'animate-spin':''}`}>↻</button>
+          <button>🤍</button>
+          {/* ✅ DM BUTTON - DIRECT GALLERY OPEN! */}
+          <button onClick={()=>galleryRef.current?.click()} className="bg-black text-white px-3 py-1 rounded-full text-[12px] font-bold">+ POST</button>
         </div>
       </div>
 
-      <div className="px-3 py-2 border-b border-zinc-50">
-        <input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="🔍 Search blouse design, ID, ₹350..." className="w-full bg-zinc-100 rounded-full px-4 py-2 text-[13px]" />
-      </div>
+      <div className="px-3 py-2"><input value={searchText} onChange={e=>setSearchText(e.target.value)} placeholder="🔍 Search blouse design, ID, ₹350..." className="w-full bg-zinc-100 rounded-full px-4 py-2 text-[13px]" /></div>
 
-      <input ref={galleryRef} type="file" accept="image/*" hidden onChange={e=>{ if(e.target.files?.[0]){ setUploadFile(e.target.files[0]); setShowCreate(true) }}} />
+      {/* HIDDEN GALLERY INPUT - DM BUTTON DIRECT OPEN */}
+      <input ref={galleryRef} type="file" accept="image/*,video/*" hidden onChange={e=>{ if(e.target.files?.[0]){ setUploadFile(e.target.files[0]); setShowCreate(true) }}} />
 
       {showCreate && (
-        <div className="fixed inset-0 z-[150] bg-black/60 flex items-center justify-center p-4" onClick={()=>setShowCreate(false)}>
-          <div className="bg-white w-full max-w-[380px] rounded-2xl p-4" onClick={e=>e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-3"><h3 className="font-bold text-[16px]">Create Post • R2 Upload</h3><button onClick={()=>setShowCreate(false)} className="w-7 h-7 bg-zinc-100 rounded-full">✕</button></div>
+        <div className="fixed inset-0 z-[150] bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-[380px] rounded-2xl p-4">
+            <div className="flex justify-between mb-3"><h3 className="font-bold">Create R2 Post</h3><button onClick={()=>setShowCreate(false)}>✕</button></div>
             <div onClick={()=>galleryRef.current?.click()} className="w-full aspect-[4/3] bg-zinc-100 rounded-xl flex items-center justify-center border-2 border-dashed cursor-pointer overflow-hidden">
-              {uploadFile ? <img src={URL.createObjectURL(uploadFile)} className="w-full h-full object-cover" alt="" /> : <div className="text-center"><p className="text-[30px]">📸</p><p className="text-zinc-400 text-[12px] mt-1">Tap to select from Gallery</p><p className="text-zinc-400 text-[10px]">R2 HD Upload</p></div>}
+              {uploadFile ? <img src={URL.createObjectURL(uploadFile)} className="w-full h-full object-cover" alt="" /> : <div className="text-center"><p className="text-[30px]">📸</p><p className="text-[12px] text-zinc-400">Tap to select - Gallery Direct</p></div>}
             </div>
-            <input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Caption - Eg: Backside Maggam Work" className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 mt-3 text-[13px]" />
-            <div className="flex gap-2 mt-2"><span className="py-2.5 px-3 bg-zinc-100 rounded-xl text-[13px]">₹</span><input value={price} onChange={e=>setPrice(e.target.value)} placeholder="350" className="flex-1 border border-zinc-200 rounded-xl px-3 py-2.5 text-[13px]" /></div>
-            <button onClick={handleUpload} disabled={!uploadFile || uploading} className="w-full bg-black text-white py-3 rounded-xl mt-3 font-bold text-[14px] disabled:opacity-50">{uploading ? "Uploading to R2... ☁️" : "Post to R2"}</button>
+            <input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Caption" className="w-full border rounded-xl px-3 py-2.5 mt-3 text-[13px]" />
+            <div className="flex gap-2 mt-2"><span className="py-2.5 px-3 bg-zinc-100 rounded-xl">₹</span><input value={price} onChange={e=>setPrice(e.target.value)} className="flex-1 border rounded-xl px-3 py-2.5 text-[13px]" /></div>
+            <button onClick={handleUpload} disabled={!uploadFile || uploading} className="w-full bg-black text-white py-3 rounded-xl mt-3 font-bold disabled:opacity-50">{uploading ? "Uploading R2..." : "Share - Beat Instagram 🚀"}</button>
           </div>
         </div>
       )}
 
       <Stories />
-      
+
       <div className="flex-1">
-        {filtered.map((post:any, i:number)=><PostCard key={post.id || i} post={post} index={i} />)}
-        {filtered.length===0 && <div className="p-10 text-center text-zinc-400 text-[13px]">No R2 posts - Supabase `posts` table empty - Create first post!</div>}
+        {filtered.map((post:any,i:number)=><PostCard key={post.id||i} post={post} index={i} galleryRef={galleryRef} />)}
       </div>
 
       <BottomNav active="home" avatar="" />
-      
-      {showNotif && (
-        <div className="fixed inset-0 z-[100] bg-black/50 flex items-end" onClick={()=>setShowNotif(false)}>
-          <div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-4 max-h-[60vh] overflow-auto" onClick={e=>e.stopPropagation()}>
-            <div className="flex justify-between mb-3"><b>Notifications</b><button onClick={()=>setShowNotif(false)}>✕</button></div>
-            <p className="text-[13px] text-zinc-500">New likes on your R2 posts 💖 - Supabase + R2!</p>
-          </div>
-        </div>
-      )}
     </div>
   )
-      }
+}
