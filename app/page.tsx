@@ -21,11 +21,23 @@ const uploadToR2 = async (file: File) => {
   await fetch(url, { method:"PUT", body:file, headers:{"Content-Type":file.type} })
   return publicUrl || `${R2_PUBLIC}/${key}`
 }
-const DEMO_POSTS = [
-  {id:1, image_url:"https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500", caption:"Backside Maggam Work ₹350", username:"mahesh_tailor", price:"350", likes_count:128, location:"Kadur"},
-  {id:2, image_url:"https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=500", caption:"Bridal Aari Work ₹450", username:"priya_kadur", price:"450", likes_count:89, location:"Chikmagalur"},
-  {id:3, image_url:"https://images.unsplash.com/photo-1609354825940-3b06ab2eaa2c?w=500", caption:"Simple Design ₹300", username:"sneha_design", price:"300", likes_count:234, location:"Kadur"},
-]
+// Find useEffect - Line ~ 160
+useEffect(()=>{
+  const fetchRealR2 = async () => {
+    setLoading(true)
+    try{
+      const { data, error } = await supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(100)
+      console.log("REAL R2 POSTS:", data?.length, error)
+      if(data && data.length > 0){
+        setPosts(data) // ✅ 74 posts vastayi
+      } else {
+        setPosts([]) // No dummy
+      }
+    }catch(e){ console.log(e) }
+    setLoading(false)
+  }
+  fetchRealR2()
+},[])
 
 function PostCard({ post, index, galleryRef }: { post:any, index:number, galleryRef:any }) {
   const [liked, setLiked] = useState(false)
@@ -53,11 +65,76 @@ function PostCard({ post, index, galleryRef }: { post:any, index:number, gallery
     if(nl){ setHeart(true); setTimeout(()=>setHeart(false),800) }
     if(navigator.vibrate) navigator.vibrate(20)
   }
+    // ✅ 2026 COMMENT BOX - Full Options
+  const [replyTo, setReplyTo] = useState<any>(null)
+  const [showEmoji, setShowEmoji] = useState(false)
+  const [showCommentOptions, setShowCommentOptions] = useState<number | null>(null)
+  const [likedComments, setLikedComments] = useState<number[]>([])
+
   const handleComment = () => {
     if(!commentText.trim()) return
-    setComments([{user:"mahesh_tailor", text:commentText, time:"now", likes:0}, ...comments])
+    const newComment = {
+      id: Date.now(),
+      user: "mahesh_tailor",
+      avatar: `https://i.pravatar.cc/100?img=5`,
+      text: commentText,
+      time: "now",
+      likes: 0,
+      liked: false,
+      replies: [],
+      isReply: !!replyTo,
+      replyTo: replyTo?.user || null
+    }
+    if(replyTo){
+      setComments(comments.map(c => c.id === replyTo.id ? {...c, replies: [...(c.replies||[]), newComment]} : c))
+    } else {
+      setComments([newComment, ...comments])
+    }
     setCommentText("")
+    setReplyTo(null)
   }
+
+  const handleCommentLike = (commentId: number) => {
+    if(likedComments.includes(commentId)){
+      setLikedComments(likedComments.filter(id => id !== commentId))
+      setComments(comments.map(c => c.id === commentId ? {...c, likes: c.likes-1, liked: false} : c))
+    } else {
+      setLikedComments([...likedComments, commentId])
+      setComments(comments.map(c => c.id === commentId ? {...c, likes: c.likes+1, liked: true} : c))
+      if(navigator.vibrate) navigator.vibrate(20)
+    }
+  }
+
+  const handleReplyClick = (comment: any) => {
+    setReplyTo(comment)
+    setCommentText(`@${comment.user} `)
+  }
+
+  const handleProfileClick = (username: string) => {
+    alert(`Open Profile: ${username} - Profile page open avthundi`)
+    // window.location.href = `/profile/${username}`
+  }
+
+  const handleCommentOption = (option: string, comment: any) => {
+    switch(option){
+      case 'delete':
+        setComments(comments.filter(c => c.id !== comment.id))
+        break
+      case 'report':
+        alert(`Reported ${comment.user} comment`)
+        break
+      case 'pin':
+        alert(`Pinned comment by ${comment.user}`)
+        break
+      case 'copy':
+        navigator.clipboard.writeText(comment.text)
+        alert('Copied!')
+        break
+    }
+    setShowCommentOptions(null)
+  }
+
+  const emojis = ["❤️", "🔥", "👏", "😍", "😊", "🙏", "💯", "👌"]
   const handleDM = () => {
     const m=`Hi Mahesh Tailor 👋 ChitPix ID:${post.id} ${displayUrl} ${caption} ₹${price}`;
     window.open(`https://wa.me/${WA}?text=${encodeURIComponent(m)}`,"_blank")
@@ -95,16 +172,46 @@ function PostCard({ post, index, galleryRef }: { post:any, index:number, gallery
         {heart && <div className="absolute inset-0 flex items-center justify-center text-[90px] animate-ping">❤️</div>}
       </div>
 
-      {/* ✅ 5 ICONS - Instagram Beat */}
-      <div className="flex justify-between px-3 pt-3">
-        <div className="flex gap-4 text-[22px]">
-          <button onClick={handleLike} className={`transition ${liked?'scale-125':''}`}>{liked?'❤️':'🤍'}</button>
-          <button onClick={()=>setShowComments(true)}>💬</button>
-          <button onClick={()=>setShowShare(true)}>✈️</button>
+            {/* ✅ 5 ICONS - Instagram 2026 - Same Size - Direct Open */}
+      <div className="flex justify-between items-center px-3 pt-3 pb-1">
+        <div className="flex gap-[18px] items-center">
+          {/* 1 ❤️ LIKE - Click -> Direct Like + Animation */}
+          <button onClick={handleLike} className="w-[23px] h-[23px] active:scale-75 transition-all duration-150">
+            {liked ? (
+              <svg fill="#ff3040" viewBox="0 0 48 48"><path d="M34.6 6.1c5.7 0 10.4 5.2 10.4 11.5 0 6.8-5.9 11-11.5 16S25 41.3 24 41.9c-1.1-.7-4.7-4-9.5-8.3-5.7-5-11.5-9.2-11.5-16C3 11.6 7.7 6.1 13.4 6.1c4.2 0 6.5 2 8.1 4.3 1.9 2.6 2.2 3.9 2.5 3.9.3 0 .6-1.3 2.5-3.9 1.6-2.3 3.9-4.3 8.1-4.3m0-3c-4.5 0-7.9 1.8-10.6 5.6-2.7-3.7-6.1-5.5-10.6-5.5C6 3.1 0 9.6 0 17.6c0 7.3 5.4 12 10.6 16.5.6.5 1.3 1.1 1.9 1.7l2.3 2c4.4 3.9 6.6 5.9 7.6 6.5.5.3 1.1.5 1.6.5.6 0 1.1-.2 1.6-.5 1-.6 2.8-2.2 7.8-6.8l2-1.8c.7-.6 1.3-1.2 2-1.7C42.7 29.6 48 25 48 17.6c0-8-6-14.5-13.4-14.5z"/></svg>
+            ) : (
+              <svg fill="none" stroke="black" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M12 21C12 21 4 13 4 8a4 4 0 0 1 7-2.5A4 4 0 0 1 20 8c0 5-8 13-8 13z"/></svg>
+            )}
+          </button>
+
+          {/* 2 💬 COMMENT - Click -> Direct Comment Popup Open */}
+          <button onClick={()=>setShowComments(true)} className="w-[23px] h-[23px] active:scale-75 transition-all">
+            <svg fill="none" stroke="black" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </button>
+
+          {/* 3 ✈️ SHARE - Click -> Direct WhatsApp Share (No Popup) */}
+          <button onClick={()=>{
+            const text = `🔥 ChitPix ${caption} ₹${price}\n${displayUrl}\nOrder 👉 wa.me/916363373372`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,"_blank");
+          }} className="w-[23px] h-[23px] active:scale-75 transition-all">
+            <svg fill="none" stroke="black" strokeWidth="1.8" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
         </div>
-        <div className="flex gap-4 items-center">
-          <button onClick={()=>setSaved(!saved)} className="text-[22px]">{saved?'🔖':'📑'}</button>
-          <button onClick={handleDM} className="bg-black text-white text-[11px] px-4 py-1.5 rounded-full font-black">DM</button>
+
+        <div className="flex gap-[18px] items-center">
+          {/* 4 🔖 SAVE - Click -> Direct Save Toggle */}
+          <button onClick={()=>{setSaved(!saved); if(navigator.vibrate) navigator.vibrate(10)}} className="w-[23px] h-[23px] active:scale-75 transition-all">
+            {saved ? (
+              <svg fill="black" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            ) : (
+              <svg fill="none" stroke="black" strokeWidth="1.8" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            )}
+          </button>
+
+          {/* 5 💌 DM - Click -> Direct WhatsApp Order */}
+          <button onClick={handleDM} className="w-[23px] h-[23px] bg-black rounded-[6px] flex items-center justify-center active:scale-75 transition-all">
+            <svg fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24" className="w-[14px] h-[14px]"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>
+          </button>
         </div>
       </div>
 
