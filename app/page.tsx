@@ -76,7 +76,8 @@ function PostCard({ post, index }: { post:any, index:number }) {
       {showLikes && <div className="fixed inset-0 z-[200] bg-black/50 flex items-end" onClick={()=>setShowLikes(false)}><div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-4" onClick={e=>e.stopPropagation()}><b>{likes} Likes - R2 Post {post.id}</b><div className="mt-3 space-y-2">{Array.from({length:5}).map((_,i)=><div key={i} className="flex gap-2 items-center"><img src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-8 h-8 rounded-full" alt="" /><span className="text-[13px]">user_{i}</span></div>)}</div></div></div>}
     </div>
   )
-          }
+}
+
 export default function HomePage(){
   const [posts, setPosts] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState('home')
@@ -169,4 +170,28 @@ export default function HomePage(){
             </div>
             <input value={caption} onChange={e=>setCaption(e.target.value)} placeholder="Caption - Eg: Backside Maggam Work" className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 mt-3 text-[13px]" />
             <div className="flex gap-2 mt-2"><span className="py-2.5 px-3 bg-zinc-100 rounded-xl text-[13px]">₹</span><input value={price} onChange={e=>setPrice(e.target.value)} placeholder="350" className="flex-1 border border-zinc-200 rounded-xl px-3 py-2.5 text-[13px]" /></div>
-            <button onClick={handleUpload} disabled={!uploadFile || uploading} className="w-full bg
+            <button onClick={handleUpload} disabled={!uploadFile || uploading} className="w-full bg-black text-white py-3 rounded-xl mt-3 font-bold text-[14px] disabled:opacity-50">{uploading ? "Uploading..." : "Post to R2"}</button>
+          </div>
+        </div>
+      )}
+
+      <Stories />
+      
+      <div className="flex-1">
+        {filtered.map((post:any, i:number)=><PostCard key={post.id || i} post={post} index={i} />)}
+        {filtered.length===0 && <div className="p-10 text-center text-zinc-400 text-[13px]">No designs found for "{searchText}"</div>}
+      </div>
+
+      <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} onCreate={()=>setShowCreate(true)} />
+      
+      {showNotif && (
+        <div className="fixed inset-0 z-[100] bg-black/50 flex items-end" onClick={()=>setShowNotif(false)}>
+          <div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-4 max-h-[60vh] overflow-auto" onClick={e=>e.stopPropagation()}>
+            <div className="flex justify-between mb-3"><b>Notifications</b><button onClick={()=>setShowNotif(false)}>✕</button></div>
+            <p className="text-[13px] text-zinc-500">New likes on your R2 posts 💖</p>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    }
