@@ -7,7 +7,7 @@ html {
   min-height: 100%;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  background: #080b14;
+  background: #ffffff !important;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -16,15 +16,24 @@ body {
   min-height: 100vh;
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  background: #080b14;
-  color: #ffffff;
-  margin: 0;
-  padding: 0;
+  background: #ffffff !important;
+  color: #000000;
+  margin: 0 !important;
+  padding: 0 !important;
   width: 100%;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y !important;
   overscroll-behavior-y: auto !important;
   position: relative !important;
+  border-bottom: none !important;
+}
+
+/* RED DOTS ANNI TEESIVEY - Top heart dot + Bottom strip */
+.bg-red-500 {
+  display: none !important;
+}
+.absolute.-top-1.-right-1 {
+  display: none !important;
 }
 
 * {
