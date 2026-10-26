@@ -1,118 +1,504 @@
 'use client';
-import { useState } from "react";
 
-// ✅ BUILD FIX - type any tho error pothundi
-type Post = any;
+import { useEffect, useState } from 'react';
 
-const NewIcons = {
-  Copy: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V7a2 2 0 0 1 2-2h8"/></svg>,
-  WhatsApp: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#25D366" strokeWidth="1.6"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M8.5 13.5c.5 1 2 2.5 4.5 2.5"/></svg>,
-  Download: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M12 3v13"/><path d="m6 12 6 6 6-6"/><path d="M3 21h18"/></svg>,
-  QR: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>,
-  Story: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>,
-  Remix: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M12 3v18M3 12h18"/></svg>,
-  Feed: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>,
-  Repost: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.6"><path d="M17 3v4H3"/><path d="M7 21v-4h14"/></svg>,
+type SharePost = {
+  id?: string | number;
+  image_url?: string;
+  video_url?: string;
+  url?: string;
+  share_url?: string;
+  caption?: string;
+  [key: string]: unknown;
 };
 
-export default function ShareAZ({ post, onClose, onDownload, onShare, onToast }: any) {
-  const [copied, setCopied] = useState(false);
+type ShareAZProps = {
+  post?: SharePost | null;
+  onClose?: () => void;
+  onDownload?: (post: SharePost | null | undefined) => void | Promise<void>;
+  onShare?: (post: SharePost | null | undefined) => void;
+  onToast?: (message: string) => void;
 
-  const handleAction = (type: string) => {
-    const url = post?.image_url || window.location.href;
-    
-    if(type === 'copy') {
-      navigator.clipboard.writeText(url);
+  // Optional callbacks: connect these to existing app features.
+  onDirectMessage?: (
+    post: SharePost | null | undefined,
+    person: string
+  ) => void;
+  onStory?: (post: SharePost | null | undefined) => void;
+  onRemix?: (post: SharePost | null | undefined) => void;
+  onGenerateQR?: (url: string) => void;
+};
+
+const recentPeople = [
+  { name: 'Alex', color: 'bg-orange-200' },
+  { name: 'Mia', color: 'bg-blue-200' },
+  { name: 'Jordan', color: 'bg-pink-200' },
+  { name: 'Priya', color: 'bg-green-200' },
+  { name: 'Sam', color: 'bg-purple-200' },
+  { name: 'Rohan', color: 'bg-yellow-200' },
+  { name: 'Tara', color: 'bg-red-200' },
+];
+
+const quickActions = [
+  { id: 'copy', label: 'Copy Link', icon: '🔗' },
+  { id: 'whatsapp', label: 'WhatsApp', icon: '☘️' },
+  { id: 'download', label: 'Download', icon: '⬇️' },
+  { id: 'qr', label: 'QR Code', icon: '▦' },
+  { id: 'story', label: 'Add to Story', icon: '＋' },
+  { id: 'remix', label: 'Remix', icon: '♻️' },
+  { id: 'feed', label: 'Add to Feed', icon: '▣' },
+  { id: 'repost', label: 'Repost', icon: '🔁' },
+] as const;
+
+const moreActions = [
+  { label: 'Telegram', url: 'https://t.me/share/url' },
+  { label: 'Facebook', url: 'https://www.facebook.com/sharer/sharer.php' },
+  { label: 'Email', url: 'mailto:' },
+  { label: 'Message', url: 'sms:' },
+];
+
+export default function ShareAZ({
+  post,
+  onClose,
+  onDownload,
+  onShare,
+  onToast,
+  onDirectMessage,
+  onStory,
+  onRemix,
+  onGenerateQR,
+}: ShareAZProps) {
+  const [copied, setCopied] = useState(false);
+  const [search, setSearch] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+
+    const timer = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  const notify = (message: string) => {
+    onToast?.(message);
+  };
+
+  // Prefer a real post URL over the image URL.
+  const getShareUrl = () => {
+    if (typeof window === 'undefined') return '';
+
+    const candidate = post?.share_url || post?.url;
+
+    if (candidate) {
+      try {
+        return new URL(candidate, window.location.origin).href;
+      } catch {
+        // Fall back to the current page.
+      }
+    }
+
+    // A post ID alone is not enough to assume your route structure.
+    return window.location.href;
+  };
+
+  const copyText = async (value: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        const success = document.execCommand('copy');
+        textarea.remove();
+
+        if (!success) throw new Error('Copy failed');
+      }
+
       setCopied(true);
-      onToast?.('Link Copied! ✅');
-      setTimeout(()=>setCopied(false), 2000);
+      notify('Link copied! ✅');
+    } catch {
+      notify('Could not copy. Please copy the link manually.');
+    }
+  };
+
+  const shareNative = async () => {
+    const url = getShareUrl();
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Chitpix',
+          text: typeof post?.caption === 'string'
+            ? post.caption
+            : 'Check this out on Chitpix!',
+          url,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
+        notify('Sharing failed. Please try another option.');
+      }
+    } else {
+      await copyText(url);
+      notify('Share menu unavailable. Link copied if permitted.');
+    }
+  };
+
+  const downloadMedia = async () => {
+    if (busy) return;
+    setBusy(true);
+
+    try {
+      // Keep the existing app's download implementation when supplied.
+      if (onDownload) {
+        await onDownload(post);
+        notify('Download requested. Check your app.');
+        return;
+      }
+
+      const mediaUrl = post?.image_url || post?.video_url;
+
+      if (!mediaUrl) {
+        notify('No image or video is available to download.');
+        return;
+      }
+
+      const response = await fetch(mediaUrl);
+
+      if (!response.ok) {
+        throw new Error('Media download failed');
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = objectUrl;
+      link.download = `chitpix-${post?.id ?? 'media'}`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      notify('Download started! ⬇️');
+    } catch {
+      notify(
+        'Download failed. Check the media URL and storage CORS settings.'
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleAction = async (action: string) => {
+    const url = getShareUrl();
+
+    switch (action) {
+      case 'copy':
+        await copyText(url);
+        return;
+
+      case 'whatsapp':
+        window.open(
+          `https://wa.me/?text=${encodeURIComponent(url)}`,
+          '_blank',
+          'noopener,noreferrer'
+        );
+        return;
+
+      case 'download':
+        await downloadMedia();
+        return;
+
+      case 'qr':
+        if (onGenerateQR) {
+          onGenerateQR(url);
+        } else {
+          setQrOpen(true);
+        }
+        return;
+
+      case 'story':
+        if (!onStory) {
+          notify('Story feature needs to be connected to your app.');
+          return;
+        }
+        onStory(post);
+        notify('Story action sent.');
+        onClose?.();
+        return;
+
+      case 'remix':
+        if (!onRemix) {
+          notify('Remix feature needs to be connected to your app.');
+          return;
+        }
+        onRemix(post);
+        onClose?.();
+        return;
+
+      case 'feed':
+      case 'repost':
+        if (!onShare) {
+          notify('Feed sharing is not connected yet.');
+          return;
+        }
+        onShare(post);
+        notify(action === 'feed' ? 'Feed share requested.' : 'Repost requested.');
+        onClose?.();
+        return;
+
+      default:
+        return;
+    }
+  };
+
+  const filteredPeople = recentPeople.filter((person) =>
+    person.name.toLowerCase().includes(search.toLowerCase().trim())
+  );
+
+  const openExternalShare = (label: string) => {
+    const url = getShareUrl();
+
+    if (label === 'Email') {
+      window.location.href =
+        `mailto:?subject=${encodeURIComponent('Chitpix post')}` +
+        `&body=${encodeURIComponent(url)}`;
       return;
     }
-    if(type === 'whatsapp') {
-      window.open(`https://wa.me/?text=${encodeURIComponent(url)}`, '_blank');
+
+    if (label === 'Message') {
+      window.location.href = `sms:?body=${encodeURIComponent(url)}`;
+      return;
     }
-    if(type === 'download') {
-      onDownload?.(post);
-      onToast?.('Downloading... ⬇️');
+
+    const config = moreActions.find((item) => item.label === label);
+
+    if (!config) {
+      notify(`${label} is not available yet.`);
+      return;
     }
-    if(type === 'qr') onToast?.('QR Code Opening... 🔳');
-    if(type === 'story') { onToast?.('Added to Story! ✨'); onClose?.(); return; }
-    if(type === 'remix') onToast?.('Remix Opening... ♻️');
-    if(type === 'feed') { onShare?.(post); onToast?.('Shared to Feed ✅'); }
-    if(type === 'repost') { onShare?.(post); onToast?.('Reposted! 🔁'); }
-    
-    onClose?.();
+
+    const destination =
+      `${config.url}?${new URLSearchParams({
+        u: url,
+        url,
+        text: url,
+      }).toString()}`;
+
+    window.open(destination, '_blank', 'noopener,noreferrer');
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end justify-center" onClick={onClose}>
-      <div className="w-full max-w-[420px] bg-white rounded-t-[28px] p-5 max-h-[90vh] overflow-y-auto animate-slide-up" onClick={e=>e.stopPropagation()}>
-        
-        {/* Handle */}
-        <div className="flex justify-center pb-3"><div className="w-10 h-1 bg-zinc-300 rounded-full"/></div>
-        
-        {/* Header like your photo */}
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="font-bold text-[18px]">Share</h2>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center">✕</button>
-        </div>
-        <p className="text-[12px] text-zinc-500 text-center mb-4">1.2M shares · 320K saves · Share this reel</p>
+    <div
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-title"
+        className="relative max-h-[90dvh] w-full max-w-[440px] overflow-y-auto rounded-t-[28px] bg-white p-5 pb-7 text-zinc-950 shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="mx-auto mb-4 h-1.5 w-11 rounded-full bg-zinc-300" />
 
-        {/* Recent Chats - Like your photo */}
-        <p className="font-semibold text-[13px] mb-2">Recent Chats</p>
-        <div className="flex gap-3 overflow-x-auto pb-3 no-scrollbar">
-          {[
-            {n:'Alex', c:'bg-orange-200'}, {n:'Mia', c:'bg-blue-200'}, 
-            {n:'Jordan', c:'bg-pink-200'}, {n:'Priya', c:'bg-green-200'},
-            {n:'Sam', c:'bg-purple-200'}, {n:'Rohan', c:'bg-yellow-200'},
-            {n:'Tara', c:'bg-red-200'}
-          ].map(p => (
-            <div key={p.n} onClick={()=>handleAction('dm')} className="flex flex-col items-center gap-1 min-w-[56px] cursor-pointer active:scale-95">
-              <div className={`w-14 h-14 rounded-full ${p.c} border-2 border-white shadow flex items-center justify-center font-bold text-xs`}>{p.n[0]}</div>
-              <span className="text-[11px]">{p.n}</span>
-            </div>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 id="share-title" className="text-xl font-bold">
+            Share on Chitpix
+          </h2>
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close share panel"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-lg hover:bg-zinc-200"
+          >
+            ✕
+          </button>
+        </div>
+
+        <p className="mb-5 text-center text-xs text-zinc-500">
+          Share photos, videos and moments with your people.
+        </p>
+
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Recent Chats</h3>
+          <button
+            type="button"
+            onClick={shareNative}
+            className="text-xs font-semibold text-blue-600"
+          >
+            More sharing options
+          </button>
+        </div>
+
+        <div className="mb-4 flex gap-4 overflow-x-auto pb-2">
+          {filteredPeople.map((person) => (
+            <button
+              key={person.name}
+              type="button"
+              onClick={() => {
+                if (!onDirectMessage) {
+                  notify('Connect onDirectMessage to enable sending in DM.');
+                  return;
+                }
+
+                onDirectMessage(post, person.name);
+                notify(`Message action sent to ${person.name}.`);
+              }}
+              className="flex min-w-[58px] flex-col items-center gap-1.5"
+            >
+              <span
+                className={`flex h-14 w-14 items-center justify-center rounded-full ${person.color} text-lg font-bold ring-2 ring-white`}
+              >
+                {person.name[0]}
+              </span>
+              <span className="max-w-[64px] truncate text-xs">
+                {person.name}
+              </span>
+            </button>
           ))}
-          <div className="flex flex-col items-center gap-1 min-w-[56px]">
-            <div className="w-14 h-14 rounded-full bg-zinc-100 flex items-center justify-center font-bold text-xs">+36</div>
-            <span className="text-[11px]">More</span>
-          </div>
+
+          {filteredPeople.length === 0 && (
+            <p className="py-3 text-xs text-zinc-500">
+              No matching sample contacts.
+            </p>
+          )}
         </div>
 
-        {/* Search bar - Like your photo */}
-        <div className="mt-2 bg-zinc-100 rounded-full flex items-center px-4 py-2.5 gap-2">
-          <span className="text-zinc-400">🔍</span>
-          <input placeholder="Search people, apps, or places" className="bg-transparent w-full outline-none text-[13px] placeholder:text-zinc-400" />
-          <span>🎤</span>
+        <label className="flex items-center gap-2 rounded-2xl bg-zinc-100 px-4 py-3 focus-within:ring-2 focus-within:ring-zinc-300">
+          <span aria-hidden="true">⌕</span>
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Search sample contacts"
+            aria-label="Search contacts"
+            className="w-full bg-transparent text-sm outline-none placeholder:text-zinc-400"
+          />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch('')}
+              aria-label="Clear search"
+              className="text-zinc-500"
+            >
+              ✕
+            </button>
+          )}
+        </label>
+
+        <div className="mb-3 mt-6 flex items-center justify-between">
+          <h3 className="text-sm font-bold">✨ Quick Actions</h3>
+          <span className="text-xs text-zinc-400">8 options</span>
         </div>
 
-        {/* Quick Actions - 8 GRID - Your NewIcons */}
-        <p className="font-semibold text-[13px] mt-5 mb-3">✨ Quick Actions</p>
-        <div className="grid grid-cols-4 gap-4">
-          <button onClick={()=>handleAction('copy')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Copy/></div><span className="text-[10px] text-center">{copied ? 'Copied!' : 'Copy Link'}</span></button>
-          <button onClick={()=>handleAction('whatsapp')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center"><NewIcons.WhatsApp/></div><span className="text-[10px]">WhatsApp</span></button>
-          <button onClick={()=>handleAction('download')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Download/></div><span className="text-[10px]">Download</span></button>
-          <button onClick={()=>handleAction('qr')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.QR/></div><span className="text-[10px]">QR Code</span></button>
-          <button onClick={()=>handleAction('story')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Story/></div><span className="text-[10px]">Add to Story</span></button>
-          <button onClick={()=>handleAction('remix')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center relative"><NewIcons.Remix/><span className="absolute -top-1 -right-1 bg-black text-white text-[7px] px-1 rounded">PRO</span></div><span className="text-[10px]">Remix</span></button>
-          <button onClick={()=>handleAction('feed')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Feed/></div><span className="text-[10px]">Add to Feed</span></button>
-          <button onClick={()=>handleAction('repost')} className="flex flex-col items-center gap-1.5 active:scale-90 transition"><div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center"><NewIcons.Repost/></div><span className="text-[10px]">Repost</span></button>
-        </div>
-
-        {/* More Options - Extra 22 */}
-        <p className="font-semibold text-[13px] mt-5 mb-3">More Options</p>
-        <div className="grid grid-cols-4 gap-4 opacity-80">
-          {['Telegram','TikTok','Facebook','Email','Save Files','AI Caption','Embed','Message','Link Bio','Schedule','Collab','More...'].map(l=>(
-            <button key={l} onClick={()=>{onToast?.(`${l} - Coming soon!`);}} className="flex flex-col items-center gap-1.5">
-              <div className="w-12 h-12 rounded-full bg-zinc-50 flex items-center justify-center text-[10px]">🔗</div>
-              <span className="text-[9px] text-center">{l}</span>
+        <div className="grid grid-cols-4 gap-x-2 gap-y-5">
+          {quickActions.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              disabled={busy}
+              onClick={() => void handleAction(action.id)}
+              className="group flex min-w-0 flex-col items-center gap-2 disabled:opacity-50"
+            >
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-2xl transition group-hover:bg-zinc-200 group-active:scale-95">
+                {action.id === 'copy' && copied ? '✓' : action.icon}
+              </span>
+              <span className="text-center text-[11px] leading-tight">
+                {action.id === 'copy' && copied ? 'Copied!' : action.label}
+              </span>
             </button>
           ))}
         </div>
 
-        <button onClick={onClose} className="w-full mt-6 bg-black text-white py-3.5 rounded-full font-semibold active:scale-95 transition">Close</button>
-        
-        <p className="text-[10px] text-zinc-400 text-center mt-3">🔒 Privacy: Everyone can view and remix</p>
-      </div>
+        <h3 className="mb-3 mt-7 text-sm font-bold">More Options</h3>
+
+        <div className="grid grid-cols-4 gap-x-2 gap-y-5">
+          {[
+            ...moreActions,
+            { label: 'TikTok', url: '' },
+            { label: 'Save Files', url: '' },
+            { label: 'AI Caption', url: '' },
+            { label: 'Embed', url: '' },
+            { label: 'Link Bio', url: '' },
+            { label: 'Schedule', url: '' },
+            { label: 'Collab', url: '' },
+            { label: 'More...', url: '' },
+          ].map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => {
+                if (['Telegram', 'Facebook', 'Email', 'Message'].includes(item.label)) {
+                  openExternalShare(item.label);
+                } else {
+                  notify(`${item.label} needs its own feature integration.`);
+                }
+              }}
+              className="flex min-w-0 flex-col items-center gap-2"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-50 text-xl ring-1 ring-zinc-100">
+                {item.label === 'Email'
+                  ? '✉️'
+                  : item.label === 'Message'
+                    ? '💬'
+                    : item.label === 'Facebook'
+                      ? 'f'
+                      : item.label === 'Telegram'
+                        ? '➤'
+                        : '＋'}
+              </span>
+              <span className="text-center text-[10px] leading-tight text-zinc-600">
+                {item.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {qrOpen && (
+          <div className="mt-5 rounded-2xl border border-zinc-200 p-4 text-center">
+            <h3 className="font-semibold">Share QR Code</h3>
+            <p className="mt-1 break-all text-xs text-zinc-500">{getShareUrl()}</p>
+
+            <img
+              className="mx-auto my-3 h-48 w-48"
+              alt="QR code for this share link"
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(getShareUrl())}`}
+            />
+
+            <p className="text-xs text-zinc-500">
+              QR generation uses an external service. Avoid sharing private links.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setQrOpen(false)}
+              className="mt-3 rounded-full bg-zinc-100 px-5 py-2 text-sm font-semibold"
+            >
+              Close QR
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-7 w-full rounded-full bg-black py-3.5 font-semibold text-white transition active:scale-[0.98]"
+        >
+          Close
+        </button>
+
+        <p className="mt-3 text-center text-[10px] text-zinc-400">
+          🔒 Share only content you have permission to share.
+        </p>
+      </section>
     </div>
   );
-}
+          }
