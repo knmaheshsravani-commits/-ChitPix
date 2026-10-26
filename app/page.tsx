@@ -164,12 +164,16 @@ function ChitIcon({
 
 function PostCard({
   post,
+  index,
   currentUserId,
   onRefresh,
+  galleryRef,
 }: {
   post: Post
+  index?: number
   currentUserId: string | null
   onRefresh: () => void
+  galleryRef?: React.RefObject<HTMLInputElement | null>
 }) {
   const router = useRouter()
 
