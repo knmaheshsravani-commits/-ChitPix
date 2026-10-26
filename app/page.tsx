@@ -322,7 +322,7 @@ function PostCard({
       )}
     </article>
   )
-            }
+      }
           
   const handleLike = async () => {
     if (!currentUserId) {
@@ -446,6 +446,57 @@ function PostCard({
       setBusy(false)
     }
   }
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadUserActions() {
+      if (!currentUserId) return
+
+      const [
+        likeResult,
+        saveResult,
+        followResult,
+      ] = await Promise.all([
+        supabase
+          .from("post_likes")
+          .select("id")
+          .eq("post_id", post.id)
+          .eq("user_id", currentUserId)
+          .maybeSingle(),
+
+        supabase
+          .from("saved_posts")
+          .select("id")
+          .eq("post_id", post.id)
+          .eq("user_id", currentUserId)
+          .maybeSingle(),
+
+        post.user_id
+          ? supabase
+              .from("user_follows")
+              .select("id")
+              .eq("follower_id", currentUserId)
+              .eq("following_id", post.user_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ])
+
+      if (cancelled) return
+
+      if (!likeResult.error) setLiked(!!likeResult.data)
+      if (!saveResult.error) setSaved(!!saveResult.data)
+
+      if (followResult && !followResult.error) {
+        setFollowed(!!followResult.data)
+      }
+    }
+
+    loadUserActions()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentUserId, post.id, post.user_id])
 const handleComment = async () => {
   const text = commentText.trim()
 
@@ -499,6 +550,77 @@ const handleComment = async () => {
     setBusy(false)
   }
 }
+const handleUpload = async () => {
+  if (!uploadFile) {
+    alert("Munduga photo/video select cheyyi bro")
+    return
+  }
+
+  if (uploading) return
+
+  if (!uploadFile.type.startsWith("image/") &&
+      !uploadFile.type.startsWith("video/")) {
+    alert("Image leda video file select cheyyi")
+    return
+  }
+
+  setUploading(true)
+
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      throw new Error("Post cheyadaniki login avvali")
+    }
+
+    // 1. Upload media to existing Cloudflare R2 endpoint.
+    const mediaUrl = await uploadToR2(uploadFile)
+
+    const mediaType = uploadFile.type.startsWith("video/")
+      ? "video"
+      : "image"
+
+    const username =
+      user.user_metadata?.username ||
+      user.email?.split("@")[0] ||
+      "ChitPix User"
+
+    // 2. Save the public media URL and post details in Supabase.
+    const { data, error } = await supabase
+      .from("posts")
+      .insert({
+        user_id: user.id,
+        username,
+        image_url: mediaUrl,
+        r2_url: mediaUrl,
+        url: mediaUrl,
+        caption: caption.trim(),
+        price: price.trim() || null,
+        media_type: mediaType,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    // 3. Add the confirmed database record to the visible feed.
+    setPosts(previous => [data, ...previous])
+
+    setShowCreate(false)
+    setUploadFile(null)
+    setCaption("")
+    setPrice("350")
+
+    alert("ChitPix post successful ❤️")
+  } catch (error: any) {
+    alert(error.message || "Upload failed. Malli try cheyyi.")
+  } finally {
+    setUploading(false)
+  }
+}
 const filtered = posts.filter((post) => {
   const query = searchText.trim().toLowerCase()
 
@@ -543,3 +665,115 @@ const loadPosts = async () => {
 useEffect(() => {
   loadPosts()
 }, [])
+<div className="flex-1">
+  {loading ? (
+    <div className="p-10 text-center text-zinc-400">
+      <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-zinc-200 border-t-blue-600" />
+      Loading ChitPix Feed...
+    </div>
+  ) : feedError ? (
+    <div className="p-8 text-center">
+      <p className="mb-3 text-sm text-red-500">
+        {feedError}
+      </p>
+      <button
+        onClick={loadPosts}
+        disabled={refreshing}
+        className="rounded-full bg-black px-5 py-2 text-sm font-bold text-white disabled:opacity-50"
+      >
+        {refreshing ? "Loading..." : "Try Again"}
+      </button>
+    </div>
+  ) : filtered.length === 0 ? (
+    <div className="p-10 text-center text-zinc-400">
+      <p className="mb-2 font-bold">No posts found</p>
+      <p className="text-sm">
+        Search clear cheyyi leda first post upload cheyyi.
+      </p>
+    </div>
+  ) : (
+    <>
+      <div className="flex justify-end px-3 py-2">
+        <button
+          onClick={loadPosts}
+          disabled={refreshing}
+          className="rounded-full bg-zinc-100 px-4 py-2 text-xs font-bold disabled:opacity-50"
+        >
+          {refreshing ? "Refreshing..." : "↻ Refresh Feed"}
+        </button>
+      </div>
+
+      {filtered.map((post, index) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          index={index}
+          currentUserId={currentUserId}
+          onRefresh={loadPosts}
+        />
+      ))}
+    </>
+  )}
+</div>
+  
+const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+useEffect(() => {
+  let active = true
+
+  async function loadCurrentUser() {
+    const { data } = await supabase.auth.getUser()
+
+    if (active) {
+      setCurrentUserId(data.user?.id || null)
+    }
+  }
+
+  loadCurrentUser()
+
+  const { data: listener } = supabase.auth.onAuthStateChange(
+    (_event, session) => {
+      setCurrentUserId(session?.user?.id || null)
+    }
+  )
+
+  return () => {
+    active = false
+    listener.subscription.unsubscribe()
+  }
+}, [])
+  
+const handleReport = async () => {
+  if (!currentUserId) {
+    setMessage("Report cheyadaniki login avvali")
+    return
+  }
+
+  const reason = window.prompt(
+    "Report reason enter cheyyi: spam, abuse, inappropriate content"
+  )
+
+  if (!reason?.trim()) return
+
+  setBusy(true)
+
+  try {
+    const { error } = await supabase
+      .from("post_reports")
+      .insert({
+        post_id: post.id,
+        reporter_id: currentUserId,
+        reason: reason.trim(),
+      })
+
+    if (error) throw error
+
+    setMessage("Report submitted. Thank you.")
+    setShowMore(false)
+  } catch (error: any) {
+    setMessage(error.message || "Report submit avvaledu")
+  } finally {
+    setBusy(false)
+  }
+  }
+  
