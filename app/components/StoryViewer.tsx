@@ -554,7 +554,7 @@ export default function StoryViewer({
         )}
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-30 p-3 bg-gradient-to-t from-black/90 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 z-[100] p-3 pb-6 bg-gradient-to-t from-black/90 to-transparent">
         <div className="flex items-center gap-2">
           <input
             value={reply}
