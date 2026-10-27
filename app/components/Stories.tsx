@@ -53,7 +53,20 @@ export default function StoriesBar({ onSelectUser, onAdd }: any){
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ fileName: `stories/${Date.now()}-${file.name}`, contentType: file.type })
       })
-      const { uploadUrl, publicUrl } = await presignRes.json()
+      const presignData = await presignRes.json()
+
+if (
+  !presignRes.ok ||
+  !presignData.url ||
+  !presignData.publicUrl
+) {
+  throw new Error(
+    presignData.error || "R2 upload URL dorakaledu"
+  )
+}
+
+const uploadUrl = presignData.url
+const publicUrl = presignData.publicUrl
       
       // 2. Upload to R2
       await fetch(uploadUrl, { method:"PUT", body: file, headers: {"Content-Type": file.type} })
