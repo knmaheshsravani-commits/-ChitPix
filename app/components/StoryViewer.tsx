@@ -1,4 +1,4 @@
-// @ts-nocheck
+ // @ts-nocheck
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -14,10 +14,10 @@ function getStoryImage(story: any) {
     story?.url ||
     story?.image ||
     story?.publicUrl ||
+    story?.video_url ||
     ""
 
   if (!value) return ""
-
   if (/^https?:\/\//i.test(value)) return value
 
   const path = String(value).replace(/^\/+/, "")
@@ -26,33 +26,8 @@ function getStoryImage(story: any) {
   }`
 }
 
-function getUsername() {
-  if (typeof window === "undefined") return ""
-
-  // Prefer the app's saved profile data if available.
-  const keys = [
-    "chitpix_profile",
-    "chitpix_user",
-    "currentUser",
-    "user",
-  ]
-
-  for (const key of keys) {
-    try {
-      const value = localStorage.getItem(key)
-      if (!value) continue
-
-      const parsed = JSON.parse(value)
-      const username =
-        parsed?.username ||
-        parsed?.user?.username ||
-        parsed?.profile?.username
-
-      if (username) return String(username).replace(/^@/, "").toLowerCase()
-    } catch {}
-  }
-
-  return ""
+function cleanUsername(value: any) {
+  return String(value || "").trim().replace(/^@/, "").toLowerCase()
 }
 
 export default function StoryViewer({
@@ -65,6 +40,10 @@ export default function StoryViewer({
   const [paused, setPaused] = useState(false)
   const [progress, setProgress] = useState(0)
 
+  const [username, setUsername] = useState("")
+  const [currentUserId, setCurrentUserId] = useState("")
+  const [authReady, setAuthReady] = useState(false)
+
   const [liked, setLiked] = useState<any>({})
   const [likeCounts, setLikeCounts] = useState<any>({})
   const [likeBusy, setLikeBusy] = useState<any>({})
@@ -73,7 +52,7 @@ export default function StoryViewer({
   const [showMore, setShowMore] = useState(false)
   const [reply, setReply] = useState("")
   const [status, setStatus] = useState("")
-  const [pollVoted, setPollVoted] = useState<any>({})
+  const [viewCounts, setViewCounts] = useState<any>({})
 
   const timerRef = useRef<any>(null)
   const startedAtRef = useRef(0)
@@ -84,15 +63,71 @@ export default function StoryViewer({
   const currentStory = currentUser?.stories?.[storyIdx]
   const storyId = String(currentStory?.id || "")
   const storyImage = getStoryImage(currentStory)
-  const [username, setUsername] = useState("")
 
-  const owner = String(
-    currentUser?.username ||
-    currentStory?.username ||
-    ""
-  ).replace(/^@/, "").toLowerCase()
-
+  const owner = cleanUsername(
+    currentUser?.username || currentStory?.username
+  )
   const isOwnStory = !!username && username === owner
+
+  // Get the actual signed-in Supabase user and profile username.
+  useEffect(() => {
+    let active = true
+
+    const loadUsername = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser()
+        if (error) throw error
+
+        const user = data?.user
+
+        if (!user) {
+          if (active) {
+            setUsername("")
+            setCurrentUserId("")
+            setAuthReady(true)
+          }
+          return
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", user.id)
+          .maybeSingle()
+
+        if (profileError) {
+          console.error("Story profile load failed:", profileError)
+        }
+
+        const name = cleanUsername(
+          profile?.username ||
+          user.user_metadata?.username ||
+          user.email?.split("@")[0] ||
+          ""
+        )
+
+        if (active) {
+          setCurrentUserId(user.id)
+          setUsername(name)
+          setAuthReady(true)
+        }
+      } catch (error) {
+        console.error("Story login check failed:", error)
+        if (active) setAuthReady(true)
+      }
+    }
+
+    loadUsername()
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      loadUsername()
+    })
+
+    return () => {
+      active = false
+      listener?.subscription?.unsubscribe()
+    }
+  }, [])
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
@@ -136,8 +171,7 @@ export default function StoryViewer({
       setStoryIdx(Math.max(0, previousStories.length - 1))
     }
   }, [storyIdx, userIdx, users, stopTimer])
-
-  // Load the real like state and count from the API.
+    
   useEffect(() => {
     if (!storyId) return
 
@@ -151,18 +185,15 @@ export default function StoryViewer({
         const res = await fetch(`/api/story-likes?${query}`, {
           cache: "no-store",
         })
-
-        if (!res.ok) throw new Error("Likes load failed")
-
         const data = await res.json()
 
+        if (!res.ok) throw new Error(data.error || "Likes load failed")
         if (!active) return
 
         setLikeCounts((old: any) => ({
           ...old,
           [storyId]: Number(data.count || 0),
         }))
-
         setLiked((old: any) => ({
           ...old,
           [storyId]: !!data.liked,
@@ -173,30 +204,44 @@ export default function StoryViewer({
     }
 
     loadLikes()
-
     return () => {
       active = false
     }
   }, [storyId, username])
 
-  // Register a story view using the existing endpoint.
+  // Register a view. The route must exist for the count to persist.
   useEffect(() => {
     if (!storyId || !username) return
 
-    fetch("/api/story_views", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username,
-        storyId,
-        storyOwner: owner,
-      }),
-    }).catch((error) => {
-      console.error("Story view save failed:", error)
-    })
+    let active = true
+
+    const registerView = async () => {
+      try {
+        const res = await fetch("/api/story_views", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, storyId, storyOwner: owner }),
+        })
+
+        const data = await res.json().catch(() => ({}))
+
+        if (active && res.ok && typeof data.count === "number") {
+          setViewCounts((old: any) => ({
+            ...old,
+            [storyId]: data.count,
+          }))
+        }
+      } catch (error) {
+        console.error("Story view save failed:", error)
+      }
+    }
+
+    registerView()
+    return () => {
+      active = false
+    }
   }, [storyId, username, owner])
 
-  // Auto-progress; pause retains the elapsed time.
   useEffect(() => {
     if (!currentStory || paused || showSeenList || showMore) {
       stopTimer()
@@ -204,7 +249,6 @@ export default function StoryViewer({
     }
 
     startedAtRef.current = Date.now()
-    const remaining = durationRef.current - elapsedRef.current
 
     timerRef.current = setInterval(() => {
       const elapsed =
@@ -234,20 +278,15 @@ export default function StoryViewer({
   ])
 
   const togglePause = () => {
-    if (paused) {
-      elapsedRef.current = (progress / 100) * durationRef.current
-    } else {
-      elapsedRef.current = (progress / 100) * durationRef.current
-    }
-
+    elapsedRef.current = (progress / 100) * durationRef.current
     setPaused((value: boolean) => !value)
   }
 
   const toggleLike = async () => {
     if (!storyId) return
 
-    if (!username) {
-      setStatus("Like cheyyadaniki login avvali.")
+    if (!authReady || !username) {
+      setStatus("Like cheyyadaniki Gmail tho login avvali.")
       return
     }
 
@@ -268,11 +307,7 @@ export default function StoryViewer({
       const res = await fetch("/api/story-likes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          storyId,
-          username,
-          storyOwner: owner,
-        }),
+        body: JSON.stringify({ storyId, username, storyOwner: owner }),
       })
 
       const data = await res.json()
@@ -285,7 +320,6 @@ export default function StoryViewer({
         ...old,
         [storyId]: data.action === "liked",
       }))
-
       setLikeCounts((old: any) => ({
         ...old,
         [storyId]: Number(data.count ?? previousCount),
@@ -297,47 +331,41 @@ export default function StoryViewer({
     } finally {
       setLikeBusy((old: any) => ({ ...old, [storyId]: false }))
     }
-  }
-
+    }
+      
   const sendReply = async () => {
-  const message = reply.trim()
-  if (!message) return
+    const message = reply.trim()
+    if (!message) return
 
-  if (!username) {
-    setStatus("Reply pampadaniki login avvali.")
-    return
-  }
-
-  if (!storyId) {
-    setStatus("Story ID dorakaledu.")
-    return
-  }
-
-  try {
-    setStatus("Reply sending...")
-
-    const res = await fetch("/api/story-replies", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        storyId,
-        username,
-        storyOwner: owner,
-        message,
-      }),
-    })
-
-    const data = await res.json()
-
-    if (!res.ok || !data.success) {
-      throw new Error(data.error || "Reply save avvaledu.")
+    if (!authReady || !username) {
+      setStatus("Reply pampadaniki Gmail tho login avvali.")
+      return
     }
 
-    setReply("")
-    setStatus("Reply sent successfully!")
-  } catch (error: any) {
-    setStatus(error.message || "Reply pampadam fail ayindi.")
-  }
+    if (!storyId) {
+      setStatus("Story ID dorakaledu.")
+      return
+    }
+
+    try {
+      setStatus("Reply sending...")
+
+      const res = await fetch("/api/story-replies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ storyId, username, storyOwner: owner, message }),
+      })
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Reply save avvaledu.")
+      }
+
+      setReply("")
+      setStatus("Reply sent successfully!")
+    } catch (error: any) {
+      setStatus(error.message || "Reply pampadam fail ayindi.")
+    }
   }
 
   const shareStory = async () => {
@@ -358,61 +386,97 @@ export default function StoryViewer({
         setStatus("Story link copied.")
       }
     } catch (error: any) {
-      if (error?.name !== "AbortError") {
-        setStatus("Share cheyyalekapoyanu.")
-      }
+      if (error?.name !== "AbortError") setStatus("Share cheyyalekapoyanu.")
     }
   }
 
-  const downloadStory = () => {
+  const downloadStory = async () => {
     if (!storyImage) {
       setStatus("Story URL dorakaledu.")
       return
     }
 
-    // Cross-origin downloads may open the file instead of downloading it.
-    const link = document.createElement("a")
-    link.href = storyImage
-    link.target = "_blank"
-    link.rel = "noopener noreferrer"
-    link.download = `chitpix-story-${storyId || Date.now()}`
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
+    try {
+      setStatus("Download preparing...")
+
+      const response = await fetch(storyImage)
+      if (!response.ok) throw new Error("Media download failed")
+
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+
+      link.href = objectUrl
+      link.download = `chitpix-story-${storyId || Date.now()}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      URL.revokeObjectURL(objectUrl)
+      setStatus("Download started.")
+    } catch (error) {
+      console.error("Story download failed:", error)
+      // Cross-origin or R2 CORS restrictions may block blob download.
+      window.open(storyImage, "_blank", "noopener,noreferrer")
+      setStatus("Story open chesanu. Download option browser lo try cheyyi.")
+    }
   }
 
   const convertToPost = async () => {
-    if (!storyImage) return setStatus("Story URL dorakaledu.")
-    setStatus("Post API response check chestunnanu...")
+    if (!storyImage) {
+      setStatus("Story URL dorakaledu.")
+      return
+    }
+
+    if (!authReady || !currentUserId || !username) {
+      setStatus("Post cheyyadaniki Gmail tho login avvali.")
+      return
+    }
 
     try {
-      const res = await fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      setStatus("Post create chestunnanu...")
+
+      // Use the same Supabase posts table as page.tsx.
+      const { data, error } = await supabase
+        .from("posts")
+        .insert({
+          user_id: currentUserId,
           image_url: storyImage,
-          caption: currentStory?.caption || "",
-        }),
-      })
+          r2_url: storyImage,
+          caption: String(currentStory?.caption || "").trim(),
+          price: null,
+          username,
+        })
+        .select("*")
+        .single()
 
-      if (!res.ok) throw new Error("Post create avvaledu")
+      if (error) throw error
 
-      setStatus("Post API accepted the request. Feed lo verify cheyyi.")
+      setStatus("Post create ayyindi! Feed refresh chesi check cheyyi.")
     } catch (error: any) {
-      setStatus(error.message || "Post create avvaledu.")
+      console.error("Story to post failed:", error)
+      setStatus(error?.message || "Post create avvaledu.")
     }
   }
 
   const deleteStory = async () => {
-    if (!isOwnStory) return setStatus("Mee story matrame delete cheyyagalru.")
+    if (!isOwnStory) {
+      setStatus("Mee story matrame delete cheyyagalru.")
+      return
+    }
+
     if (!window.confirm("Ee story delete cheyyala?")) return
 
     try {
-      const res = await fetch(`/api/stories?id=${encodeURIComponent(storyId)}`, {
-        method: "DELETE",
-      })
+      const res = await fetch(
+        `/api/stories?id=${encodeURIComponent(storyId)}`,
+        { method: "DELETE" }
+      )
+      const data = await res.json().catch(() => ({}))
 
-      if (!res.ok) throw new Error("Story delete avvaledu")
+      if (!res.ok || data.success === false) {
+        throw new Error(data.error || "Story delete avvaledu")
+      }
 
       setStatus("Story deleted.")
       goNext()
@@ -425,23 +489,24 @@ export default function StoryViewer({
 
   const isVideo =
     currentStory.type === "video" ||
+    currentStory.type === "reel" ||
     !!currentStory.video_url ||
     /\.(mp4|webm|mov)(\?|$)/i.test(storyImage)
 
+  const displayedViews = Number(
+    viewCounts[storyId] ?? currentStory.views ?? 0
+  )
+    
   return (
     <div className="fixed inset-0 z-[99999] bg-black text-white flex flex-col w-full max-w-[480px] mx-auto overflow-hidden">
       <div className="absolute top-0 left-0 right-0 z-30 flex gap-1 p-2">
-        {currentUser.stories.map((_: any, i: number) => (
+        {(currentUser.stories || []).map((_: any, i: number) => (
           <div key={i} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
             <div
               className="h-full bg-white"
               style={{
                 width:
-                  i < storyIdx
-                    ? "100%"
-                    : i === storyIdx
-                    ? `${progress}%`
-                    : "0%",
+                  i < storyIdx ? "100%" : i === storyIdx ? `${progress}%` : "0%",
               }}
             />
           </div>
@@ -512,7 +577,6 @@ export default function StoryViewer({
           onClick={goPrev}
           className="absolute left-0 top-1/4 bottom-1/4 w-1/5 z-10"
         />
-
         <button
           type="button"
           aria-label="Next story"
@@ -534,9 +598,7 @@ export default function StoryViewer({
           aria-label="Like story"
         >
           {liked[storyId] ? "❤️" : "🤍"}
-          <span className="ml-2 text-sm">
-            {Number(likeCounts[storyId] || 0)}
-          </span>
+          <span className="ml-2 text-sm">{Number(likeCounts[storyId] || 0)}</span>
         </button>
 
         {liked[storyId] && (
@@ -582,7 +644,7 @@ export default function StoryViewer({
             className="text-xs"
             aria-label="Views"
           >
-            👁️ {Number(currentStory.views || 0)}
+            👁️ {displayedViews}
           </button>
         </div>
 
@@ -590,15 +652,12 @@ export default function StoryViewer({
           <button type="button" onClick={shareStory} className="border border-white/30 rounded-full px-3 py-2 text-xs">
             ↗️ Share
           </button>
-
           <button type="button" onClick={downloadStory} className="border border-white/30 rounded-full px-3 py-2 text-xs">
             ⬇️ Download
           </button>
-
           <button type="button" onClick={convertToPost} className="border border-white/30 rounded-full px-3 py-2 text-xs">
             📌 To Post
           </button>
-
           <button type="button" onClick={() => setShowMore(!showMore)} className="border border-white/30 rounded-full px-3 py-2 text-xs">
             ⋯ More
           </button>
@@ -609,7 +668,6 @@ export default function StoryViewer({
         <div className="absolute inset-0 z-40 bg-black/70 flex items-end">
           <div className="w-full bg-white text-black rounded-t-2xl p-5 space-y-3">
             <p className="font-bold">Story options</p>
-
             {isOwnStory ? (
               <button type="button" onClick={deleteStory} className="w-full text-left py-2 text-red-600">
                 🗑️ Delete my story
@@ -623,7 +681,6 @@ export default function StoryViewer({
                 🚩 Report story
               </button>
             )}
-
             <button type="button" onClick={() => setShowMore(false)} className="w-full rounded-full bg-black text-white py-3">
               Close
             </button>
@@ -637,10 +694,10 @@ export default function StoryViewer({
             <div className="w-10 h-1 bg-zinc-300 rounded-full mx-auto mb-4" />
             <h2 className="font-bold text-lg">Story views</h2>
             <p className="text-sm text-zinc-500 mt-2">
-              Current story view count: {Number(currentStory.views || 0)}
+              Current story view count: {displayedViews}
             </p>
             <p className="text-xs text-zinc-500 mt-2">
-              Real viewer names require the story_views API to return a viewer list.
+              Viewer names show avvadaniki API viewer list return cheyyali.
             </p>
             <button
               type="button"
@@ -654,4 +711,5 @@ export default function StoryViewer({
       )}
     </div>
   )
-    }
+                                           }
+        
