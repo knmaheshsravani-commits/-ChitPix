@@ -1,4 +1,4 @@
-import ShareAZ from "./components/ShareAZ"
+
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import BottomNav from "./components/BottomNav"
