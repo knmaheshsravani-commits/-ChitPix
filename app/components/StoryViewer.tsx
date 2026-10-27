@@ -48,7 +48,7 @@ export default function StoryViewer({
   const [likeCounts, setLikeCounts] = useState<any>({})
   const [likeBusy, setLikeBusy] = useState<any>({})
 
-  const [viewers, setViewers] = useState<any[]>([])
+  const [showSeenList, setShowSeenList] = useState(false)
   const [showMore, setShowMore] = useState(false)
   const [reply, setReply] = useState("")
   const [status, setStatus] = useState("")
