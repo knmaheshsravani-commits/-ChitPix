@@ -84,7 +84,7 @@ export default function StoryViewer({
   const currentStory = currentUser?.stories?.[storyIdx]
   const storyId = String(currentStory?.id || "")
   const storyImage = getStoryImage(currentStory)
-  const username = getUsername()
+  const [username, setUsername] = useState("")
 
   const owner = String(
     currentUser?.username ||
