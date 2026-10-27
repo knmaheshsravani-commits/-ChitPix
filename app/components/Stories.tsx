@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import StoryViewer from "./StoryViewer"
 
 const R2_PUBLIC =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
