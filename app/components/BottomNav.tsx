@@ -20,13 +20,13 @@ export default function BottomNav({
 
     const loadPhoto = async () => {
       try {
-        // First preference: the photo supplied by the Profile page.
+        // 1. Use the avatar supplied by the Profile page.
         if (avatar && !avatar.startsWith("blob:")) {
           setProfilePhoto(avatar)
           return
         }
 
-        // Next preference: the signed-in user's saved Supabase profile.
+        // 2. Load the signed-in user's saved profile photo.
         const {
           data: { user },
           error: authError,
@@ -48,8 +48,9 @@ export default function BottomNav({
           return
         }
 
-        // Backward compatibility with the previous localStorage value.
+        // 3. Fallback to the previous localStorage value.
         const saved = localStorage.getItem("chitpix_profile_photo")
+
         if (!cancelled) {
           setProfilePhoto(avatar || saved || "")
         }
@@ -85,78 +86,146 @@ export default function BottomNav({
 
   const goTo = (path: string, tab: string) => {
     if (setActiveTab) setActiveTab(tab)
-    router.push(path)
-    window.scrollTo(0, 0)
+
+    if (pathname !== path) {
+      router.push(path)
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const iconStyle = (selected: boolean) => ({
-    background: selected ? "#f2f2f2" : "transparent",
+  const iconClass = (selected: boolean) =>
+    `flex items-center justify-center w-[52px] h-[44px] rounded-full transition-colors ${
+      selected ? "bg-neutral-100" : "bg-transparent"
+    }`
+
+  const iconStroke = (selected: boolean) => ({
+    color: "#111111",
+    strokeWidth: selected ? 2.3 : 1.8,
   })
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-neutral-200 flex justify-around items-center h-[60px] z-[99999]"
-      style={{ backgroundColor: "white" }}
+      aria-label="Main navigation"
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-neutral-200 flex justify-around items-center h-[62px] z-[99999]"
+      style={{
+        backgroundColor: "#ffffff",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
     >
+      {/* HOME */}
       <button
         type="button"
         aria-label="Home"
+        aria-current={isHome ? "page" : undefined}
         onClick={() => goTo("/", "home")}
-        className="flex items-center justify-center w-[56px] h-[38px] rounded-full"
-        style={iconStyle(isHome)}
+        className={iconClass(isHome)}
+        style={iconStroke(isHome)}
       >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8">
-          <path d="M3 10L12 3L21 10V21H14V14H10V21H3Z" />
+        <svg
+          width="27"
+          height="27"
+          viewBox="0 0 28 28"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M3.5 12.5 14 3.5l10.5 9" />
+          <path d="M6.5 11v12h6v-7h3v7h6V11" />
         </svg>
       </button>
 
-      <button
-        type="button"
-        aria-label="Reels"
-        onClick={() => goTo("/reels", "reels")}
-        className="flex items-center justify-center w-[56px] h-[38px] rounded-full"
-        style={iconStyle(isReels)}
-      >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8">
-          <rect x="3" y="3" width="18" height="18" rx="5" />
-          <path d="M10 8.5V15.5L15 12Z" fill={isReels ? "black" : "none"} />
-        </svg>
-      </button>
-
-      <button
-        type="button"
-        aria-label="Messages"
-        onClick={() => goTo("/messages", "messages")}
-        className="flex items-center justify-center w-[56px] h-[38px] rounded-full"
-        style={iconStyle(isDM)}
-      >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.8">
-          <path d="M22 3L11.5 13M22 3L15 22L11.5 13L2 9L22 3Z" />
-        </svg>
-      </button>
-
+      {/* SEARCH */}
       <button
         type="button"
         aria-label="Search"
+        aria-current={isSearch ? "page" : undefined}
         onClick={() => goTo("/search", "search")}
-        className="flex items-center justify-center w-[56px] h-[38px] rounded-full"
-        style={iconStyle(isSearch)}
+        className={iconClass(isSearch)}
+        style={iconStroke(isSearch)}
       >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="1.9">
-          <circle cx="11" cy="11" r="6" />
-          <path d="M16 16L20 20" />
+        <svg
+          width="27"
+          height="27"
+          viewBox="0 0 28 28"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        >
+          <circle cx="12" cy="12" r="7.5" />
+          <path d="m17.5 17.5 6 6" />
         </svg>
       </button>
 
+      {/* DIRECT MESSAGES */}
+      <button
+        type="button"
+        aria-label="Direct messages"
+        aria-current={isDM ? "page" : undefined}
+        onClick={() => goTo("/messages", "messages")}
+        className={iconClass(isDM)}
+        style={iconStroke(isDM)}
+      >
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 28 28"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M24.5 3.5 12.8 15.2" />
+          <path d="m24.5 3.5-7.4 21-4.3-9.3-9.3-4.3z" />
+        </svg>
+      </button>
+
+      {/* REELS */}
+      <button
+        type="button"
+        aria-label="Reels"
+        aria-current={isReels ? "page" : undefined}
+        onClick={() => goTo("/reels", "reels")}
+        className={iconClass(isReels)}
+        style={iconStroke(isReels)}
+      >
+        <svg
+          width="27"
+          height="27"
+          viewBox="0 0 28 28"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="3" width="22" height="22" rx="6" />
+          <path d="M3.5 10h21" />
+          <path d="m10 3 5 7" />
+          <path d="m17 3 5 7" />
+          <path
+            d="m12 13 6 3.5-6 3.5z"
+            fill="currentColor"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+      {/* PROFILE */}
       <button
         type="button"
         aria-label="Profile"
+        aria-current={isProfile ? "page" : undefined}
         onClick={() => goTo("/profile", "profile")}
-        className="flex items-center justify-center w-[56px] h-[38px] rounded-full"
-        style={iconStyle(isProfile)}
+        className="flex items-center justify-center w-[52px] h-[44px] rounded-full"
+        style={iconStroke(isProfile)}
       >
         <div
-          className={`w-[34px] h-[34px] rounded-full overflow-hidden ${
+          className={`w-[32px] h-[32px] rounded-full overflow-hidden ${
             isProfile
               ? "ring-2 ring-black ring-offset-1"
               : "border border-neutral-300"
@@ -170,10 +239,19 @@ export default function BottomNav({
               onError={() => setProfilePhoto("")}
             />
           ) : (
-            <div className="w-full h-full bg-neutral-200 flex items-center justify-center">
-              <svg width="23" height="23" viewBox="0 0 24 24" fill="#666">
+            <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+              <svg
+                width="23"
+                height="23"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <circle cx="12" cy="8" r="4" />
-                <path d="M4 21C4 16 7 13 12 13S20 16 20 21Z" />
+                <path d="M4 21c0-4.5 3.2-7 8-7s8 2.5 8 7" />
               </svg>
             </div>
           )}
@@ -181,4 +259,4 @@ export default function BottomNav({
       </button>
     </nav>
   )
-}
+                }
