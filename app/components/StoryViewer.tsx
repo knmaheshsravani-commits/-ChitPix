@@ -2,6 +2,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { supabase } from "../../lib/supabase"
 
 const R2_PUBLIC =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
