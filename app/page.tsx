@@ -1,5 +1,4 @@
-"use client"
-
+import ShareAZ from "./components/ShareAZ"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import BottomNav from "./components/BottomNav"
@@ -783,67 +782,30 @@ function PostCard({
         </div>
       )}
 
-      {/* Share modal */}
-      {showShare && (
-        <div
-          className="fixed inset-0 z-[200] flex items-end bg-black/50"
-          onClick={() => setShowShare(false)}
-        >
-          <div
-            className="mx-auto w-full max-w-[480px] rounded-t-2xl bg-white p-5"
-            onClick={event => event.stopPropagation()}
-          >
-            <div className="mb-5 flex items-center justify-between">
-              <b className="text-base">Share post</b>
-              <button
-                onClick={() => setShowShare(false)}
-                aria-label="Close share menu"
-              >
-                <ChitIcon name="close" size={22} />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <button
-                onClick={handleShare}
-                className="flex flex-col items-center gap-2 text-xs"
-              >
-                <span className="rounded-full bg-zinc-100 p-3">
-                  <ChitIcon name="share" size={25} />
-                </span>
-                Share
-              </button>
-
-              <button
-                onClick={handleCopyLink}
-                className="flex flex-col items-center gap-2 text-xs"
-              >
-                <span className="rounded-full bg-zinc-100 p-3">
-                  <ChitIcon name="link" size={25} />
-                </span>
-                Copy Link
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowShare(false)
-                  handleDM()
-                }}
-                className="flex flex-col items-center gap-2 text-xs"
-              >
-                <span className="rounded-full bg-zinc-100 p-3">
-                  <ChitIcon name="send" size={25} />
-                </span>
-                WhatsApp
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </article>
-  )
-            }
-// ===== PART 3/4: HOME PAGE LOGIC =====
+      {/* ShareAZ modal */}
+{showShare && (
+  <ShareAZ
+    post={{
+      id: post.id,
+      image_url: mediaUrl,
+      url: window.location.href,
+      caption: post.caption || "",
+    }}
+    onClose={() => setShowShare(false)}
+    onToast={(message) => setMessage(message)}
+    onShare={() => handleShare()}
+    onDownload={() => {
+      const link = document.createElement("a")
+      link.href = mediaUrl
+      link.download = `chitpix-${post.id || "media"}`
+      link.click()
+    }}
+    onDirectMessage={() => {
+      setShowShare(false)
+      handleDM()
+    }}
+  />
+)}
 
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([])
