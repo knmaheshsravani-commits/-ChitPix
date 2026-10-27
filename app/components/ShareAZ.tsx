@@ -1,61 +1,249 @@
-'use client';
+"use client"
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react"
 
 type SharePost = {
-  id?: string | number;
-  image_url?: string;
-  video_url?: string;
-  url?: string;
-  share_url?: string;
-  caption?: string;
-  [key: string]: unknown;
-};
+  id?: string | number
+  image_url?: string
+  video_url?: string
+  url?: string
+  share_url?: string
+  caption?: string
+  [key: string]: unknown
+}
 
 type ShareAZProps = {
-  post?: SharePost | null;
-  onClose?: () => void;
-  onDownload?: (post: SharePost | null | undefined) => void | Promise<void>;
-  onShare?: (post: SharePost | null | undefined) => void;
-  onToast?: (message: string) => void;
-
-  // Optional callbacks: connect these to existing app features.
+  post?: SharePost | null
+  onClose?: () => void
+  onDownload?: (post: SharePost | null | undefined) => void | Promise<void>
+  onShare?: (post: SharePost | null | undefined) => void
+  onToast?: (message: string) => void
   onDirectMessage?: (
     post: SharePost | null | undefined,
     person: string
-  ) => void;
-  onStory?: (post: SharePost | null | undefined) => void;
-  onRemix?: (post: SharePost | null | undefined) => void;
-  onGenerateQR?: (url: string) => void;
-};
+  ) => void
+  onStory?: (post: SharePost | null | undefined) => void
+  onRemix?: (post: SharePost | null | undefined) => void
+  onGenerateQR?: (url: string) => void
+}
 
 const recentPeople = [
-  { name: 'Alex', color: 'bg-orange-200' },
-  { name: 'Mia', color: 'bg-blue-200' },
-  { name: 'Jordan', color: 'bg-pink-200' },
-  { name: 'Priya', color: 'bg-green-200' },
-  { name: 'Sam', color: 'bg-purple-200' },
-  { name: 'Rohan', color: 'bg-yellow-200' },
-  { name: 'Tara', color: 'bg-red-200' },
-];
+  { name: "Alex", color: "bg-orange-100" },
+  { name: "Mia", color: "bg-blue-100" },
+  { name: "Jordan", color: "bg-pink-100" },
+  { name: "Priya", color: "bg-green-100" },
+  { name: "Sam", color: "bg-purple-100" },
+  { name: "Rohan", color: "bg-yellow-100" },
+  { name: "Tara", color: "bg-red-100" },
+]
 
 const quickActions = [
-  { id: 'copy', label: 'Copy Link', icon: '🔗' },
-  { id: 'whatsapp', label: 'WhatsApp', icon: '☘️' },
-  { id: 'download', label: 'Download', icon: '⬇️' },
-  { id: 'qr', label: 'QR Code', icon: '▦' },
-  { id: 'story', label: 'Add to Story', icon: '＋' },
-  { id: 'remix', label: 'Remix', icon: '♻️' },
-  { id: 'feed', label: 'Add to Feed', icon: '▣' },
-  { id: 'repost', label: 'Repost', icon: '🔁' },
-] as const;
+  { id: "copy", label: "Copy Link", icon: "link" },
+  { id: "whatsapp", label: "WhatsApp", icon: "wa" },
+  { id: "download", label: "Download", icon: "download" },
+  { id: "qr", label: "QR Code", icon: "qr" },
+  { id: "story", label: "Add to Story", icon: "plus" },
+  { id: "remix", label: "Remix", icon: "remix" },
+  { id: "feed", label: "Add to Feed", icon: "image" },
+  { id: "repost", label: "Repost", icon: "repost" },
+] as const
 
 const moreActions = [
-  { label: 'Telegram', url: 'https://t.me/share/url' },
-  { label: 'Facebook', url: 'https://www.facebook.com/sharer/sharer.php' },
-  { label: 'Email', url: 'mailto:' },
-  { label: 'Message', url: 'sms:' },
-];
+  { id: "telegram", label: "Telegram", icon: "send" },
+  { id: "facebook", label: "Facebook", icon: "facebook" },
+  { id: "email", label: "Email", icon: "mail" },
+  { id: "message", label: "SMS", icon: "message" },
+  { id: "native", label: "More Apps", icon: "share" },
+  { id: "caption", label: "Copy Caption", icon: "text" },
+  { id: "media", label: "Media Link", icon: "image" },
+  { id: "save", label: "Save Files", icon: "download" },
+  { id: "embed", label: "Embed", icon: "code" },
+  { id: "bio", label: "Link Bio", icon: "link" },
+  { id: "tiktok", label: "TikTok", icon: "video" },
+  { id: "ai", label: "AI Caption", icon: "sparkles" },
+  { id: "hashtags", label: "Hashtags", icon: "hash" },
+  { id: "schedule", label: "Schedule", icon: "clock" },
+  { id: "collab", label: "Collab", icon: "users" },
+  { id: "copytext", label: "Copy Text", icon: "copy" },
+  { id: "more", label: "More Options", icon: "more" },
+] as const
+
+function ShareIcon({
+  name,
+  size = 24,
+}: {
+  name: string
+  size?: number
+}) {
+  const common = {
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.8,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  }
+
+  switch (name) {
+    case "link":
+      return (
+        <svg {...common}>
+          <path d="M10 13a5 5 0 0 0 7.1 0l3-3A5 5 0 0 0 13 2.9l-1.7 1.7" />
+          <path d="M14 11a5 5 0 0 0-7.1 0l-3 3A5 5 0 0 0 11 21.1l1.7-1.7" />
+        </svg>
+      )
+    case "wa":
+      return (
+        <svg {...common}>
+          <path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.6A8.5 8.5 0 1 1 20.5 11.5Z" />
+          <path d="M8.5 8.5c.5 2.5 2.5 4.5 5 5l1.2-1.2 2 1c-.2 1.4-1.1 2-2.4 2-3.5-.6-6.5-3.6-7-7 .1-1.2.7-2.1 2-2.3l1 2z" />
+        </svg>
+      )
+    case "download":
+      return (
+        <svg {...common}>
+          <path d="M12 3v12m-5-5 5 5 5-5" />
+          <path d="M5 17v4h14v-4" />
+        </svg>
+      )
+    case "qr":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <path d="M14 14h3v3h-3zm5 0h2v2h-2zm-5 5h2v2h-2zm5 0h2v2h-2" />
+        </svg>
+      )
+    case "plus":
+      return (
+        <svg {...common}>
+          <path d="M12 5v14M5 12h14" />
+          <rect x="3" y="3" width="18" height="18" rx="5" />
+        </svg>
+      )
+    case "remix":
+      return (
+        <svg {...common}>
+          <path d="m17 3 4 4-4 4" />
+          <path d="M3 7h13a5 5 0 0 1 5 5" />
+          <path d="m7 21-4-4 4-4" />
+          <path d="M21 17H8a5 5 0 0 1-5-5" />
+        </svg>
+      )
+    case "image":
+      return (
+        <svg {...common}>
+          <rect x="3" y="3" width="18" height="18" rx="3" />
+          <circle cx="8.5" cy="8.5" r="1.5" />
+          <path d="m21 15-5-5L5 21" />
+        </svg>
+      )
+    case "repost":
+      return (
+        <svg {...common}>
+          <path d="m17 3 4 4-4 4" />
+          <path d="M3 11V9a2 2 0 0 1 2-2h16" />
+          <path d="m7 21-4-4 4-4" />
+          <path d="M21 13v2a2 2 0 0 1-2 2H3" />
+        </svg>
+      )
+    case "send":
+      return (
+        <svg {...common}>
+          <path d="m22 2-7 20-4-9-9-4z" />
+          <path d="M22 2 11 13" />
+        </svg>
+      )
+    case "facebook":
+      return (
+        <svg {...common}>
+          <path d="M14 21v-8h3l.5-4H14V7c0-1.2.4-2 2-2h2V1.5c-.8-.1-1.8-.2-2.8-.2C12.4 1.3 10 3.4 10 7v2H7v4h3v8z" />
+        </svg>
+      )
+    case "mail":
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m3 7 9 6 9-6" />
+        </svg>
+      )
+    case "message":
+      return (
+        <svg {...common}>
+          <path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.6A8.5 8.5 0 1 1 21 11.5Z" />
+        </svg>
+      )
+    case "share":
+      return (
+        <svg {...common}>
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <path d="m8.7 10.5 6.6-4m-6.6 7 6.6 4" />
+        </svg>
+      )
+    case "text":
+    case "copy":
+      return (
+        <svg {...common}>
+          <rect x="8" y="8" width="12" height="13" rx="2" />
+          <path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2" />
+          <path d="M11 12h6m-6 4h6" />
+        </svg>
+      )
+    case "code":
+      return (
+        <svg {...common}>
+          <path d="m8 8-4 4 4 4m8-8 4 4-4 4m-2-11-4 14" />
+        </svg>
+      )
+    case "video":
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="14" rx="3" />
+          <path d="m10 9 5 3-5 3z" />
+        </svg>
+      )
+    case "sparkles":
+      return (
+        <svg {...common}>
+          <path d="m12 3 1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" />
+          <path d="m19 14 1 2.5 2.5 1-2.5 1L19 21l-1-2.5-2.5-1 2.5-1z" />
+        </svg>
+      )
+    case "hash":
+      return (
+        <svg {...common}>
+          <path d="M5 9h16M3 15h16M10 3 7 21m10-18-3 18" />
+        </svg>
+      )
+    case "clock":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+      )
+    case "users":
+      return (
+        <svg {...common}>
+          <circle cx="9" cy="8" r="4" />
+          <path d="M2 21v-2a7 7 0 0 1 14 0v2M16 4a4 4 0 0 1 0 8m2 3a5 5 0 0 1 4 5v1" />
+        </svg>
+      )
+    default:
+      return (
+        <svg {...common}>
+          <circle cx="5" cy="12" r="1" />
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="19" cy="12" r="1" />
+        </svg>
+      )
+  }
+}
 
 export default function ShareAZ({
   post,
@@ -68,231 +256,301 @@ export default function ShareAZ({
   onRemix,
   onGenerateQR,
 }: ShareAZProps) {
-  const [copied, setCopied] = useState(false);
-  const [search, setSearch] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [qrOpen, setQrOpen] = useState(false);
+  const [copied, setCopied] = useState(false)
+  const [search, setSearch] = useState("")
+  const [busy, setBusy] = useState(false)
+  const [qrOpen, setQrOpen] = useState(false)
 
   useEffect(() => {
-    if (!copied) return;
+    if (!copied) return
 
-    const timer = window.setTimeout(() => setCopied(false), 2000);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
+    const timer = window.setTimeout(() => setCopied(false), 2000)
+    return () => window.clearTimeout(timer)
+  }, [copied])
 
   const notify = (message: string) => {
-    onToast?.(message);
-  };
+    onToast?.(message)
+  }
 
-  // Prefer a real post URL over the image URL.
   const getShareUrl = () => {
-    if (typeof window === 'undefined') return '';
+    if (typeof window === "undefined") return ""
 
-    const candidate = post?.share_url || post?.url;
+    const candidate = post?.share_url || post?.url
 
-    if (candidate) {
+    if (typeof candidate === "string" && candidate.trim()) {
       try {
-        return new URL(candidate, window.location.origin).href;
+        return new URL(candidate, window.location.origin).href
       } catch {
-        // Fall back to the current page.
+        // Fall back to the current page URL.
       }
     }
 
-    // A post ID alone is not enough to assume your route structure.
-    return window.location.href;
-  };
+    return window.location.href
+  }
 
   const copyText = async (value: string) => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(value);
+        await navigator.clipboard.writeText(value)
       } else {
-        const textarea = document.createElement('textarea');
-        textarea.value = value;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
+        const textarea = document.createElement("textarea")
+        textarea.value = value
+        textarea.style.position = "fixed"
+        textarea.style.opacity = "0"
+        document.body.appendChild(textarea)
+        textarea.select()
 
-        const success = document.execCommand('copy');
-        textarea.remove();
+        const success = document.execCommand("copy")
+        textarea.remove()
 
-        if (!success) throw new Error('Copy failed');
+        if (!success) throw new Error("Copy failed")
       }
 
-      setCopied(true);
-      notify('Link copied! ✅');
+      setCopied(true)
+      notify("Copied successfully! ✅")
     } catch {
-      notify('Could not copy. Please copy the link manually.');
+      notify("Copy failed. Please try again.")
     }
-  };
+  }
 
   const shareNative = async () => {
-    const url = getShareUrl();
+    const url = getShareUrl()
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Chitpix',
-          text: typeof post?.caption === 'string'
-            ? post.caption
-            : 'Check this out on Chitpix!',
+          title: "ChitPix",
+          text:
+            typeof post?.caption === "string" && post.caption
+              ? post.caption
+              : "Check this out on ChitPix!",
           url,
-        });
+        })
       } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') return;
-        notify('Sharing failed. Please try another option.');
+        if (error instanceof Error && error.name === "AbortError") return
+        notify("Sharing failed. Please try another option.")
       }
     } else {
-      await copyText(url);
-      notify('Share menu unavailable. Link copied if permitted.');
+      await copyText(url)
     }
-  };
+  }
 
   const downloadMedia = async () => {
-    if (busy) return;
-    setBusy(true);
+    if (busy) return
+    setBusy(true)
 
     try {
-      // Keep the existing app's download implementation when supplied.
       if (onDownload) {
-        await onDownload(post);
-        notify('Download requested. Check your app.');
-        return;
+        await onDownload(post)
+        notify("Download action sent to the app.")
+        return
       }
 
-      const mediaUrl = post?.image_url || post?.video_url;
+      const mediaUrl = post?.image_url || post?.video_url
 
-      if (!mediaUrl) {
-        notify('No image or video is available to download.');
-        return;
+      if (!mediaUrl || typeof mediaUrl !== "string") {
+        notify("No image or video is available to download.")
+        return
       }
 
-      const response = await fetch(mediaUrl);
+      const response = await fetch(mediaUrl)
+      if (!response.ok) throw new Error("Download failed")
 
-      if (!response.ok) {
-        throw new Error('Media download failed');
-      }
+      const blob = await response.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const link = document.createElement("a")
 
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      link.href = objectUrl
+      link.download = `chitpix-${post?.id ?? "media"}`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
 
-      link.href = objectUrl;
-      link.download = `chitpix-${post?.id ?? 'media'}`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      notify('Download started! ⬇️');
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1500)
+      notify("Download started! ⬇️")
     } catch {
-      notify(
-        'Download failed. Check the media URL and storage CORS settings.'
-      );
+      notify("Download failed. Check the media URL and storage CORS settings.")
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
-  const handleAction = async (action: string) => {
-    const url = getShareUrl();
+  const openExternalShare = (label: string) => {
+    const url = getShareUrl()
+    const caption =
+      typeof post?.caption === "string" ? post.caption : "Check this on ChitPix!"
+
+    if (label === "Email") {
+      window.location.href =
+        `mailto:?subject=${encodeURIComponent("ChitPix post")}` +
+        `&body=${encodeURIComponent(`${caption}\n${url}`)}`
+      return
+    }
+
+    if (label === "SMS") {
+      window.location.href = `sms:?body=${encodeURIComponent(`${caption} ${url}`)}`
+      return
+    }
+
+    if (label === "Telegram") {
+      window.open(
+        `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(caption)}`,
+        "_blank",
+        "noopener,noreferrer"
+      )
+      return
+    }
+
+    if (label === "Facebook") {
+      window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+        "_blank",
+        "noopener,noreferrer"
+      )
+    }
+  }
+
+  // PART 2 continues directly below this line.
+const handleAction = async (action: string) => {
+    const url = getShareUrl()
+    const caption = typeof post?.caption === "string" ? post.caption : ""
+    const mediaUrl =
+      typeof post?.image_url === "string"
+        ? post.image_url
+        : typeof post?.video_url === "string"
+          ? post.video_url
+          : ""
 
     switch (action) {
-      case 'copy':
-        await copyText(url);
-        return;
+      case "copy":
+      case "bio":
+        await copyText(url)
+        return
 
-      case 'whatsapp':
+      case "whatsapp":
         window.open(
-          `https://wa.me/?text=${encodeURIComponent(url)}`,
-          '_blank',
-          'noopener,noreferrer'
-        );
-        return;
+          `https://wa.me/?text=${encodeURIComponent(`${caption}\n${url}`)}`,
+          "_blank",
+          "noopener,noreferrer"
+        )
+        return
 
-      case 'download':
-        await downloadMedia();
-        return;
+      case "download":
+      case "save":
+        await downloadMedia()
+        return
 
-      case 'qr':
+      case "qr":
         if (onGenerateQR) {
-          onGenerateQR(url);
+          onGenerateQR(url)
         } else {
-          setQrOpen(true);
+          setQrOpen(true)
         }
-        return;
+        return
 
-      case 'story':
+      case "story":
         if (!onStory) {
-          notify('Story feature needs to be connected to your app.');
-          return;
+          notify("Add to Story needs to be connected to your app.")
+          return
         }
-        onStory(post);
-        notify('Story action sent.');
-        onClose?.();
-        return;
+        onStory(post)
+        onClose?.()
+        return
 
-      case 'remix':
+      case "remix":
         if (!onRemix) {
-          notify('Remix feature needs to be connected to your app.');
-          return;
+          notify("Remix needs to be connected to your app.")
+          return
         }
-        onRemix(post);
-        onClose?.();
-        return;
+        onRemix(post)
+        onClose?.()
+        return
 
-      case 'feed':
-      case 'repost':
+      case "feed":
+      case "repost":
         if (!onShare) {
-          notify('Feed sharing is not connected yet.');
-          return;
+          notify("Feed and Repost need to be connected to your app.")
+          return
         }
-        onShare(post);
-        notify(action === 'feed' ? 'Feed share requested.' : 'Repost requested.');
-        onClose?.();
-        return;
+        onShare(post)
+        onClose?.()
+        return
+
+      case "telegram":
+        openExternalShare("Telegram")
+        return
+
+      case "facebook":
+        openExternalShare("Facebook")
+        return
+
+      case "email":
+        openExternalShare("Email")
+        return
+
+      case "message":
+        openExternalShare("SMS")
+        return
+
+      case "native":
+      case "more":
+        await shareNative()
+        return
+
+      case "caption":
+        if (!caption) {
+          notify("This post has no caption.")
+          return
+        }
+        await copyText(caption)
+        return
+
+      case "media":
+        if (!mediaUrl) {
+          notify("This post has no direct media URL.")
+          return
+        }
+        await copyText(mediaUrl)
+        return
+
+      case "copytext":
+        await copyText(`${caption}\n${url}`.trim())
+        return
+
+      case "embed":
+        await copyText(
+          `<iframe src="${url}" title="ChitPix post" loading="lazy"></iframe>`
+        )
+        return
+
+      case "tiktok":
+        notify("TikTok sharing needs a supported integration.")
+        return
+
+      case "ai":
+        notify("AI Caption needs an AI caption service.")
+        return
+
+      case "hashtags":
+        notify("Hashtag generation needs to be connected.")
+        return
+
+      case "schedule":
+        notify("Scheduling needs a publishing scheduler.")
+        return
+
+      case "collab":
+        notify("Collab needs the ChitPix collaboration feature.")
+        return
 
       default:
-        return;
+        notify("This option is not available yet.")
     }
-  };
+  }
 
   const filteredPeople = recentPeople.filter((person) =>
     person.name.toLowerCase().includes(search.toLowerCase().trim())
-  );
-
-  const openExternalShare = (label: string) => {
-    const url = getShareUrl();
-
-    if (label === 'Email') {
-      window.location.href =
-        `mailto:?subject=${encodeURIComponent('Chitpix post')}` +
-        `&body=${encodeURIComponent(url)}`;
-      return;
-    }
-
-    if (label === 'Message') {
-      window.location.href = `sms:?body=${encodeURIComponent(url)}`;
-      return;
-    }
-
-    const config = moreActions.find((item) => item.label === label);
-
-    if (!config) {
-      notify(`${label} is not available yet.`);
-      return;
-    }
-
-    const destination =
-      `${config.url}?${new URLSearchParams({
-        u: url,
-        url,
-        text: url,
-      }).toString()}`;
-
-    window.open(destination, '_blank', 'noopener,noreferrer');
-  };
+  )
 
   return (
     <div
@@ -311,14 +569,13 @@ export default function ShareAZ({
 
         <div className="mb-2 flex items-center justify-between">
           <h2 id="share-title" className="text-xl font-bold">
-            Share on Chitpix
+            Share on ChitPix
           </h2>
-
           <button
             type="button"
             onClick={onClose}
             aria-label="Close share panel"
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 text-lg hover:bg-zinc-200"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-zinc-100 hover:bg-zinc-200"
           >
             ✕
           </button>
@@ -332,7 +589,7 @@ export default function ShareAZ({
           <h3 className="text-sm font-semibold">Recent Chats</h3>
           <button
             type="button"
-            onClick={shareNative}
+            onClick={() => void shareNative()}
             className="text-xs font-semibold text-blue-600"
           >
             More sharing options
@@ -346,17 +603,17 @@ export default function ShareAZ({
               type="button"
               onClick={() => {
                 if (!onDirectMessage) {
-                  notify('Connect onDirectMessage to enable sending in DM.');
-                  return;
+                  notify("Connect the DM feature to send posts to real users.")
+                  return
                 }
 
-                onDirectMessage(post, person.name);
-                notify(`Message action sent to ${person.name}.`);
+                onDirectMessage(post, person.name)
+                onClose?.()
               }}
               className="flex min-w-[58px] flex-col items-center gap-1.5"
             >
               <span
-                className={`flex h-14 w-14 items-center justify-center rounded-full ${person.color} text-lg font-bold ring-2 ring-white`}
+                className={`flex h-14 w-14 items-center justify-center rounded-full ${person.color} text-lg font-bold`}
               >
                 {person.name[0]}
               </span>
@@ -374,7 +631,7 @@ export default function ShareAZ({
         </div>
 
         <label className="flex items-center gap-2 rounded-2xl bg-zinc-100 px-4 py-3 focus-within:ring-2 focus-within:ring-zinc-300">
-          <span aria-hidden="true">⌕</span>
+          <ShareIcon name="link" size={19} />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -385,7 +642,7 @@ export default function ShareAZ({
           {search && (
             <button
               type="button"
-              onClick={() => setSearch('')}
+              onClick={() => setSearch("")}
               aria-label="Clear search"
               className="text-zinc-500"
             >
@@ -395,7 +652,7 @@ export default function ShareAZ({
         </label>
 
         <div className="mb-3 mt-6 flex items-center justify-between">
-          <h3 className="text-sm font-bold">✨ Quick Actions</h3>
+          <h3 className="text-sm font-bold">Quick Actions</h3>
           <span className="text-xs text-zinc-400">8 options</span>
         </div>
 
@@ -408,52 +665,36 @@ export default function ShareAZ({
               onClick={() => void handleAction(action.id)}
               className="group flex min-w-0 flex-col items-center gap-2 disabled:opacity-50"
             >
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 text-2xl transition group-hover:bg-zinc-200 group-active:scale-95">
-                {action.id === 'copy' && copied ? '✓' : action.icon}
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-100 transition group-hover:bg-zinc-200 group-active:scale-95">
+                {action.id === "copy" && copied ? (
+                  <span className="text-2xl">✓</span>
+                ) : (
+                  <ShareIcon name={action.icon} size={25} />
+                )}
               </span>
               <span className="text-center text-[11px] leading-tight">
-                {action.id === 'copy' && copied ? 'Copied!' : action.label}
+                {action.id === "copy" && copied ? "Copied!" : action.label}
               </span>
             </button>
           ))}
         </div>
 
-        <h3 className="mb-3 mt-7 text-sm font-bold">More Options</h3>
+        <div className="mb-3 mt-7 flex items-center justify-between">
+          <h3 className="text-sm font-bold">More Options</h3>
+          <span className="text-xs text-zinc-400">17 options</span>
+        </div>
 
         <div className="grid grid-cols-4 gap-x-2 gap-y-5">
-          {[
-            ...moreActions,
-            { label: 'TikTok', url: '' },
-            { label: 'Save Files', url: '' },
-            { label: 'AI Caption', url: '' },
-            { label: 'Embed', url: '' },
-            { label: 'Link Bio', url: '' },
-            { label: 'Schedule', url: '' },
-            { label: 'Collab', url: '' },
-            { label: 'More...', url: '' },
-          ].map((item) => (
+          {moreActions.map((item) => (
             <button
-              key={item.label}
+              key={item.id}
               type="button"
-              onClick={() => {
-                if (['Telegram', 'Facebook', 'Email', 'Message'].includes(item.label)) {
-                  openExternalShare(item.label);
-                } else {
-                  notify(`${item.label} needs its own feature integration.`);
-                }
-              }}
-              className="flex min-w-0 flex-col items-center gap-2"
+              disabled={busy}
+              onClick={() => void handleAction(item.id)}
+              className="flex min-w-0 flex-col items-center gap-2 disabled:opacity-50"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-50 text-xl ring-1 ring-zinc-100">
-                {item.label === 'Email'
-                  ? '✉️'
-                  : item.label === 'Message'
-                    ? '💬'
-                    : item.label === 'Facebook'
-                      ? 'f'
-                      : item.label === 'Telegram'
-                        ? '➤'
-                        : '＋'}
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-50 text-zinc-800 ring-1 ring-zinc-100 transition active:scale-95">
+                <ShareIcon name={item.icon} size={22} />
               </span>
               <span className="text-center text-[10px] leading-tight text-zinc-600">
                 {item.label}
@@ -465,7 +706,9 @@ export default function ShareAZ({
         {qrOpen && (
           <div className="mt-5 rounded-2xl border border-zinc-200 p-4 text-center">
             <h3 className="font-semibold">Share QR Code</h3>
-            <p className="mt-1 break-all text-xs text-zinc-500">{getShareUrl()}</p>
+            <p className="mt-1 break-all text-xs text-zinc-500">
+              {getShareUrl()}
+            </p>
 
             <img
               className="mx-auto my-3 h-48 w-48"
@@ -496,9 +739,9 @@ export default function ShareAZ({
         </button>
 
         <p className="mt-3 text-center text-[10px] text-zinc-400">
-          🔒 Share only content you have permission to share.
+          Share only content you have permission to share.
         </p>
       </section>
     </div>
-  );
-          }
+  )
+                }
