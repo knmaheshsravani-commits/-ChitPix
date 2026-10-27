@@ -400,7 +400,7 @@ export default function StoryViewer({
     /\.(mp4|webm|mov)(\?|$)/i.test(storyImage)
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black text-white flex flex-col max-w-[480px] mx-auto">
+    <div className="fixed inset-0 z-[99999] bg-black text-white flex flex-col w-full max-w-[480px] mx-auto overflow-hidden">
       <div className="absolute top-0 left-0 right-0 z-30 flex gap-1 p-2">
         {currentUser.stories.map((_: any, i: number) => (
           <div key={i} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
