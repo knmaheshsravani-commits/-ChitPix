@@ -271,86 +271,15 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         })}
       </div>
 
-      {selectedUser && currentStory && (
-        <div
-          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
-          onClick={closeStory}
-        >
-          <div
-            className="relative w-full h-full max-w-[480px] bg-black flex items-center justify-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="absolute top-3 left-3 right-3 z-20 flex gap-1">
-              {selectedUser.stories.map((_: any, i: number) => (
-                <div
-                  key={i}
-                  className="h-1 flex-1 rounded-full bg-white/40 overflow-hidden"
-                >
-                  <div
-                    className={`h-full ${
-                      i <= storyIndex ? "bg-white" : "bg-transparent"
-                    }`}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="absolute top-7 left-3 z-20 text-white text-sm">
-              {selectedUser.username}
-            </div>
-
-            <button
-              type="button"
-              onClick={closeStory}
-              className="absolute top-5 right-4 z-30 text-white text-3xl px-2"
-              aria-label="Close story"
-            >
-              ×
-            </button>
-
-            {currentImage ? (
-              currentImage.match(/\.(mp4|webm|mov)(\?|$)/i) ? (
-                <video
-                  key={currentImage}
-                  src={currentImage}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="w-full max-h-full object-contain"
-                />
-              ) : (
-                <img
-                  key={currentImage}
-                  src={currentImage}
-                  alt="Story"
-                  className="w-full max-h-full object-contain"
-                  onError={() =>
-                    console.error("Story image failed to load:", currentImage)
-                  }
-                />
-              )
-            ) : (
-              <p className="text-white">Story photo dorakaledu.</p>
-            )}
-
-            <button
-              type="button"
-              onClick={nextStory}
-              className="absolute right-0 top-1/3 bottom-1/3 w-1/4 z-10"
-              aria-label="Next story"
-            />
-
-            {storyIndex > 0 && (
-              <button
-                type="button"
-                onClick={() => setStoryIndex((index: number) => index - 1)}
-                className="absolute left-0 top-1/3 bottom-1/3 w-1/4 z-10"
-                aria-label="Previous story"
-              />
-            )}
-          </div>
-        </div>
-      )}
+      {selectedUser && (
+  <StoryViewer
+    users={stories}
+    startIndex={stories.findIndex(
+      (user: any) => user.username === selectedUser.username
+    )}
+    onClose={closeStory}
+  />
+)}
     </>
   )
 }
