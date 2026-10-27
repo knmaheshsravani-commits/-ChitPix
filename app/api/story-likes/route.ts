@@ -48,7 +48,10 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
     const storyId = searchParams.get("storyId")
-    const username = searchParams.get("username")
+    const username = (searchParams.get("username") || "")
+  .trim()
+  .replace(/^@/, "")
+  .toLowerCase()
     const likes = await getLikes()
 
     if (!storyId) {
@@ -65,8 +68,11 @@ export async function GET(req: Request) {
     return NextResponse.json({
       count: storyLikes.length,
       liked: username
-        ? storyLikes.some((like: any) => like.username === username)
-        : false,
+  ? storyLikes.some(
+      (like: any) =>
+        String(like.username || "").trim().replace(/^@/, "").toLowerCase() === username
+    )
+  : false,
     })
   } catch {
     return NextResponse.json(
