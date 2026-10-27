@@ -69,7 +69,15 @@ const uploadUrl = presignData.url
 const publicUrl = presignData.publicUrl
       
       // 2. Upload to R2
-      await fetch(uploadUrl, { method:"PUT", body: file, headers: {"Content-Type": file.type} })
+    const uploadRes = await fetch(uploadUrl, {
+  method: "PUT",
+  body: file,
+  headers: { "Content-Type": file.type },
+})
+
+if (!uploadRes.ok) {
+  throw new Error(`R2 upload failed: ${uploadRes.status}`)
+}
       
       // 3. Save to DB
       await fetch("/api/stories", {
