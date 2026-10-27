@@ -29,7 +29,11 @@ export default function StoriesBar({ onSelectUser, onAdd }: any){
         raw.forEach((s:any)=>{
           const u = s.username || s.user || "user"
           if(!grouped[u]) grouped[u] = {username:u, avatar:s.avatar||`https://i.pravatar.cc/100?u=${u}`, stories:[], verified:s.verified||false, isCloseFriend:s.isCloseFriend||false}
-          grouped[u].stories.push({...s, image:fixR2Url(s), image_url:fixR2Url(s)})
+          grouped[u].stories.push({
+  ...s,
+  image: s.image_url || s.url || s.image || "",
+  image_url: s.image_url || s.url || s.image || ""
+})
         })
         setStories(Object.values(grouped))
       }catch(e){ setStories([]) }
