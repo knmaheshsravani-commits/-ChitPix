@@ -507,11 +507,10 @@ function PostCard({
     if (post.username) {
       router.push(`/profile/${encodeURIComponent(post.username)}`)
     } else {
-      setMessage("Username dorakaledu")
+      setMessage("Username")
     }
   }
 
-  // Part 2 lo post UI and modals continue avuthayi.
   return (
     <article className="border-b-8 border-zinc-100 bg-white">
       {/* Post header */}
