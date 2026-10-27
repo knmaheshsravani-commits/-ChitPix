@@ -527,7 +527,7 @@ export default function StoryViewer({
           type="button"
           onClick={toggleLike}
           disabled={!!likeBusy[storyId]}
-          className={`absolute right-3 bottom-28 z-20 rounded-full px-4 py-3 text-xl ${
+          className={`absolute right-4 bottom-36 z-[60] rounded-full px-4 py-3 text-xl ${
             liked[storyId] ? "bg-pink-600" : "bg-black/60"
           }`}
           aria-label="Like story"
