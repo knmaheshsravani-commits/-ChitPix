@@ -299,16 +299,44 @@ export default function StoryViewer({
   }
 
   const sendReply = async () => {
-    const message = reply.trim()
-    if (!message) return
+  const message = reply.trim()
+  if (!message) return
 
-    if (!username) {
-      setStatus("Reply pampadaniki login avvali.")
-      return
+  if (!username) {
+    setStatus("Reply pampadaniki login avvali.")
+    return
+  }
+
+  if (!storyId) {
+    setStatus("Story ID dorakaledu.")
+    return
+  }
+
+  try {
+    setStatus("Reply sending...")
+
+    const res = await fetch("/api/story-replies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        storyId,
+        username,
+        storyOwner: owner,
+        message,
+      }),
+    })
+
+    const data = await res.json()
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || "Reply save avvaledu.")
     }
 
-    // No reply API was supplied, so do not pretend this was saved.
-    setStatus("Reply API inka connect cheyyali.")
+    setReply("")
+    setStatus("Reply sent successfully!")
+  } catch (error: any) {
+    setStatus(error.message || "Reply pampadam fail ayindi.")
+  }
   }
 
   const shareStory = async () => {
