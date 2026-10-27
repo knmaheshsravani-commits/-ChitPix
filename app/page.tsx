@@ -781,7 +781,6 @@ function PostCard({
         </div>
       )}
 
-      import ShareAZ from "./components/ShareAZ"
       {/* ShareAZ modal */}
 {showShare && (
   <ShareAZ
