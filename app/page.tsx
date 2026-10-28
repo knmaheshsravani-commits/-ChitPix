@@ -802,10 +802,11 @@ function PostCard({
     onDirectMessage={() => {
       setShowShare(false)
       handleDM()
-    }}
-  />
-)}
+          )}
+    </article>
+  )
 }
+
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([])
   const [currentUserId, setCurrentUserId] = useState("")
