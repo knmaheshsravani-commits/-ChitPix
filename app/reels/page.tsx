@@ -216,20 +216,54 @@ export default function ReelsPage(){
   }
 
   // FEATURE 8: POST COMMENT
-  const postComment = () => {
-    if (!commentText.trim()) return
-    const newComment = {
-      id: Date.now(),
-      user: 'you',
-      avatar: 'https://i.pravatar.cc/100?u=you',
-      text: commentText,
-      likes: 0,
-      time: 'now'
+const postComment = async () => {
+  const text = commentText.trim()
+  const currentPost = posts[currentIndex]
+
+  if (!text || !currentPost?.id) return
+
+  try {
+    const response = await fetch("/api/comment", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        postId: currentPost.id,
+        text,
+      }),
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error("Comment API error:", errorText)
+      alert("Comment save avvaledu bro. API error check cheyyali.")
+      return
     }
-    setComments([newComment, ...comments])
+
+    const result = await response.json()
+
+    setComments((prev: any[]) => [
+      {
+        id: result?.comment?.id ?? Date.now(),
+        user: result?.comment?.username ?? "knmahesh",
+        avatar:
+          result?.comment?.user_photo ??
+          "https://i.pravatar.cc/100?u=you",
+        text,
+        likes: 0,
+        time: "now",
+      },
+      ...prev,
+    ])
+
     setCommentText("")
-    fetch('/api/comment', { method: 'POST', body: JSON.stringify({ postId: posts[currentIndex]?.id, text: commentText }) }).catch(()=>{})
+  } catch (error) {
+    console.error("Comment error:", error)
+    alert("Network error bro. Malli try cheyyi.")
   }
+}
+  
     const toggleCommentLike = (id: number) => {
     const isLiked = commentLikes[id]
     setCommentLikes(p => ({ ...p, [id]: !isLiked }))
