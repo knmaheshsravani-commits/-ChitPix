@@ -1,4 +1,5 @@
-"use client"
+import { useState, useEffect } from "react"
+import { useRef } from "react"
 import { useState, useEffect } from "react"
 import { supabase } from "../../lib/supabase"
 import { useRouter } from "next/navigation"
@@ -8,7 +9,33 @@ export default function CommentAZ({postId, isOpen, onClose}:{postId:string, isOp
   const [comments, setComments] = useState<any[]>([])
   const [text, setText] = useState("")
   const [replyTo, setReplyTo] = useState<any|null>(null)
-  const me = {username:"knmahesh", photo:"https://i.pravatar.cc/100?u=mahesh"}
+  const [me, setMe] = useState({
+  id: "",
+  username: "user",
+  photo: ""
+})
+
+useEffect(() => {
+  const loadMe = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle()
+
+    setMe({
+      id: user.id,
+      username: profile?.username || user.email?.split("@")[0] || "user",
+      photo: profile?.avatar_url || ""
+    })
+  }
+
+  loadMe()
+}, [])
 
   useEffect(()=>{
     if(!isOpen) return
@@ -18,7 +45,16 @@ export default function CommentAZ({postId, isOpen, onClose}:{postId:string, isOp
   },[isOpen])
 
   const load = async () => {
-    const { data } = await supabase.from("comments").select("*").eq("post_id", postId).order("created_at",{ascending:false})
+    const { data, error } = await supabase
+  .from("post_comments")
+  .select("*")
+  .eq("post_id", postId)
+  .order("created_at", { ascending: true })
+
+if (error) {
+  console.error("Comments load error:", error)
+  return
+}
     if(data){
       const { data: likes } = await supabase.from("comment_likes").select("comment_id").eq("username", me.username)
       const set = new Set(likes?.map((l:any)=>l.comment_id))
@@ -32,8 +68,21 @@ export default function CommentAZ({postId, isOpen, onClose}:{postId:string, isOp
     const savedText = text.trim()
     setText(""); setReplyTo(null)
     setComments(prev=>replyTo?prev.map(p=>p.id===replyTo.id?{...p, replies:[...p.replies, {id:Date.now().toString(), username:me.username, user_photo:me.photo, text:savedText, likes:0, created_at:new Date().toISOString()}]}:p):[{id:Date.now().toString(), username:me.username, user_photo:me.photo, text:savedText, likes:0, replies:[], created_at:new Date().toISOString()},...prev])
-    await supabase.from("comments").insert({post_id:postId, username:me.username, user_photo:me.photo, text:savedText, parent_id:replyTo?.id||null})
-    load()
+    const { error } = await supabase.from("post_comments").insert({
+  post_id: postId,
+  username: me.username,
+  user_id: me.id,
+  content: savedText,
+  parent_id: replyTo?.id || null,
+})
+
+if (error) {
+  console.error("Comment save error:", error)
+  alert("Comment save avvaledu bro")
+  return
+}
+
+await load()
   }
 
   const like = async (c:any) => {
