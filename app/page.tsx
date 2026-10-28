@@ -805,7 +805,7 @@ function PostCard({
     }}
   />
 )}
-
+}
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([])
   const [currentUserId, setCurrentUserId] = useState("")
