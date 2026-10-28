@@ -877,13 +877,13 @@ export default function HomePage() {
     if (error) throw error
 
     const postList = data || []
-    const userIds = [
-      ...new Set(
-        postList
-          .map((post: any) => post.user_id)
-          .filter(Boolean)
-      ),
-    ]
+    const userIds = Array.from(
+  new Set(
+    postList
+      .map((post: any) => post.user_id)
+      .filter(Boolean)
+  )
+)
 
     let profilesMap: Record<string, any> = {}
 
