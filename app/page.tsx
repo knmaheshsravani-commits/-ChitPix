@@ -13,12 +13,13 @@ const R2_PUBLIC =
 
 const WA = "916363373372"
 
-type Post = {
+type Post = { 
   id: string
   user_id?: string
   username?: string
   avatar_url?: string | null
-  avatar?: string | null
+avatar?: string | null
+full_name?: string | null
   image_url?: string
   r2_url?: string
   url?: string
@@ -863,25 +864,60 @@ export default function HomePage() {
 
   // Load posts from Supabase
   const loadPosts = async () => {
-    setLoading(true)
-    setError("")
+  setLoading(true)
+  setError("")
 
-    try {
-      const { data, error } = await supabase
-        .from("posts")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100)
+  try {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100)
 
-      if (error) throw error
+    if (error) throw error
 
-      setPosts(data || [])
-    } catch (err: any) {
-      console.error("ChitPix feed error:", err)
-      setError(err?.message || "Posts load avvaledu")
-    } finally {
-      setLoading(false)
+    const postList = data || []
+    const userIds = [
+      ...new Set(
+        postList
+          .map((post: any) => post.user_id)
+          .filter(Boolean)
+      ),
+    ]
+
+    let profilesMap: Record<string, any> = {}
+
+    if (userIds.length > 0) {
+      const { data: profiles, error: profilesError } =
+        await supabase
+          .from("profiles")
+          .select("id, username, avatar_url")
+          .in("id", userIds)
+
+      if (profilesError) throw profilesError
+
+      for (const profile of profiles || []) {
+        profilesMap[profile.id] = profile
+      }
     }
+
+    const updatedPosts = postList.map((post: any) => {
+      const userProfile = profilesMap[post.user_id] || {}
+
+      return {
+  ...post,
+  username: userProfile.username || post.username || "",
+  avatar_url: userProfile.avatar_url || post.avatar_url || "",
+      }
+    })
+
+    setPosts(updatedPosts)
+  } catch (err: any) {
+    console.error("ChitPix feed error:", err)
+    setError(err?.message || "Posts load avvaledu")
+  } finally {
+    setLoading(false)
+  }
   }
 
   useEffect(() => {
