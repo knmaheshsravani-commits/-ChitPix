@@ -515,27 +515,34 @@ function PostCard({
     <article className="border-b-8 border-zinc-100 bg-white">
       {/* Post header */}
       <div className="flex items-center justify-between px-3 py-3">
-        <button
-          onClick={handleProfile}
-          className="flex min-w-0 items-center gap-2 text-left"
-        >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2px]">
-            <div className="flex h-full w-full items-center justify-center rounded-full bg-white font-bold">
-              {(post.username || "C").slice(0, 1).toUpperCase()}
-            </div>
-          </div>
+        
+<button
+  onClick={handleProfile}
+  className="flex min-w-0 items-center gap-2 text-left"
+>
+  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 font-bold">
+    {post.avatar_url || post.avatar ? (
+      <img
+        src={post.avatar_url || post.avatar}
+        alt={post.username || "User"}
+        className="h-full w-full rounded-full object-cover"
+      />
+    ) : (
+      String(post.username || "C").slice(0, 1).toUpperCase()
+    )}
+  </div>
 
-          <div className="min-w-0">
-            <p className="truncate text-sm font-bold">
-              {post.username || "ChitPix Creator"}
-            </p>
-            <p className="text-xs text-zinc-500">
-              {post.created_at
-                ? new Date(post.created_at).toLocaleDateString()
-                : "ChitPix"}
-            </p>
-          </div>
-        </button>
+  <div className="min-w-0">
+    <p className="truncate text-sm font-bold">
+      {post.username || "ChitPix Creator"}
+    </p>
+    <p className="text-xs text-zinc-500">
+      {post.created_at
+        ? new Date(post.created_at).toLocaleDateString()
+        : "ChitPix"}
+    </p>
+  </div>
+</button>
 
         <div className="flex shrink-0 items-center gap-2">
           {!isOwner && (
