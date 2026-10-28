@@ -503,13 +503,15 @@ function PostCard({
     }
   }
 
+  
   const handleProfile = () => {
     if (post.username) {
       router.push(`/profile/${encodeURIComponent(post.username)}`)
     } else {
-      setMessage("Username")
-       )
-}
+      setMessage("Username not available")
+    }
+  }
+  
   
   return (
     <article className="border-b-8 border-zinc-100 bg-white">
