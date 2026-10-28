@@ -1,54 +1,207 @@
 "use client"
-import { useState } from "react"
 
-export default function PostCard({post}:{post:any}){
+import { useState } from "react"
+import CommentAZ from "./CommentAZ"
+
+export default function PostCard({ post }: { post: any }) {
   const [isFollowing, setIsFollowing] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
-  
+  const [showComments, setShowComments] = useState(false)
+
+  const postId = String(post.id ?? post.post_id ?? "")
+
+  const avatar =
+    post.avatar || "https://i.pravatar.cc/100?img=5"
+
+  const username = post.user || "user_kadur"
+
   return (
     <>
-      <div className="border-b border-neutral-100">
-        {/* HEADER - USER PROFILE + FOLLOW */}
-        <div className="px-3 py-2.5 flex justify-between items-center">
-          <div className="flex items-center gap-2.5" onClick={()=>setShowProfile(true)}>
-            <img src={post.avatar || `https://i.pravatar.cc/100?img=${Math.floor(Math.random()*30)}`} className="w-8 h-8 rounded-full" />
+      <div className="border-b border-neutral-200 bg-white">
+        {/* USER HEADER */}
+        <div className="px-3 py-3 flex justify-between items-center">
+          <button
+            type="button"
+            onClick={() => setShowProfile(true)}
+            className="flex items-center gap-2.5 text-left"
+          >
+            <img
+              src={avatar}
+              alt={username}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+
             <div>
-              <div className="text-[13px] font-bold leading-none flex items-center gap-1">{post.user || 'user_kadur'} {post.verified && <span className="text-blue-500">✓</span>}</div>
-              <div className="text-[11px] opacity-70 flex items-center gap-1 mt-0.5">♫ {post.location || 'Kadur • Original audio'}</div>
+              <div className="text-sm font-bold flex items-center gap-1">
+                {username}
+                {post.verified && (
+                  <span className="text-blue-500">✓</span>
+                )}
+              </div>
+
+              <div className="text-xs text-neutral-500 mt-1">
+                {post.location || "Kadur • Original audio"}
+              </div>
             </div>
-          </div>
+          </button>
+
           <div className="flex items-center gap-3">
-            <button onClick={()=>setIsFollowing(!isFollowing)} className={`px-4 py-1 rounded-md text-[12px] font-bold border ${isFollowing ? 'bg-white text-black border-neutral-300' : 'bg-white text-black border-black'}`}>{isFollowing ? 'Following' : 'Follow'}</button>
-            <button>☰</button>
+            <button
+              type="button"
+              onClick={() => setIsFollowing(!isFollowing)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-bold border ${
+                isFollowing
+                  ? "border-neutral-300 text-neutral-600"
+                  : "border-black text-black"
+              }`}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
+
+            <button
+              type="button"
+              aria-label="Post options"
+              className="text-xl px-1"
+              onClick={() => setShowProfile(true)}
+            >
+              ⋯
+            </button>
           </div>
         </div>
 
-        {/* IMAGE */}
-        <div className="w-full bg-neutral-100"><img src={post.imageUrl || post.url || 'https://picsum.photos/500/600?'+post.id} className="w-full aspect-[4/5] object-cover" /></div>
+        {/* POST IMAGE */}
+        <div className="w-full bg-neutral-100">
+          <img
+            src={
+              post.imageUrl ||
+              post.url ||
+              "https://picsum.photos/500/600"
+            }
+            alt="Post"
+            className="w-full aspect-[4/5] object-cover"
+          />
+        </div>
 
-        {/* ICONS - LOCK - TOUCH LEADU */}
-        <div className="px-3 py-2.5 flex justify-between">
-          <div className="flex gap-4 text-[22px]"><span>♡</span><span>💬</span><span>↗</span></div>
-          <div className="text-[22px]">🔖</div>
+        {/* POST ACTIONS */}
+        <div className="px-4 pt-3 flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            <button
+              type="button"
+              aria-label="Like post"
+              className="text-3xl leading-none"
+            >
+              ♡
+            </button>
+
+            <button
+              type="button"
+              aria-label="Open comments"
+              onClick={() => setShowComments(true)}
+              className="text-3xl leading-none"
+            >
+              ♧
+            </button>
+
+            <button
+              type="button"
+              aria-label="Share post"
+              className="text-2xl"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: username,
+                    url: window.location.origin,
+                  }).catch(() => {})
+                }
+              }}
+            >
+              ↗
+            </button>
+          </div>
+
+          <button
+            type="button"
+            aria-label="Save post"
+            className="text-2xl"
+          >
+            ♧
+          </button>
+        </div>
+
+        {/* CAPTION AND COMMENTS LINK */}
+        <div className="px-4 pt-2 pb-4">
+          {post.likes_count > 0 && (
+            <div className="text-sm font-bold mb-2">
+              {post.likes_count} likes
+            </div>
+          )}
+
+          <div className="text-sm">
+            <b className="mr-2">{username}</b>
+            {post.caption || ""}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowComments(true)}
+            className="text-sm text-neutral-500 mt-2"
+          >
+            View comments
+          </button>
         </div>
       </div>
 
-      {/* PROFILE MODAL - CLICK CHESI OPEN */}
+      {/* COMMENTS MODAL */}
+      {showComments && (
+        <CommentAZ
+          postId={postId}
+          isOpen={showComments}
+          onClose={() => setShowComments(false)}
+        />
+      )}
+
+      {/* PROFILE MODAL */}
       {showProfile && (
-        <div className="fixed inset-0 z-[200] bg-white max-w-[480px] mx-auto">
-          <div className="p-3 flex justify-between border-b"><button onClick={()=>setShowProfile(false)}>← {post.user}</button><button onClick={()=>setShowProfile(false)}>✕</button></div>
-          <div className="p-4 text-center">
-            <img src={post.avatar || 'https://i.pravatar.cc/100?img=5'} className="w-24 h-24 rounded-full mx-auto" />
-            <div className="font-black mt-3">{post.user}</div>
-            <div className="flex justify-center gap-8 mt-4">
-              <div><div className="font-bold">64</div><div className="text-[12px]">Posts</div></div>
-              <div><div className="font-bold">12.5k</div><div className="text-[12px]">Followers</div></div>
-              <div><div className="font-bold">340</div><div className="text-[12px]">Following</div></div>
+        <div
+          className="fixed inset-0 z-[200] bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowProfile(false)}
+        >
+          <div
+            className="bg-white w-full max-w-[420px] rounded-2xl p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center">
+              <b>Profile</b>
+              <button
+                type="button"
+                onClick={() => setShowProfile(false)}
+                className="text-2xl"
+              >
+                ×
+              </button>
             </div>
-            <div className="flex gap-2 mt-6">
-              <button onClick={()=>setIsFollowing(!isFollowing)} className={`flex-1 py-2 rounded-lg font-bold ${isFollowing ? 'bg-neutral-200' : 'bg-black text-white'}`}>{isFollowing ? 'Unfollow' : 'Follow'}</button>
-              <button className="flex-1 bg-neutral-100 py-2 rounded-lg">Settings ⚙️</button>
+
+            <img
+              src={avatar}
+              alt={username}
+              className="w-24 h-24 rounded-full object-cover mx-auto mt-5"
+            />
+
+            <div className="text-center font-bold mt-3">
+              {username}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setIsFollowing(!isFollowing)}
+              className={`w-full mt-5 py-3 rounded-xl font-bold ${
+                isFollowing
+                  ? "bg-neutral-200 text-black"
+                  : "bg-black text-white"
+              }`}
+            >
+              {isFollowing ? "Following" : "Follow"}
+            </button>
           </div>
         </div>
       )}
