@@ -508,7 +508,8 @@ function PostCard({
       router.push(`/profile/${encodeURIComponent(post.username)}`)
     } else {
       setMessage("Username")
-    }
+       )
+}
   
   return (
     <article className="border-b-8 border-zinc-100 bg-white">
@@ -779,10 +780,12 @@ function PostCard({
           </div>
         </div>
       )}
+      
+      )   // <- ShareAZ close
+}     // <- Idi kavali bro! Function close
 
-      // ShareAZ Component - Missing kabatti add chesa
-function ShareAZ({ post, onClose, onToast, onShare, onDownload, onDirectMessage }: any) {
-  return (
+return (
+  <article className="border-b-8 border-zinc-100 bg-white">
     <div className="fixed inset-0 z-[200] bg-black/50 flex items-end" onClick={onClose}>
       <div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-5" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
