@@ -8,6 +8,7 @@ import BottomNav from "../../components/BottomNav"
 export default function UserProfilePage() {
   const params = useParams()
   const router = useRouter()
+
   const username = decodeURIComponent(
     String(params?.username || "")
   )
@@ -17,6 +18,8 @@ export default function UserProfilePage() {
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState("")
   const [following, setFollowing] = useState(false)
+  const [followersCount, setFollowersCount] = useState(0)
+  const [followingCount, setFollowingCount] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
 
@@ -26,20 +29,31 @@ export default function UserProfilePage() {
     async function loadProfile() {
       setLoading(true)
       setError("")
+      setFollowing(false)
+      setFollowersCount(0)
+      setFollowingCount(0)
 
       try {
-        const { data: auth } = await supabase.auth.getUser()
+        const { data: auth, error: authError } =
+          await supabase.auth.getUser()
+
+        if (authError) throw authError
+
         const user = auth?.user
 
-        if (active) setCurrentUserId(user?.id || "")
+        if (active) {
+          setCurrentUserId(user?.id || "")
+        }
 
-        const { data: found, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("username", username)
-          .maybeSingle()
+        const { data: found, error: profileError } =
+          await supabase
+            .from("profiles")
+            .select("*")
+            .eq("username", username)
+            .maybeSingle()
 
         if (profileError) throw profileError
+
         if (!found) {
           if (active) setError("User profile not found.")
           return
@@ -47,36 +61,83 @@ export default function UserProfilePage() {
 
         if (active) setProfile(found)
 
-        const { data: userPosts, error: postsError } = await supabase
-          .from("posts")
-          .select("*")
-          .eq("user_id", found.id)
-          .order("created_at", { ascending: false })
+        const { data: userPosts, error: postsError } =
+          await supabase
+            .from("posts")
+            .select("*")
+            .eq("user_id", found.id)
+            .order("created_at", { ascending: false })
 
         if (postsError) throw postsError
+
         if (active) setPosts(userPosts || [])
 
-        if (user && user.id !== found.id) {
-          const { data: relation, error: followError } = await supabase
-            .from("user_follows")
-            .select("follower_id")
-            .eq("follower_id", user.id)
-            .eq("following_id", found.id)
-            .maybeSingle()
+        // Count followers and following from user_follows.
+        const [followersResult, followingResult] =
+          await Promise.all([
+            supabase
+              .from("user_follows")
+              .select("id", {
+                count: "exact",
+                head: true,
+              })
+              .eq("following_id", found.id),
 
-          if (!followError && active) {
+            supabase
+              .from("user_follows")
+              .select("id", {
+                count: "exact",
+                head: true,
+              })
+              .eq("follower_id", found.id),
+          ])
+
+        if (followersResult.error) {
+          throw followersResult.error
+        }
+
+        if (followingResult.error) {
+          throw followingResult.error
+        }
+
+        if (active) {
+          setFollowersCount(followersResult.count ?? 0)
+          setFollowingCount(followingResult.count ?? 0)
+        }
+
+        // Check whether the logged-in user follows this profile.
+        if (user && user.id !== found.id) {
+          const { data: relation, error: followError } =
+            await supabase
+              .from("user_follows")
+              .select("follower_id")
+              .eq("follower_id", user.id)
+              .eq("following_id", found.id)
+              .maybeSingle()
+
+          if (followError) throw followError
+
+          if (active) {
             setFollowing(!!relation)
           }
         }
       } catch (e: any) {
         console.error("USER PROFILE ERROR:", e)
-        if (active) setError(e?.message || "Unable to load profile.")
+
+        if (active) {
+          setError(e?.message || "Unable to load profile.")
+        }
       } finally {
         if (active) setLoading(false)
       }
     }
 
-    if (username) loadProfile()
+    if (username) {
+      loadProfile()
+    } else {
+      setError("Username not available.")
+      setLoading(false)
+    }
 
     return () => {
       active = false
@@ -89,9 +150,12 @@ export default function UserProfilePage() {
       return
     }
 
-    if (!profile || busy || currentUserId === profile.id) return
+    if (!profile || busy || currentUserId === profile.id) {
+      return
+    }
 
     setBusy(true)
+
     try {
       if (following) {
         const { error } = await supabase
@@ -101,7 +165,9 @@ export default function UserProfilePage() {
           .eq("following_id", profile.id)
 
         if (error) throw error
+
         setFollowing(false)
+        setFollowersCount((count) => Math.max(0, count - 1))
       } else {
         const { error } = await supabase
           .from("user_follows")
@@ -111,26 +177,43 @@ export default function UserProfilePage() {
           })
 
         if (error) throw error
+
         setFollowing(true)
+        setFollowersCount((count) => count + 1)
       }
     } catch (e: any) {
-      alert("Follow update failed: " + (e?.message || "Unknown error"))
+      alert(
+        "Follow update failed: " +
+          (e?.message || "Unknown error")
+      )
     } finally {
       setBusy(false)
     }
   }
 
   if (loading) {
-    return <main className="min-h-screen p-8 text-center">Loading profile...</main>
+    return (
+      <main className="min-h-screen p-8 text-center">
+        Loading profile...
+      </main>
+    )
   }
 
   if (error || !profile) {
     return (
       <main className="min-h-screen bg-white p-8 text-center text-black">
-        <h2 className="text-xl font-bold">Profile unavailable</h2>
-        <p className="mt-3">{error || "User not found."}</p>
-        <button className="mt-5 rounded-xl bg-black px-5 py-3 text-white"
-          onClick={() => router.back()}>
+        <h2 className="text-xl font-bold">
+          Profile unavailable
+        </h2>
+
+        <p className="mt-3">
+          {error || "User not found."}
+        </p>
+
+        <button
+          className="mt-5 rounded-xl bg-black px-5 py-3 text-white"
+          onClick={() => router.back()}
+        >
           Go back
         </button>
       </main>
@@ -143,15 +226,27 @@ export default function UserProfilePage() {
     <main className="min-h-screen bg-white pb-24 text-black">
       <div className="mx-auto max-w-[470px]">
         <header className="flex items-center gap-4 border-b p-4">
-          <button onClick={() => router.back()} className="text-2xl">←</button>
-          <h1 className="text-xl font-bold">{profile.username}</h1>
+          <button
+            onClick={() => router.back()}
+            className="text-2xl"
+            aria-label="Go back"
+          >
+            ←
+          </button>
+
+          <h1 className="text-xl font-bold">
+            {profile.username}
+          </h1>
         </header>
 
         <section className="p-5">
           <div className="flex items-center gap-6">
             {avatar ? (
-              <img src={avatar} alt="Profile photo"
-                className="h-24 w-24 rounded-full object-cover" />
+              <img
+                src={avatar}
+                alt="Profile photo"
+                className="h-24 w-24 rounded-full object-cover"
+              />
             ) : (
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gray-200 text-3xl">
                 {String(profile.username || "U")[0].toUpperCase()}
@@ -160,62 +255,99 @@ export default function UserProfilePage() {
 
             <div className="flex flex-1 justify-around text-center">
               <div>
-                <b className="block text-xl">{posts.length}</b>
+                <b className="block text-xl">
+                  {posts.length}
+                </b>
                 <span className="text-sm">Posts</span>
               </div>
-              
-<div>
-  <b className="block text-xl">
-    {Number(profile.followers_count || 0)}
-  </b>
-  <span className="text-sm">Followers</span>
-</div>
-<div>
-  <b className="block text-xl">
-    {Number(profile.following_count || 0)}
-  </b>
-  <span className="text-sm">Following</span>
-</div>
-              
+
+              <div>
+                <b className="block text-xl">
+                  {followersCount}
+                </b>
+                <span className="text-sm">Followers</span>
+              </div>
+
+              <div>
+                <b className="block text-xl">
+                  {followingCount}
+                </b>
+                <span className="text-sm">Following</span>
+              </div>
+            </div>
+          </div>
 
           <h2 className="mt-4 font-bold">
             {profile.full_name || profile.username}
           </h2>
+
           <p className="mt-1 whitespace-pre-line text-sm">
             {profile.bio || ""}
           </p>
 
           {currentUserId !== profile.id && (
-            <button onClick={toggleFollow} disabled={busy}
-              className="mt-4 w-full rounded-xl bg-blue-600 py-3 font-bold text-white disabled:opacity-50">
-              {busy ? "Please wait..." : following ? "Following" : "Follow"}
+            <button
+              onClick={toggleFollow}
+              disabled={busy}
+              className="mt-4 w-full rounded-xl bg-blue-600 py-3 font-bold text-white disabled:opacity-50"
+            >
+              {busy
+                ? "Please wait..."
+                : following
+                  ? "Following"
+                  : "Follow"}
             </button>
           )}
         </section>
 
-        <h3 className="border-t p-4 text-center font-bold">POSTS</h3>
+        <h3 className="border-t p-4 text-center font-bold">
+          POSTS
+        </h3>
+
         <div className="grid grid-cols-3 gap-1">
           {posts.map((post: any, index: number) => {
-            const src = post.image_url || post.image || post.r2_url || post.url
-            return src ? (
-              <button key={post.id || index}
+            const src =
+              post.image_url ||
+              post.image ||
+              post.r2_url ||
+              post.url
+
+            if (!src) return null
+
+            const isVideo =
+              String(post.type || post.media_type || "")
+                .toLowerCase()
+                .includes("video") ||
+              String(src).toLowerCase().includes(".mp4")
+
+            return (
+              <button
+                key={post.id || index}
                 onClick={() => router.push(`/post/${post.id}`)}
-                className="aspect-square overflow-hidden bg-gray-100">
-                {String(post.type || post.media_type || "").toLowerCase().includes("video") ||
-                String(src).toLowerCase().includes(".mp4") ? (
-                  <video src={src} muted playsInline
-                    className="h-full w-full object-cover" />
+                className="aspect-square overflow-hidden bg-gray-100"
+              >
+                {isVideo ? (
+                  <video
+                    src={src}
+                    muted
+                    playsInline
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
-                  <img src={src} alt="Post"
-                    className="h-full w-full object-cover" />
+                  <img
+                    src={src}
+                    alt="Post"
+                    className="h-full w-full object-cover"
+                  />
                 )}
               </button>
-            ) : null
+            )
           })}
         </div>
       </div>
+
       <BottomNav active="profile" avatar={avatar} />
     </main>
   )
-      }
-      
+  }
+    
