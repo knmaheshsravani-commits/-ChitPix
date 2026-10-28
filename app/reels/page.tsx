@@ -234,7 +234,8 @@ const postComment = async () => {
   userId: currentUserId,
   username: currentUsername,
 }),
-
+  })
+    
     if (!response.ok) {
       const errorText = await response.text()
       console.error("Comment API error:", errorText)
