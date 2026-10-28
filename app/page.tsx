@@ -503,16 +503,14 @@ function PostCard({
     }
   }
 
-  
-  const handleProfile = () => {
+        const handleProfile = () => {
     if (post.username) {
       router.push(`/profile/${encodeURIComponent(post.username)}`)
     } else {
       setMessage("Username not available")
     }
   }
-  
-  
+
   return (
     <article className="border-b-8 border-zinc-100 bg-white">
       {/* Post header */}
@@ -782,40 +780,11 @@ function PostCard({
           </div>
         </div>
       )}
-      
-      )   // <- ShareAZ close
-}     // <- Idi kavali bro! Function close
 
-return (
-  <article className="border-b-8 border-zinc-100 bg-white">
-    <div className="fixed inset-0 z-[200] bg-black/50 flex items-end" onClick={onClose}>
-      <div className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-5" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-4">
-          <b>Share</b>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-zinc-100">✕</button>
-        </div>
-        <div className="grid grid-cols-4 gap-4 text-center text-xs">
-          <button onClick={() => { onShare(); onToast("Sharing...") }} className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">↗</div>
-            Share
-          </button>
-          <button onClick={() => { onToast("Link Copied"); navigator.clipboard.writeText(post.image_url) }} className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">🔗</div>
-            Copy Link
-          </button>
-          <button onClick={onDownload} className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">↓</div>
-            Download
-          </button>
-          <button onClick={onDirectMessage} className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">WA</div>
-            WhatsApp
-          </button>
-        </div>
-      </div>
-    </div>
+
+    </article>
   )
-      }
+}
 
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([])
