@@ -163,16 +163,20 @@ export default function UserProfilePage() {
                 <b className="block text-xl">{posts.length}</b>
                 <span className="text-sm">Posts</span>
               </div>
-              <div>
-                <b className="block text-xl">—</b>
-                <span className="text-sm">Followers</span>
-              </div>
-              <div>
-                <b className="block text-xl">—</b>
-                <span className="text-sm">Following</span>
-              </div>
-            </div>
-          </div>
+              
+<div>
+  <b className="block text-xl">
+    {Number(profile.followers_count || 0)}
+  </b>
+  <span className="text-sm">Followers</span>
+</div>
+<div>
+  <b className="block text-xl">
+    {Number(profile.following_count || 0)}
+  </b>
+  <span className="text-sm">Following</span>
+</div>
+              
 
           <h2 className="mt-4 font-bold">
             {profile.full_name || profile.username}
