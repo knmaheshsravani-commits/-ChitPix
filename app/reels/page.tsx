@@ -231,7 +231,7 @@ const postComment = async () => {
       body: JSON.stringify({
   postId: currentPost.id,
   text,
-  userId: currentUserId,
+  userId: (await supabase.auth.getUser()).data.user?.id,
   username: currentUsername,
 }),
   })
