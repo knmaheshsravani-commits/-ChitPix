@@ -509,8 +509,8 @@ function PostCard({
     } else {
       setMessage("Username")
     }
-  }
-  
+     )
+
   return (
     <article className="border-b-8 border-zinc-100 bg-white">
       {/* Post header */}
