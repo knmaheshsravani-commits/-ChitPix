@@ -229,10 +229,11 @@ const postComment = async () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        postId: currentPost.id,
-        text,
-      }),
-    })
+  postId: currentPost.id,
+  text,
+  userId: currentUserId,
+  username: currentUsername,
+}),
 
     if (!response.ok) {
       const errorText = await response.text()
