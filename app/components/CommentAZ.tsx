@@ -137,7 +137,7 @@ await load()
           ))}
         </div>
 
-        <div className="p-3 border-t border-zinc-800 flex gap-2 items-center">
+        <div className="shrink-0 p-3 border-t border-zinc-800 bg-[#121212] flex gap-2 items-center">
           <img src={me.photo} className="w-8 h-8 rounded-full" />
           <input
             value={text}
