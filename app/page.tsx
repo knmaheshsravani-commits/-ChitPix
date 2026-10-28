@@ -17,6 +17,8 @@ type Post = {
   id: string
   user_id?: string
   username?: string
+  avatar_url?: string | null
+  avatar?: string | null
   image_url?: string
   r2_url?: string
   url?: string
