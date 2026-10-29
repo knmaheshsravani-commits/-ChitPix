@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import BottomNav from '../components/BottomNav'
 import { useRouter } from 'next/navigation'
+import { supabase } from "../../lib/supabase"
 
 type Reel = {
   id: string
@@ -216,7 +217,6 @@ export default function ReelsPage(){
   }
 
   // FEATURE 8: POST COMMENT
-const postComment = async () => {
   const text = commentText.trim()
   const currentPost = posts[currentIndex]
 
