@@ -234,7 +234,10 @@ const postComment = async () => {
   postId: currentPost.id,
   text,
   userId: (await supabase.auth.getUser()).data.user?.id,
-  username: currentUsername,
+  username:
+  (await supabase.auth.getUser()).data.user?.user_metadata?.username ||
+  (await supabase.auth.getUser()).data.user?.email?.split("@")[0] ||
+  "ChitPix User",
 }),
   })
     
@@ -250,7 +253,7 @@ const postComment = async () => {
     setComments((prev: any[]) => [
       {
         id: result?.comment?.id ?? Date.now(),
-        user: result?.comment?.username ?? "knmahesh",
+        user: result?.comment?.username ?? "ChitPix User",
         avatar:
           result?.comment?.user_photo ??
           "https://i.pravatar.cc/100?u=you",
