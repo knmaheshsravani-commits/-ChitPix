@@ -217,6 +217,8 @@ export default function ReelsPage(){
   }
 
   // FEATURE 8: POST COMMENT
+const postComment = async () => {
+  // FEATURE 8: POST COMMENT
   const text = commentText.trim()
   const currentPost = posts[currentIndex]
 
