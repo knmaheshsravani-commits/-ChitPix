@@ -803,6 +803,7 @@ export default function ReelsPage() {
                     </span>
                   </button>
 
+                  {String(post.user_id) !== String(currentUserId) && (
                   <button
                     onClick={() => toggleFollow(creatorId)}
                     className="flex flex-col items-center gap-1"
@@ -823,6 +824,7 @@ export default function ReelsPage() {
                       </span>
                     </span>
                   </button>
+                )}
 
                   <button
                     onClick={() => setShowMore(true)}
