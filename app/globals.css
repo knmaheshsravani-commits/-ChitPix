@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
+background: #ffffff !important;
   background: #000000 !important;
   margin: 0;
   padding: 0;
@@ -10,7 +10,7 @@ html {
   overflow-x: hidden;
 }
 
-body {
+background: #ffffff !important;
   background: #000000 !important;
   margin: 0 !important;
   padding: 0 !important;
