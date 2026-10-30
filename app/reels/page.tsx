@@ -832,8 +832,9 @@ export default function ReelsPage() {
     aria-label="More options"
   >
     <MoreHorizontal className="h-9 w-9 text-white" />
-  </button>
+    </button>
 
+</aside>
 
 {/* CREATOR PROFILE AND CAPTION */}
 <div className="absolute bottom-24 left-4 right-20 z-20">
