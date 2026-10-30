@@ -2,16 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-background: #ffffff !important;
-  background: #000000 !important;
+html {
+  background: #ffffff !important;
   margin: 0;
   padding: 0;
   min-height: 100%;
   overflow-x: hidden;
 }
 
-background: #ffffff !important;
-  background: #000000 !important;
+body {
+  background: #ffffff !important;
   margin: 0 !important;
   padding: 0 !important;
   min-height: 100%;
