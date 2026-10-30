@@ -703,29 +703,50 @@ export default function ReelsPage() {
 
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80" />
 
-                {/* TOP BAR */}
-                <header className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between px-4 pb-5 pt-12">
-                  <button onClick={() => router.back()} aria-label="Go back">
-                    <ChevronDown className="h-7 w-7 rotate-90" />
-                  </button>
+                
+{/* TOP HEADER - CHITPIX REELS */}
+<header className="absolute left-0 right-0 top-0 z-30 px-5 pb-5 pt-12">
+  <div className="flex items-center justify-between">
 
-                  <h1 className="text-xl font-extrabold">
-                    ChitPix <span className="text-pink-400">Reels</span>
-                  </h1>
+    {/* CREATE REEL */}
+    <button
+      onClick={() => router.push("/upload")}
+      aria-label="Create Reel"
+      className="flex h-11 w-11 items-center justify-center"
+    >
+      <Plus className="h-8 w-8 text-white" strokeWidth={2.5} />
+    </button>
 
-                  <button
-                    onClick={toggleMute}
-                    className={`rounded-full p-2.5 ${GRADIENTS.pink}`}
-                    aria-label={muted ? "Unmute" : "Mute"}
-                  >
-                    {muted ? (
-                      <VolumeX className="h-5 w-5" />
-                    ) : (
-                      <Volume2 className="h-5 w-5" />
-                    )}
-                  </button>
-                </header>
+    {/* REELS DROPDOWN */}
+    <button
+      onClick={() => alert("Reels menu coming soon!")}
+      className="flex items-center gap-1"
+    >
+      <span className="text-3xl font-extrabold text-white">
+        Reels
+      </span>
+      <ChevronDown className="h-6 w-6 text-white" />
+    </button>
 
+    {/* FRIENDS */}
+    <button
+      onClick={() => router.push("/friends")}
+      className="text-2xl font-extrabold text-white"
+    >
+      Friends
+    </button>
+
+    {/* SEND */}
+    <button
+      onClick={() => setShowShare(true)}
+      aria-label="Send Reel"
+    >
+      <Send className="h-8 w-8 text-white" strokeWidth={2} />
+    </button>
+
+  </div>
+</header>
+                
                 {/* PLAY / PAUSE */}
                 {isCurrent && isVideo && !isPlaying && (
                   <button
@@ -737,156 +758,152 @@ export default function ReelsPage() {
                   </button>
                 )}
 
-                {/* GRADIENT ACTION ICONS */}
-                <aside className="absolute bottom-32 right-3 z-20 flex flex-col items-center gap-5 sm:right-5">
-                  <button
-                    onClick={() => toggleLike(postId)}
-                    className="flex flex-col items-center gap-1"
-                    aria-label="Like Reel"
-                  >
-                    <span className={`rounded-full p-2.5 ${GRADIENTS.heart}`}>
-                      <Heart
-                        className={`h-6 w-6 ${
-                          liked[postId] ? "fill-white" : ""
-                        }`}
-                      />
-                    </span>
-                    <span className="text-xs font-semibold">
-                      {formatCount(
-                        Number(post.likes || 0) + (liked[postId] ? 1 : 0)
-                      )}
-                    </span>
-                  </button>
+                
+{/* RIGHT SIDE - 6 INSTAGRAM STYLE ICONS */}
+<aside className="absolute bottom-32 right-4 z-20 flex flex-col items-center gap-7">
 
-                  <button
-                    onClick={() => void openComments()}
-                    className="flex flex-col items-center gap-1"
-                    aria-label="Open comments"
-                  >
-                    <span className={`rounded-full p-2.5 ${GRADIENTS.blue}`}>
-                      <MessageCircle className="h-6 w-6" />
-                    </span>
-                    <span className="text-xs">
-                      {formatCount(
-  isCurrent
-    ? Math.max(Number(post.comments || 0), comments.length)
-    : Number(post.comments || 0)
-)}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setShowShare(true)}
-                    className="flex flex-col items-center gap-1"
-                    aria-label="Share Reel"
-                  >
-                    <span className={`rounded-full p-2.5 ${GRADIENTS.purple}`}>
-                      <Send className="h-6 w-6" />
-                    </span>
-                    <span className="text-xs">Share</span>
-                  </button>
-
-                  <button
-                    onClick={() => toggleSave(postId)}
-                    className="flex flex-col items-center gap-1"
-                    aria-label="Save Reel"
-                  >
-                    <span className={`rounded-full p-2.5 ${GRADIENTS.orange}`}>
-                      <Bookmark
-                        className={`h-6 w-6 ${
-                          saved[postId] ? "fill-white" : ""
-                        }`}
-                      />
-                    </span>
-                    <span className="text-xs">
-                      {saved[postId] ? "Saved" : "Save"}
-                    </span>
-                  </button>
-
-                  {String(post.user_id) !== String(currentUserId) && (
-                  <button
-                    onClick={() => toggleFollow(creatorId)}
-                    className="flex flex-col items-center gap-1"
-                    aria-label="Follow creator"
-                  >
-                    <span className="relative">
-                      <img
-                        src={avatar}
-                        alt={username}
-                        className="h-11 w-11 rounded-full border-2 border-white object-cover"
-                      />
-                      <span className={`absolute -bottom-2 left-1/2 -translate-x-1/2 rounded-full p-0.5 ${GRADIENTS.pink}`}>
-                        {followed[creatorId] ? (
-                          <Check className="h-3.5 w-3.5" />
-                        ) : (
-                          <Plus className="h-3.5 w-3.5" />
-                        )}
-                      </span>
-                    </span>
-                  </button>
-                )}
-
-                  <button
-                    onClick={() => setShowMore(true)}
-                    aria-label="More options"
-                  >
-                    <MoreHorizontal className="h-8 w-8" />
-                  </button>
-                </aside>
-
-                {/* CREATOR AND CAPTION */}
-                <div className="absolute bottom-24 left-4 right-20 z-10 sm:left-6">
-                  <div className="mb-3 flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        if (post.user_id) {
-                          router.push(`/profile/${post.user_id}`)
-                        }
-                      }}
-                      className="flex items-center gap-2"
-                    >
-                      <img
-                        src={avatar}
-                        alt={username}
-                        className="h-10 w-10 rounded-full border border-white object-cover"
-                      />
-                      <span className="text-sm font-bold">{username}</span>
-                    </button>
-
-                    {currentUserId &&
- String(post.user_id) !== String(currentUserId) && (
+  {/* 1. LIKE */}
   <button
-    onClick={() => toggleFollow(creatorId)}
-    className={`rounded-full px-3 py-1 text-xs font-bold ${GRADIENTS.pink}`}
+    onClick={() => toggleLike(postId)}
+    className="flex flex-col items-center gap-1"
+    aria-label="Like Reel"
   >
-    {followed[creatorId] ? "Following" : "Follow"}
+    <Heart
+      className={`h-8 w-8 ${
+        liked[postId]
+          ? "fill-red-500 text-red-500"
+          : "text-white"
+      }`}
+      strokeWidth={2.3}
+    />
+    <span className="text-xs font-semibold">
+      {formatCount(
+        Number(post.likes || 0) + (liked[postId] ? 1 : 0)
+      )}
+    </span>
   </button>
-)}
 
-                  <p className="whitespace-pre-wrap break-words text-sm leading-5">
-                    {captionExpand[postId]
-                      ? post.caption || ""
-                      : (post.caption || "").slice(0, 120)}
+  {/* 2. COMMENT */}
+  <button
+    onClick={() => void openComments()}
+    className="flex flex-col items-center gap-1"
+    aria-label="Comments"
+  >
+    <MessageCircle className="h-8 w-8 text-white" strokeWidth={2.3} />
+    <span className="text-xs">
+      {formatCount(Number(post.comments || 0))}
+    </span>
+  </button>
 
-                    {(post.caption || "").length > 120 && (
-                      <button
-                        onClick={() =>
-                          setCaptionExpand((previous) => ({
-                            ...previous,
-                            [postId]: !previous[postId],
-                          }))
-                        }
-                        className="ml-2 font-bold"
-                      >
-                        {captionExpand[postId] ? "less" : "...more"}
-                      </button>
-                    )}
-                  </p>
+  {/* 3. REMIX */}
+  <button
+    onClick={() => alert("Remix feature will be added soon!")}
+    aria-label="Remix Reel"
+  >
+    <RefreshCw className="h-8 w-8 text-white" strokeWidth={2.3} />
+  </button>
 
-                  <div className="mt-3 flex items-center gap-2 text-xs text-white/80">
-  <Music2 className="h-4 w-4" />
-  <span>{post.audio_name || "Original audio · ChitPix"}</span>
-</div>
+  {/* 4. SHARE */}
+  <button
+    onClick={() => setShowShare(true)}
+    aria-label="Share Reel"
+  >
+    <Send className="h-8 w-8 text-white" strokeWidth={2.3} />
+  </button>
+
+  {/* 5. SAVE */}
+  <button
+    onClick={() => toggleSave(postId)}
+    aria-label="Save Reel"
+  >
+    <Bookmark
+      className={`h-8 w-8 ${
+        saved[postId]
+          ? "fill-white text-white"
+          : "text-white"
+      }`}
+      strokeWidth={2.3}
+    />
+  </button>
+
+  {/* 6. MORE */}
+  <button
+    onClick={() => setShowMore(true)}
+    aria-label="More options"
+  >
+    <MoreHorizontal className="h-9 w-9 text-white" />
+  </button>
+
+
+{/* CREATOR PROFILE AND CAPTION */}
+<div className="absolute bottom-24 left-4 right-20 z-20">
+
+  {/* PROFILE ROW */}
+  <div className="mb-3 flex items-center gap-3">
+
+    {/* PROFILE DP + USERNAME */}
+    <button
+      onClick={() => {
+        if (post.user_id) {
+          router.push(`/profile/${post.user_id}`)
+        }
+      }}
+      className="flex min-w-0 items-center gap-3"
+    >
+      <img
+        src={avatar}
+        alt={username}
+        className="h-12 w-12 shrink-0 rounded-full border-2 border-white object-cover"
+      />
+
+      <span className="truncate text-base font-extrabold text-white">
+        {username}
+      </span>
+    </button>
+
+    {/* FOLLOW BUTTON */}
+    {currentUserId &&
+      String(post.user_id) !== String(currentUserId) && (
+        <button
+          onClick={() => toggleFollow(creatorId)}
+          className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-white ${
+            followed[creatorId]
+              ? "bg-white/20"
+              : "bg-white/25"
+          }`}
+        >
+          {followed[creatorId] ? "Following" : "Follow"}
+        </button>
+      )}
+
+  </div>
+
+  {/* CAPTION */}
+  <p className="whitespace-pre-wrap break-words text-sm leading-5 text-white">
+    {captionExpand[postId]
+      ? post.caption || ""
+      : (post.caption || "").slice(0, 120)}
+
+    {(post.caption || "").length > 120 && (
+      <button
+        onClick={() =>
+          setCaptionExpand((previous) => ({
+            ...previous,
+            [postId]: !previous[postId],
+          }))
+        }
+        className="ml-2 font-bold"
+      >
+        {captionExpand[postId] ? "less" : "...more"}
+      </button>
+    )}
+  </p>
+
+  {/* AUDIO NAME */}
+  <div className="mt-3 flex items-center gap-2 text-xs text-white/80">
+    <Music2 className="h-4 w-4" />
+    <span>{post.audio_name || "Original audio · ChitPix"}</span>
+  </div>
 </div>
 </div>
                 {/* VIDEO PROGRESS */}
