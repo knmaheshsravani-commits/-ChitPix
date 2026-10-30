@@ -20,13 +20,11 @@ export default function BottomNav({
 
     const loadPhoto = async () => {
       try {
-        // 1. Use the avatar supplied by the Profile page.
         if (avatar && !avatar.startsWith("blob:")) {
           setProfilePhoto(avatar)
           return
         }
 
-        // 2. Load the signed-in user's saved profile photo.
         const {
           data: { user },
           error: authError,
@@ -48,7 +46,6 @@ export default function BottomNav({
           return
         }
 
-        // 3. Fallback to the previous localStorage value.
         const saved = localStorage.getItem("chitpix_profile_photo")
 
         if (!cancelled) {
@@ -66,7 +63,7 @@ export default function BottomNav({
       }
     }
 
-    loadPhoto()
+    void loadPhoto()
 
     window.addEventListener("storage", loadPhoto)
     window.addEventListener("chitpix-profile-photo-updated", loadPhoto)
@@ -79,10 +76,11 @@ export default function BottomNav({
   }, [avatar])
 
   const isHome = pathname === "/"
-  const isSearch = pathname === "/search"
-  const isDM = pathname === "/messages"
-  const isReels = pathname === "/reels"
-  const isProfile = pathname === "/profile"
+  const isSearch = pathname.startsWith("/search")
+  const isDM = pathname.startsWith("/messages")
+  const isReels = pathname.startsWith("/reels")
+  const isProfile =
+    pathname === "/profile" || pathname.startsWith("/profile/")
 
   const goTo = (path: string, tab: string) => {
     if (setActiveTab) setActiveTab(tab)
@@ -94,140 +92,104 @@ export default function BottomNav({
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  const iconClass = (selected: boolean) =>
-    `flex items-center justify-center w-[52px] h-[44px] rounded-full transition-colors ${
+  const buttonClass = (selected: boolean) =>
+    `flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full transition-colors ${
       selected ? "bg-neutral-100" : "bg-transparent"
     }`
 
-  const iconStroke = (selected: boolean) => ({
-    color: "#111111",
-    strokeWidth: selected ? 2.3 : 1.8,
-  })
+  const stroke = {
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  }
 
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-neutral-200 flex justify-around items-center h-[62px] z-[99999]"
+      className="fixed bottom-0 left-1/2 z-[99999] flex h-[82px] w-full max-w-[480px] -translate-x-1/2 items-center justify-around border-t border-neutral-100 bg-white px-2"
       style={{
         backgroundColor: "#ffffff",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-      {/* HOME */}
+
+      {/* 1. HOME */}
       <button
         type="button"
         aria-label="Home"
         aria-current={isHome ? "page" : undefined}
         onClick={() => goTo("/", "home")}
-        className={iconClass(isHome)}
-        style={iconStroke(isHome)}
+        className={buttonClass(isHome)}
+        style={{ color: "#111111" }}
       >
-        <svg
-          width="27"
-          height="27"
-          viewBox="0 0 28 28"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M3.5 12.5 14 3.5l10.5 9" />
-          <path d="M6.5 11v12h6v-7h3v7h6V11" />
+        <svg width="39" height="39" viewBox="0 0 40 40" {...stroke}>
+          <path d="M4 18.5 20 5 36 18.5" />
+          <path d="M8 17v18h9V24h6v11h9V17" />
         </svg>
       </button>
 
-      {/* SEARCH */}
+      {/* 2. SEARCH */}
       <button
         type="button"
         aria-label="Search"
         aria-current={isSearch ? "page" : undefined}
         onClick={() => goTo("/search", "search")}
-        className={iconClass(isSearch)}
-        style={iconStroke(isSearch)}
+        className={buttonClass(isSearch)}
+        style={{ color: "#111111" }}
       >
-        <svg
-          width="27"
-          height="27"
-          viewBox="0 0 28 28"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.9"
-          strokeLinecap="round"
-        >
-          <circle cx="12" cy="12" r="7.5" />
-          <path d="m17.5 17.5 6 6" />
+        <svg width="39" height="39" viewBox="0 0 40 40" {...stroke}>
+          <circle cx="17.5" cy="17.5" r="13" />
+          <path d="m27 27 9 9" />
         </svg>
       </button>
 
-      {/* DIRECT MESSAGES */}
+      {/* 3. DIRECT MESSAGE */}
       <button
         type="button"
         aria-label="Direct messages"
         aria-current={isDM ? "page" : undefined}
         onClick={() => goTo("/messages", "messages")}
-        className={iconClass(isDM)}
-        style={iconStroke(isDM)}
+        className={buttonClass(isDM)}
+        style={{ color: "#111111" }}
       >
-        <svg
-          width="28"
-          height="28"
-          viewBox="0 0 28 28"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M24.5 3.5 12.8 15.2" />
-          <path d="m24.5 3.5-7.4 21-4.3-9.3-9.3-4.3z" />
+        <svg width="40" height="40" viewBox="0 0 40 40" {...stroke}>
+          <path d="M36 4 4 17.5l13 5.5L23 36 36 4Z" />
+          <path d="m17 23 19-19" />
         </svg>
       </button>
 
-      {/* REELS */}
+      {/* 4. REELS */}
       <button
         type="button"
         aria-label="Reels"
         aria-current={isReels ? "page" : undefined}
         onClick={() => goTo("/reels", "reels")}
-        className={iconClass(isReels)}
-        style={iconStroke(isReels)}
+        className={buttonClass(isReels)}
+        style={{ color: "#111111" }}
       >
-        <svg
-          width="27"
-          height="27"
-          viewBox="0 0 28 28"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="3" y="3" width="22" height="22" rx="6" />
-          <path d="M3.5 10h21" />
-          <path d="m10 3 5 7" />
-          <path d="m17 3 5 7" />
-          <path
-            d="m12 13 6 3.5-6 3.5z"
-            fill="currentColor"
-            strokeLinejoin="round"
-          />
+        <svg width="40" height="40" viewBox="0 0 40 40" {...stroke}>
+          <rect x="3" y="5" width="34" height="30" rx="6" />
+          <path d="M3 14h34" />
+          <path d="m9 5 6 9" />
+          <path d="m20 5 6 9" />
+          <path d="m17 19 10 6-10 6V19Z" fill="currentColor" />
         </svg>
       </button>
 
-      {/* PROFILE */}
+      {/* 5. PROFILE DP */}
       <button
         type="button"
         aria-label="Profile"
         aria-current={isProfile ? "page" : undefined}
         onClick={() => goTo("/profile", "profile")}
-        className="flex items-center justify-center w-[52px] h-[44px] rounded-full"
-        style={iconStroke(isProfile)}
+        className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full"
       >
         <div
-          className={`w-[32px] h-[32px] rounded-full overflow-hidden ${
+          className={`h-[43px] w-[43px] overflow-hidden rounded-full ${
             isProfile
-              ? "ring-2 ring-black ring-offset-1"
+              ? "ring-2 ring-black ring-offset-2"
               : "border border-neutral-300"
           }`}
         >
@@ -235,28 +197,25 @@ export default function BottomNav({
             <img
               src={profilePhoto}
               alt="My profile"
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover"
               onError={() => setProfilePhoto("")}
             />
           ) : (
-            <div className="w-full h-full bg-neutral-100 flex items-center justify-center">
+            <div className="flex h-full w-full items-center justify-center bg-neutral-100">
               <svg
-                width="23"
-                height="23"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                width="29"
+                height="29"
+                viewBox="0 0 30 30"
+                {...stroke}
               >
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-4.5 3.2-7 8-7s8 2.5 8 7" />
+                <circle cx="15" cy="10" r="6" />
+                <path d="M4 27c0-7 4-11 11-11s11 4 11 11" />
               </svg>
             </div>
           )}
         </div>
       </button>
+
     </nav>
   )
-                }
+}
