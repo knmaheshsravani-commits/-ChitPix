@@ -407,11 +407,59 @@ export default function ReelsPage() {
   }
 
   // Reel action states.
-  const toggleLike = (postId: string) => {
-    setLiked((previous) => ({
-      ...previous,
-      [postId]: !previous[postId],
-    }))
+  const toggleLike = async (postId: string) => {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      alert("Please login to like this Reel.")
+      return
+    }
+
+    const { data: existingLike, error: checkError } = await supabase
+      .from("post_likes")
+      .select("id")
+      .eq("post_id", postId)
+      .eq("user_id", user.id)
+      .maybeSingle()
+
+    if (checkError) throw checkError
+
+    if (existingLike) {
+      const { error } = await supabase
+        .from("post_likes")
+        .delete()
+        .eq("id", existingLike.id)
+        .eq("user_id", user.id)
+
+      if (error) throw error
+
+      setLiked((previous) => ({
+        ...previous,
+        [postId]: false,
+      }))
+    } else {
+      const { error } = await supabase
+        .from("post_likes")
+        .insert({
+          post_id: postId,
+          user_id: user.id,
+        })
+
+      if (error) throw error
+
+      setLiked((previous) => ({
+        ...previous,
+        [postId]: true,
+      }))
+    }
+  } catch (error) {
+    console.error("Reel like error:", error)
+    alert("Like save avvaledu bro. Malli try cheyyi.")
+  }
   }
 
   const toggleSave = (postId: string) => {
