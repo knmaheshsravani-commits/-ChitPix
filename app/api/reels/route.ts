@@ -83,7 +83,29 @@ export async function GET(req: Request) {
         { status: 500 }
       )
     }
+    const postIds = (data || []).map((post: any) => post.id)
 
+let commentRows: any[] = []
+
+if (postIds.length > 0) {
+  const { data: rows, error: commentError } = await supabase
+    .from("post_comments")
+    .select("post_id")
+    .in("post_id", postIds)
+
+  if (commentError) {
+    console.error("Comments count error:", commentError.message)
+  } else {
+    commentRows = rows || []
+  }
+}
+
+const commentCounts: Record<string, number> = {}
+
+commentRows.forEach((comment: any) => {
+  const id = String(comment.post_id)
+  commentCounts[id] = (commentCounts[id] || 0) + 1
+})
     const reels = (data || [])
       .map((post: any) => {
         const mediaUrl = getMediaUrl(post)
