@@ -853,13 +853,15 @@ export default function ReelsPage() {
                       <span className="text-sm font-bold">{username}</span>
                     </button>
 
-                    <button
-                      onClick={() => toggleFollow(creatorId)}
-                      className={`rounded-full px-3 py-1 text-xs font-bold ${GRADIENTS.pink}`}
-                    >
-                      {followed[creatorId] ? "Following" : "Follow"}
-                    </button>
-                  </div>
+                    {currentUserId &&
+ String(post.user_id) !== String(currentUserId) && (
+  <button
+    onClick={() => toggleFollow(creatorId)}
+    className={`rounded-full px-3 py-1 text-xs font-bold ${GRADIENTS.pink}`}
+  >
+    {followed[creatorId] ? "Following" : "Follow"}
+  </button>
+)}
 
                   <p className="whitespace-pre-wrap break-words text-sm leading-5">
                     {captionExpand[postId]
