@@ -93,7 +93,7 @@ export default function BottomNav({
   }
 
   const buttonClass = (selected: boolean) =>
-    `flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full transition-colors ${
+    `flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-colors ${
       selected ? "bg-neutral-100" : "bg-transparent"
     }`
 
@@ -108,13 +108,12 @@ export default function BottomNav({
   return (
     <nav
       aria-label="Main navigation"
-      className="fixed bottom-0 left-1/2 z-[99999] flex h-[82px] w-full max-w-[480px] -translate-x-1/2 items-center justify-around border-t border-neutral-100 bg-white px-2"
+      className="fixed bottom-0 left-1/2 z-[99999] flex h-[64px] w-full max-w-[480px] -translate-x-1/2 items-center justify-around border-t border-neutral-100 bg-white px-2"
       style={{
         backgroundColor: "#ffffff",
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
-
       {/* 1. HOME */}
       <button
         type="button"
@@ -124,7 +123,7 @@ export default function BottomNav({
         className={buttonClass(isHome)}
         style={{ color: "#111111" }}
       >
-        <svg width="39" height="39" viewBox="0 0 40 40" {...stroke}>
+        <svg width="24" height="24" viewBox="0 0 40 40" {...stroke}>
           <path d="M4 18.5 20 5 36 18.5" />
           <path d="M8 17v18h9V24h6v11h9V17" />
         </svg>
@@ -139,7 +138,7 @@ export default function BottomNav({
         className={buttonClass(isSearch)}
         style={{ color: "#111111" }}
       >
-        <svg width="39" height="39" viewBox="0 0 40 40" {...stroke}>
+        <svg width="24" height="24" viewBox="0 0 40 40" {...stroke}>
           <circle cx="17.5" cy="17.5" r="13" />
           <path d="m27 27 9 9" />
         </svg>
@@ -154,7 +153,7 @@ export default function BottomNav({
         className={buttonClass(isDM)}
         style={{ color: "#111111" }}
       >
-        <svg width="40" height="40" viewBox="0 0 40 40" {...stroke}>
+        <svg width="24" height="24" viewBox="0 0 40 40" {...stroke}>
           <path d="M36 4 4 17.5l13 5.5L23 36 36 4Z" />
           <path d="m17 23 19-19" />
         </svg>
@@ -169,7 +168,7 @@ export default function BottomNav({
         className={buttonClass(isReels)}
         style={{ color: "#111111" }}
       >
-        <svg width="40" height="40" viewBox="0 0 40 40" {...stroke}>
+        <svg width="24" height="24" viewBox="0 0 40 40" {...stroke}>
           <rect x="3" y="5" width="34" height="30" rx="6" />
           <path d="M3 14h34" />
           <path d="m9 5 6 9" />
@@ -184,12 +183,12 @@ export default function BottomNav({
         aria-label="Profile"
         aria-current={isProfile ? "page" : undefined}
         onClick={() => goTo("/profile", "profile")}
-        className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full"
+        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
       >
         <div
-          className={`h-[43px] w-[43px] overflow-hidden rounded-full ${
+          className={`h-8 w-8 overflow-hidden rounded-full ${
             isProfile
-              ? "ring-2 ring-black ring-offset-2"
+              ? "ring-2 ring-black ring-offset-1"
               : "border border-neutral-300"
           }`}
         >
@@ -203,8 +202,8 @@ export default function BottomNav({
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-neutral-100">
               <svg
-                width="29"
-                height="29"
+                width="22"
+                height="22"
                 viewBox="0 0 30 30"
                 {...stroke}
               >
@@ -215,7 +214,6 @@ export default function BottomNav({
           )}
         </div>
       </button>
-
     </nav>
   )
 }
