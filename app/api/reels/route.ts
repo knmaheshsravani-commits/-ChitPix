@@ -104,13 +104,13 @@ export async function GET(req: Request) {
     const allPosts = data || []
 
     // STEP 2: GET USER IDS
-    const userIds = [
-      ...new Set(
-        allPosts
-          .map((post: any) => post.user_id)
-          .filter((id: any) => Boolean(id))
-      ),
-    ]
+    const userIds: string[] = Array.from(
+  new Set<string>(
+    allPosts
+      .map((post: any) => String(post.user_id || ""))
+      .filter((id: string) => id.length > 0)
+  )
+)
 
     // STEP 3: LOAD REAL PROFILES
     const profileMap: Record<string, any> = {}
