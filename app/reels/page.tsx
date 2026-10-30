@@ -656,7 +656,7 @@ export default function ReelsPage() {
             return (
               <section
                 key={postId}
-                className="relative h-[100dvh] w-full snap-start snap-always overflow-hidden bg-black"
+                className="relative h-[calc(100dvh-82px)] w-full snap-start snap-always overflow-hidden bg-black"
               >
                 {media ? (
                   isVideo ? (
