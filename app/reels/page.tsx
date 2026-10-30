@@ -884,11 +884,11 @@ export default function ReelsPage() {
                   </p>
 
                   <div className="mt-3 flex items-center gap-2 text-xs text-white/80">
-                    <Music2 className="h-4 w-4" />
-                    <span>{post.audio_name || "Original audio · ChitPix"}</span>
-                  </div>
-                </div>
-
+  <Music2 className="h-4 w-4" />
+  <span>{post.audio_name || "Original audio · ChitPix"}</span>
+</div>
+</div>
+</div>
                 {/* VIDEO PROGRESS */}
                 {isVideo && (
                   <div className="absolute bottom-[76px] left-0 right-0 z-20 h-1 bg-white/20">
