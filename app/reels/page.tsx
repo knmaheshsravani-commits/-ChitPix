@@ -906,7 +906,6 @@ export default function ReelsPage() {
     <span>{post.audio_name || "Original audio · ChitPix"}</span>
   </div>
 </div>
-</div>
                 {/* VIDEO PROGRESS */}
                 {isVideo && (
                   <div className="absolute bottom-[76px] left-0 right-0 z-20 h-1 bg-white/20">
