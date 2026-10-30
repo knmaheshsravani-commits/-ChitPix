@@ -606,7 +606,7 @@ export default function ReelsPage() {
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full snap-y snap-mandatory overflow-y-auto scrollbar-hide"
+        className="h-[calc(100dvh-82px)] snap-y snap-mandatory overflow-y-auto scrollbar-hide"
       >
         {loadingReels ? (
           <div className="flex h-full flex-col items-center justify-center gap-3">
@@ -656,7 +656,7 @@ export default function ReelsPage() {
             return (
               <section
                 key={postId}
-                className="relative h-[calc(100dvh-82px)] w-full snap-start snap-always overflow-hidden bg-black"
+                className="relative h-full w-full snap-start snap-always overflow-hidden bg-black"
               >
                 {media ? (
                   isVideo ? (
