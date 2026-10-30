@@ -60,8 +60,6 @@ function ScrollFix() {
               b.style.setProperty('overflow-x','hidden','important');
               b.style.setProperty('position','relative','important');
               b.style.setProperty('touch-action','pan-y','important');
-              b.style.setProperty('background','white','important');
-              de.style.setProperty('background','white','important');
             }
             unlock();
             document.addEventListener('DOMContentLoaded', unlock);
