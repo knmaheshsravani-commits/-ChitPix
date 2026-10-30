@@ -719,7 +719,11 @@ export default function ReelsPage() {
                       <MessageCircle className="h-6 w-6" />
                     </span>
                     <span className="text-xs">
-                      {formatCount(Number(post.comments || 0))}
+                      {formatCount(
+  isCurrent
+    ? Math.max(Number(post.comments || 0), comments.length)
+    : Number(post.comments || 0)
+)}
                     </span>
                   </button>
 
