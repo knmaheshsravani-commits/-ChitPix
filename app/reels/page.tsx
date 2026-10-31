@@ -1018,7 +1018,6 @@ const toggleLike = async (postId: string) => {
   <Music2 className="h-5 w-5" />
   <span>{post.audio_name || "Original audio · ChitPix"}</span>
 </div>
-</div>
                 
                 {/* VIDEO PROGRESS */}
                 {isVideo && (
