@@ -876,14 +876,9 @@ export default function ReelsPage() {
   />
 
   <span className="max-w-[200px] truncate text-base font-extrabold text-white">
-    {username}
-  </span>
-</button>
   {username}
 </span>
-      {username}
-    </span>
-  </button>
+</button>
 
   {/* FOLLOW BUTTON */}
   {currentUserId &&
