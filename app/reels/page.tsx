@@ -705,7 +705,7 @@ export default function ReelsPage() {
 
                 
 {/* TOP HEADER - CHITPIX REELS */}
-<header className="absolute left-0 right-0 top-0 z-30 px-5 pb-5 pt-12">
+<header className="absolute left-0 right-0 top-0 z-30 px-5 pb-3 pt-4">
   <div className="flex items-center justify-between">
 
     {/* CREATE REEL */}
@@ -812,34 +812,52 @@ export default function ReelsPage() {
     <Send className="h-6 w-6 text-white" strokeWidth={2.3} />
   </button>
 
-  {/* 5. SAVE */}
-  <button
-    onClick={() => toggleSave(postId)}
-    aria-label="Save Reel"
-  >
-    <Bookmark
-      className={`h-6 w-6 ${
-        saved[postId]
-          ? "fill-white text-white"
-          : "text-white"
-      }`}
-      strokeWidth={2.3}
-    />
-  </button>
 
-  {/* MORE */}
-  <button
-    onClick={() => setShowMore(true)}
-    aria-label="More options"
-  >
-    <MoreHorizontal className="h-6 w-6 text-white" />
-  </button>
+{/* 5. SAVE */}
+<button
+  onClick={() => toggleSave(postId)}
+  aria-label="Save Reel"
+>
+  <Bookmark
+    className={`h-6 w-6 ${
+      saved[postId]
+        ? "fill-white text-white"
+        : "text-white"
+    }`}
+    strokeWidth={2.3}
+  />
+</button>
+
+{/* MORE */}
+<button
+  onClick={() => setShowMore(true)}
+  aria-label="More options"
+>
+  <MoreHorizontal className="h-6 w-6 text-white" />
+</button>
+
+{/* SOUND ON / OFF */}
+<button
+  onClick={toggleMute}
+  aria-label={muted ? "Turn sound on" : "Turn sound off"}
+  className="flex flex-col items-center gap-1"
+>
+  {muted ? (
+    <VolumeX className="h-6 w-6 text-white" />
+  ) : (
+    <Volume2 className="h-6 w-6 text-white" />
+  )}
+  <span className="text-[10px] font-semibold text-white">
+    {muted ? "OFF" : "ON"}
+  </span>
+</button>
 
 </aside>
                 
+                
 
 {/* CREATOR PROFILE AND CAPTION */}
-<div className="absolute bottom-12 left-4 right-20 z-20">
+<div className="absolute bottom-4 left-4 right-20 z-20">
 
   
 {/* PROFILE ROW */}
@@ -860,7 +878,7 @@ export default function ReelsPage() {
       className="h-9 w-9 shrink-0 rounded-full border-2 border-white object-cover"
     />
 
-    <span className="max-w-[145px] truncate text-lg font-extrabold text-white">
+    className="max-w-[200px] truncate text-base font-extrabold text-white"
       {username}
     </span>
   </button>
@@ -870,7 +888,7 @@ export default function ReelsPage() {
     String(post.user_id) !== String(currentUserId) && (
       <button
         onClick={() => toggleFollow(creatorId)}
-        className={`shrink-0 rounded-xl border-2 border-white px-5 py-2 text-base font-bold text-white ${
+        className={`shrink-0 rounded-xl border-2 border-white px-3 py-1.5 text-sm font-bold text-white ${
           followed[creatorId]
             ? "bg-white/25"
             : "bg-transparent"
