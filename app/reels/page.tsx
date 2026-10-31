@@ -839,7 +839,7 @@ export default function ReelsPage() {
                 
 
 {/* CREATOR PROFILE AND CAPTION */}
-<div className="absolute bottom-24 left-4 right-20 z-20">
+<div className="absolute bottom-12 left-4 right-20 z-20">
 
   
 {/* PROFILE ROW */}
