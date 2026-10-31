@@ -35,13 +35,3 @@ video {
 button {
   -webkit-tap-highlight-color: transparent;
 }
-html,
-body {
-  touch-action: pan-x pan-y;
-  overscroll-behavior: none;
-}
-
-img,
-video {
-  touch-action: pan-x pan-y;
-}
