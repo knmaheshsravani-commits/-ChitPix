@@ -839,73 +839,75 @@ export default function ReelsPage() {
 {/* CREATOR PROFILE AND CAPTION */}
 <div className="absolute bottom-24 left-4 right-20 z-20">
 
-  {/* PROFILE ROW */}
-  <div className="mb-3 flex items-center gap-3">
+  
+{/* PROFILE ROW */}
+<div className="mb-5 flex items-center gap-3">
 
-    {/* PROFILE DP + USERNAME */}
-    <button
-      onClick={() => {
-        if (post.user_id) {
-          router.push(`/profile/${post.user_id}`)
-        }
-      }}
-      className="flex min-w-0 items-center gap-3"
-    >
-      <img
-        src={avatar}
-        alt={username}
-        className="h-12 w-12 shrink-0 rounded-full border-2 border-white object-cover"
-      />
+  {/* PROFILE DP + USERNAME */}
+  <button
+    onClick={() => {
+      if (post.user_id) {
+        router.push(`/profile/${post.user_id}`)
+      }
+    }}
+    className="flex min-w-0 items-center gap-3"
+  >
+    <img
+      src={avatar}
+      alt={username}
+      className="h-14 w-14 shrink-0 rounded-full border-2 border-white object-cover"
+    />
 
-      <span className="truncate text-base font-extrabold text-white">
-        {username}
-      </span>
-    </button>
+    <span className="max-w-[145px] truncate text-lg font-extrabold text-white">
+      {username}
+    </span>
+  </button>
 
-    {/* FOLLOW BUTTON */}
-    {currentUserId &&
-      String(post.user_id) !== String(currentUserId) && (
-        <button
-          onClick={() => toggleFollow(creatorId)}
-          className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-bold text-white ${
-            followed[creatorId]
-              ? "bg-white/20"
-              : "bg-white/25"
-          }`}
-        >
-          {followed[creatorId] ? "Following" : "Follow"}
-        </button>
-      )}
-
-  </div>
-
-  {/* CAPTION */}
-  <p className="whitespace-pre-wrap break-words text-sm leading-5 text-white">
-    {captionExpand[postId]
-      ? post.caption || ""
-      : (post.caption || "").slice(0, 120)}
-
-    {(post.caption || "").length > 120 && (
+  {/* FOLLOW BUTTON */}
+  {currentUserId &&
+    String(post.user_id) !== String(currentUserId) && (
       <button
-        onClick={() =>
-          setCaptionExpand((previous) => ({
-            ...previous,
-            [postId]: !previous[postId],
-          }))
-        }
-        className="ml-2 font-bold"
+        onClick={() => toggleFollow(creatorId)}
+        className={`shrink-0 rounded-xl border-2 border-white px-5 py-2 text-base font-bold text-white ${
+          followed[creatorId]
+            ? "bg-white/25"
+            : "bg-transparent"
+        }`}
       >
-        {captionExpand[postId] ? "less" : "...more"}
+        {followed[creatorId] ? "Following" : "Follow"}
       </button>
     )}
-  </p>
 
-  {/* AUDIO NAME */}
-  <div className="mt-3 flex items-center gap-2 text-xs text-white/80">
-    <Music2 className="h-4 w-4" />
-    <span>{post.audio_name || "Original audio · ChitPix"}</span>
-  </div>
 </div>
+
+{/* CAPTION */}
+<p className="whitespace-pre-wrap break-words text-lg leading-6 text-white">
+  {captionExpand[postId]
+    ? post.caption || ""
+    : (post.caption || "").slice(0, 120)}
+
+  {(post.caption || "").length > 120 && (
+    <button
+      onClick={() =>
+        setCaptionExpand((previous) => ({
+          ...previous,
+          [postId]: !previous[postId],
+        }))
+      }
+      className="ml-2 font-bold"
+    >
+      {captionExpand[postId] ? "less" : "...more"}
+    </button>
+  )}
+</p>
+
+{/* AUDIO NAME */}
+<div className="mt-3 flex items-center gap-2 text-sm text-white/90">
+  <Music2 className="h-5 w-5" />
+  <span>{post.audio_name || "Original audio · ChitPix"}</span>
+</div>
+</div>
+                
                 {/* VIDEO PROGRESS */}
                 {isVideo && (
                   <div className="absolute bottom-[76px] left-0 right-0 z-20 h-1 bg-white/20">
