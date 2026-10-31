@@ -770,7 +770,7 @@ export default function ReelsPage() {
     aria-label="Like Reel"
   >
     <Heart
-      className={`h-7 w-7 ${
+      className={`h-6 w-6 ${
         liked[postId]
           ? "fill-red-500 text-red-500"
           : "text-white"
@@ -790,7 +790,7 @@ export default function ReelsPage() {
     className="flex flex-col items-center gap-1"
     aria-label="Comments"
   >
-    <MessageCircle className="h-7 w-7 text-white" strokeWidth={2.3} />
+    <MessageCircle className="h-6 w-6 text-white" strokeWidth={2.3} />
     <span className="text-[11px]">
       {formatCount(Number(post.comments || 0))}
     </span>
@@ -801,7 +801,7 @@ export default function ReelsPage() {
     onClick={() => alert("Repost feature will be added soon!")}
     aria-label="Repost Reel"
   >
-    <RefreshCw className="h-7 w-7 text-white" strokeWidth={2.3} />
+    <RefreshCw className="h-6 w-6 text-white" strokeWidth={2.3} />
   </button>
 
   {/* 4. SHARE */}
@@ -809,7 +809,7 @@ export default function ReelsPage() {
     onClick={() => setShowShare(true)}
     aria-label="Share Reel"
   >
-    <Send className="h-7 w-7 text-white" strokeWidth={2.3} />
+    <Send className="h-6 w-6 text-white" strokeWidth={2.3} />
   </button>
 
   {/* 5. SAVE */}
@@ -818,7 +818,7 @@ export default function ReelsPage() {
     aria-label="Save Reel"
   >
     <Bookmark
-      className={`h-7 w-7 ${
+      className={`h-6 w-6 ${
         saved[postId]
           ? "fill-white text-white"
           : "text-white"
@@ -832,7 +832,7 @@ export default function ReelsPage() {
     onClick={() => setShowMore(true)}
     aria-label="More options"
   >
-    <MoreHorizontal className="h-7 w-7 text-white" />
+    <MoreHorizontal className="h-6 w-6 text-white" />
   </button>
 
 </aside>
