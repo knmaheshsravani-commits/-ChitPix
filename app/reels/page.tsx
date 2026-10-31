@@ -895,8 +895,6 @@ export default function ReelsPage() {
       </button>
     )}
 
-</div>
-
 {/* CAPTION */}
 <p className="whitespace-pre-wrap break-words text-lg leading-6 text-white">
   {captionExpand[postId]
