@@ -872,10 +872,10 @@ const toggleLike = async (postId: string) => {
       strokeWidth={2.3}
     />
     <span className="text-[11px] font-semibold">
-      {formatCount(
-        Number(post.likes || 0) + (liked[postId] ? 1 : 0)
-      )}
-    </span>
+  {formatCount(
+    likesCount[postId] ?? Number(post.likes || 0)
+  )}
+</span>
   </button>
 
   {/* 2. COMMENT */}
