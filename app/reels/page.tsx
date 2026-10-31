@@ -878,7 +878,11 @@ export default function ReelsPage() {
       className="h-9 w-9 shrink-0 rounded-full border-2 border-white object-cover"
     />
 
-    className="max-w-[200px] truncate text-base font-extrabold text-white"
+    <span
+  className="max-w-[200px] truncate text-base font-extrabold text-white"
+>
+  {username}
+</span>
       {username}
     </span>
   </button>
