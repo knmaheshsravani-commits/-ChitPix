@@ -256,7 +256,23 @@ export default function ReelsPage() {
       active = false
     }
   }, [])
+   // PLAY ONLY THE CURRENT REEL
+useEffect(() => {
+  Object.entries(videoRefs.current).forEach(([index, video]) => {
+    const reelIndex = Number(index)
 
+    if (reelIndex !== currentIndex) {
+      video.pause()
+      video.muted = true
+    } else {
+      video.muted = muted
+
+      void video.play().catch((error) => {
+        console.log("Reel playback:", error)
+      })
+    }
+  })
+}, [currentIndex, posts, muted])
   // Part 2 continues with persistent, per-Reel comments,
   // posting, sharing, and the Reel interaction functions.
         
