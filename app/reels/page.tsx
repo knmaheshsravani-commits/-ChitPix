@@ -90,7 +90,7 @@ export default function ReelsPage() {
   const [reelsError, setReelsError] = useState("")
 
   // Reel actions
-  const [liked, setLiked] = useState<Record<string, boolean>>({})
+  const [likesCount, setLikesCount] = useState<Record<string, number>>({})
   const [saved, setSaved] = useState<Record<string, boolean>>({})
   const [followed, setFollowed] = useState<Record<string, boolean>>({})
   const [muted, setMuted] = useState(true)
@@ -407,7 +407,8 @@ export default function ReelsPage() {
   }
 
   // Reel action states.
-  const toggleLike = async (postId: string) => {
+  
+const toggleLike = async (postId: string) => {
   try {
     const {
       data: { user },
@@ -419,12 +420,13 @@ export default function ReelsPage() {
       return
     }
 
-    const { data: existingLike, error: checkError } = await supabase
-      .from("post_likes")
-      .select("id")
-      .eq("post_id", postId)
-      .eq("user_id", user.id)
-      .maybeSingle()
+    const { data: existingLike, error: checkError } =
+      await supabase
+        .from("post_likes")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", user.id)
+        .maybeSingle()
 
     if (checkError) throw checkError
 
@@ -441,6 +443,14 @@ export default function ReelsPage() {
         ...previous,
         [postId]: false,
       }))
+
+      setLikesCount((previous) => ({
+        ...previous,
+        [postId]: Math.max(
+          0,
+          (previous[postId] ?? Number(posts.find(p => String(p.id) === postId)?.likes || 0)) - 1
+        ),
+      }))
     } else {
       const { error } = await supabase
         .from("post_likes")
@@ -455,12 +465,19 @@ export default function ReelsPage() {
         ...previous,
         [postId]: true,
       }))
+
+      setLikesCount((previous) => ({
+        ...previous,
+        [postId]:
+          (previous[postId] ?? Number(posts.find(p => String(p.id) === postId)?.likes || 0)) + 1,
+      }))
     }
   } catch (error) {
     console.error("Reel like error:", error)
     alert("Like save avvaledu bro. Malli try cheyyi.")
   }
-  }
+}
+  
 
   const toggleSave = (postId: string) => {
     setSaved((previous) => ({
@@ -469,12 +486,89 @@ export default function ReelsPage() {
     }))
   }
 
-  const toggleFollow = (userId: string) => {
-    setFollowed((previous) => ({
-      ...previous,
-      [userId]: !previous[userId],
-    }))
+  
+  // LOAD FOLLOWING USERS FROM DATABASE
+  useEffect(() => {
+    if (!currentUserId) return
+
+    const loadFollowing = async () => {
+      const { data, error } = await supabase
+        .from("user_follows")
+        .select("following_id")
+        .eq("follower_id", currentUserId)
+
+      if (error) {
+        console.error("Following load error:", error)
+        return
+      }
+
+      const followingMap: Record<string, boolean> = {}
+
+      data?.forEach((item) => {
+        followingMap[item.following_id] = true
+      })
+
+      setFollowed(followingMap)
+    }
+
+    void loadFollowing()
+  }, [currentUserId])
+
+  // DATABASE FOLLOW / UNFOLLOW
+  const toggleFollow = async (userId: string) => {
+    if (!currentUserId || !userId) return
+
+    const { data: existing, error: checkError } = await supabase
+      .from("user_follows")
+      .select("following_id")
+      .eq("follower_id", currentUserId)
+      .eq("following_id", userId)
+      .maybeSingle()
+
+    if (checkError) {
+      console.error(checkError)
+      alert("Follow status check failed bro.")
+      return
+    }
+
+    if (existing) {
+      const { error } = await supabase
+        .from("user_follows")
+        .delete()
+        .eq("follower_id", currentUserId)
+        .eq("following_id", userId)
+
+      if (error) {
+        console.error(error)
+        alert("Unfollow failed bro.")
+        return
+      }
+
+      setFollowed((previous) => ({
+        ...previous,
+        [userId]: false,
+      }))
+    } else {
+      const { error } = await supabase
+        .from("user_follows")
+        .insert({
+          follower_id: currentUserId,
+          following_id: userId,
+        })
+
+      if (error) {
+        console.error(error)
+        alert("Follow failed bro.")
+        return
+      }
+
+      setFollowed((previous) => ({
+        ...previous,
+        [userId]: true,
+      }))
+    }
   }
+  
 
   const toggleMute = () => {
     setMuted((previous) => {
@@ -856,36 +950,36 @@ export default function ReelsPage() {
                 
                 
 
-{/* CREATOR PROFILE AND CAPTION */}
-<div className="absolute bottom-4 left-4 right-20 z-20">
 
-  
-{/* PROFILE DP + USERNAME */}
-<button
-  onClick={() => {
-    if (post.user_id) {
-      router.push(`/profile/${post.user_id}`)
-    }
-  }}
-  className="flex min-w-0 items-center gap-3"
->
-  <img
-    src={avatar}
-    alt={username}
-    className="h-9 w-9 shrink-0 rounded-full border-2 border-white object-cover"
-  />
+{/* CREATOR PROFILE + FOLLOW */}
+<div className="absolute bottom-2 left-4 right-20 z-20 flex items-center gap-2">
 
-  <span className="max-w-[200px] truncate text-base font-extrabold text-white">
-  {username}
-</span>
-</button>
+  {/* PROFILE DP + USERNAME */}
+  <button
+    onClick={() => {
+      if (post.user_id) {
+        router.push(`/profile/${post.user_id}`)
+      }
+    }}
+    className="flex min-w-0 items-center gap-3"
+  >
+    <img
+      src={avatar}
+      alt={username}
+      className="h-10 w-10 shrink-0 rounded-full border-2 border-white object-cover"
+    />
 
-  {/* FOLLOW BUTTON */}
+    <span className="max-w-[150px] truncate text-base font-extrabold text-white">
+      {username}
+    </span>
+  </button>
+
+  {/* SMALL FOLLOW BUTTON */}
   {currentUserId &&
     String(post.user_id) !== String(currentUserId) && (
       <button
         onClick={() => toggleFollow(creatorId)}
-        className={`shrink-0 rounded-xl border-2 border-white px-3 py-1.5 text-sm font-bold text-white ${
+        className={`shrink-0 rounded-lg border border-white px-2.5 py-1 text-xs font-bold text-white ${
           followed[creatorId]
             ? "bg-white/25"
             : "bg-transparent"
@@ -894,6 +988,9 @@ export default function ReelsPage() {
         {followed[creatorId] ? "Following" : "Follow"}
       </button>
     )}
+
+</div>
+                
 
 {/* CAPTION */}
 <p className="whitespace-pre-wrap break-words text-lg leading-6 text-white">
