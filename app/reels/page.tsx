@@ -759,8 +759,9 @@ export default function ReelsPage() {
                 )}
 
                 
-{/* RIGHT SIDE - 6 INSTAGRAM STYLE ICONS */}
-<aside className="absolute bottom-32 right-4 z-20 flex flex-col items-center gap-7">
+
+{/* RIGHT SIDE - CHITPIX 5 ICONS + MORE */}
+<aside className="absolute bottom-32 right-4 z-20 flex flex-col items-center gap-5">
 
   {/* 1. LIKE */}
   <button
@@ -769,14 +770,14 @@ export default function ReelsPage() {
     aria-label="Like Reel"
   >
     <Heart
-      className={`h-8 w-8 ${
+      className={`h-7 w-7 ${
         liked[postId]
           ? "fill-red-500 text-red-500"
           : "text-white"
       }`}
       strokeWidth={2.3}
     />
-    <span className="text-xs font-semibold">
+    <span className="text-[11px] font-semibold">
       {formatCount(
         Number(post.likes || 0) + (liked[postId] ? 1 : 0)
       )}
@@ -789,18 +790,18 @@ export default function ReelsPage() {
     className="flex flex-col items-center gap-1"
     aria-label="Comments"
   >
-    <MessageCircle className="h-8 w-8 text-white" strokeWidth={2.3} />
-    <span className="text-xs">
+    <MessageCircle className="h-7 w-7 text-white" strokeWidth={2.3} />
+    <span className="text-[11px]">
       {formatCount(Number(post.comments || 0))}
     </span>
   </button>
 
-  {/* 3. REMIX */}
+  {/* 3. REPOST */}
   <button
-    onClick={() => alert("Remix feature will be added soon!")}
-    aria-label="Remix Reel"
+    onClick={() => alert("Repost feature will be added soon!")}
+    aria-label="Repost Reel"
   >
-    <RefreshCw className="h-8 w-8 text-white" strokeWidth={2.3} />
+    <RefreshCw className="h-7 w-7 text-white" strokeWidth={2.3} />
   </button>
 
   {/* 4. SHARE */}
@@ -808,7 +809,7 @@ export default function ReelsPage() {
     onClick={() => setShowShare(true)}
     aria-label="Share Reel"
   >
-    <Send className="h-8 w-8 text-white" strokeWidth={2.3} />
+    <Send className="h-7 w-7 text-white" strokeWidth={2.3} />
   </button>
 
   {/* 5. SAVE */}
@@ -817,7 +818,7 @@ export default function ReelsPage() {
     aria-label="Save Reel"
   >
     <Bookmark
-      className={`h-8 w-8 ${
+      className={`h-7 w-7 ${
         saved[postId]
           ? "fill-white text-white"
           : "text-white"
@@ -826,15 +827,16 @@ export default function ReelsPage() {
     />
   </button>
 
-  {/* 6. MORE */}
+  {/* MORE */}
   <button
     onClick={() => setShowMore(true)}
     aria-label="More options"
   >
-    <MoreHorizontal className="h-9 w-9 text-white" />
-    </button>
+    <MoreHorizontal className="h-7 w-7 text-white" />
+  </button>
 
 </aside>
+                
 
 {/* CREATOR PROFILE AND CAPTION */}
 <div className="absolute bottom-24 left-4 right-20 z-20">
@@ -855,7 +857,7 @@ export default function ReelsPage() {
     <img
       src={avatar}
       alt={username}
-      className="h-14 w-14 shrink-0 rounded-full border-2 border-white object-cover"
+      className="h-9 w-9 shrink-0 rounded-full border-2 border-white object-cover"
     />
 
     <span className="max-w-[145px] truncate text-lg font-extrabold text-white">
