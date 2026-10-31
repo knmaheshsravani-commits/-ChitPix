@@ -860,27 +860,25 @@ export default function ReelsPage() {
 <div className="absolute bottom-4 left-4 right-20 z-20">
 
   
-{/* PROFILE ROW */}
-<div className="mb-5 flex items-center gap-3">
-
-  {/* PROFILE DP + USERNAME */}
-  <button
-    onClick={() => {
-      if (post.user_id) {
-        router.push(`/profile/${post.user_id}`)
-      }
-    }}
-    className="flex min-w-0 items-center gap-3"
-  >
-    <img
-      src={avatar}
-      alt={username}
-      className="h-9 w-9 shrink-0 rounded-full border-2 border-white object-cover"
-    />
-
-    <span
-  className="max-w-[200px] truncate text-base font-extrabold text-white"
+{/* PROFILE DP + USERNAME */}
+<button
+  onClick={() => {
+    if (post.user_id) {
+      router.push(`/profile/${post.user_id}`)
+    }
+  }}
+  className="flex min-w-0 items-center gap-3"
 >
+  <img
+    src={avatar}
+    alt={username}
+    className="h-9 w-9 shrink-0 rounded-full border-2 border-white object-cover"
+  />
+
+  <span className="max-w-[200px] truncate text-base font-extrabold text-white">
+    {username}
+  </span>
+</button>
   {username}
 </span>
       {username}
