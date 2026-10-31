@@ -666,7 +666,7 @@ export default function ReelsPage() {
                         else delete videoRefs.current[idx]
                       }}
                       src={media}
-                      className="absolute inset-0 h-full w-full object-contain"
+                      className="absolute inset-0 h-full w-full object-cover"
                       loop
                       playsInline
                       muted={muted}
@@ -692,7 +692,7 @@ export default function ReelsPage() {
                     <img
                       src={media}
                       alt={post.caption || "ChitPix post"}
-                      className="absolute inset-0 h-full w-full object-contain"
+                      className="absolute inset-0 h-full w-full object-cover"
                     />
                   )
                 ) : (
