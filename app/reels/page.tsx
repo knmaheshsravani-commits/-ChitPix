@@ -88,7 +88,7 @@ export default function ReelsPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loadingReels, setLoadingReels] = useState(true)
   const [reelsError, setReelsError] = useState("")
-
+  const [likesCount, setLikesCount] = useState<Record<string, number>>({})
   // Reel actions
   const [liked, setLiked] = useState<Record<string, boolean>>({})
   const [saved, setSaved] = useState<Record<string, boolean>>({})
