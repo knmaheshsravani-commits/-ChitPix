@@ -90,7 +90,7 @@ export default function ReelsPage() {
   const [reelsError, setReelsError] = useState("")
 
   // Reel actions
-  const [likesCount, setLikesCount] = useState<Record<string, number>>({})
+  const [liked, setLiked] = useState<Record<string, boolean>>({})
   const [saved, setSaved] = useState<Record<string, boolean>>({})
   const [followed, setFollowed] = useState<Record<string, boolean>>({})
   const [muted, setMuted] = useState(true)
