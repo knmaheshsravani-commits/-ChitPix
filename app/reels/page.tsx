@@ -425,6 +425,10 @@ useEffect(() => {
   // Reel action states.
   
 const toggleLike = async (postId: string) => {
+  if (likingRef.current[postId]) return
+
+  likingRef.current[postId] = true
+
   try {
     const {
       data: { user },
@@ -451,21 +455,12 @@ const toggleLike = async (postId: string) => {
         .from("post_likes")
         .delete()
         .eq("id", existingLike.id)
-        .eq("user_id", user.id)
 
       if (error) throw error
 
-      setLiked((previous) => ({
+      setLiked(previous => ({
         ...previous,
         [postId]: false,
-      }))
-
-      setLikesCount((previous) => ({
-        ...previous,
-        [postId]: Math.max(
-          0,
-          (previous[postId] ?? Number(posts.find(p => String(p.id) === postId)?.likes || 0)) - 1
-        ),
       }))
     } else {
       const { error } = await supabase
@@ -477,20 +472,29 @@ const toggleLike = async (postId: string) => {
 
       if (error) throw error
 
-      setLiked((previous) => ({
+      setLiked(previous => ({
         ...previous,
         [postId]: true,
       }))
-
-      setLikesCount((previous) => ({
-        ...previous,
-        [postId]:
-          (previous[postId] ?? Number(posts.find(p => String(p.id) === postId)?.likes || 0)) + 1,
-      }))
     }
+
+    const { count, error: countError } = await supabase
+      .from("post_likes")
+      .select("id", { count: "exact", head: true })
+      .eq("post_id", postId)
+
+    if (countError) throw countError
+
+    setLikesCount(previous => ({
+      ...previous,
+      [postId]: count ?? 0,
+    }))
+
   } catch (error) {
     console.error("Reel like error:", error)
     alert("Like save avvaledu bro. Malli try cheyyi.")
+  } finally {
+    delete likingRef.current[postId]
   }
 }
   
