@@ -88,13 +88,13 @@ export async function POST(req: Request) {
       )
     }
 
-    const recipientIds = [
-      ...new Set(
-        (followers || [])
-          .map((f: any) => f.follower_id)
-          .filter((id: string) => id && id !== user.id)
-      ),
-    ]
+    const recipientIds = Array.from(
+  new Set(
+    (followers || [])
+      .map((f: any) => f.follower_id)
+      .filter((id: string) => id && id !== user.id)
+  )
+)
 
     if (recipientIds.length === 0) {
       return NextResponse.json({
