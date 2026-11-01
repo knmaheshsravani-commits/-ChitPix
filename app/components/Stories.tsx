@@ -1,4 +1,4 @@
-// @ts-nocheck
+ // @ts-nocheck
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -81,12 +81,49 @@ function isActiveStory(story: any) {
   return true
 }
 
+// GET REAL STORY OWNER
+function getStoryOwner(story: any) {
+  const userId =
+    story?.user_id ||
+    story?.userId ||
+    story?.profile_id ||
+    story?.profile?.id ||
+    story?.profiles?.id ||
+    story?.user?.id ||
+    ""
+
+  const username = cleanUsername(
+    story?.username ||
+    story?.profile?.username ||
+    story?.profiles?.username ||
+    story?.user?.username ||
+    (typeof story?.user === "string" ? story.user : "")
+  )
+
+  if (userId) {
+    return {
+      key: `user:${String(userId)}`,
+      userId: String(userId),
+      username,
+    }
+  }
+
+  if (username) {
+    return {
+      key: `username:${username.toLowerCase()}`,
+      userId: "",
+      username,
+    }
+  }
+
+  return null
+}
+
 export default function StoriesBar({ onSelectUser, onAdd }: any) {
   const [stories, setStories] = useState<any[]>([])
   const [seen, setSeen] = useState<any>({})
   const [uploading, setUploading] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
-
   const [loadingStories, setLoadingStories] = useState(false)
 
   const fileRef = useRef<HTMLInputElement>(null)
@@ -119,41 +156,28 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
       raw.forEach((s: any) => {
         if (!s) return
 
-        const username = cleanUsername(
-          s.username ||
-          s.profile?.username ||
-          s.profiles?.username ||
-          s.user?.username ||
-          (typeof s.user === "string" ? s.user : "")
-        )
+        // IDENTIFY STORY OWNER
+        const owner = getStoryOwner(s)
+
+        if (!owner) {
+          console.warn("Story owner missing:", s.id)
+          return
+        }
 
         const image = fixR2Url(s)
 
-        // STORY MEDIA MUST EXIST
         if (!image) return
 
-        // EXPIRED STORIES MUST NOT SHOW
         if (!isActiveStory(s)) return
 
-        const userId =
-          s.user_id ||
-          s.userId ||
-          s.profile_id ||
-          s.profile?.id ||
-          s.profiles?.id ||
-          ""
+        const ownerKey = owner.key
 
-        const ownerKey = String(
-          userId || username.toLowerCase() || s.id || ""
-        )
-
-        if (!ownerKey) return
-
+        // CREATE SEPARATE USER GROUP
         if (!grouped[ownerKey]) {
           grouped[ownerKey] = {
             id: ownerKey,
-            user_id: userId,
-            username: username || "user",
+            user_id: owner.userId,
+            username: owner.username || "user",
 
             avatar:
               s.avatar_url ||
@@ -162,7 +186,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
               s.profiles?.avatar_url ||
               s.user?.avatar_url ||
               `https://i.pravatar.cc/100?u=${encodeURIComponent(
-                username || ownerKey
+                owner.userId || owner.username
               )}`,
 
             stories: [],
@@ -171,14 +195,16 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           }
         }
 
+        // ADD STORY TO ITS OWNER ONLY
         grouped[ownerKey].stories.push({
           ...s,
-          username: username || grouped[ownerKey].username,
+          user_id: owner.userId || s.user_id || "",
+          username: owner.username || grouped[ownerKey].username,
           image,
           image_url: image,
         })
 
-        // USE LATEST AVAILABLE PROFILE DATA
+        // UPDATE PROFILE PHOTO
         if (
           s.avatar_url ||
           s.avatar ||
@@ -197,7 +223,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         }
       })
 
-      // REMOVE EMPTY USERS AND SORT STORIES
+      // SORT STORIES INSIDE EACH USER
       const users = Object.values(grouped)
         .filter((user: any) => user.stories.length > 0)
         .map((user: any) => {
@@ -208,7 +234,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           return user
         })
 
-      // USERS WITH NEWEST STORIES FIRST
+      // NEWEST USER STORY FIRST
       users.sort((a: any, b: any) => {
         const aLatest = Math.max(
           ...a.stories.map((s: any) => getStoryTime(s))
@@ -222,6 +248,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
       })
 
       setStories(users)
+
     } catch (error) {
       console.error("Stories load error:", error)
     } finally {
@@ -229,7 +256,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     }
   }, [])
 
-  // INITIAL LOAD + AUTOMATIC REFRESH
+  // INITIAL LOAD + AUTO REFRESH
   useEffect(() => {
     let active = true
 
@@ -271,8 +298,10 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
 
     if (!file) return
 
-    if (!file.type.startsWith("image/") &&
-        !file.type.startsWith("video/")) {
+    if (
+      !file.type.startsWith("image/") &&
+      !file.type.startsWith("video/")
+    ) {
       alert("Image or video select cheyyi.")
       return
     }
@@ -313,12 +342,9 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
       })
 
       if (!uploadRes.ok) {
-        throw new Error(
-          `R2 upload failed: ${uploadRes.status}`
-        )
+        throw new Error(`R2 upload failed: ${uploadRes.status}`)
       }
 
-      
       // GET LOGGED-IN USER
       const { data: authData, error: authError } =
         await supabase.auth.getUser()
@@ -348,7 +374,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         throw new Error("Username not found")
       }
 
-      // SAVE STORY WITH REAL USER DETAILS
+      // SAVE STORY WITH CORRECT USER ID
       const saveRes = await fetch("/api/stories", {
         method: "POST",
         headers: {
@@ -370,11 +396,11 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           saveData.error || "Story database save failed"
         )
       }
-      
 
       await loadStories()
 
       alert("Story uploaded successfully!")
+
     } catch (error) {
       console.error("Story upload error:", error)
       alert("Story upload failed! Please try again.")
@@ -385,8 +411,8 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         fileRef.current.value = ""
       }
     }
-  }
-
+                }
+            
   // OPEN STORY
   const openStory = (user: any) => {
     if (!user?.stories?.length) return
@@ -395,12 +421,11 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
 
     if (typeof onSelectUser === "function") {
       try {
-        onSelectUser(
-          user,
-          stories.findIndex(
-            (item: any) => item.id === user.id
-          )
+        const index = stories.findIndex(
+          (item: any) => item.id === user.id
         )
+
+        onSelectUser(user, index)
       } catch (error) {
         console.error("Parent story callback error:", error)
       }
@@ -410,8 +435,8 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
   // CLOSE STORY
   const closeStory = () => {
     setSelectedUser(null)
-            }
-          
+  }
+
   return (
     <>
       {/* INSTAGRAM STYLE STORIES BAR */}
@@ -455,12 +480,13 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           </span>
         </button>
 
-        {/* ALL USERS WHO POSTED STORIES */}
+        {/* ALL USERS STORIES */}
 
         {stories.map((user: any, i: number) => {
           const isSeen =
             seen[user.username] ||
-            seen[user.id]
+            seen[user.id] ||
+            seen[user.user_id]
 
           const ringClass = user.isCloseFriend
             ? "bg-green-500"
@@ -471,7 +497,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           return (
             <button
               type="button"
-              key={user.id || user.username || i}
+              key={user.id}
               onClick={() => openStory(user)}
               className="flex flex-col items-center min-w-[76px] shrink-0 touch-manipulation"
             >
@@ -489,7 +515,9 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
                     loading="lazy"
                     onError={(e) => {
                       e.currentTarget.src =
-                        `https://i.pravatar.cc/100?u=${encodeURIComponent(user.username)}`
+                        `https://i.pravatar.cc/100?u=${encodeURIComponent(
+                          user.username
+                        )}`
                     }}
                     className="w-full h-full rounded-full object-cover"
                   />
@@ -508,11 +536,15 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           )
         })}
 
+        {/* LOADING */}
+
         {loadingStories && stories.length === 0 && (
           <div className="text-xs text-zinc-400 py-5">
             Loading Stories...
           </div>
         )}
+
+        {/* EMPTY STORIES */}
 
         {!loadingStories && stories.length === 0 && (
           <div className="text-xs text-zinc-400 py-5">
