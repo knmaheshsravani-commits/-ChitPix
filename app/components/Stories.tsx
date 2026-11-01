@@ -1,4 +1,4 @@
- // @ts-nocheck
+// @ts-nocheck
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -60,14 +60,10 @@ function getStoryTime(story: any) {
 function isActiveStory(story: any) {
   const now = Date.now()
 
-  const expiry =
-    story?.expires_at ||
-    story?.expiresAt ||
-    ""
+  const expiry = story?.expires_at || story?.expiresAt || ""
 
   if (expiry) {
     const expiryTime = new Date(expiry).getTime()
-
     if (Number.isFinite(expiryTime) && expiryTime <= now) {
       return false
     }
@@ -82,7 +78,6 @@ function isActiveStory(story: any) {
   return true
 }
 
-// GET REAL STORY OWNER
 function getStoryOwner(story: any) {
   const userId =
     story?.user_id ||
@@ -95,10 +90,10 @@ function getStoryOwner(story: any) {
 
   const username = cleanUsername(
     story?.username ||
-    story?.profile?.username ||
-    story?.profiles?.username ||
-    story?.user?.username ||
-    (typeof story?.user === "string" ? story.user : "")
+      story?.profile?.username ||
+      story?.profiles?.username ||
+      story?.user?.username ||
+      (typeof story?.user === "string" ? story.user : "")
   )
 
   if (userId) {
@@ -127,7 +122,42 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [loadingStories, setLoadingStories] = useState(false)
   const [showComposer, setShowComposer] = useState(false)
+
+  const [currentUserId, setCurrentUserId] = useState("")
+  const [myUsername, setMyUsername] = useState("")
+  const [myAvatar, setMyAvatar] = useState("")
+
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // GET LOGGED-IN USER AND PROFILE DP
+  const loadMyProfile = useCallback(async () => {
+    try {
+      const { data } = await supabase.auth.getUser()
+      const authUser = data?.user
+
+      if (!authUser) return
+
+      setCurrentUserId(authUser.id)
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", authUser.id)
+        .maybeSingle()
+
+      setMyUsername(
+        cleanUsername(
+          profile?.username ||
+            authUser.user_metadata?.username ||
+            authUser.email?.split("@")[0]
+        )
+      )
+
+      setMyAvatar(profile?.avatar_url || "")
+    } catch (error) {
+      console.error("My profile load error:", error)
+    }
+  }, [])
 
   // LOAD ALL USERS STORIES
   const loadStories = useCallback(async () => {
@@ -138,65 +168,49 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         cache: "no-store",
       })
 
-      if (!res.ok) {
-        throw new Error("Stories load failed")
-      }
+      if (!res.ok) throw new Error("Stories load failed")
 
       const data = await res.json()
 
       const raw = Array.isArray(data)
         ? data
         : Array.isArray(data?.stories)
-        ? data.stories
-        : Array.isArray(data?.data)
-        ? data.data
-        : []
+          ? data.stories
+          : Array.isArray(data?.data)
+            ? data.data
+            : []
 
       const grouped: any = {}
 
       raw.forEach((s: any) => {
         if (!s) return
 
-        // IDENTIFY STORY OWNER
         const owner = getStoryOwner(s)
-
-        if (!owner) {
-          console.warn("Story owner missing:", s.id)
-          return
-        }
+        if (!owner) return
 
         const image = fixR2Url(s)
-
-        if (!image) return
-
-        if (!isActiveStory(s)) return
+        if (!image || !isActiveStory(s)) return
 
         const ownerKey = owner.key
 
-        // CREATE SEPARATE USER GROUP
         if (!grouped[ownerKey]) {
           grouped[ownerKey] = {
             id: ownerKey,
             user_id: owner.userId,
             username: owner.username || "user",
-
             avatar:
               s.avatar_url ||
               s.avatar ||
               s.profile?.avatar_url ||
               s.profiles?.avatar_url ||
               s.user?.avatar_url ||
-              `https://i.pravatar.cc/100?u=${encodeURIComponent(
-                owner.userId || owner.username
-              )}`,
-
+              "",
             stories: [],
             verified: !!s.verified,
             isCloseFriend: !!s.isCloseFriend,
           }
         }
 
-        // ADD STORY TO ITS OWNER ONLY
         grouped[ownerKey].stories.push({
           ...s,
           user_id: owner.userId || s.user_id || "",
@@ -205,7 +219,6 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           image_url: image,
         })
 
-        // UPDATE PROFILE PHOTO
         if (
           s.avatar_url ||
           s.avatar ||
@@ -219,37 +232,29 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
             s.profiles?.avatar_url
         }
 
-        if (s.verified) {
-          grouped[ownerKey].verified = true
-        }
+        if (s.verified) grouped[ownerKey].verified = true
       })
 
-      // SORT STORIES INSIDE EACH USER
       const users = Object.values(grouped)
         .filter((user: any) => user.stories.length > 0)
         .map((user: any) => {
-          user.stories.sort((a: any, b: any) => {
-            return getStoryTime(a) - getStoryTime(b)
-          })
-
+          user.stories.sort(
+            (a: any, b: any) => getStoryTime(a) - getStoryTime(b)
+          )
           return user
         })
 
-      // NEWEST USER STORY FIRST
       users.sort((a: any, b: any) => {
         const aLatest = Math.max(
           ...a.stories.map((s: any) => getStoryTime(s))
         )
-
         const bLatest = Math.max(
           ...b.stories.map((s: any) => getStoryTime(s))
         )
-
         return bLatest - aLatest
       })
 
       setStories(users)
-
     } catch (error) {
       console.error("Stories load error:", error)
     } finally {
@@ -261,38 +266,58 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
   useEffect(() => {
     let active = true
 
+    loadMyProfile()
     loadStories()
 
-    fetch("/api/story_views", {
-      cache: "no-store",
-    })
+    fetch("/api/story_views", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
-        if (active) {
-          setSeen(data.views || {})
-        }
+        if (active) setSeen(data.views || {})
       })
       .catch(() => {})
 
     const refreshTimer = setInterval(() => {
-      if (active) loadStories()
+      if (active) {
+        loadMyProfile()
+        loadStories()
+      }
     }, 60000)
 
     return () => {
       active = false
       clearInterval(refreshTimer)
     }
-  }, [loadStories])
+  }, [loadMyProfile, loadStories])
 
-  // ADD STORY BUTTON
+  // FIND MY OWN STORIES
+  const myStories = stories.find(
+    (user: any) =>
+      currentUserId &&
+      String(user.user_id || "") === String(currentUserId)
+  )
+
+  // OTHER USERS ONLY
+  const otherUsersStories = stories.filter(
+    (user: any) =>
+      !currentUserId ||
+      String(user.user_id || "") !== String(currentUserId)
+  )
+
+  // OPEN COMPOSER
   const handleAddClick = () => {
-  setShowComposer(true)
+    if (typeof onAdd === "function") {
+      try {
+        onAdd()
+      } catch (error) {
+        console.error(error)
+      }
+    }
+
+    setShowComposer(true)
   }
 
   // UPLOAD STORY
-  const handleFile = async (e: any) => {
-    const file = e.target.files?.[0]
-
+  const handleFile = async (file: File) => {
     if (!file) return
 
     if (
@@ -308,9 +333,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     try {
       const presignRes = await fetch("/api/r2-presign", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fileName: `stories/${Date.now()}-${file.name}`,
           contentType: file.type,
@@ -333,16 +356,13 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
       const uploadRes = await fetch(presignData.url, {
         method: "PUT",
         body: file,
-        headers: {
-          "Content-Type": file.type,
-        },
+        headers: { "Content-Type": file.type },
       })
 
       if (!uploadRes.ok) {
         throw new Error(`R2 upload failed: ${uploadRes.status}`)
       }
 
-      // GET LOGGED-IN USER
       const { data: authData, error: authError } =
         await supabase.auth.getUser()
 
@@ -352,7 +372,6 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
 
       const loggedUser = authData.user
 
-      // GET USER PROFILE
       const { data: profile, error: profileError } =
         await supabase
           .from("profiles")
@@ -367,16 +386,11 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         loggedUser.user_metadata?.username ||
         loggedUser.email?.split("@")[0]
 
-      if (!username) {
-        throw new Error("Username not found")
-      }
+      if (!username) throw new Error("Username not found")
 
-      // SAVE STORY WITH CORRECT USER ID
       const saveRes = await fetch("/api/stories", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           image_url: presignData.publicUrl,
           image: presignData.publicUrl,
@@ -394,31 +408,32 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         )
       }
 
+      setCurrentUserId(loggedUser.id)
+      setMyUsername(cleanUsername(username))
+      setMyAvatar(profile?.avatar_url || "")
+
       await loadStories()
-
       alert("Story uploaded successfully!")
-
     } catch (error) {
       console.error("Story upload error:", error)
       alert("Story upload failed! Please try again.")
     } finally {
       setUploading(false)
-
-      if (fileRef.current) {
-        fileRef.current.value = ""
-      }
+      if (fileRef.current) fileRef.current.value = ""
     }
-                }
-    // PUBLISH FROM STORY COMPOSER
-const handleComposerPublish = async (file: File) => {
-  setShowComposer(false)
+  }
 
-  await handleFile({
-    target: {
-      files: [file],
-    },
-  })
-}        
+  const handleInputChange = (e: any) => {
+    const file = e.target.files?.[0]
+    if (file) handleFile(file)
+  }
+
+  // PUBLISH FROM STORY COMPOSER
+  const handleComposerPublish = async (file: File) => {
+    setShowComposer(false)
+    await handleFile(file)
+  }
+
   // OPEN STORY
   const openStory = (user: any) => {
     if (!user?.stories?.length) return
@@ -430,7 +445,6 @@ const handleComposerPublish = async (file: File) => {
         const index = stories.findIndex(
           (item: any) => item.id === user.id
         )
-
         onSelectUser(user, index)
       } catch (error) {
         console.error("Parent story callback error:", error)
@@ -441,54 +455,78 @@ const handleComposerPublish = async (file: File) => {
   // CLOSE STORY
   const closeStory = () => {
     setSelectedUser(null)
-  }
-
-  return (
+                  }
+   return (
     <>
       {/* INSTAGRAM STYLE STORIES BAR */}
-
       <div className="w-full bg-white border-b border-zinc-100 py-3 px-3 flex gap-2 overflow-x-auto overflow-y-hidden scrollbar-hide select-none">
 
         {/* HIDDEN FILE INPUT */}
-
         <input
           ref={fileRef}
           type="file"
           hidden
           accept="image/*,video/*"
-          onChange={handleFile}
+          onChange={handleInputChange}
         />
 
-        {/* YOUR STORY */}
-
+        {/* YOUR STORY - PROFILE DP */}
         <button
           type="button"
-          onClick={handleAddClick}
+          onClick={() => {
+            if (myStories?.stories?.length) {
+              openStory(myStories)
+            } else {
+              handleAddClick()
+            }
+          }}
           disabled={uploading}
           className="flex flex-col items-center min-w-[76px] shrink-0 touch-manipulation"
         >
-          <div className="relative w-[66px] h-[66px] rounded-full bg-zinc-100 border-2 border-dashed border-zinc-300 flex items-center justify-center">
+          <div
+            className={`relative w-[70px] h-[70px] rounded-full p-[3px] ${
+              myStories?.stories?.length
+                ? "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
+                : "bg-zinc-200"
+            }`}
+          >
+            <div className="w-full h-full rounded-full bg-white p-[2px]">
+              {myAvatar ? (
+                <img
+                  src={myAvatar}
+                  alt="Your profile"
+                  className="w-full h-full rounded-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none"
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-zinc-100 flex items-center justify-center text-2xl font-bold text-zinc-500">
+                  {myUsername?.charAt(0)?.toUpperCase() || "Y"}
+                </div>
+              )}
+            </div>
 
-            <span className="text-3xl text-black">
-              {uploading ? "⏳" : ""}
-            </span>
-
-            {!uploading && (
+            {!myStories?.stories?.length && (
               <span className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white text-lg font-bold">
                 +
               </span>
             )}
 
+            {uploading && (
+              <span className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center text-white">
+                ⏳
+              </span>
+            )}
           </div>
 
-          <span className="text-[12px] mt-1 text-black">
+          <span className="text-[12px] mt-1 text-black max-w-[76px] truncate">
             Your Story
           </span>
         </button>
 
-        {/* ALL USERS STORIES */}
-
-        {stories.map((user: any, i: number) => {
+        {/* OTHER USERS STORIES */}
+        {otherUsersStories.map((user: any) => {
           const isSeen =
             seen[user.username] ||
             seen[user.id] ||
@@ -497,8 +535,8 @@ const handleComposerPublish = async (file: File) => {
           const ringClass = user.isCloseFriend
             ? "bg-green-500"
             : isSeen
-            ? "bg-zinc-300"
-            : "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
+              ? "bg-zinc-300"
+              : "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
 
           return (
             <button
@@ -507,43 +545,40 @@ const handleComposerPublish = async (file: File) => {
               onClick={() => openStory(user)}
               className="flex flex-col items-center min-w-[76px] shrink-0 touch-manipulation"
             >
-
-              {/* PROFILE RING */}
-
               <div
-                className={`w-[66px] h-[66px] rounded-full p-[3px] ${ringClass}`}
+                className={`w-[70px] h-[70px] rounded-full p-[3px] ${ringClass}`}
               >
                 <div className="w-full h-full rounded-full bg-white p-[2px]">
-
-                  <img
-                    src={user.avatar}
-                    alt={user.username}
-                    loading="lazy"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        `https://i.pravatar.cc/100?u=${encodeURIComponent(
-                          user.username
-                        )}`
-                    }}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.username}
+                      loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          `https://i.pravatar.cc/100?u=${encodeURIComponent(
+                            user.username
+                          )}`
+                      }}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-zinc-100 flex items-center justify-center text-xl font-bold text-zinc-500">
+                      {user.username?.charAt(0)?.toUpperCase() || "U"}
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {/* USERNAME */}
 
               <span className="text-[12px] mt-1 text-black max-w-[76px] truncate">
                 {user.username}
                 {user.verified && " 👑"}
               </span>
-
             </button>
           )
         })}
 
         {/* LOADING */}
-
         {loadingStories && stories.length === 0 && (
           <div className="text-xs text-zinc-400 py-5">
             Loading Stories...
@@ -551,7 +586,6 @@ const handleComposerPublish = async (file: File) => {
         )}
 
         {/* EMPTY STORIES */}
-
         {!loadingStories && stories.length === 0 && (
           <div className="text-xs text-zinc-400 py-5">
             No Stories yet
@@ -559,15 +593,16 @@ const handleComposerPublish = async (file: File) => {
         )}
 
       </div>
-      {/* STORY COMPOSER */}
-{showComposer && (
-  <StoryComposer
-    onClose={() => setShowComposer(false)}
-    onPublish={handleComposerPublish}
-  />
-)}
-      {/* STORY VIEWER */}
 
+      {/* STORY COMPOSER */}
+      {showComposer && (
+        <StoryComposer
+          onClose={() => setShowComposer(false)}
+          onPublish={handleComposerPublish}
+        />
+      )}
+
+      {/* STORY VIEWER */}
       {selectedUser && (
         <StoryViewer
           users={stories}
@@ -577,7 +612,6 @@ const handleComposerPublish = async (file: File) => {
           onClose={closeStory}
         />
       )}
-
     </>
   )
 }
