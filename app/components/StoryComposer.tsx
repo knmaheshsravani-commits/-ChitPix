@@ -187,8 +187,8 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
         </div>
       )}
 
-      {/* BOTTOM ACTIONS */}
-      <div className="mt-auto flex items-center justify-between gap-3 px-4 pb-7 pt-5">
+      /* BOTTOM ACTIONS */
+      <div className="fixed bottom-0 left-0 z-[100000] flex w-full items-center justify-between gap-3 border-t border-zinc-800 bg-black px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+24px)]">
 
         <button
           onClick={onClose}
