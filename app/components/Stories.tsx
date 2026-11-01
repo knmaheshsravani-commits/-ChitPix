@@ -19,11 +19,10 @@ function fixR2Url(p: any) {
 
   if (!url) return ""
 
-  // Already a complete URL: keep it unchanged.
   if (/^https?:\/\//i.test(url)) return url
 
-  // Keep the complete object path if it is already present.
   const cleanPath = url.replace(/^\/+/, "")
+
   if (
     cleanPath.startsWith("stories/") ||
     cleanPath.startsWith("posts/") ||
@@ -41,6 +40,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
   const [uploading, setUploading] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [storyIndex, setStoryIndex] = useState(0)
+
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -55,6 +55,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         if (!res.ok) throw new Error("Stories load failed")
 
         const data = await res.json()
+
         const raw = Array.isArray(data)
           ? data
           : data.stories || []
@@ -69,6 +70,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
               username,
               avatar:
                 s.avatar ||
+                s.avatar_url ||
                 `https://i.pravatar.cc/100?u=${encodeURIComponent(username)}`,
               stories: [],
               verified: s.verified || false,
@@ -87,7 +89,9 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           }
         })
 
-        if (active) setStories(Object.values(grouped))
+        if (active) {
+          setStories(Object.values(grouped))
+        }
       } catch (error) {
         console.error("Stories load error:", error)
         if (active) setStories([])
@@ -173,18 +177,19 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
       alert("Story upload failed! Please try again.")
     } finally {
       setUploading(false)
-      if (fileRef.current) fileRef.current.value = ""
+
+      if (fileRef.current) {
+        fileRef.current.value = ""
+      }
     }
   }
 
   const openStory = (user: any) => {
     if (!user?.stories?.length) return
 
-    // Open this component's viewer directly.
     setSelectedUser(user)
     setStoryIndex(0)
 
-    // Notify the parent too, if it uses this callback.
     if (typeof onSelectUser === "function") {
       try {
         onSelectUser(user, stories.indexOf(user))
@@ -194,24 +199,18 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     }
   }
 
-  const closeStory = () => setSelectedUser(null)
-
-  const currentStory = selectedUser?.stories?.[storyIndex]
-  const currentImage = currentStory ? fixR2Url(currentStory) : ""
-
-  const nextStory = () => {
-    if (!selectedUser) return
-
-    if (storyIndex < selectedUser.stories.length - 1) {
-      setStoryIndex((index: number) => index + 1)
-    } else {
-      closeStory()
-    }
+  const closeStory = () => {
+    setSelectedUser(null)
   }
 
   return (
     <>
-      <div className="w-full bg-white border-b border-zinc-100 py-3 px-2 flex gap-3 overflow-x-auto scrollbar-hide select-none">
+      {/* INSTAGRAM STYLE STORIES BAR */}
+
+      <div className="w-full bg-white border-b border-zinc-100 py-3 px-3 flex gap-2 overflow-x-auto overflow-y-hidden scrollbar-hide select-none">
+
+        {/* HIDDEN FILE INPUT */}
+
         <input
           ref={fileRef}
           type="file"
@@ -220,66 +219,94 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           onChange={handleFile}
         />
 
+        {/* YOUR STORY */}
+
         <button
           type="button"
           onClick={handleAddClick}
           disabled={uploading}
-          className="flex flex-col items-center min-w-[66px] cursor-pointer touch-manipulation"
+          className="flex flex-col items-center min-w-[76px] shrink-0 touch-manipulation"
         >
-          <div className="w-[66px] h-[66px] rounded-full bg-zinc-100 border-2 border-dashed border-zinc-300 flex items-center justify-center text-2xl">
-            {uploading ? "⏳" : "＋"}
+          <div className="relative w-[66px] h-[66px] rounded-full bg-zinc-100 border-2 border-dashed border-zinc-300 flex items-center justify-center">
+
+            <span className="text-3xl text-black">
+              {uploading ? "⏳" : ""}
+            </span>
+
+            {!uploading && (
+              <span className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white text-lg font-bold">
+                +
+              </span>
+            )}
+
           </div>
-          <span className="text-[11px] mt-1">Your Story</span>
-          <span className="text-[9px] text-zinc-400">Kadur • HD</span>
+
+          <span className="text-[12px] mt-1 text-black">
+            Your Story
+          </span>
         </button>
+
+        {/* OTHER USERS STORIES */}
 
         {stories.map((user: any, i: number) => {
           const isSeen = seen[user.username]
 
           const ringClass = user.isCloseFriend
-            ? "p-[2.5px] bg-green-500"
+            ? "bg-green-500"
             : isSeen
-            ? "p-[2.5px] bg-zinc-200"
-            : "p-[2.5px] bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
+            ? "bg-zinc-300"
+            : "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
 
           return (
             <button
               type="button"
               key={user.username || i}
               onClick={() => openStory(user)}
-              className="flex flex-col items-center min-w-[66px] cursor-pointer touch-manipulation"
+              className="flex flex-col items-center min-w-[76px] shrink-0 touch-manipulation"
             >
-              <div className={`rounded-full ${ringClass}`}>
-                <div className="bg-white p-[2px] rounded-full">
+
+              {/* PROFILE RING */}
+
+              <div
+                className={`w-[66px] h-[66px] rounded-full p-[3px] ${ringClass}`}
+              >
+                <div className="w-full h-full rounded-full bg-white p-[2px]">
+
                   <img
                     src={user.avatar}
                     alt={user.username}
-                    className="w-[60px] h-[60px] rounded-full object-cover"
+                    className="w-full h-full rounded-full object-cover"
                   />
+
                 </div>
               </div>
 
-              <span className="text-[11px] mt-1 max-w-[66px] truncate">
-                {user.username} {user.verified && "👑"}
+              {/* USERNAME */}
+
+              <span className="text-[12px] mt-1 text-black max-w-[76px] truncate">
+                {user.username}
+                {user.verified && " 👑"}
               </span>
 
-              <span className="text-[8px] text-zinc-400">
-                {user.stories.length} • R2
-              </span>
             </button>
           )
         })}
+
       </div>
 
+      {/* STORY VIEWER */}
+
       {selectedUser && (
-  <StoryViewer
-    users={stories}
-    startIndex={stories.findIndex(
-      (user: any) => user.username === selectedUser.username
-    )}
-    onClose={closeStory}
-  />
-)}
+        <StoryViewer
+          users={stories}
+          startIndex={stories.findIndex(
+            (user: any) =>
+              user.username === selectedUser.username
+          )}
+          onClose={closeStory}
+        />
+      )}
     </>
   )
-}
+                        }
+                     
