@@ -1025,18 +1025,42 @@ export default function HomePage() {
 
       // Your existing posts table columns:
       // user_id, image_url, caption, created_at, price, username, r2_url
-      const { error: insertError } = await supabase
-        .from("posts")
-        .insert({
-          user_id: currentUserId,
-          image_url: publicUrl,
-          r2_url: publicUrl,
-          caption: caption.trim(),
-          price: price.trim() || null,
-          username: currentUsername,
-        })
+      const { data: newPost, error: insertError } = await supabase
+  .from("posts")
+  .insert({
+    user_id: currentUserId,
+    image_url: publicUrl,
+    r2_url: publicUrl,
+    caption: caption.trim(),
+    price: price.trim() || null,
+    username: currentUsername,
+  })
+  .select("id")
+  .single()
 
-      if (insertError) throw insertError
+if (insertError) throw insertError
+
+// Notify followers about new post
+try {
+  const notificationResponse = await fetch("/api/notifications", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type: "post",
+      content_id: newPost.id,
+    }),
+  })
+
+  const notificationResult = await notificationResponse.json()
+
+  if (!notificationResponse.ok) {
+    console.error("Post notification failed:", notificationResult)
+  }
+} catch (notificationError) {
+  console.error("Notification error:", notificationError)
+}
 
       setNotice("Post upload success!")
       setSelectedFile(null)
