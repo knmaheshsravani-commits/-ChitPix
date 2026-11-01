@@ -29,7 +29,8 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
   const [preview, setPreview] = useState("")
   const [activeTab, setActiveTab] = useState("Recents")
   const [selectedTool, setSelectedTool] = useState("")
-
+  const [showTemplates, setShowTemplates] = useState(false)
+const [selectedTemplate, setSelectedTemplate] = useState("none")
   useEffect(() => {
     if (!file) {
       setPreview("")
@@ -55,7 +56,13 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
 
     setFile(selected)
   }
-
+  const templates = [
+  { id: "none", name: "Original", style: "none" },
+  { id: "love", name: "Love", style: "bg-gradient-to-br from-pink-500 to-red-500" },
+  { id: "gold", name: "Golden", style: "bg-gradient-to-br from-yellow-500 to-amber-800" },
+  { id: "night", name: "Night", style: "bg-gradient-to-br from-indigo-700 to-black" },
+  { id: "nature", name: "Nature", style: "bg-gradient-to-br from-green-500 to-emerald-900" },
+]
   const tools = [
     { name: "Templates", icon: LayoutGrid },
     { name: "Effects", icon: Sparkles },
@@ -89,7 +96,10 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
           return (
             <button
               key={tool.name}
-              onClick={() => setSelectedTool(tool.name)}
+              onClick={() => {
+  setSelectedTool(tool.name)
+  setShowTemplates(tool.name === "Templates")
+}}
               className={`flex min-w-[125px] flex-col items-center justify-center gap-3 rounded-2xl border py-5 ${
                 selectedTool === tool.name
                   ? "border-white bg-zinc-800"
@@ -102,7 +112,36 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
           )
         })}
       </div>
+        {/* TEMPLATES PANEL */}
+{showTemplates && (
+  <div className="flex gap-3 overflow-x-auto px-4 py-4 border-b border-zinc-800">
 
+    {templates.map((template) => (
+      <button
+        key={template.id}
+        onClick={() => setSelectedTemplate(template.id)}
+        className={`min-w-[90px] rounded-xl border-2 p-3 ${
+          selectedTemplate === template.id
+            ? "border-white"
+            : "border-zinc-700"
+        }`}
+      >
+        <div
+          className={`h-16 w-full rounded-lg ${
+            template.style === "none"
+              ? "bg-zinc-700"
+              : template.style
+          }`}
+        />
+
+        <span className="mt-2 block text-sm">
+          {template.name}
+        </span>
+      </button>
+    ))}
+
+  </div>
+)}
       {/* GALLERY TITLE */}
       <div className="flex items-center justify-between px-5 py-6">
         <button
@@ -163,7 +202,13 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
 
       {/* PREVIEW */}
       {file && preview && (
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4">
+        <div
+  className={`flex min-h-0 flex-1 flex-col items-center justify-center px-4 py-4 ${
+    templates.find((t) => t.id === selectedTemplate)?.style === "none"
+      ? "bg-black"
+      : templates.find((t) => t.id === selectedTemplate)?.style
+  }`}
+>
           {file.type.startsWith("video/") ? (
             <video
               src={preview}
