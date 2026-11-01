@@ -256,6 +256,55 @@ export default function ReelsPage() {
       active = false
     }
   }, [])
+  
+  // LOAD REEL LIKES FROM SUPABASE
+  useEffect(() => {
+    if (!posts.length || !currentUserId) return
+
+    let active = true
+
+    const loadReelLikes = async () => {
+      const postIds = posts.map((post) => String(post.id))
+
+      const { data, error } = await supabase
+        .from("post_likes")
+        .select("post_id, user_id")
+        .in("post_id", postIds)
+
+      if (error) {
+        console.error("Reel likes loading error:", error)
+        return
+      }
+
+      if (!active) return
+
+      const counts: Record<string, number> = {}
+      const myLikes: Record<string, boolean> = {}
+
+      postIds.forEach((id) => {
+        counts[id] = 0
+      })
+
+      data?.forEach((like) => {
+        const id = String(like.post_id)
+        counts[id] = (counts[id] || 0) + 1
+
+        if (like.user_id === currentUserId) {
+          myLikes[id] = true
+        }
+      })
+
+      setLikesCount(counts)
+      setLiked(myLikes)
+    }
+
+    void loadReelLikes()
+
+    return () => {
+      active = false
+    }
+  }, [posts, currentUserId])
+  
    // PLAY ONLY THE CURRENT REEL
 useEffect(() => {
   Object.entries(videoRefs.current).forEach(([index, video]) => {
