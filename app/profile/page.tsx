@@ -1956,16 +1956,15 @@ return (
   </div>
 )}
 
-{/* NOTICE */}
-
-{notice && (
-  <div className="fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-full bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-xl">
-    {notice}
-    <button onClick={clearNotice} className="ml-3">
-      <X size={15} className="inline" />
-    </button>
-  </div>
-)}
-  </main>
-)
-    }
+      {/* NOTICE */}
+      {notice && (
+        <div className="fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-full bg-black px-4 py-2 text-sm text-white">
+          {notice}
+          <button onClick={clearNotice} className="ml-3">
+            <X size={15} className="inline" />
+          </button>
+        </div>
+      )}
+    </main>
+  );
+      }
