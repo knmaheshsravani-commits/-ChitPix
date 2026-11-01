@@ -273,15 +273,14 @@ export async function POST(req: Request) {
         throw followError
       }
 
-      const recipientIds = [
-        ...new Set(
-          (followers || [])
-            .map((f: any) => f.follower_id)
-            .filter(
-              (id: string) => Boolean(id) && id !== user.id
-            )
-        ),
-      ]
+      const recipientIds: string[] = (followers || [])
+  .map((f: any) => f.follower_id)
+  .filter(
+    (id: string, index: number, arr: string[]) =>
+      Boolean(id) &&
+      id !== user.id &&
+      arr.indexOf(id) === index
+  )
 
       if (recipientIds.length > 0) {
         const rows = recipientIds.map((recipientId) => ({
