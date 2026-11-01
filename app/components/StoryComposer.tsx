@@ -64,7 +64,7 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
   ]
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col bg-black text-white">
+    <div className="fixed inset-0 z-[2147483647] flex flex-col bg-black text-white">
 
       {/* HEADER */}
       <div className="flex items-center justify-between px-5 py-5">
