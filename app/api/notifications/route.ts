@@ -176,13 +176,13 @@ export async function GET() {
 
     const notifications = data || []
 
-    const actorIds = [
-      ...new Set(
-        notifications
-          .map((n: any) => n.actor_id)
-          .filter(Boolean)
-      ),
-    ]
+    const actorIds = Array.from(
+  new Set(
+    notifications
+      .map((n: any) => n.actor_id)
+      .filter(Boolean)
+  )
+)
 
     let profiles: any[] = []
 
