@@ -471,59 +471,65 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         />
 
         {/* YOUR STORY - PROFILE DP */}
-        <button
-          type="button"
-          onClick={() => {
-            if (myStories?.stories?.length) {
-              openStory(myStories)
-            } else {
-              handleAddClick()
-            }
-          }}
-          disabled={uploading}
-          className="flex flex-col items-center min-w-[76px] shrink-0 touch-manipulation"
-        >
-          <div
-            className={`relative w-[70px] h-[70px] rounded-full p-[3px] ${
-              myStories?.stories?.length
-                ? "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
-                : "bg-zinc-200"
-            }`}
-          >
-            <div className="w-full h-full rounded-full bg-white p-[2px]">
-              {myAvatar ? (
-                <img
-                  src={myAvatar}
-                  alt="Your profile"
-                  className="w-full h-full rounded-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none"
-                  }}
-                />
-              ) : (
-                <div className="w-full h-full rounded-full bg-zinc-100 flex items-center justify-center text-2xl font-bold text-zinc-500">
-                  {myUsername?.charAt(0)?.toUpperCase() || "Y"}
-                </div>
-              )}
-            </div>
+<div className="relative flex flex-col items-center min-w-[76px] shrink-0">
 
-            {!myStories?.stories?.length && (
-              <span className="absolute bottom-0 right-0 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white text-lg font-bold">
-                +
-              </span>
-            )}
-
-            {uploading && (
-              <span className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center text-white">
-                ⏳
-              </span>
-            )}
+  {/* PROFILE DP */}
+  <button
+    type="button"
+    onClick={() => {
+      if (myStories?.stories?.length) {
+        openStory(myStories)
+      } else {
+        handleAddClick()
+      }
+    }}
+    className="flex flex-col items-center touch-manipulation"
+  >
+    <div
+      className={`relative w-[70px] h-[70px] rounded-full p-[3px] ${
+        myStories?.stories?.length
+          ? "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
+          : "bg-zinc-200"
+      }`}
+    >
+      <div className="w-full h-full rounded-full bg-white p-[2px]">
+        {myAvatar ? (
+          <img
+            src={myAvatar}
+            alt="Your profile"
+            className="w-full h-full rounded-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full rounded-full bg-zinc-100 flex items-center justify-center text-2xl font-bold text-zinc-500">
+            {myUsername?.charAt(0)?.toUpperCase() || "Y"}
           </div>
+        )}
+      </div>
 
-          <span className="text-[12px] mt-1 text-black max-w-[76px] truncate">
-            Your Story
-          </span>
-        </button>
+      {uploading && (
+        <span className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center text-white">
+          ⏳
+        </span>
+      )}
+    </div>
+
+    <span className="text-[12px] mt-1 text-black max-w-[76px] truncate">
+      Your Story
+    </span>
+  </button>
+
+  {/* ALWAYS VISIBLE ADD STORY BUTTON */}
+  <button
+    type="button"
+    onClick={handleAddClick}
+    disabled={uploading}
+    aria-label="Add new story"
+    className="absolute top-[43px] right-0 z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-xl font-bold text-white shadow-md active:scale-90"
+  >
+    +
+  </button>
+
+</div>
 
         {/* OTHER USERS STORIES */}
         {otherUsersStories.map((user: any) => {
