@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import StoryViewer from "./StoryViewer"
+import { supabase } from "../../lib/supabase"
 
 const R2_PUBLIC =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
@@ -317,6 +318,37 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         )
       }
 
+      
+      // GET LOGGED-IN USER
+      const { data: authData, error: authError } =
+        await supabase.auth.getUser()
+
+      if (authError || !authData?.user) {
+        throw new Error("Please login again")
+      }
+
+      const loggedUser = authData.user
+
+      // GET USER PROFILE
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("username, avatar_url")
+          .eq("id", loggedUser.id)
+          .maybeSingle()
+
+      if (profileError) throw profileError
+
+      const username =
+        profile?.username ||
+        loggedUser.user_metadata?.username ||
+        loggedUser.email?.split("@")[0]
+
+      if (!username) {
+        throw new Error("Username not found")
+      }
+
+      // SAVE STORY WITH REAL USER DETAILS
       const saveRes = await fetch("/api/stories", {
         method: "POST",
         headers: {
@@ -325,12 +357,20 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         body: JSON.stringify({
           image_url: presignData.publicUrl,
           image: presignData.publicUrl,
+          username,
+          user_id: loggedUser.id,
+          avatar_url: profile?.avatar_url || "",
         }),
       })
 
+      const saveData = await saveRes.json()
+
       if (!saveRes.ok) {
-        throw new Error("Story database save failed")
+        throw new Error(
+          saveData.error || "Story database save failed"
+        )
       }
+      
 
       await loadStories()
 
