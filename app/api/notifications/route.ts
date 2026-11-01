@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import { supabaseAdmin } from "@/lib/supabaseAdmin"
+import { supabaseAdmin } from "../../../lib/supabaseAdmin"
 
 export const runtime = "nodejs"
 
