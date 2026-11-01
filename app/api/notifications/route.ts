@@ -16,9 +16,7 @@ async function getAuthenticatedUser() {
         getAll() {
           return cookieStore.getAll()
         },
-        setAll() {
-          // Read-only authentication in this API route
-        },
+        setAll() {},
       },
     }
   )
@@ -33,7 +31,7 @@ async function getAuthenticatedUser() {
   return user
 }
 
-// CREATE NOTIFICATIONS FOR FOLLOWERS
+// CREATE POST / REEL / STORY NOTIFICATIONS
 export async function POST(req: Request) {
   try {
     const user = await getAuthenticatedUser()
@@ -46,9 +44,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json()
-
-    const type = body.type
-    const contentId = body.content_id
+    const type = body?.type
+    const contentId = body?.content_id
 
     if (!["post", "reel", "story"].includes(type)) {
       return NextResponse.json(
@@ -58,8 +55,8 @@ export async function POST(req: Request) {
     }
 
     if (
-      !contentId ||
       typeof contentId !== "string" ||
+      !contentId.trim() ||
       contentId.length > 200
     ) {
       return NextResponse.json(
@@ -68,7 +65,6 @@ export async function POST(req: Request) {
       )
     }
 
-    // Get creator username
     const { data: profile } = await supabaseAdmin
       .from("profiles")
       .select("username")
@@ -77,14 +73,14 @@ export async function POST(req: Request) {
 
     const username = profile?.username || "Someone"
 
-    // Get followers from Supabase
-    const { data: followers, error: followError } = await supabaseAdmin
-      .from("user_follows")
-      .select("follower_id")
-      .eq("following_id", user.id)
+    const { data: followers, error: followError } =
+      await supabaseAdmin
+        .from("user_follows")
+        .select("follower_id")
+        .eq("following_id", user.id)
 
     if (followError) {
-      console.error("Followers fetch error:", followError)
+      console.error("Followers error:", followError)
 
       return NextResponse.json(
         { success: false, error: "Could not load followers" },
@@ -92,16 +88,13 @@ export async function POST(req: Request) {
       )
     }
 
-    const followerIds: string[] = (followers || [])
-  .map((f: any) => f.follower_id)
-  .filter(
-    (id: string, index: number, arr: string[]) =>
-      Boolean(id) &&
-      id !== user.id &&
-      arr.indexOf(id) === index
-  )
-
-const recipientIds = followerIds
+    const recipientIds = [
+      ...new Set(
+        (followers || [])
+          .map((f: any) => f.follower_id)
+          .filter((id: string) => id && id !== user.id)
+      ),
+    ]
 
     if (recipientIds.length === 0) {
       return NextResponse.json({
@@ -121,7 +114,7 @@ const recipientIds = followerIds
       recipient_id: recipientId,
       actor_id: user.id,
       type,
-      content_id: contentId,
+      content_id: contentId.trim(),
       message: messages[type],
       is_read: false,
     }))
@@ -181,7 +174,45 @@ export async function GET() {
       )
     }
 
-    return NextResponse.json(data || [])
+    const notifications = data || []
+
+    const actorIds = [
+      ...new Set(
+        notifications
+          .map((n: any) => n.actor_id)
+          .filter(Boolean)
+      ),
+    ]
+
+    let profiles: any[] = []
+
+    if (actorIds.length > 0) {
+      const { data: profileData, error: profileError } =
+        await supabaseAdmin
+          .from("profiles")
+          .select("id, username, avatar_url")
+          .in("id", actorIds)
+
+      if (profileError) {
+        console.error("Notification profiles error:", profileError)
+      } else {
+        profiles = profileData || []
+      }
+    }
+
+    const result = notifications.map((n: any) => {
+      const actor = profiles.find(
+        (p: any) => p.id === n.actor_id
+      )
+
+      return {
+        ...n,
+        actor_username: actor?.username || "ChitPix User",
+        actor_avatar_url: actor?.avatar_url || null,
+      }
+    })
+
+    return NextResponse.json(result)
   } catch (error) {
     console.error("Notification GET error:", error)
 
@@ -190,4 +221,60 @@ export async function GET() {
       { status: 500 }
     )
   }
-          }
+}
+
+// MARK ONE OR ALL NOTIFICATIONS AS READ
+export async function PATCH(req: Request) {
+  try {
+    const user = await getAuthenticatedUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Please login first" },
+        { status: 401 }
+      )
+    }
+
+    const body = await req.json()
+
+    let query = supabaseAdmin
+      .from("notifications")
+      .update({ is_read: true })
+      .eq("recipient_id", user.id)
+
+    if (body?.markAll === true) {
+      query = query.eq("is_read", false)
+    } else if (
+      typeof body?.id === "string" &&
+      body.id.trim()
+    ) {
+      query = query.eq("id", body.id)
+    } else {
+      return NextResponse.json(
+        { success: false, error: "Notification id or markAll required" },
+        { status: 400 }
+      )
+    }
+
+    const { error } = await query
+
+    if (error) {
+      console.error("Mark read error:", error)
+
+      return NextResponse.json(
+        { success: false, error: "Could not update notification" },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Notification PATCH error:", error)
+
+    return NextResponse.json(
+      { success: false, error: "Server error" },
+      { status: 500 }
+    )
+  }
+              }
+       
