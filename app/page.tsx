@@ -1392,182 +1392,237 @@ try {
         </div>
       )}
 
-            {/* NOTIFICATIONS */}
+                  {/* INSTAGRAM STYLE NOTIFICATIONS PAGE */}
       {showNotif && (
-        <div
-          className="fixed inset-0 z-[110] bg-black/50 flex items-end"
-          onClick={() => setShowNotif(false)}
-        >
-          <section
-            className="bg-white w-full max-w-[480px] mx-auto rounded-t-2xl p-5 max-h-[75vh] min-h-48 flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-[110] bg-white">
+          <section className="mx-auto flex h-[100dvh] w-full max-w-[480px] flex-col bg-white">
+
             {/* HEADER */}
-            <div className="flex justify-between items-center border-b pb-3">
-              <h2 className="font-bold text-lg">
+            <div className="sticky top-0 z-10 flex items-center gap-5 border-b bg-white px-4 py-4">
+              <button
+                onClick={() => setShowNotif(false)}
+                aria-label="Back"
+                className="p-1"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="28"
+                  height="28"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <h2 className="flex-1 text-2xl font-black">
                 Notifications
               </h2>
 
-              <div className="flex items-center gap-3">
-                {notifications.some((n: any) => !n.is_read) && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch("/api/notifications", {
-                          method: "PATCH",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({ markAll: true }),
-                        })
-
-                        if (!response.ok) {
-                          throw new Error("Mark all failed")
-                        }
-
-                        setNotifications((previous) =>
-                          previous.map((n: any) => ({
-                            ...n,
-                            is_read: true,
-                          }))
-                        )
-                      } catch (error) {
-                        console.error(error)
-                        setNotifError("Notifications update avvaledu")
-                      }
-                    }}
-                    className="text-xs font-semibold text-blue-600"
-                  >
-                    Mark all read
-                  </button>
-                )}
-
-                <button
-                  onClick={() => setShowNotif(false)}
-                  className="rounded-full bg-zinc-100 w-8 h-8"
-                >
-                  ✕
-                </button>
-              </div>
+              <span className="text-sm font-bold text-blue-600">
+                {notifications.filter((n: any) => !n.is_read).length > 0
+                  ? notifications.filter((n: any) => !n.is_read).length
+                  : ""}
+              </span>
             </div>
 
-            {/* LOADING */}
-            {notifLoading && (
-              <p className="text-center text-sm text-zinc-500 py-8">
-                Loading notifications...
-              </p>
-            )}
-
-            {/* ERROR */}
-            {!notifLoading && notifError && (
-              <div className="text-center py-8">
-                <p className="text-sm text-red-500">
-                  {notifError}
-                </p>
+            {/* MARK ALL READ */}
+            {notifications.some((n: any) => !n.is_read) && (
+              <div className="flex justify-end border-b px-4 py-3">
                 <button
-                  onClick={loadNotifications}
-                  className="mt-3 text-sm font-bold text-blue-600"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch("/api/notifications", {
+                        method: "PATCH",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({ markAll: true }),
+                      })
+
+                      if (!response.ok) {
+                        throw new Error("Mark all failed")
+                      }
+
+                      setNotifications((previous) =>
+                        previous.map((n: any) => ({
+                          ...n,
+                          is_read: true,
+                        }))
+                      )
+                    } catch (error) {
+                      console.error(error)
+                      setNotifError("Notifications update avvaledu")
+                    }
+                  }}
+                  className="text-sm font-bold text-blue-600"
                 >
-                  Try Again
+                  Mark all as read
                 </button>
               </div>
             )}
 
-            {/* EMPTY */}
-            {!notifLoading &&
-              !notifError &&
-              notifications.length === 0 && (
-                <p className="text-center text-sm text-zinc-500 py-10">
-                  No notifications yet ❤️
+            {/* CONTENT */}
+            <div className="flex-1 overflow-y-auto">
+
+              {/* LOADING */}
+              {notifLoading && (
+                <p className="py-12 text-center text-sm text-zinc-500">
+                  Loading notifications...
                 </p>
               )}
 
-            {/* NOTIFICATION LIST */}
-            {!notifLoading && !notifError && (
-              <div className="flex-1 overflow-y-auto">
-                {notifications.map((item: any) => (
-                  <div
-                    key={item.id}
-                    className={`flex items-center gap-3 border-b py-4 ${
-                      item.is_read ? "bg-white" : "bg-blue-50"
-                    }`}
+              {/* ERROR */}
+              {!notifLoading && notifError && (
+                <div className="px-5 py-12 text-center">
+                  <p className="text-sm text-red-500">
+                    {notifError}
+                  </p>
+
+                  <button
+                    onClick={loadNotifications}
+                    className="mt-4 font-bold text-blue-600"
                   >
-                    <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-zinc-200 flex items-center justify-center font-bold">
-                      {item.actor_avatar_url ? (
-                        <img
-                          src={item.actor_avatar_url}
-                          alt={item.actor_username || "User"}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        String(item.actor_username || "C")
-                          .slice(0, 1)
-                          .toUpperCase()
-                      )}
-                    </div>
+                    Try Again
+                  </button>
+                </div>
+              )}
 
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm break-words">
-                        <b>
-                          {item.actor_username || "ChitPix User"}
-                        </b>{" "}
-                        {item.message ||
-                          (item.type === "post"
-                            ? "shared a new post"
-                            : item.type === "reel"
-                            ? "shared a new reel"
-                            : item.type === "story"
-                            ? "added a new story"
-                            : "sent you a notification")}
-                      </p>
-
-                      <p className="mt-1 text-xs text-zinc-400">
-                        {item.created_at
-                          ? new Date(item.created_at).toLocaleString()
-                          : ""}
-                      </p>
-                    </div>
-
-                    {!item.is_read && (
-                      <button
-                        onClick={async () => {
-                          try {
-                            const response = await fetch(
-                              "/api/notifications",
-                              {
-                                method: "PATCH",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({ id: item.id }),
-                              }
-                            )
-
-                            if (!response.ok) {
-                              throw new Error("Read update failed")
-                            }
-
-                            setNotifications((previous) =>
-                              previous.map((n: any) =>
-                                n.id === item.id
-                                  ? { ...n, is_read: true }
-                                  : n
-                              )
-                            )
-                          } catch (error) {
-                            console.error(error)
-                            setNotifError("Read update avvaledu")
-                          }
-                        }}
-                        className="shrink-0 text-xs font-semibold text-blue-600"
+              {/* EMPTY */}
+              {!notifLoading &&
+                !notifError &&
+                notifications.length === 0 && (
+                  <div className="flex min-h-[55vh] flex-col items-center justify-center px-6 text-center">
+                    <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-black">
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="42"
+                        height="42"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
                       >
-                        Read
-                      </button>
-                    )}
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                        <path d="M10 21h4" />
+                      </svg>
+                    </div>
+
+                    <h3 className="text-xl font-bold">
+                      Notifications
+                    </h3>
+
+                    <p className="mt-2 text-sm text-zinc-500">
+                      When someone likes, follows or shares a post,
+                      you will see it here.
+                    </p>
                   </div>
-                ))}
-              </div>
-            )}
+                )}
+
+              {/* NEW NOTIFICATIONS */}
+              {!notifLoading &&
+                !notifError &&
+                notifications.length > 0 && (
+                  <div>
+                    <h3 className="px-4 pb-2 pt-5 text-lg font-bold">
+                      New
+                    </h3>
+
+                    {notifications.map((item: any) => (
+                      <div
+                        key={item.id}
+                        className={`flex items-center gap-3 px-4 py-4 ${
+                          item.is_read ? "bg-white" : "bg-blue-50"
+                        }`}
+                      >
+                        {/* USER DP */}
+                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-zinc-200">
+                          {item.actor_avatar_url ? (
+                            <img
+                              src={item.actor_avatar_url}
+                              alt={item.actor_username || "User"}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-lg font-bold">
+                              {String(item.actor_username || "C")
+                                .slice(0, 1)
+                                .toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* MESSAGE */}
+                        <div className="min-w-0 flex-1">
+                          <p className="break-words text-sm">
+                            <b>
+                              {item.actor_username || "ChitPix User"}
+                            </b>{" "}
+                            {item.message ||
+                              (item.type === "post"
+                                ? "shared a post."
+                                : item.type === "reel"
+                                ? "shared a reel."
+                                : item.type === "story"
+                                ? "added a story."
+                                : "sent you a notification.")}
+                          </p>
+
+                          <p className="mt-1 text-xs text-zinc-500">
+                            {item.created_at
+                              ? new Date(item.created_at).toLocaleString()
+                              : ""}
+                          </p>
+
+                          {!item.is_read && (
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(
+                                    "/api/notifications",
+                                    {
+                                      method: "PATCH",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        id: item.id,
+                                      }),
+                                    }
+                                  )
+
+                                  if (!response.ok) {
+                                    throw new Error("Read update failed")
+                                  }
+
+                                  setNotifications((previous) =>
+                                    previous.map((n: any) =>
+                                      n.id === item.id
+                                        ? { ...n, is_read: true }
+                                        : n
+                                    )
+                                  )
+                                } catch (error) {
+                                  console.error(error)
+                                  setNotifError("Read update avvaledu")
+                                }
+                              }}
+                              className="mt-2 text-xs font-bold text-blue-600"
+                            >
+                              Mark as read
+                            </button>
+                          )}
+                        </div>
+
+                        {/* UNREAD DOT */}
+                        {!item.is_read && (
+                          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-blue-600" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+            </div>
           </section>
         </div>
       )}
