@@ -39,7 +39,7 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
 
   const [selectedTemplate, setSelectedTemplate] = useState("none")
   const [selectedEffect, setSelectedEffect] = useState("normal")
-  const [fitMode, setFitMode] = useState("contain")
+  const [fitMode, setFitMode] = useState<"contain" | "cover">("contain")
 
   const [musicFile, setMusicFile] = useState<File | null>(null)
   const [musicPreview, setMusicPreview] = useState("")
