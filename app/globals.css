@@ -35,3 +35,10 @@ video {
 button {
   -webkit-tap-highlight-color: transparent;
 }
+/* ChitPix mobile zoom control */
+html,
+body {
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
+  -webkit-text-size-adjust: 100%;
+}
