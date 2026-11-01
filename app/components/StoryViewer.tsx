@@ -1,4 +1,4 @@
- // @ts-nocheck
+// @ts-nocheck
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
@@ -18,9 +18,11 @@ function getStoryImage(story: any) {
     ""
 
   if (!value) return ""
+
   if (/^https?:\/\//i.test(value)) return value
 
   const path = String(value).replace(/^\/+/, "")
+
   return `${R2_PUBLIC.replace(/\/$/, "")}/${
     path.startsWith("stories/") ? path : `stories/${path}`
   }`
@@ -59,23 +61,36 @@ export default function StoryViewer({
   const elapsedRef = useRef(0)
   const durationRef = useRef(7000)
 
+  // CURRENT USER AND STORY
   const currentUser = users?.[userIdx]
   const currentStory = currentUser?.stories?.[storyIdx]
+
   const storyId = String(currentStory?.id || "")
   const storyImage = getStoryImage(currentStory)
 
   const owner = cleanUsername(
     currentUser?.username || currentStory?.username
   )
-  const isOwnStory = !!username && username === owner
 
-  // Get the actual signed-in Supabase user and profile username.
+  const ownerId = String(
+    currentUser?.user_id ||
+    currentStory?.user_id ||
+    ""
+  )
+
+  const isOwnStory =
+    !!currentUserId &&
+    !!ownerId &&
+    currentUserId === ownerId
+
+  // GET LOGGED-IN USER
   useEffect(() => {
     let active = true
 
     const loadUsername = async () => {
       try {
         const { data, error } = await supabase.auth.getUser()
+
         if (error) throw error
 
         const user = data?.user
@@ -89,11 +104,12 @@ export default function StoryViewer({
           return
         }
 
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", user.id)
-          .maybeSingle()
+        const { data: profile, error: profileError } =
+          await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", user.id)
+            .maybeSingle()
 
         if (profileError) {
           console.error("Story profile load failed:", profileError)
@@ -111,17 +127,20 @@ export default function StoryViewer({
           setUsername(name)
           setAuthReady(true)
         }
+
       } catch (error) {
         console.error("Story login check failed:", error)
+
         if (active) setAuthReady(true)
       }
     }
 
     loadUsername()
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      loadUsername()
-    })
+    const { data: listener } =
+      supabase.auth.onAuthStateChange(() => {
+        loadUsername()
+      })
 
     return () => {
       active = false
@@ -129,6 +148,7 @@ export default function StoryViewer({
     }
   }, [])
 
+  // STOP STORY TIMER
   const stopTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current)
@@ -136,13 +156,19 @@ export default function StoryViewer({
     }
   }, [])
 
+  // CLOSE VIEWER
   const close = useCallback(() => {
     stopTimer()
-    if (typeof onClose === "function") onClose()
+
+    if (typeof onClose === "function") {
+      onClose()
+    }
   }, [onClose, stopTimer])
 
+  // NEXT STORY
   const goNext = useCallback(() => {
     stopTimer()
+
     elapsedRef.current = 0
     setProgress(0)
 
@@ -156,22 +182,37 @@ export default function StoryViewer({
     } else {
       close()
     }
-  }, [close, currentUser, storyIdx, userIdx, users.length, stopTimer])
+  }, [
+    close,
+    currentUser,
+    storyIdx,
+    userIdx,
+    users.length,
+    stopTimer,
+  ])
 
+  // PREVIOUS STORY
   const goPrev = useCallback(() => {
     stopTimer()
+
     elapsedRef.current = 0
     setProgress(0)
 
     if (storyIdx > 0) {
       setStoryIdx((n: number) => n - 1)
     } else if (userIdx > 0) {
-      const previousStories = users[userIdx - 1]?.stories || []
+      const previousStories =
+        users[userIdx - 1]?.stories || []
+
       setUserIdx((n: number) => n - 1)
-      setStoryIdx(Math.max(0, previousStories.length - 1))
+
+      setStoryIdx(
+        Math.max(0, previousStories.length - 1)
+      )
     }
   }, [storyIdx, userIdx, users, stopTimer])
-    
+
+  // LOAD STORY LIKES
   useEffect(() => {
     if (!storyId) return
 
@@ -180,36 +221,47 @@ export default function StoryViewer({
     const loadLikes = async () => {
       try {
         const query = new URLSearchParams({ storyId })
-        if (username) query.set("username", username)
 
-        const res = await fetch(`/api/story-likes?${query}`, {
-          cache: "no-store",
-        })
+        if (username) {
+          query.set("username", username)
+        }
+
+        const res = await fetch(
+          `/api/story-likes?${query}`,
+          { cache: "no-store" }
+        )
+
         const data = await res.json()
 
-        if (!res.ok) throw new Error(data.error || "Likes load failed")
+        if (!res.ok) {
+          throw new Error(data.error || "Likes load failed")
+        }
+
         if (!active) return
 
         setLikeCounts((old: any) => ({
           ...old,
           [storyId]: Number(data.count || 0),
         }))
+
         setLiked((old: any) => ({
           ...old,
           [storyId]: !!data.liked,
         }))
+
       } catch (error) {
         console.error("Story likes load failed:", error)
       }
     }
 
     loadLikes()
+
     return () => {
       active = false
     }
   }, [storyId, username])
 
-  // Register a view. The route must exist for the count to persist.
+  // REGISTER STORY VIEW
   useEffect(() => {
     if (!storyId || !username) return
 
@@ -219,29 +271,42 @@ export default function StoryViewer({
       try {
         const res = await fetch("/api/story_views", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, storyId, storyOwner: owner }),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            username,
+            storyId,
+            storyOwner: owner,
+          }),
         })
 
         const data = await res.json().catch(() => ({}))
 
-        if (active && res.ok && typeof data.count === "number") {
+        if (
+          active &&
+          res.ok &&
+          typeof data.count === "number"
+        ) {
           setViewCounts((old: any) => ({
             ...old,
             [storyId]: data.count,
           }))
         }
+
       } catch (error) {
         console.error("Story view save failed:", error)
       }
     }
 
     registerView()
+
     return () => {
       active = false
     }
   }, [storyId, username, owner])
 
+  // STORY AUTO PLAY TIMER
   useEffect(() => {
     if (!currentStory || paused || showSeenList || showMore) {
       stopTimer()
@@ -252,7 +317,10 @@ export default function StoryViewer({
 
     timerRef.current = setInterval(() => {
       const elapsed =
-        elapsedRef.current + Date.now() - startedAtRef.current
+        elapsedRef.current +
+        Date.now() -
+        startedAtRef.current
+
       const nextProgress = Math.min(
         (elapsed / durationRef.current) * 100,
         100
@@ -267,6 +335,7 @@ export default function StoryViewer({
     }, 50)
 
     return () => stopTimer()
+
   }, [
     currentStory,
     paused,
@@ -277,11 +346,17 @@ export default function StoryViewer({
     stopTimer,
   ])
 
+  // PAUSE / RESUME
   const togglePause = () => {
-    elapsedRef.current = (progress / 100) * durationRef.current
+    if (!paused) {
+      elapsedRef.current =
+        (progress / 100) * durationRef.current
+    }
+
     setPaused((value: boolean) => !value)
   }
 
+  // LIKE STORY
   const toggleLike = async () => {
     if (!storyId) return
 
@@ -295,19 +370,37 @@ export default function StoryViewer({
     const wasLiked = !!liked[storyId]
     const previousCount = Number(likeCounts[storyId] || 0)
 
-    setLikeBusy((old: any) => ({ ...old, [storyId]: true }))
-    setLiked((old: any) => ({ ...old, [storyId]: !wasLiked }))
+    setLikeBusy((old: any) => ({
+      ...old,
+      [storyId]: true,
+    }))
+
+    setLiked((old: any) => ({
+      ...old,
+      [storyId]: !wasLiked,
+    }))
+
     setLikeCounts((old: any) => ({
       ...old,
-      [storyId]: Math.max(0, previousCount + (wasLiked ? -1 : 1)),
+      [storyId]: Math.max(
+        0,
+        previousCount + (wasLiked ? -1 : 1)
+      ),
     }))
+
     setStatus("")
 
     try {
       const res = await fetch("/api/story-likes", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storyId, username, storyOwner: owner }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          storyId,
+          username,
+          storyOwner: owner,
+        }),
       })
 
       const data = await res.json()
@@ -320,21 +413,37 @@ export default function StoryViewer({
         ...old,
         [storyId]: data.action === "liked",
       }))
+
       setLikeCounts((old: any) => ({
         ...old,
         [storyId]: Number(data.count ?? previousCount),
       }))
+
     } catch (error: any) {
-      setLiked((old: any) => ({ ...old, [storyId]: wasLiked }))
-      setLikeCounts((old: any) => ({ ...old, [storyId]: previousCount }))
+      setLiked((old: any) => ({
+        ...old,
+        [storyId]: wasLiked,
+      }))
+
+      setLikeCounts((old: any) => ({
+        ...old,
+        [storyId]: previousCount,
+      }))
+
       setStatus(error.message || "Like save avvaledu.")
+
     } finally {
-      setLikeBusy((old: any) => ({ ...old, [storyId]: false }))
+      setLikeBusy((old: any) => ({
+        ...old,
+        [storyId]: false,
+      }))
     }
-    }
-      
+   }
+       
+  // SEND STORY REPLY
   const sendReply = async () => {
     const message = reply.trim()
+
     if (!message) return
 
     if (!authReady || !username) {
@@ -352,9 +461,17 @@ export default function StoryViewer({
 
       const res = await fetch("/api/story-replies", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ storyId, username, storyOwner: owner, message }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          storyId,
+          username,
+          storyOwner: owner,
+          message,
+        }),
       })
+
       const data = await res.json()
 
       if (!res.ok || !data.success) {
@@ -363,11 +480,13 @@ export default function StoryViewer({
 
       setReply("")
       setStatus("Reply sent successfully!")
+
     } catch (error: any) {
       setStatus(error.message || "Reply pampadam fail ayindi.")
     }
   }
 
+  // SHARE STORY
   const shareStory = async () => {
     if (!storyImage) {
       setStatus("Story URL dorakaledu.")
@@ -386,10 +505,13 @@ export default function StoryViewer({
         setStatus("Story link copied.")
       }
     } catch (error: any) {
-      if (error?.name !== "AbortError") setStatus("Share cheyyalekapoyanu.")
+      if (error?.name !== "AbortError") {
+        setStatus("Share cheyyalekapoyanu.")
+      }
     }
   }
 
+  // DOWNLOAD STORY
   const downloadStory = async () => {
     if (!storyImage) {
       setStatus("Story URL dorakaledu.")
@@ -400,7 +522,10 @@ export default function StoryViewer({
       setStatus("Download preparing...")
 
       const response = await fetch(storyImage)
-      if (!response.ok) throw new Error("Media download failed")
+
+      if (!response.ok) {
+        throw new Error("Media download failed")
+      }
 
       const blob = await response.blob()
       const objectUrl = URL.createObjectURL(blob)
@@ -413,15 +538,19 @@ export default function StoryViewer({
       link.remove()
 
       URL.revokeObjectURL(objectUrl)
+
       setStatus("Download started.")
+
     } catch (error) {
       console.error("Story download failed:", error)
-      // Cross-origin or R2 CORS restrictions may block blob download.
+
       window.open(storyImage, "_blank", "noopener,noreferrer")
+
       setStatus("Story open chesanu. Download option browser lo try cheyyi.")
     }
   }
 
+  // CONVERT STORY TO POST
   const convertToPost = async () => {
     if (!storyImage) {
       setStatus("Story URL dorakaledu.")
@@ -436,7 +565,6 @@ export default function StoryViewer({
     try {
       setStatus("Post create chestunnanu...")
 
-      // Use the same Supabase posts table as page.tsx.
       const { data, error } = await supabase
         .from("posts")
         .insert({
@@ -453,12 +581,14 @@ export default function StoryViewer({
       if (error) throw error
 
       setStatus("Post create ayyindi! Feed refresh chesi check cheyyi.")
+
     } catch (error: any) {
       console.error("Story to post failed:", error)
       setStatus(error?.message || "Post create avvaledu.")
     }
   }
 
+  // DELETE OWN STORY
   const deleteStory = async () => {
     if (!isOwnStory) {
       setStatus("Mee story matrame delete cheyyagalru.")
@@ -472,6 +602,7 @@ export default function StoryViewer({
         `/api/stories?id=${encodeURIComponent(storyId)}`,
         { method: "DELETE" }
       )
+
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok || data.success === false) {
@@ -480,11 +611,13 @@ export default function StoryViewer({
 
       setStatus("Story deleted.")
       goNext()
+
     } catch (error: any) {
       setStatus(error.message || "Story delete avvaledu.")
     }
   }
 
+  // CHECK CURRENT STORY
   if (!currentStory || !currentUser) return null
 
   const isVideo =
@@ -496,29 +629,43 @@ export default function StoryViewer({
   const displayedViews = Number(
     viewCounts[storyId] ?? currentStory.views ?? 0
   )
-    
+
   return (
     <div className="fixed inset-0 z-[99999] bg-black text-white flex flex-col w-full max-w-[480px] mx-auto overflow-hidden">
+
+      {/* STORY PROGRESS BARS */}
+
       <div className="absolute top-0 left-0 right-0 z-30 flex gap-1 p-2">
         {(currentUser.stories || []).map((_: any, i: number) => (
-          <div key={i} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
+          <div
+            key={i}
+            className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden"
+          >
             <div
               className="h-full bg-white"
               style={{
                 width:
-                  i < storyIdx ? "100%" : i === storyIdx ? `${progress}%` : "0%",
+                  i < storyIdx
+                    ? "100%"
+                    : i === storyIdx
+                    ? `${progress}%`
+                    : "0%",
               }}
             />
           </div>
         ))}
       </div>
 
+      {/* TOP PROFILE BAR */}
+
       <div className="absolute top-4 left-0 right-0 z-30 flex justify-between items-center px-3 pt-5">
+
         <button
           type="button"
           onClick={() => {
             setPaused(true)
-            window.location.href = `/profile/${encodeURIComponent(owner)}`
+            window.location.href =
+              `/profile/${encodeURIComponent(owner)}`
           }}
           className="flex items-center gap-2 text-left"
         >
@@ -527,10 +674,12 @@ export default function StoryViewer({
             className="w-9 h-9 rounded-full object-cover"
             alt=""
           />
+
           <span>
             <span className="block text-sm font-bold">
               {owner || "user"} {currentUser.verified ? "👑" : ""}
             </span>
+
             <span className="block text-[10px] text-white/70">
               Story · {likeCounts[storyId] || 0} likes
             </span>
@@ -538,16 +687,31 @@ export default function StoryViewer({
         </button>
 
         <div className="flex items-center gap-3">
-          <button type="button" onClick={togglePause} aria-label={paused ? "Resume" : "Pause"}>
+
+          <button
+            type="button"
+            onClick={togglePause}
+            aria-label={paused ? "Resume" : "Pause"}
+          >
             {paused ? "▶️" : "⏸️"}
           </button>
-          <button type="button" onClick={close} className="text-2xl" aria-label="Close">
+
+          <button
+            type="button"
+            onClick={close}
+            className="text-2xl"
+            aria-label="Close"
+          >
             ×
           </button>
+
         </div>
       </div>
 
+      {/* STORY MEDIA */}
+
       <div className="flex-1 relative flex items-center justify-center bg-zinc-950">
+
         {storyImage ? (
           isVideo ? (
             <video
@@ -564,12 +728,18 @@ export default function StoryViewer({
               src={storyImage}
               alt="Story"
               className="max-w-full max-h-full object-contain"
-              onError={() => setStatus("Story photo load avvaledu. URL check cheyyali.")}
+              onError={() =>
+                setStatus("Story photo load avvaledu. URL check cheyyali.")
+              }
             />
           )
         ) : (
-          <p className="text-sm text-white/70">Story photo URL dorakaledu.</p>
+          <p className="text-sm text-white/70">
+            Story photo URL dorakaledu.
+          </p>
         )}
+
+        {/* PREVIOUS STORY */}
 
         <button
           type="button"
@@ -577,6 +747,9 @@ export default function StoryViewer({
           onClick={goPrev}
           className="absolute left-0 top-1/4 bottom-1/4 w-1/5 z-10"
         />
+
+        {/* NEXT STORY */}
+
         <button
           type="button"
           aria-label="Next story"
@@ -584,9 +757,13 @@ export default function StoryViewer({
           className="absolute right-0 top-1/4 bottom-1/4 w-1/5 z-10"
         />
 
+        {/* CAPTION */}
+
         <div className="absolute top-[30%] left-3 bg-black/60 rounded-full px-3 py-1 text-xs pointer-events-none">
           {currentStory.caption || "ChitPix Story"}
         </div>
+
+        {/* STORY LIKE BUTTON */}
 
         <button
           type="button"
@@ -598,8 +775,13 @@ export default function StoryViewer({
           aria-label="Like story"
         >
           {liked[storyId] ? "❤️" : "🤍"}
-          <span className="ml-2 text-sm">{Number(likeCounts[storyId] || 0)}</span>
+
+          <span className="ml-2 text-sm">
+            {Number(likeCounts[storyId] || 0)}
+          </span>
         </button>
+
+        {/* HEART ANIMATION */}
 
         {liked[storyId] && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-7xl pointer-events-none">
@@ -607,18 +789,30 @@ export default function StoryViewer({
           </div>
         )}
 
+        {/* STATUS */}
+
         {status && (
           <div className="absolute top-16 left-3 right-3 z-40 rounded-lg bg-black/80 p-3 text-center text-xs">
             {status}
-            <button type="button" className="ml-3 underline" onClick={() => setStatus("")}>
+
+            <button
+              type="button"
+              className="ml-3 underline"
+              onClick={() => setStatus("")}
+            >
               Close
             </button>
           </div>
         )}
+
       </div>
 
+      {/* BOTTOM ACTIONS */}
+
       <div className="absolute bottom-0 left-0 right-0 z-[100] p-3 pb-6 bg-gradient-to-t from-black/90 to-transparent">
+
         <div className="flex items-center gap-2">
+
           <input
             value={reply}
             onChange={(e: any) => setReply(e.target.value)}
@@ -646,30 +840,63 @@ export default function StoryViewer({
           >
             👁️ {displayedViews}
           </button>
+
         </div>
 
+        {/* STORY FEATURES */}
+
         <div className="flex flex-wrap gap-2 mt-3 justify-center">
-          <button type="button" onClick={shareStory} className="border border-white/30 rounded-full px-3 py-2 text-xs">
+
+          <button
+            type="button"
+            onClick={shareStory}
+            className="border border-white/30 rounded-full px-3 py-2 text-xs"
+          >
             ↗️ Share
           </button>
-          <button type="button" onClick={downloadStory} className="border border-white/30 rounded-full px-3 py-2 text-xs">
+
+          <button
+            type="button"
+            onClick={downloadStory}
+            className="border border-white/30 rounded-full px-3 py-2 text-xs"
+          >
             ⬇️ Download
           </button>
-          <button type="button" onClick={convertToPost} className="border border-white/30 rounded-full px-3 py-2 text-xs">
+
+          <button
+            type="button"
+            onClick={convertToPost}
+            className="border border-white/30 rounded-full px-3 py-2 text-xs"
+          >
             📌 To Post
           </button>
-          <button type="button" onClick={() => setShowMore(!showMore)} className="border border-white/30 rounded-full px-3 py-2 text-xs">
+
+          <button
+            type="button"
+            onClick={() => setShowMore(!showMore)}
+            className="border border-white/30 rounded-full px-3 py-2 text-xs"
+          >
             ⋯ More
           </button>
+
         </div>
       </div>
 
+      {/* MORE OPTIONS */}
+
       {showMore && (
         <div className="absolute inset-0 z-40 bg-black/70 flex items-end">
+
           <div className="w-full bg-white text-black rounded-t-2xl p-5 space-y-3">
+
             <p className="font-bold">Story options</p>
+
             {isOwnStory ? (
-              <button type="button" onClick={deleteStory} className="w-full text-left py-2 text-red-600">
+              <button
+                type="button"
+                onClick={deleteStory}
+                className="w-full text-left py-2 text-red-600"
+              >
                 🗑️ Delete my story
               </button>
             ) : (
@@ -681,24 +908,40 @@ export default function StoryViewer({
                 🚩 Report story
               </button>
             )}
-            <button type="button" onClick={() => setShowMore(false)} className="w-full rounded-full bg-black text-white py-3">
+
+            <button
+              type="button"
+              onClick={() => setShowMore(false)}
+              className="w-full rounded-full bg-black text-white py-3"
+            >
               Close
             </button>
+
           </div>
         </div>
       )}
 
+      {/* STORY VIEWS */}
+
       {showSeenList && (
         <div className="absolute inset-0 z-40 bg-black/60 flex items-end">
+
           <div className="w-full bg-white text-black rounded-t-2xl p-5">
+
             <div className="w-10 h-1 bg-zinc-300 rounded-full mx-auto mb-4" />
-            <h2 className="font-bold text-lg">Story views</h2>
+
+            <h2 className="font-bold text-lg">
+              Story views
+            </h2>
+
             <p className="text-sm text-zinc-500 mt-2">
               Current story view count: {displayedViews}
             </p>
+
             <p className="text-xs text-zinc-500 mt-2">
               Viewer names show avvadaniki API viewer list return cheyyali.
             </p>
+
             <button
               type="button"
               onClick={() => setShowSeenList(false)}
@@ -706,10 +949,12 @@ export default function StoryViewer({
             >
               Close
             </button>
+
           </div>
         </div>
       )}
+
     </div>
   )
-                                           }
-        
+       }
+       
