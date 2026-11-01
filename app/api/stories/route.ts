@@ -1,10 +1,16 @@
-import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3"
+import {
+  S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3"
+
 import { NextResponse } from "next/server"
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 const R2 = new S3Client({
-  region: 'auto',
+  region: "auto",
   endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
     accessKeyId: process.env.R2_ACCESS_KEY_ID!,
@@ -12,102 +18,280 @@ const R2 = new S3Client({
   },
 })
 
-const BUCKET = process.env.R2_BUCKET_NAME || process.env.R2_BUCKET || 'chitpix'
+const BUCKET =
+  process.env.R2_BUCKET_NAME ||
+  process.env.R2_BUCKET ||
+  "chitpix"
+
 const STORIES_KEY = "data/stories.json"
 
-const HOURS_24 = 24 * 60 * 60 * 1000 // 86400000 ms
+const HOURS_24 = 24 * 60 * 60 * 1000
 
-export async function GET() {
+// READ ALL STORIES
+async function readStories() {
   try {
-    const res = await R2.send(new GetObjectCommand({ Bucket: BUCKET, Key: STORIES_KEY }))
-    const text = await res.Body?.transformToString()
-    let stories = text ? JSON.parse(text) : []
-
-    // 24H AUTO DELETE LOGIC
-    const now = Date.now()
-    const validStories = stories.filter((s: any) => {
-      const created = new Date(s.created_at).getTime()
-      const isValid = now - created < HOURS_24
-      return isValid
-    })
-
-    // Auto cleanup - expired stories ni R2 nundi kuda delete chey
-    if (validStories.length !== stories.length) {
-      await R2.send(new PutObjectCommand({
+    const res = await R2.send(
+      new GetObjectCommand({
         Bucket: BUCKET,
         Key: STORIES_KEY,
-        Body: JSON.stringify(validStories, null, 2),
-        ContentType: "application/json",
-        CacheControl: 'no-cache'
-      }))
-      console.log(`Cleaned ${stories.length - validStories.length} expired stories`)
+      })
+    )
+
+    const text = await res.Body?.transformToString()
+
+    if (!text) return []
+
+    const data = JSON.parse(text)
+
+    return Array.isArray(data) ? data : []
+  } catch (error: any) {
+    if (
+      error?.name === "NoSuchKey" ||
+      error?.name === "NotFound" ||
+      error?.$metadata?.httpStatusCode === 404
+    ) {
+      return []
     }
 
-    validStories.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    return NextResponse.json(validStories)
-  } catch (e: any) {
-    return NextResponse.json([])
+    throw error
   }
 }
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json()
-    if (!body.image_url && !body.url) return NextResponse.json({ error: "No image" }, { status: 400 })
-
-    const res = await R2.send(new GetObjectCommand({ Bucket: BUCKET, Key: STORIES_KEY })).catch(() => null)
-    const text = (res as any)?.Body ? await (res as any).Body?.transformToString() : null
-    let stories = text ? JSON.parse(text) : []
-
-    // Cleanup old before adding new
-    const now = Date.now()
-    stories = stories.filter((s: any) => now - new Date(s.created_at).getTime() < HOURS_24)
-
-    const story = {
-      id: Date.now().toString(),
-      image_url: body.image_url || body.url,
-      url: body.image_url || body.url,
-      video_url: body.video_url,
-      username: (body.username || "knmahesh").toLowerCase(),
-      avatar_url: body.avatar_url || `https://i.pravatar.cc/100?u=${body.username}`,
-      created_at: new Date().toISOString(),
-      expires_at: new Date(now + HOURS_24).toISOString(), // 24h expiry time
-      caption: body.caption || "",
-      views: 0,
-      type: 'story',
-      isR2Permanent: false,
-      viewsText: '24h story • Auto delete after 24h'
-    }
-
-    stories.unshift(story)
-    stories = stories.slice(0, 1000)
-
-    await R2.send(new PutObjectCommand({
+// SAVE ALL STORIES
+async function saveStories(stories: any[]) {
+  await R2.send(
+    new PutObjectCommand({
       Bucket: BUCKET,
       Key: STORIES_KEY,
       Body: JSON.stringify(stories, null, 2),
       ContentType: "application/json",
-      CacheControl: 'no-cache'
-    }))
+      CacheControl: "no-cache",
+    })
+  )
+}
 
-    return NextResponse.json(story)
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+// CHECK 24 HOURS
+function isActiveStory(story: any) {
+  const now = Date.now()
+
+  const created = new Date(
+    story.created_at || 0
+  ).getTime()
+
+  if (!Number.isFinite(created) || !created) {
+    return false
+  }
+
+  const expiry = story.expires_at
+    ? new Date(story.expires_at).getTime()
+    : created + HOURS_24
+
+  return (
+    now < expiry &&
+    now - created < HOURS_24
+  )
+}
+
+// GET ALL USERS STORIES
+export async function GET() {
+  try {
+    let stories = await readStories()
+
+    const activeStories = stories.filter(
+      (story: any) => isActiveStory(story)
+    )
+
+    // CLEAN EXPIRED STORIES
+    if (activeStories.length !== stories.length) {
+      await saveStories(activeStories)
+
+      console.log("Expired stories cleaned")
+    }
+
+    // NEWEST STORIES FIRST
+    activeStories.sort((a: any, b: any) => {
+      return (
+        new Date(b.created_at).getTime() -
+        new Date(a.created_at).getTime()
+      )
+    })
+
+    return NextResponse.json(
+      activeStories,
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate",
+        },
+      }
+    )
+  } catch (error: any) {
+    console.error("GET STORIES ERROR:", error)
+
+    return NextResponse.json(
+      {
+        error: error.message || "Stories load failed",
+      },
+      { status: 500 }
+    )
   }
 }
 
-// Optional: DELETE - Manual delete
+// CREATE NEW STORY
+export async function POST(req: Request) {
+  try {
+    const body = await req.json()
+
+    const username = String(
+      body.username || ""
+    )
+      .trim()
+      .replace(/^@/, "")
+
+    const imageUrl =
+      body.image_url ||
+      body.url ||
+      body.video_url ||
+      ""
+
+    if (!username) {
+      return NextResponse.json(
+        {
+          error: "Username missing. Login and send username.",
+        },
+        { status: 400 }
+      )
+    }
+
+    if (!imageUrl) {
+      return NextResponse.json(
+        { error: "Story image or video missing" },
+        { status: 400 }
+      )
+    }
+
+    if (
+      !/^https?:\/\//i.test(String(imageUrl))
+    ) {
+      return NextResponse.json(
+        { error: "Invalid story URL" },
+        { status: 400 }
+      )
+    }
+
+    const now = Date.now()
+
+    // REMOVE EXPIRED STORIES
+    let stories = await readStories()
+
+    stories = stories.filter(
+      (story: any) => isActiveStory(story)
+    )
+
+    // CREATE STORY
+    const story = {
+      id: `${now}_${Math.random().toString(36).slice(2, 9)}`,
+
+      user_id: body.user_id || "",
+
+      username,
+
+      avatar_url: body.avatar_url || "",
+
+      image_url: imageUrl,
+
+      url: imageUrl,
+
+      video_url: body.video_url || "",
+
+      caption: body.caption || "",
+
+      created_at: new Date(now).toISOString(),
+
+      expires_at: new Date(
+        now + HOURS_24
+      ).toISOString(),
+
+      views: 0,
+
+      type: "story",
+
+      isR2Permanent: false,
+
+      viewsText: "24h story • Auto delete after 24h",
+    }
+
+    // ADD NEW STORY
+    stories.unshift(story)
+
+    // MAXIMUM 1000 STORIES
+    stories = stories.slice(0, 1000)
+
+    await saveStories(stories)
+
+    return NextResponse.json(
+      {
+        success: true,
+        story,
+      },
+      { status: 201 }
+    )
+  } catch (error: any) {
+    console.error("POST STORY ERROR:", error)
+
+    return NextResponse.json(
+      {
+        error: error.message || "Story upload failed",
+      },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE STORY
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-    const id = searchParams.get('id')
-    const res = await R2.send(new GetObjectCommand({ Bucket: BUCKET, Key: STORIES_KEY }))
-    const text = await res.Body?.transformToString()
-    let stories = text ? JSON.parse(text) : []
-    stories = stories.filter((s: any) => s.id !== id)
-    await R2.send(new PutObjectCommand({ Bucket: BUCKET, Key: STORIES_KEY, Body: JSON.stringify(stories, null, 2), ContentType: "application/json", CacheControl: 'no-cache' }))
-    return NextResponse.json({ success: true })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+
+    const id = searchParams.get("id")
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Story ID missing" },
+        { status: 400 }
+      )
+    }
+
+    let stories = await readStories()
+
+    const exists = stories.some(
+      (story: any) => String(story.id) === String(id)
+    )
+
+    if (!exists) {
+      return NextResponse.json(
+        { error: "Story not found" },
+        { status: 404 }
+      )
+    }
+
+    stories = stories.filter(
+      (story: any) => String(story.id) !== String(id)
+    )
+
+    await saveStories(stories)
+
+    return NextResponse.json({
+      success: true,
+      message: "Story deleted successfully",
+    })
+  } catch (error: any) {
+    console.error("DELETE STORY ERROR:", error)
+
+    return NextResponse.json(
+      {
+        error: error.message || "Story delete failed",
+      },
+      { status: 500 }
+    )
   }
-}
+      }
