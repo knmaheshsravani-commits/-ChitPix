@@ -126,7 +126,7 @@ export default function ReelsPage() {
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRefs = useRef<Record<number, HTMLVideoElement>>({})
   const touchStartY = useRef<number | null>(null)
-
+  const likingRef = useRef<Record<string, boolean>>({})
   // Load signed-in user and profile details
   useEffect(() => {
     let active = true
