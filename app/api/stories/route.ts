@@ -5,6 +5,9 @@ import {
 } from "@aws-sdk/client-s3"
 
 import { NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
+import { supabaseAdmin } from "../../../lib/supabaseAdmin"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -24,10 +27,38 @@ const BUCKET =
   "chitpix"
 
 const STORIES_KEY = "data/stories.json"
-
 const HOURS_24 = 24 * 60 * 60 * 1000
 
-// READ ALL STORIES
+// AUTHENTICATED USER
+async function getAuthenticatedUser() {
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll() {
+          // Read-only authentication
+        },
+      },
+    }
+  )
+
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error || !user) return null
+
+  return user
+}
+
+// READ STORIES
 async function readStories() {
   try {
     const res = await R2.send(
@@ -57,7 +88,7 @@ async function readStories() {
   }
 }
 
-// SAVE ALL STORIES
+// SAVE STORIES
 async function saveStories(stories: any[]) {
   await R2.send(
     new PutObjectCommand({
@@ -86,13 +117,10 @@ function isActiveStory(story: any) {
     ? new Date(story.expires_at).getTime()
     : created + HOURS_24
 
-  return (
-    now < expiry &&
-    now - created < HOURS_24
-  )
+  return now < expiry && now - created < HOURS_24
 }
 
-// GET ALL USERS STORIES
+// GET ALL ACTIVE STORIES
 export async function GET() {
   try {
     let stories = await readStories()
@@ -104,11 +132,10 @@ export async function GET() {
     // CLEAN EXPIRED STORIES
     if (activeStories.length !== stories.length) {
       await saveStories(activeStories)
-
       console.log("Expired stories cleaned")
     }
 
-    // NEWEST STORIES FIRST
+    // NEWEST FIRST
     activeStories.sort((a: any, b: any) => {
       return (
         new Date(b.created_at).getTime() -
@@ -116,33 +143,58 @@ export async function GET() {
       )
     })
 
-    return NextResponse.json(
-      activeStories,
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
-      }
-    )
+    return NextResponse.json(activeStories, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    })
   } catch (error: any) {
     console.error("GET STORIES ERROR:", error)
 
     return NextResponse.json(
-      {
-        error: error.message || "Stories load failed",
-      },
+      { error: error.message || "Stories load failed" },
       { status: 500 }
     )
   }
 }
 
-// CREATE NEW STORY
+// CREATE STORY + NOTIFY FOLLOWERS
 export async function POST(req: Request) {
   try {
+    // VERIFY LOGIN
+    const user = await getAuthenticatedUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "Please login first" },
+        { status: 401 }
+      )
+    }
+
     const body = await req.json()
 
+    // USER ID MUST MATCH LOGIN
+    if (!body.user_id || body.user_id !== user.id) {
+      return NextResponse.json(
+        { success: false, error: "User ID mismatch" },
+        { status: 403 }
+      )
+    }
+
+    // GET PROFILE
+    const { data: profile, error: profileError } =
+      await supabaseAdmin
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", user.id)
+        .maybeSingle()
+
+    if (profileError) {
+      console.error("Story profile error:", profileError)
+    }
+
     const username = String(
-      body.username || ""
+      profile?.username || body.username || ""
     )
       .trim()
       .replace(/^@/, "")
@@ -155,9 +207,7 @@ export async function POST(req: Request) {
 
     if (!username) {
       return NextResponse.json(
-        {
-          error: "Username missing. Login and send username.",
-        },
+        { error: "Username missing" },
         { status: 400 }
       )
     }
@@ -169,9 +219,7 @@ export async function POST(req: Request) {
       )
     }
 
-    if (
-      !/^https?:\/\//i.test(String(imageUrl))
-    ) {
+    if (!/^https?:\/\//i.test(String(imageUrl))) {
       return NextResponse.json(
         { error: "Invalid story URL" },
         { status: 400 }
@@ -190,48 +238,86 @@ export async function POST(req: Request) {
     // CREATE STORY
     const story = {
       id: `${now}_${Math.random().toString(36).slice(2, 9)}`,
-
-      user_id: body.user_id || "",
-
+      user_id: user.id,
       username,
-
-      avatar_url: body.avatar_url || "",
-
+      avatar_url: profile?.avatar_url || body.avatar_url || "",
       image_url: imageUrl,
-
       url: imageUrl,
-
       video_url: body.video_url || "",
-
       caption: body.caption || "",
-
       created_at: new Date(now).toISOString(),
-
-      expires_at: new Date(
-        now + HOURS_24
-      ).toISOString(),
-
+      expires_at: new Date(now + HOURS_24).toISOString(),
       views: 0,
-
       type: "story",
-
       isR2Permanent: false,
-
       viewsText: "24h story • Auto delete after 24h",
     }
 
-    // ADD NEW STORY
+    // SAVE STORY FIRST
     stories.unshift(story)
-
-    // MAXIMUM 1000 STORIES
     stories = stories.slice(0, 1000)
 
     await saveStories(stories)
+
+    // NOTIFY FOLLOWERS
+    let notificationSent = 0
+
+    try {
+      const { data: followers, error: followError } =
+        await supabaseAdmin
+          .from("user_follows")
+          .select("follower_id")
+          .eq("following_id", user.id)
+
+      if (followError) {
+        throw followError
+      }
+
+      const recipientIds = [
+        ...new Set(
+          (followers || [])
+            .map((f: any) => f.follower_id)
+            .filter(
+              (id: string) => Boolean(id) && id !== user.id
+            )
+        ),
+      ]
+
+      if (recipientIds.length > 0) {
+        const rows = recipientIds.map((recipientId) => ({
+          recipient_id: recipientId,
+          actor_id: user.id,
+          type: "story",
+          content_id: story.id,
+          message: `${username} added a new story`,
+          is_read: false,
+        }))
+
+        const { error: notificationError } =
+          await supabaseAdmin
+            .from("notifications")
+            .insert(rows)
+
+        if (notificationError) {
+          throw notificationError
+        }
+
+        notificationSent = rows.length
+      }
+    } catch (notificationError) {
+      // Story upload should remain successful
+      // even if notification insertion fails.
+      console.error(
+        "STORY NOTIFICATION ERROR:",
+        notificationError
+      )
+    }
 
     return NextResponse.json(
       {
         success: true,
         story,
+        notificationSent,
       },
       { status: 201 }
     )
@@ -239,9 +325,7 @@ export async function POST(req: Request) {
     console.error("POST STORY ERROR:", error)
 
     return NextResponse.json(
-      {
-        error: error.message || "Story upload failed",
-      },
+      { error: error.message || "Story upload failed" },
       { status: 500 }
     )
   }
@@ -251,7 +335,6 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const { searchParams } = new URL(req.url)
-
     const id = searchParams.get("id")
 
     if (!id) {
@@ -288,10 +371,9 @@ export async function DELETE(req: Request) {
     console.error("DELETE STORY ERROR:", error)
 
     return NextResponse.json(
-      {
-        error: error.message || "Story delete failed",
-      },
+      { error: error.message || "Story delete failed" },
       { status: 500 }
     )
   }
-      }
+        }
+      
