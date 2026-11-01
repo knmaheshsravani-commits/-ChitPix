@@ -92,13 +92,16 @@ export async function POST(req: Request) {
       )
     }
 
-    const recipientIds = [
-      ...new Set(
-        (followers || [])
-          .map((f: any) => f.follower_id)
-          .filter((id: string) => id && id !== user.id)
-      ),
-    ]
+    const followerIds: string[] = (followers || [])
+  .map((f: any) => f.follower_id)
+  .filter(
+    (id: string, index: number, arr: string[]) =>
+      Boolean(id) &&
+      id !== user.id &&
+      arr.indexOf(id) === index
+  )
+
+const recipientIds = followerIds
 
     if (recipientIds.length === 0) {
       return NextResponse.json({
