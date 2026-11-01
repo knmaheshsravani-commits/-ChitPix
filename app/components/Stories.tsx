@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import StoryViewer from "./StoryViewer"
+import StoryComposer from "./StoryComposer"
 import { supabase } from "../../lib/supabase"
 
 const R2_PUBLIC =
@@ -125,7 +126,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
   const [uploading, setUploading] = useState(false)
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [loadingStories, setLoadingStories] = useState(false)
-
+  const [showComposer, setShowComposer] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   // LOAD ALL USERS STORIES
@@ -285,11 +286,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
 
   // ADD STORY BUTTON
   const handleAddClick = () => {
-    if (typeof onAdd === "function") {
-      onAdd()
-    } else {
-      fileRef.current?.click()
-    }
+  setShowComposer(true)
   }
 
   // UPLOAD STORY
@@ -412,7 +409,16 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
       }
     }
                 }
-            
+    // PUBLISH FROM STORY COMPOSER
+const handleComposerPublish = async (file: File) => {
+  setShowComposer(false)
+
+  await handleFile({
+    target: {
+      files: [file],
+    },
+  })
+}        
   // OPEN STORY
   const openStory = (user: any) => {
     if (!user?.stories?.length) return
@@ -553,7 +559,13 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         )}
 
       </div>
-
+      {/* STORY COMPOSER */}
+{showComposer && (
+  <StoryComposer
+    onClose={() => setShowComposer(false)}
+    onPublish={handleComposerPublish}
+  />
+)}
       {/* STORY VIEWER */}
 
       {selectedUser && (
