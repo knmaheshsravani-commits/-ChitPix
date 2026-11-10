@@ -542,9 +542,9 @@ async function loadConnections(type: "followers" | "following") {
 
     if (followError) throw followError
 
-    const userIds = [
-      ...new Set((followRows || []).map((row: any) => row[column]))
-    ]
+    const userIds = Array.from(
+  new Set((followRows || []).map((row: any) => row[column]))
+)
 
     if (userIds.length === 0) {
       if (type === "followers") setFollowersList([])
