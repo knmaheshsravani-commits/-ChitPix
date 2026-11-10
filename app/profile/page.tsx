@@ -182,7 +182,6 @@ function HighlightsInline({
 
   return (
     <div className="flex gap-5 px-4 mt-5 overflow-x-auto">
-
       <button
         type="button"
         onClick={() =>
@@ -242,7 +241,6 @@ function StoryViewerInline({
 
   return (
     <div className="fixed inset-0 z-[100] mx-auto flex max-w-[470px] flex-col bg-black">
-
       <div className="flex items-center justify-between p-4 text-white">
         <span className="font-bold">
           {users[0]?.title || users[0]?.username}
@@ -283,1688 +281,2568 @@ function StoryViewerInline({
     </div>
   )
 }
-// ==========================================
-// PART 2 / 8
-// PROFILE STATES & SUPABASE DATA
-// ==========================================
+// =====================================
+// PROFILE PAGE
+// PART 2 - STATE & DATABASE FUNCTIONS
+// =====================================
 
 export default function ProfilePage() {
   const router = useRouter()
   const params = useParams()
 
-  const usernameFromUrl = (params as any)?.username
-
   // PROFILE DATA
 
   const [posts, setPosts] = useState<any[]>([])
+  const [activeTab, setActiveTab] = useState("POSTS")
 
-  const [activeTab, setActiveTab] = useState<
-    "POSTS" | "REELS" | "TAGGED"
-  >("POSTS")
-
-  const [followers] = useState(129)
-  const [following] = useState(205)
-
-  const [username, setUsername] = useState("knmahesh")
-
-  const [bio, setBio] = useState(
-    "Welcome to ChitPix\nPhotographer | Creator"
-  )
-
-  const [link, setLink] = useState("chitpix.com")
+  const [username, setUsername] = useState("Loading...")
+  const [fullName, setFullName] = useState("")
+  const [bio, setBio] = useState("")
+  const [link, setLink] = useState("")
   const [photo, setPhoto] = useState("")
 
-  // EDIT PROFILE
+  const [followers, setFollowers] = useState(0)
+  const [following, setFollowing] = useState(0)
+
+  const [currentUserId, setCurrentUserId] = useState("")
+  const [profileUserId, setProfileUserId] = useState("")
+  const [isOwnProfile, setIsOwnProfile] = useState(true)
+
+  // PROFILE EDIT
 
   const [showEdit, setShowEdit] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
-
   const [editName, setEditName] = useState("")
   const [editBio, setEditBio] = useState("")
   const [editLink, setEditLink] = useState("")
-
-  // POSTS
-
-  const [selectedPost, setSelectedPost] = useState<any>(null)
-
   const [uploading, setUploading] = useState(false)
 
+  // PROFILE OPTIONS
+
+  const [showMenu, setShowMenu] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [settingsSection, setSettingsSection] = useState("")
+  const [showActivity, setShowActivity] = useState(false)
+
+  const [showFollowers, setShowFollowers] = useState(false)
+  const [showFollowing, setShowFollowing] = useState(false)
+  const [showArchive, setShowArchive] = useState(false)
+  const [showQR, setShowQR] = useState(false)
+
+  const [selectedPost, setSelectedPost] = useState<any>(null)
+  const [selectedHighlight, setSelectedHighlight] = useState<any>(null)
+
+  // CREATOR FEATURES
+
   const [pinnedPosts, setPinnedPosts] = useState<string[]>([])
+  const [featuredProfile, setFeaturedProfile] = useState(false)
+  const [creatorBadge, setCreatorBadge] = useState("")
 
   const [searchQuery, setSearchQuery] = useState("")
-
   const [archivedPosts, setArchivedPosts] = useState<any[]>([])
+  const [notice, setNotice] = useState("")
 
   const [loading, setLoading] = useState(true)
 
-  // PROFILE MENU
+  // USER SETTINGS
 
-  const [showQR, setShowQR] = useState(false)
+  const [userSettings, setUserSettings] = useState<any>({
+    privateAccount: false,
+    notifications: true,
+    activityStatus: true,
+    commentsAllowed: true,
+    messageRequests: true,
+    saveOriginalPhotos: false,
+    darkMode: false,
+    language: "English",
+  })
 
-  const [showFollowers, setShowFollowers] = useState(false)
-
-  const [showFollowing, setShowFollowing] = useState(false)
-
-  const [showArchive, setShowArchive] = useState(false)
-
-  const [selectedHighlight, setSelectedHighlight] =
-    useState<any>(null)
-
-  // ADDITIONAL PROFILE STATES
-
-  const [currentUserId, setCurrentUserId] = useState("")
-
-  const [isOwnProfile, setIsOwnProfile] = useState(true)
-
-  const [notice, setNotice] = useState("")
-
-  const [showSettings, setShowSettings] = useState(false)
-
-  // ==========================================
-  // LOAD PROFILE FROM SUPABASE
-  // ==========================================
+  // =====================================
+  // LOAD PROFILE AND POSTS
+  // =====================================
 
   useEffect(() => {
-    let cancelled = false
-
-    const fetchProfileData = async () => {
-      setLoading(true)
-
-      try {
-        const {
-          data: { user },
-          error: authError,
-        } = await supabase.auth.getUser()
-
-        if (authError) throw authError
-
-        if (!user) {
-          if (!cancelled) {
-            setNotice("Please login to view your profile.")
-            setLoading(false)
-          }
-
-          return
-        }
-
-        if (cancelled) return
-
-        setCurrentUserId(user.id)
-
-        const { data: profile, error: profileError } =
-          await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .maybeSingle()
-
-        if (profileError) throw profileError
-
-        if (cancelled) return
-
-        const name =
-          profile?.username ||
-          user.email?.split("@")[0] ||
-          "knmahesh"
-
-        setUsername(name)
-        setEditName(name)
-
-        setBio(profile?.bio || "")
-        setEditBio(profile?.bio || "")
-
-        setLink(profile?.website || "")
-        setEditLink(profile?.website || "")
-
-        setPhoto(fixR2Url(profile?.avatar_url))
-
-        // LOAD USER POSTS
-
-        const { data: myPosts, error: postsError } =
-          await supabase
-            .from("posts")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("created_at", {
-              ascending: false,
-            })
-
-        if (postsError) throw postsError
-
-        if (cancelled) return
-
-        // FORMAT POSTS AND REELS
-
-        const mapped = (myPosts || [])
-          .map((post: any) => {
-            const image = fixR2Url(
-              post.image_url ||
-                post.image ||
-                post.r2_url ||
-                post.url ||
-                post
-            )
-
-            const isVideo =
-              String(post.type || "")
-                .toLowerCase()
-                .includes("reel") ||
-              String(post.media_type || "")
-                .toLowerCase()
-                .includes("video") ||
-              String(image)
-                .toLowerCase()
-                .includes(".mp4")
-
-            return {
-              ...post,
-              image,
-              imageUrl: image,
-              r2Url: image,
-              url: image,
-              type: isVideo ? "reels" : "post",
-              username: name,
-              id: post.id,
-              caption: post.caption || "",
-            }
-          })
-          .filter(
-            (post: any) =>
-              post.image && post.image.length > 5
-          )
-
-        if (!cancelled) {
-          setPosts(mapped)
-        }
-
-      } catch (error: any) {
-        console.error(
-          "CHITPIX PROFILE FETCH ERROR:",
-          error
-        )
-
-        if (!cancelled) {
-          setNotice(
-            error?.message || "Profile loading failed."
-          )
-        }
-
-      } finally {
-        if (!cancelled) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchProfileData()
-
-    return () => {
-      cancelled = true
-    }
+    loadProfileData()
   }, [])
 
-  // ==========================================
-  // END PART 2
-  // PART 3 CONTINUES BELOW
-  // ==========================================
-       
-// ==========================================
-// PART 3 / 8
-// PROFILE ACTIONS & EDIT FUNCTIONS
-// ==========================================
+  async function loadProfileData() {
+    try {
+      setLoading(true)
 
-// PROFILE PHOTO UPLOAD
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser()
 
-const handlePhotoChange = async (event: any) => {
-  const file = event.target.files?.[0]
-  event.target.value = ""
+      if (authError) throw authError
 
-  if (!file) return
+      if (!user) {
+        setNotice("Please login to view your profile.")
+        setLoading(false)
+        return
+      }
 
-  if (!file.type.startsWith("image/")) {
-    alert("Please select an image.")
-    return
+      setCurrentUserId(user.id)
+      setProfileUserId(user.id)
+      setIsOwnProfile(true)
+
+      // PROFILE
+
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle()
+
+      if (profileError) {
+        console.error("Profile error:", profileError)
+      }
+
+      if (profile) {
+        setUsername(profile.username || user.email?.split("@")[0] || "user")
+        setFullName(profile.full_name || profile.username || "")
+        setBio(profile.bio || "")
+        setLink(profile.website || "")
+        setPhoto(fixR2Url(profile.avatar_url))
+      } else {
+        setUsername(user.email?.split("@")[0] || "user")
+      }
+
+      // POSTS
+
+      const { data: postData, error: postsError } =
+        await supabase
+          .from("posts")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+
+      if (postsError) {
+        console.error("Posts error:", postsError)
+      }
+
+      const formattedPosts = (postData || []).map(
+        (post: any) => {
+          const mediaUrl = fixR2Url(
+            post.image_url ||
+              post.r2_url ||
+              post.image ||
+              post.url
+          )
+
+          const mediaType =
+            post.media_type ||
+            post.type ||
+            (mediaUrl.match(/\.(mp4|mov|webm)(\?|$)/i)
+              ? "reels"
+              : "post")
+
+          return {
+            ...post,
+            image_url: mediaUrl,
+            type:
+              String(mediaType).toLowerCase().includes("video") ||
+              String(mediaType).toLowerCase().includes("reel")
+                ? "reels"
+                : "post",
+          }
+        }
+      )
+
+      setPosts(formattedPosts)
+
+      // FOLLOWERS COUNT
+      // user_follows: follower_id, following_id
+
+      const { count: followersCount, error: followersError } =
+        await supabase
+          .from("user_follows")
+          .select("*", { count: "exact", head: true })
+          .eq("following_id", user.id)
+
+      if (followersError) {
+        console.error("Followers count error:", followersError)
+      } else {
+        setFollowers(followersCount || 0)
+      }
+
+      // FOLLOWING COUNT
+
+      const { count: followingCount, error: followingError } =
+        await supabase
+          .from("user_follows")
+          .select("*", { count: "exact", head: true })
+          .eq("follower_id", user.id)
+
+      if (followingError) {
+        console.error("Following count error:", followingError)
+      } else {
+        setFollowing(followingCount || 0)
+      }
+
+      // USER SETTINGS
+
+      const { data: settingsData, error: settingsError } =
+        await supabase
+          .from("user_settings")
+          .select("settings")
+          .eq("user_id", user.id)
+          .maybeSingle()
+
+      if (settingsError) {
+        console.error("Settings load error:", settingsError)
+      }
+
+      if (settingsData?.settings) {
+        setUserSettings((previous: any) => ({
+          ...previous,
+          ...settingsData.settings,
+        }))
+
+        setPinnedPosts(
+          settingsData.settings.pinnedPosts || []
+        )
+
+        setFeaturedProfile(
+          settingsData.settings.featuredProfile || false
+        )
+      }
+
+    } catch (error: any) {
+      console.error("Profile loading error:", error)
+      setNotice(error.message || "Unable to load profile.")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (file.size > 10 * 1024 * 1024) {
-    alert("Image must be smaller than 10 MB.")
-    return
-  }
+  // =====================================
+  // SAVE USER SETTINGS
+  // =====================================
 
-  const previousPhoto = photo
-  const localPreview = URL.createObjectURL(file)
+  async function saveUserSettings(updatedSettings: any) {
+    if (!currentUserId) return
 
-  setPhoto(localPreview)
-  setUploading(true)
-
-  try {
-    const fixedUrl = await uploadToR2(file, "avatars")
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      throw new Error("Please login again.")
+    const newSettings = {
+      ...userSettings,
+      ...updatedSettings,
     }
 
-    const { data: existing, error: existingError } =
-      await supabase
-        .from("profiles")
-        .select("id, email")
-        .eq("id", user.id)
-        .maybeSingle()
-
-    if (existingError) throw existingError
-
-    const profileEmail = user.email || existing?.email
-
-    if (!profileEmail) {
-      throw new Error("Login email not found.")
-    }
+    setUserSettings(newSettings)
 
     const { error } = await supabase
-      .from("profiles")
+      .from("user_settings")
       .upsert(
         {
-          id: user.id,
-          email: profileEmail,
-          username,
-          avatar_url: fixedUrl,
-          bio,
-          website: link,
+          user_id: currentUserId,
+          settings: {
+            ...newSettings,
+            pinnedPosts,
+            featuredProfile,
+          },
+          updated_at: new Date().toISOString(),
         },
-        { onConflict: "id" }
-      )
-
-    if (error) throw error
-
-    setPhoto(fixedUrl)
-
-    alert("Profile photo updated successfully! ❤️")
-
-  } catch (error: any) {
-    console.error("PHOTO UPLOAD ERROR:", error)
-
-    setPhoto(previousPhoto)
-
-    alert(
-      error?.message || "Photo upload failed."
-    )
-
-  } finally {
-    URL.revokeObjectURL(localPreview)
-    setUploading(false)
-  }
-}
-
-// EDIT PROFILE OPEN
-
-const openEditProfile = () => {
-  setEditName(username)
-  setEditBio(bio)
-  setEditLink(link)
-  setShowEdit(true)
-}
-
-// SAVE PROFILE
-
-const handleProfileSave = async () => {
-  if (uploading) return
-
-  const newName = editName.trim()
-  const newBio = editBio
-  const newLink = editLink.trim()
-
-  if (!newName) {
-    alert("Username cannot be empty.")
-    return
-  }
-
-  setUploading(true)
-
-  try {
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      throw new Error("Please login again.")
-    }
-
-    const { data: existing, error: existingError } =
-      await supabase
-        .from("profiles")
-        .select("id, email, avatar_url")
-        .eq("id", user.id)
-        .maybeSingle()
-
-    if (existingError) throw existingError
-
-    const profileEmail = user.email || existing?.email
-
-    if (!profileEmail) {
-      throw new Error("Login email not found.")
-    }
-
-    const safeAvatar =
-      photo && !photo.startsWith("blob:")
-        ? photo
-        : existing?.avatar_url || null
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .upsert(
         {
-          id: user.id,
-          email: profileEmail,
-          username: newName,
-          bio: newBio,
-          website: newLink,
-          avatar_url: safeAvatar,
-        },
-        { onConflict: "id" }
+          onConflict: "user_id",
+        }
       )
-      .select(
-        "id, username, avatar_url, bio, website"
-      )
-      .single()
 
-    if (error) throw error
-
-    if (!data || data.id !== user.id) {
-      throw new Error("Profile update verification failed.")
-    }
-
-    setUsername(data.username || newName)
-    setEditName(data.username || newName)
-
-    setBio(data.bio || "")
-    setEditBio(data.bio || "")
-
-    setLink(data.website || "")
-    setEditLink(data.website || "")
-
-    setPhoto(fixR2Url(data.avatar_url))
-
-    setShowEdit(false)
-
-    alert("Profile saved successfully! ❤️")
-
-  } catch (error: any) {
-    console.error("PROFILE SAVE ERROR:", error)
-
-    alert(
-      error?.message || "Profile save failed."
-    )
-
-  } finally {
-    setUploading(false)
-  }
-}
-
-// SHARE PROFILE
-
-const handleShareProfile = async () => {
-  const profileUrl = window.location.href
-
-  try {
-    if (navigator.share) {
-      await navigator.share({
-        title: `${username} on ChitPix`,
-        text: `Follow ${username} on ChitPix!`,
-        url: profileUrl,
-      })
+    if (error) {
+      console.error("Settings save error:", error)
+      setNotice("Settings could not be saved.")
     } else {
-      await navigator.clipboard.writeText(profileUrl)
-      alert("Profile link copied! ❤️")
-    }
-  } catch (error: any) {
-    if (error?.name !== "AbortError") {
-      alert("Unable to share profile.")
+      setNotice("Settings saved successfully.")
     }
   }
-}
 
-// QR PROFILE
+  // =====================================
+  // PROFILE EDIT SAVE
+  // =====================================
 
-const handleQRProfile = async () => {
-  const profileUrl = window.location.href
+  async function handleProfileSave() {
+    if (!currentUserId) return
 
-  try {
-    await navigator.clipboard.writeText(profileUrl)
-    setShowQR(true)
-  } catch {
-    setShowQR(true)
-  }
-}
-
-// FOLLOW / UNFOLLOW
-// Uses existing user_follows table.
-
-const handleFollow = async (targetUserId: string) => {
-  if (!currentUserId) {
-    alert("Please login to follow.")
-    return
-  }
-
-  if (!targetUserId || targetUserId === currentUserId) {
-    return
-  }
-
-  try {
-    const { data: existing, error: checkError } =
-      await supabase
-        .from("user_follows")
-        .select("follower_id")
-        .eq("follower_id", currentUserId)
-        .eq("following_id", targetUserId)
-        .maybeSingle()
-
-    if (checkError) throw checkError
-
-    if (existing) {
+    try {
       const { error } = await supabase
-        .from("user_follows")
-        .delete()
-        .eq("follower_id", currentUserId)
-        .eq("following_id", targetUserId)
+        .from("profiles")
+        .upsert(
+          {
+            id: currentUserId,
+            username: editName.trim() || username,
+            bio: editBio,
+            website: editLink,
+            avatar_url: photo,
+          },
+          {
+            onConflict: "id",
+          }
+        )
 
       if (error) throw error
 
-      alert("Unfollowed successfully.")
-    } else {
-      const { error } = await supabase
-        .from("user_follows")
-        .insert({
-          follower_id: currentUserId,
-          following_id: targetUserId,
-        })
+      setUsername(editName.trim() || username)
+      setFullName(editName.trim() || fullName)
+      setBio(editBio)
+      setLink(editLink)
 
-      if (error && error.code !== "23505") {
-        throw error
+      setShowEdit(false)
+      setNotice("Profile updated successfully!")
+    } catch (error: any) {
+      console.error("Profile save error:", error)
+      setNotice(error.message || "Profile update failed.")
+    }
+  }
+
+  // =====================================
+  // PROFILE PHOTO UPLOAD
+  // =====================================
+
+  async function handlePhotoChange(file: File) {
+    if (!file || !currentUserId) return
+
+    try {
+      setUploading(true)
+
+      const imageUrl = await uploadToR2(file, "avatars")
+
+      const { error } = await supabase
+        .from("profiles")
+        .upsert(
+          {
+            id: currentUserId,
+            avatar_url: imageUrl,
+          },
+          {
+            onConflict: "id",
+          }
+        )
+
+      if (error) throw error
+
+      setPhoto(imageUrl)
+      setNotice("Profile photo updated!")
+    } catch (error: any) {
+      console.error("Photo upload error:", error)
+      setNotice(error.message || "Photo upload failed.")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // =====================================
+  // OPEN SETTINGS SECTION
+  // =====================================
+
+  function openSettingsSection(section: string) {
+    setSettingsSection(section)
+    setShowSettings(true)
+    setShowMenu(false)
+    setShowActivity(false)
+  }
+
+  function closeProfileOverlays() {
+    setShowEdit(false)
+    setShowMenu(false)
+    setShowSettings(false)
+    setShowActivity(false)
+    setShowFollowers(false)
+    setShowFollowing(false)
+    setShowArchive(false)
+    setShowQR(false)
+    setSelectedPost(null)
+    setSelectedHighlight(null)
+  }
+
+  // =====================================
+  // PROFILE SHARE
+  // =====================================
+
+  function getProfileUrl() {
+    if (typeof window === "undefined") return ""
+    return `${window.location.origin}/profile/${username}`
+  }
+
+  async function handleShareProfile() {
+    const url = getProfileUrl()
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${username} on ChitPix`,
+          text: `Check out ${username}'s profile on ChitPix!`,
+          url,
+        })
+      } else {
+        await navigator.clipboard.writeText(url)
+        setNotice("Profile link copied!")
+      }
+    } catch (error) {
+      console.log("Share cancelled or unavailable:", error)
+    }
+  }
+
+  async function handleCopyProfileLink() {
+    try {
+      await navigator.clipboard.writeText(getProfileUrl())
+      setNotice("Profile link copied!")
+    } catch {
+      setNotice("Could not copy profile link.")
+    }
+  }
+
+  function handleQRProfile() {
+    setShowQR(true)
+  }
+
+  // =====================================
+  // FEATURED PROFILE
+  // =====================================
+
+  async function toggleFeaturedProfile() {
+    const nextValue = !featuredProfile
+
+    setFeaturedProfile(nextValue)
+
+    await saveUserSettings({
+      featuredProfile: nextValue,
+    })
+
+    setNotice(
+      nextValue
+        ? "Featured profile enabled!"
+        : "Featured profile disabled."
+    )
+  }
+
+  // =====================================
+  // PIN PROFILE POSTS
+  // =====================================
+
+  async function togglePinPost(postId: string) {
+    let updated: string[]
+
+    if (pinnedPosts.includes(postId)) {
+      updated = pinnedPosts.filter((id) => id !== postId)
+    } else {
+      if (pinnedPosts.length >= 3) {
+        setNotice("You can pin up to 3 posts.")
+        return
       }
 
-      alert("Following successfully! ❤️")
+      updated = [...pinnedPosts, postId]
     }
 
-  } catch (error: any) {
-    console.error("FOLLOW ERROR:", error)
-    alert(error?.message || "Follow action failed.")
+    setPinnedPosts(updated)
+
+    const { error } = await supabase
+      .from("user_settings")
+      .upsert(
+        {
+          user_id: currentUserId,
+          settings: {
+            ...userSettings,
+            pinnedPosts: updated,
+            featuredProfile,
+          },
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id",
+        }
+      )
+
+    if (error) {
+      console.error("Pin save error:", error)
+      setNotice("Could not save pinned posts.")
+    } else {
+      setNotice("Featured posts updated!")
+    }
   }
-}
 
-// PROFILE MENU
+  // =====================================
+  // ARCHIVE POST
+  // =====================================
 
-const openProfileMenu = () => {
-  setShowMenu(true)
-}
+  function archivePost(post: any) {
+    setArchivedPosts((previous) => [
+      ...previous,
+      post,
+    ])
 
-const closeProfileMenu = () => {
-  setShowMenu(false)
-}
+    setPosts((previous) =>
+      previous.filter((item) => item.id !== post.id)
+    )
 
-// PROFILE NOTICE
+    setSelectedPost(null)
+    setNotice("Post moved to archive in this session.")
+  }
 
-const showProfileNotice = (message: string) => {
-  setNotice(message)
-}
+  // =====================================
+  // PROFILE SEARCH
+  // =====================================
 
-// ==========================================
-// END PART 3
-// PART 4 CONTINUES BELOW
-// ==========================================
- 
-// ==========================================
-// PART 4 / 8
-// POSTS, REELS & HIGHLIGHTS
-// ==========================================
+  const filteredPosts = posts.filter((post) =>
+    String(post.caption || "")
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  )
 
-// FILTER PROFILE POSTS
+  const postCount = posts.filter(
+    (post) => post.type === "post"
+  ).length
 
-const profilePosts = posts.filter(
-  (post: any) =>
-    post.type === "post" &&
-    !post.is_archived
-)
+  const reelCount = posts.filter(
+    (post) => post.type === "reels"
+  ).length
 
-const profileReels = posts.filter(
-  (post: any) =>
-    post.type === "reels" &&
-    !post.is_archived
-)
+  const shopPosts = posts.filter(
+    (post) =>
+      Number(post.price || 0) > 0
+  )
 
-const taggedPosts = posts.filter(
-  (post: any) =>
-    post.is_tagged === true
-)
+  // =====================================
+  // CREATOR BADGES
+  // =====================================
 
-// ACTIVE TAB POSTS
+  const creatorBadges = []
 
-const visiblePosts =
-  activeTab === "POSTS"
-    ? profilePosts
-    : activeTab === "REELS"
-      ? profileReels
-      : taggedPosts
+  if (posts.length >= 1) {
+    creatorBadges.push("First Post")
+  }
 
-// POST PREVIEW
+  if (posts.length >= 10) {
+    creatorBadges.push("Active Creator")
+  }
 
-const openPostPreview = (post: any) => {
-  setSelectedPost(post)
-}
+  if (reelCount >= 5) {
+    creatorBadges.push("Reels Creator")
+  }
 
-// CLOSE POST PREVIEW
+  if (followers >= 100) {
+    creatorBadges.push("Community Star")
+  }
 
-const closePostPreview = () => {
-  setSelectedPost(null)
-}
+  // =====================================
+  // PROFILE STATISTICS
+  // =====================================
 
-// CHANGE PROFILE TAB
+  const profileStats = [
+    {
+      label: "Posts",
+      value: posts.length,
+      onClick: () => setActiveTab("POSTS"),
+    },
+    {
+      label: "Followers",
+      value: followers,
+      onClick: () => setShowFollowers(true),
+    },
+    {
+      label: "Following",
+      value: following,
+      onClick: () => setShowFollowing(true),
+    },
+  ]
 
-const changeProfileTab = (
-  tab: "POSTS" | "REELS" | "TAGGED"
-) => {
-  setActiveTab(tab)
-  setSelectedPost(null)
-}
+  // =====================================
+  // NOTICE CLOSE
+  // =====================================
 
-// CHECK VIDEO FILE
+  function closeNotice() {
+    setNotice("")
+  }
 
-const isVideoPost = (post: any) => {
-  const value = String(
-    post?.media_type ||
-    post?.type ||
-    post?.image ||
-    ""
-  ).toLowerCase()
+  // Part 3 continues here...
+  // =====================================
+  // PROFILE MENU ITEMS
+  // =====================================
+
+  const profileMenuItems = [
+    {
+      label: "Settings and privacy",
+      icon: Settings,
+      action: () => openSettingsSection("main"),
+    },
+    {
+      label: "Your activity",
+      icon: Activity,
+      action: () => setShowActivity(true),
+    },
+    {
+      label: "Saved",
+      icon: Bookmark,
+      action: () => openSettingsSection("Saved"),
+    },
+    {
+      label: "Archive",
+      icon: Archive,
+      action: () => setShowArchive(true),
+    },
+    {
+      label: "QR code",
+      icon: QrCode,
+      action: handleQRProfile,
+    },
+    {
+      label: "Share profile",
+      icon: Share2,
+      action: handleShareProfile,
+    },
+  ]
+
+  // =====================================
+  // SETTINGS MENU ITEMS
+  // =====================================
+
+  const settingsMenuItems = [
+    {
+      title: "Your account",
+      items: [
+        { label: "Edit profile", icon: UserRound },
+        { label: "Account privacy", icon: LockKeyhole },
+        { label: "Security", icon: ShieldCheck },
+        { label: "Notifications", icon: Bell },
+        { label: "Your activity", icon: Activity },
+        { label: "Archive", icon: Archive },
+        { label: "Saved", icon: Bookmark },
+      ],
+    },
+    {
+      title: "How others can interact with you",
+      items: [
+        { label: "Messages and story replies", icon: Send },
+        { label: "Comments", icon: MessageCircle },
+        { label: "Tags and mentions", icon: AtSign },
+        { label: "Sharing and reuse", icon: Repeat },
+        { label: "Blocked accounts", icon: Ban },
+        { label: "Restricted accounts", icon: UserPlus },
+      ],
+    },
+    {
+      title: "What you see",
+      items: [
+        { label: "Content preferences", icon: SlidersHorizontal },
+        { label: "Like and share counts", icon: Heart },
+        { label: "Muted accounts", icon: VolumeX },
+      ],
+    },
+    {
+      title: "Your app and media",
+      items: [
+        { label: "Language", icon: Languages },
+        { label: "Accessibility", icon: Accessibility },
+        { label: "Data usage and media quality", icon: Smartphone },
+        { label: "Downloads", icon: Download },
+      ],
+    },
+    {
+      title: "More information and support",
+      items: [
+        { label: "Help", icon: CircleHelp },
+        { label: "About ChitPix", icon: Info },
+        { label: "Report a problem", icon: Flag },
+      ],
+    },
+  ]
+
+  // =====================================
+  // SETTINGS ITEM CLICK
+  // =====================================
+
+  function handleSettingsItemClick(label: string) {
+    if (label === "Edit profile") {
+      setEditName(username)
+      setEditBio(bio)
+      setEditLink(link)
+      setShowEdit(true)
+      setShowSettings(false)
+      return
+    }
+
+    if (label === "Your activity") {
+      setShowActivity(true)
+      setShowSettings(false)
+      return
+    }
+
+    if (label === "Archive") {
+      setShowArchive(true)
+      setShowSettings(false)
+      return
+    }
+
+    if (label === "Saved") {
+      setSettingsSection("Saved")
+      return
+    }
+
+    setSettingsSection(label)
+  }
+
+  // =====================================
+  // POST TAB FILTER
+  // =====================================
+
+  const visiblePosts =
+    activeTab === "POSTS"
+      ? filteredPosts.filter(
+          (post) => post.type === "post"
+        )
+      : activeTab === "REELS"
+      ? filteredPosts.filter(
+          (post) => post.type === "reels"
+        )
+      : filteredPosts
+
+  // =====================================
+  // LOADING SCREEN
+  // =====================================
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-white pb-20">
+        <div className="mx-auto flex min-h-[70vh] max-w-[600px] flex-col items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-pink-500" />
+          <p className="mt-4 text-sm text-gray-500">
+            Loading ChitPix profile...
+          </p>
+        </div>
+        <BottomNav />
+      </main>
+    )
+  }
+
+  // =====================================
+  // MAIN PROFILE PAGE
+  // =====================================
 
   return (
-    value.includes("video") ||
-    value.includes("reel") ||
-    /\.(mp4|mov|webm|m4v)(\?|$)/i.test(value)
-  )
-}
-
-// GET POST IMAGE
-
-const getPostImage = (post: any) => {
-  return fixR2Url(
-    post?.thumbnail_url ||
-    post?.image_url ||
-    post?.image ||
-    post?.r2_url ||
-    post?.url ||
-    ""
-  )
-}
-
-// FORMAT POST DATE
-
-const formatPostDate = (date: any) => {
-  if (!date) return ""
-
-  const parsed = new Date(date)
-
-  if (Number.isNaN(parsed.getTime())) {
-    return ""
-  }
-
-  return parsed.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
-}
-
-// HIGHLIGHT SELECTION
-
-const handleHighlightSelect = (item: any) => {
-  setSelectedHighlight(item)
-}
-
-// CLOSE HIGHLIGHT
-
-const closeHighlight = () => {
-  setSelectedHighlight(null)
-}
-
-// PIN / UNPIN POST
-// Local UI state until database persistence
-// is connected in the later integration step.
-
-const togglePinPost = (postId: string) => {
-  if (!postId) return
-
-  setPinnedPosts(previous =>
-    previous.includes(postId)
-      ? previous.filter(id => id !== postId)
-      : [...previous, postId].slice(0, 3)
-  )
-}
-
-// SEARCH PROFILE POSTS
-
-const searchedPosts = visiblePosts.filter(
-  (post: any) => {
-    const caption = String(
-      post?.caption || ""
-    ).toLowerCase()
-
-    return caption.includes(
-      searchQuery.toLowerCase().trim()
-    )
-  }
-)
-
-// PROFILE POST COUNTS
-
-const totalPostCount = profilePosts.length
-
-const totalReelCount = profileReels.length
-
-// ==========================================
-// END PART 4
-// PART 5 CONTINUES BELOW
-// ==========================================
-// PART 5 / 8
-
-// PROFILE MENU ACTIONS
-const handleMenuAction = (action: string) => {
-  setShowMenu(false)
-
-  switch (action) {
-    case "edit":
-      openEditProfile()
-      break
-
-    case "share":
-      handleShareProfile()
-      break
-
-    case "qr":
-      handleQRProfile()
-      break
-
-    case "archive":
-      setShowArchive(true)
-      break
-
-    case "settings":
-      setShowSettings(true)
-      break
-
-    case "saved":
-      showProfileNotice("Saved posts feature coming soon")
-      break
-
-    case "activity":
-      showProfileNotice("Your activity feature coming soon")
-      break
-
-    case "logout":
-      handleLogout()
-      break
-
-    default:
-      break
-  }
-}
-
-// LOGOUT
-const handleLogout = async () => {
-  const confirmed = window.confirm("Are you sure you want to log out?")
-  if (!confirmed) return
-
-  const { error } = await supabase.auth.signOut()
-
-  if (error) {
-    showProfileNotice(error.message)
-    return
-  }
-
-  router.push("/login")
-}
-
-// EDIT PROFILE FIELD HANDLER
-const updateEditField = (
-  field: "username" | "bio" | "link",
-  value: string
-) => {
-  if (field === "username") setEditUsername(value)
-  if (field === "bio") setEditBio(value)
-  if (field === "link") setEditLink(value)
-}
-
-// CLOSE ALL PROFILE OVERLAYS
-const closeProfileOverlays = () => {
-  setShowMenu(false)
-  setShowQR(false)
-  setShowArchive(false)
-  setShowSettings(false)
-  setShowFollowers(false)
-  setShowFollowing(false)
-  setSelectedPost(null)
-  setSelectedHighlight(null)
-}
-
-// PROFILE SETTINGS NAVIGATION
-const openSettingsSection = (section: string) => {
-  setShowSettings(false)
-
-  if (section === "Edit profile") {
-    openEditProfile()
-    return
-  }
-
-  if (section === "Saved") {
-    handleMenuAction("saved")
-    return
-  }
-
-  if (section === "Archive") {
-    setShowArchive(true)
-    return
-  }
-
-  if (section === "Activity") {
-    handleMenuAction("activity")
-    return
-  }
-
-  if (section === "Notifications") {
-    showProfileNotice("Notification settings coming soon")
-    return
-  }
-
-  if (section === "Privacy") {
-    showProfileNotice("Privacy settings coming soon")
-    return
-  }
-
-  if (section === "Help") {
-    showProfileNotice("Help center coming soon")
-    return
-  }
-}
-
-// ARCHIVE POSTS
-const restoreArchivedPost = (postId: string) => {
-  setArchivedPosts((previous: any[]) =>
-    previous.filter((post: any) => post.id !== postId)
-  )
-
-  setPosts((previous: any[]) =>
-    previous.map((post: any) =>
-      post.id === postId
-        ? { ...post, is_archived: false }
-        : post
-    )
-  )
-
-  showProfileNotice("Post restored")
-}
-
-// ARCHIVE POST LOCALLY
-const archivePost = (postId: string) => {
-  const post = posts.find((item: any) => item.id === postId)
-
-  if (!post) return
-
-  setArchivedPosts((previous: any[]) => [
-    post,
-    ...previous.filter((item: any) => item.id !== postId),
-  ])
-
-  setPosts((previous: any[]) =>
-    previous.map((item: any) =>
-      item.id === postId
-        ? { ...item, is_archived: true }
-        : item
-    )
-  )
-
-  setSelectedPost(null)
-  showProfileNotice("Post moved to archive")
-}
-
-// REMOVE PIN
-const removePinnedPost = (postId: string) => {
-  setPinnedPosts((previous: string[]) =>
-    previous.filter((id: string) => id !== postId)
-  )
-}
-
-// PROFILE NOTICE
-const clearNotice = () => {
-  setNotice("")
-}
-
-// PART 6 CONTINUES BELOW
-// PART 6 / 8
-
-// PROFILE MENU ITEMS
-const profileMenuItems = [
-  {
-    label: "Settings and activity",
-    icon: Settings,
-    action: "settings",
-  },
-  {
-    label: "Your activity",
-    icon: Activity,
-    action: "activity",
-  },
-  {
-    label: "Archive",
-    icon: Archive,
-    action: "archive",
-  },
-  {
-    label: "Saved",
-    icon: Bookmark,
-    action: "saved",
-  },
-  {
-    label: "QR code",
-    icon: QrCode,
-    action: "qr",
-  },
-  {
-    label: "Share profile",
-    icon: Share2,
-    action: "share",
-  },
-  {
-    label: "Log out",
-    icon: LogOut,
-    action: "logout",
-  },
-]
-
-// SETTINGS MENU ITEMS
-const settingsMenuItems = [
-  {
-    label: "Edit profile",
-    description: "Update your profile information",
-    icon: UserRound,
-  },
-  {
-    label: "Notifications",
-    description: "Manage your notifications",
-    icon: Bell,
-  },
-  {
-    label: "Privacy",
-    description: "Control who can see your content",
-    icon: LockKeyhole,
-  },
-  {
-    label: "Saved",
-    description: "Your saved posts",
-    icon: Bookmark,
-  },
-  {
-    label: "Archive",
-    description: "Your archived posts",
-    icon: Archive,
-  },
-  {
-    label: "Activity",
-    description: "Your account activity",
-    icon: Activity,
-  },
-  {
-    label: "Help",
-    description: "Help and support",
-    icon: CircleHelp,
-  },
-]
-
-// PROFILE STATISTICS
-const profileStats = [
-  {
-    label: "Posts",
-    value: totalPostCount,
-    action: () => changeProfileTab("POSTS"),
-  },
-  {
-    label: "Followers",
-    value: followers,
-    action: () => setShowFollowers(true),
-  },
-  {
-    label: "Following",
-    value: following,
-    action: () => setShowFollowing(true),
-  },
-]
-
-// GET USER INITIALS
-const getUserInitials = (value: string) => {
-  const cleaned = String(value || "U").trim()
-
-  return cleaned
-    .slice(0, 2)
-    .toUpperCase()
-}
-
-// FORMAT COUNTS
-const formatCount = (value: number) => {
-  if (value >= 1000000) {
-    return `${(value / 1000000).toFixed(1)}M`
-  }
-
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}K`
-  }
-
-  return String(value)
-}
-
-// POST GRID EMPTY MESSAGE
-const getEmptyMessage = () => {
-  if (activeTab === "REELS") {
-    return {
-      title: "No Reels Yet",
-      description: "Videos you share will appear here.",
-    }
-  }
-
-  if (activeTab === "TAGGED") {
-    return {
-      title: "No Tagged Posts",
-      description: "Photos and videos you're tagged in will appear here.",
-    }
-  }
-
-  return {
-    title: "Share Your First Photo",
-    description: "When you share photos, they will appear on your profile.",
-  }
-}
-
-// POST ACTION HANDLER
-const handlePostAction = (action: string, post: any) => {
-  if (action === "view") {
-    openPostPreview(post)
-    return
-  }
-
-  if (action === "pin") {
-    togglePinPost(post.id)
-    showProfileNotice(
-      pinnedPosts.includes(post.id)
-        ? "Post unpinned"
-        : "Post pinned"
-    )
-    return
-  }
-
-  if (action === "archive") {
-    archivePost(post.id)
-    return
-  }
-
-  if (action === "share") {
-    handleShareProfile()
-    return
-  }
-}
-
-// CHECK WHETHER POST IS PINNED
-const isPostPinned = (postId: string) => {
-  return pinnedPosts.includes(postId)
-}
-
-// SORT PINNED POSTS FIRST
-const sortedVisiblePosts = [...searchedPosts].sort(
-  (a: any, b: any) => {
-    const aPinned = pinnedPosts.includes(a.id) ? 1 : 0
-    const bPinned = pinnedPosts.includes(b.id) ? 1 : 0
-
-    return bPinned - aPinned
-  }
-)
-
-// PART 7 CONTINUES BELOW
-// PART 7 / 8
-
-return (
-  <main className="min-h-screen bg-white text-gray-900 pb-24">
-
-    {/* TOP HEADER */}
-    <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur">
-      <div className="flex items-center gap-2">
-        <h1 className="text-xl font-bold tracking-tight">
-          {username || "ChitPix"}
-        </h1>
-        <icon className="hidden" />
-      </div>
-
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => showProfileNotice("Create post feature coming soon")}
-          className="rounded-full p-2 hover:bg-gray-100"
-          aria-label="Create post"
-        >
-          <Plus size={24} />
-        </button>
-
-        <button
-          onClick={() => setShowMenu(true)}
-          className="rounded-full p-2 hover:bg-gray-100"
-          aria-label="Open menu"
-        >
-          <Menu size={24} />
-        </button>
-      </div>
-    </header>
-
-    {/* PROFILE DETAILS */}
-    <section className="px-4 pt-5">
-
-      <div className="flex items-center gap-5">
-
-        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-gray-100 ring-2 ring-gray-200">
-          {photo ? (
-            <img
-              src={fixR2Url(photo)}
-              alt="Profile"
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-2xl font-bold text-gray-500">
-              {getUserInitials(username)}
+    <main className="mx-auto min-h-screen w-full max-w-[600px] bg-white pb-24 text-gray-900">
+
+      {/* TOP HEADER */}
+
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight">
+            {username}
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-5">
+          <button
+            type="button"
+            onClick={() => openSettingsSection("main")}
+            aria-label="Settings"
+          >
+            <Plus size={25} strokeWidth={1.8} />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowMenu(true)}
+            aria-label="Profile menu"
+          >
+            <Menu size={25} strokeWidth={1.8} />
+          </button>
+        </div>
+      </header>
+
+      {/* PROFILE DETAILS */}
+
+      <section className="px-4 pt-5">
+
+        <div className="flex items-center gap-5">
+
+          {/* PROFILE PHOTO */}
+
+          <div className="relative shrink-0">
+            <div className="h-[88px] w-[88px] overflow-hidden rounded-full border border-gray-200 bg-gray-100">
+              {photo ? (
+                <img
+                  src={photo}
+                  alt="Profile photo"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <UserRound size={42} className="text-gray-400" />
+                </div>
+              )}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setShowEdit(true)}
+              className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-white"
+              aria-label="Edit profile photo"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+
+          {/* PROFILE STATS */}
+
+          <div className="grid flex-1 grid-cols-3 text-center">
+
+            {profileStats.map((stat) => (
+              <button
+                type="button"
+                key={stat.label}
+                onClick={stat.onClick}
+                className="flex flex-col items-center"
+              >
+                <span className="text-lg font-bold">
+                  {stat.value}
+                </span>
+
+                <span className="text-xs text-gray-600">
+                  {stat.label}
+                </span>
+              </button>
+            ))}
+
+          </div>
+        </div>
+
+        {/* NAME AND BIO */}
+
+        <div className="mt-4">
+          <p className="text-sm font-bold">
+            {fullName || username}
+          </p>
+
+          {bio && (
+            <p className="mt-1 whitespace-pre-wrap text-sm">
+              {bio}
+            </p>
+          )}
+
+          {link && (
+            <a
+              href={
+                link.startsWith("http")
+                  ? link
+                  : `https://${link}`
+              }
+              target="_blank"
+              rel="noreferrer"
+              className="mt-1 block break-all text-sm font-semibold text-blue-700"
+            >
+              {link}
+            </a>
           )}
         </div>
 
-        <div className="grid flex-1 grid-cols-3 text-center">
-          {profileStats.map((stat) => (
-            <button
-              key={stat.label}
-              onClick={stat.action}
-              className="rounded-lg py-2 hover:bg-gray-50"
-            >
-              <p className="text-lg font-bold">
-                {formatCount(stat.value)}
-              </p>
-              <p className="text-xs text-gray-500">
-                {stat.label}
-              </p>
-            </button>
-          ))}
+        {/* CREATOR BADGES */}
+
+        {creatorBadges.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {creatorBadges.map((badge) => (
+              <span
+                key={badge}
+                className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700"
+              >
+                ⭐ {badge}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* FEATURED PROFILE LABEL */}
+
+        {featuredProfile && (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-800">
+            <Star size={14} />
+            Featured Profile
+          </div>
+        )}
+
+        {/* PROFILE ACTION BUTTONS */}
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+
+          <button
+            type="button"
+            onClick={() => {
+              setEditName(username)
+              setEditBio(bio)
+              setEditLink(link)
+              setShowEdit(true)
+            }}
+            className="rounded-lg bg-gray-100 py-2 text-sm font-semibold"
+          >
+            Edit profile
+          </button>
+
+          <button
+            type="button"
+            onClick={handleShareProfile}
+            className="rounded-lg bg-gray-100 py-2 text-sm font-semibold"
+          >
+            Share profile
+          </button>
+
         </div>
 
-      </div>
+        {/* CREATOR FEATURE BUTTONS */}
 
-      {/* BIO */}
-      <div className="mt-4">
-        <h2 className="font-bold">{username || "ChitPix User"}</h2>
+        <div className="mt-2 grid grid-cols-2 gap-2">
 
-        {bio && (
-          <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">
-            {bio}
-          </p>
-        )}
-
-        {link && (
-          <a
-            href={link.startsWith("http") ? link : `https://${link}`}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-1 block text-sm font-semibold text-blue-600"
+          <button
+            type="button"
+            onClick={() => openSettingsSection("Creator Dashboard")}
+            className="rounded-lg bg-gray-100 py-2 text-sm font-semibold"
           >
-            {link}
-          </a>
-        )}
-      </div>
+            <BarChart3 size={16} className="mr-1 inline" />
+            Creator Dashboard
+          </button>
 
-      {/* PROFILE BUTTONS */}
-      <div className="mt-4 flex gap-2">
-        {isOwnProfile ? (
-          <>
-            <button
-              onClick={openEditProfile}
-              className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold hover:bg-gray-200"
-            >
-              Edit profile
-            </button>
+          <button
+            type="button"
+            onClick={toggleFeaturedProfile}
+            className="rounded-lg bg-gray-100 py-2 text-sm font-semibold"
+          >
+            <Star size={16} className="mr-1 inline" />
+            {featuredProfile ? "Unfeature Profile" : "Featured Profile"}
+          </button>
 
-            <button
-              onClick={handleShareProfile}
-              className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold hover:bg-gray-200"
-            >
-              Share profile
-            </button>
+        </div>
 
-            <button
-              onClick={() => setShowQR(true)}
-              className="rounded-lg bg-gray-100 px-3 py-2 hover:bg-gray-200"
-              aria-label="QR code"
-            >
-              <QrCode size={18} />
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => currentUserId && handleFollow(currentUserId)}
-              className="flex-1 rounded-lg bg-blue-600 py-2 text-sm font-semibold text-white"
-            >
-              Follow
-            </button>
+      </section>
 
-            <button
-              onClick={() => showProfileNotice("Messaging feature coming soon")}
-              className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold"
-            >
-              Message
-            </button>
-          </>
-        )}
-      </div>
+      {/* HIGHLIGHTS */}
 
-    </section>
-
-    {/* HIGHLIGHTS */}
-    <section className="mt-6">
       <HighlightsInline
         username={username}
-        onSelect={handleHighlightSelect}
+        onSelect={(item: any) => setSelectedHighlight(item)}
       />
-    </section>
 
-    {/* PROFILE TABS */}
-    <div className="mt-6 grid grid-cols-3 border-t border-gray-100">
-      {[
-        { id: "POSTS", icon: Grid3X3 },
-        { id: "REELS", icon: Clapperboard },
-        { id: "TAGGED", icon: Users },
-      ].map((tab) => {
-        const TabIcon = tab.icon
+      {/* PROFILE SEARCH */}
 
-        return (
-          <button
-            key={tab.id}
-            onClick={() => changeProfileTab(tab.id as any)}
-            className={`flex items-center justify-center border-b-2 py-3 ${
-              activeTab === tab.id
-                ? "border-gray-900 text-gray-900"
-                : "border-transparent text-gray-400"
-            }`}
-            aria-label={tab.id}
-          >
-            <TabIcon size={21} />
-          </button>
-        )
-      })}
-    </div>
+      <div className="mx-4 mt-5 flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2">
+        <Search size={18} className="text-gray-500" />
 
-    {/* SEARCH POSTS */}
-    <div className="px-3 py-3">
-      <div className="flex items-center gap-2 rounded-lg bg-gray-100 px-3">
-        <Search size={17} className="text-gray-500" />
         <input
           value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search posts..."
-          className="w-full bg-transparent py-2 text-sm outline-none"
+          onChange={(event) =>
+            setSearchQuery(event.target.value)
+          }
+          placeholder="Search your posts..."
+          className="w-full bg-transparent text-sm outline-none"
         />
-      </div>
-    </div>
 
-    {/* POSTS GRID */}
-    {loading ? (
-      <div className="grid grid-cols-3 gap-0.5">
-        {Array.from({ length: 9 }).map((_, index) => (
-          <div
-            key={index}
-            className="aspect-square animate-pulse bg-gray-100"
-          />
-        ))}
-      </div>
-    ) : sortedVisiblePosts.length > 0 ? (
-      <div className="grid grid-cols-3 gap-0.5">
-        {sortedVisiblePosts.map((post: any) => (
+        {searchQuery && (
           <button
+            type="button"
+            onClick={() => setSearchQuery("")}
+          >
+            <X size={17} />
+          </button>
+        )}
+      </div>
+
+      {/* PROFILE TABS */}
+
+      <div className="mt-5 grid grid-cols-3 border-t border-gray-200">
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("POSTS")}
+          className={`flex items-center justify-center gap-2 border-t-2 py-3 text-xs font-semibold ${
+            activeTab === "POSTS"
+              ? "border-black text-black"
+              : "border-transparent text-gray-400"
+          }`}
+        >
+          <Grid3X3 size={19} />
+          POSTS
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("REELS")}
+          className={`flex items-center justify-center gap-2 border-t-2 py-3 text-xs font-semibold ${
+            activeTab === "REELS"
+              ? "border-black text-black"
+              : "border-transparent text-gray-400"
+          }`}
+        >
+          <Clapperboard size={19} />
+          REELS
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("TAGGED")}
+          className={`flex items-center justify-center gap-2 border-t-2 py-3 text-xs font-semibold ${
+            activeTab === "TAGGED"
+              ? "border-black text-black"
+              : "border-transparent text-gray-400"
+          }`}
+        >
+          <Users size={19} />
+          TAGGED
+        </button>
+
+      </div>
+
+      {/* POST GRID */}
+
+      <section className="grid grid-cols-3 gap-[2px]">
+
+        {visiblePosts.map((post: any) => (
+          <button
+            type="button"
             key={post.id}
-            onClick={() => openPostPreview(post)}
+            onClick={() => setSelectedPost(post)}
             className="relative aspect-square overflow-hidden bg-gray-100"
           >
-            {getPostImage(post) ? (
+            {post.image_url ? (
               <img
-                src={getPostImage(post)}
-                alt={post.caption || "Post"}
-                loading="lazy"
+                src={post.image_url}
+                alt={post.caption || "ChitPix post"}
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-gray-400">
-                <Camera size={28} />
+              <div className="flex h-full items-center justify-center">
+                <Camera size={25} className="text-gray-400" />
               </div>
             )}
 
-            {isVideoPost(post) && (
+            {post.type === "reels" && (
               <div className="absolute right-2 top-2 text-white drop-shadow">
                 <Clapperboard size={19} />
               </div>
             )}
 
-            {isPostPinned(post.id) && (
-              <div className="absolute left-2 top-2 rounded bg-black/60 p-1 text-white">
-                <Star size={13} />
+            {pinnedPosts.includes(String(post.id)) && (
+              <div className="absolute left-2 top-2 text-white drop-shadow">
+                <Star size={18} fill="white" />
               </div>
             )}
+
           </button>
         ))}
-      </div>
-    ) : (
-      <div className="px-6 py-14 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-gray-900">
-          {activeTab === "REELS" ? (
-            <Clapperboard size={30} />
-          ) : activeTab === "TAGGED" ? (
-            <Users size={30} />
-          ) : (
-            <Camera size={30} />
-          )}
-        </div>
 
-        <h3 className="text-lg font-bold">
-          {getEmptyMessage().title}
-        </h3>
+      </section>
 
-        <p className="mt-1 text-sm text-gray-500">
-          {getEmptyMessage().description}
-        </p>
-      </div>
-    )}
+      {/* EMPTY POSTS */}
 
-    {/* BOTTOM NAVIGATION */}
-    <BottomNav />
-
-    {/* PART 8 CONTINUES BELOW */}
-  </main>
-)
- {/* PART 8 / 8 - EDIT PROFILE MODAL */}
-
-{showEdit && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
-
-      <div className="flex items-center justify-between border-b p-4">
-        <button onClick={() => setShowEdit(false)}>
-          <X size={22} />
-        </button>
-
-        <h2 className="font-bold">Edit Profile</h2>
-
-        <button
-          onClick={handleProfileSave}
-          disabled={uploading}
-          className="font-semibold text-blue-600 disabled:opacity-50"
-        >
-          {uploading ? "Saving..." : "Done"}
-        </button>
-      </div>
-
-      <div className="space-y-5 p-5">
-
-        <div className="flex flex-col items-center">
-          <div className="h-24 w-24 overflow-hidden rounded-full bg-gray-100">
-            {photo ? (
-              <img
-                src={fixR2Url(photo)}
-                alt="Profile"
-                className="h-full w-full object-cover"
-              />
+      {visiblePosts.length === 0 && (
+        <div className="flex flex-col items-center justify-center px-5 py-14 text-center">
+          <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full border-2 border-gray-900">
+            {activeTab === "REELS" ? (
+              <Clapperboard size={30} />
             ) : (
-              <div className="flex h-full items-center justify-center text-2xl font-bold">
-                {getUserInitials(username)}
-              </div>
+              <Camera size={30} />
             )}
           </div>
 
-          <label className="mt-3 cursor-pointer font-semibold text-blue-600">
-            Change profile photo
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0]
-                if (file) handlePhotoChange(file)
-              }}
-            />
-          </label>
-        </div>
+          <h2 className="text-lg font-bold">
+            {searchQuery
+              ? "No matching posts"
+              : activeTab === "REELS"
+              ? "No Reels Yet"
+              : activeTab === "TAGGED"
+              ? "No Tagged Posts"
+              : "No Posts Yet"}
+          </h2>
 
-        <div>
-          <label className="mb-1 block text-sm font-semibold">Username</label>
-          <input
-            value={editName}
-            onChange={(event) => setEditName(event.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-blue-500"
-            placeholder="Username"
-          />
-        </div>
-
-        <div>
-          <label className="mb-1 block text-sm font-semibold">Bio</label>
-          <textarea
-            value={editBio}
-            onChange={(event) => setEditBio(event.target.value)}
-            rows={3}
-            maxLength={150}
-            className="w-full resize-none rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-blue-500"
-            placeholder="Write something about yourself..."
-          />
-          <p className="mt-1 text-right text-xs text-gray-400">
-            {editBio.length}/150
+          <p className="mt-1 text-sm text-gray-500">
+            {searchQuery
+              ? "Try another search."
+              : "Your ChitPix posts will appear here."}
           </p>
         </div>
+      )}
 
-        <div>
-          <label className="mb-1 block text-sm font-semibold">Website</label>
-          <input
-            value={editLink}
-            onChange={(event) => setEditLink(event.target.value)}
-            className="w-full rounded-lg border border-gray-200 px-3 py-3 outline-none focus:border-blue-500"
-            placeholder="https://yourwebsite.com"
-          />
-        </div>
+      {/* PART 4 CONTINUES BELOW */}
+            {/* =====================================
+          CHITPIX MINI SHOP
+      ===================================== */}
 
-      </div>
-    </div>
-  </div>
-)}
-
-{/* PROFILE MENU */}
-
-{showMenu && (
-  <div
-    className="fixed inset-0 z-50 bg-black/40"
-    onClick={() => setShowMenu(false)}
-  >
-    <div
-      className="absolute right-0 top-0 h-full w-[82%] max-w-sm overflow-y-auto rounded-l-2xl bg-white p-5 shadow-xl"
-      onClick={(event) => event.stopPropagation()}
-    >
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold">Menu</h2>
-        <button onClick={() => setShowMenu(false)}>
-          <X size={23} />
-        </button>
-      </div>
-
-      {profileMenuItems.map((item) => {
-        const ItemIcon = item.icon
-
-        return (
-          <button
-            key={item.action}
-            onClick={() => handleMenuAction(item.action)}
-            className="flex w-full items-center gap-4 rounded-xl px-3 py-4 text-left hover:bg-gray-100"
-          >
-            <ItemIcon size={22} />
-            <span className="font-medium">{item.label}</span>
-            <ChevronRight size={18} className="ml-auto text-gray-400" />
-          </button>
-        )
-      })}
-    </div>
-  </div>
-)}
-
-{/* SETTINGS */}
-
-{showSettings && (
-  <div className="fixed inset-0 z-50 overflow-y-auto bg-white">
-
-    <div className="sticky top-0 flex items-center gap-4 border-b bg-white p-4">
-      <button onClick={() => setShowSettings(false)}>
-        <ArrowLeft size={23} />
-      </button>
-      <h2 className="text-xl font-bold">Settings and activity</h2>
-    </div>
-
-    <div className="p-4">
-      {settingsMenuItems.map((item) => {
-        const ItemIcon = item.icon
-
-        return (
-          <button
-            key={item.label}
-            onClick={() => openSettingsSection(item.label)}
-            className="flex w-full items-center gap-4 rounded-xl px-3 py-4 text-left hover:bg-gray-50"
-          >
-            <ItemIcon size={23} />
-            <div className="flex-1">
-              <p className="font-semibold">{item.label}</p>
-              <p className="text-xs text-gray-500">{item.description}</p>
+      {activeTab === "SHOP" && (
+        <section className="px-4 py-5">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">
+                ChitPix Mini Shop
+              </h2>
+              <p className="text-xs text-gray-500">
+                Products shared on your profile
+              </p>
             </div>
-            <ChevronRight size={18} className="text-gray-400" />
-          </button>
-        )
-      })}
 
-      <button
-        onClick={() => handleMenuAction("logout")}
-        className="mt-5 flex w-full items-center gap-3 rounded-xl p-4 font-semibold text-red-600 hover:bg-red-50"
-      >
-        <LogOut size={22} />
-        Log out
-      </button>
-    </div>
-  </div>
-)}
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold">
+              {shopPosts.length} Items
+            </span>
+          </div>
 
-{/* ARCHIVE */}
+          {shopPosts.length === 0 ? (
+            <div className="rounded-xl bg-gray-50 px-5 py-10 text-center">
+              <ShoppingBagIcon />
+              <h3 className="mt-3 font-bold">
+                Your shop is empty
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Add a price to a post to show it here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {shopPosts.map((post: any) => (
+                <button
+                  type="button"
+                  key={post.id}
+                  onClick={() => setSelectedPost(post)}
+                  className="overflow-hidden rounded-xl border border-gray-100 text-left"
+                >
+                  <div className="aspect-square bg-gray-100">
+                    {post.image_url && (
+                      <img
+                        src={post.image_url}
+                        alt={post.caption || "Shop item"}
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
 
-{showArchive && (
-  <div className="fixed inset-0 z-50 overflow-y-auto bg-white">
+                  <div className="p-3">
+                    <p className="line-clamp-2 text-sm font-medium">
+                      {post.caption || "ChitPix item"}
+                    </p>
+                    <p className="mt-1 font-bold text-green-700">
+                      ₹{Number(post.price).toLocaleString("en-IN")}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
-    <div className="sticky top-0 flex items-center gap-4 border-b bg-white p-4">
-      <button onClick={() => setShowArchive(false)}>
-        <ArrowLeft size={23} />
-      </button>
-      <h2 className="text-xl font-bold">Archive</h2>
-    </div>
+      {/* =====================================
+          CREATOR DASHBOARD
+      ===================================== */}
 
-    {archivedPosts.length > 0 ? (
-      <div className="grid grid-cols-3 gap-0.5">
-        {archivedPosts.map((post: any) => (
-          <div key={post.id} className="relative aspect-square bg-gray-100">
-            {getPostImage(post) && (
-              <img
-                src={getPostImage(post)}
-                alt="Archived post"
-                className="h-full w-full object-cover"
-              />
-            )}
+      {settingsSection === "Creator Dashboard" && (
+        <section className="mx-4 my-5 rounded-2xl border border-gray-200 p-4">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold">
+                Creator Dashboard
+              </h2>
+              <p className="text-xs text-gray-500">
+                Your ChitPix creator overview
+              </p>
+            </div>
 
             <button
-              onClick={() => restoreArchivedPost(post.id)}
-              className="absolute inset-x-1 bottom-1 rounded-md bg-white/90 py-2 text-xs font-bold"
+              type="button"
+              onClick={() => setSettingsSection("")}
+              className="rounded-full bg-gray-100 p-2"
             >
-              Restore
+              <X size={18} />
             </button>
           </div>
-        ))}
-      </div>
-    ) : (
-      <div className="px-6 py-20 text-center">
-        <Archive size={45} className="mx-auto mb-4 text-gray-400" />
-        <h3 className="text-lg font-bold">No archived posts</h3>
-        <p className="mt-2 text-sm text-gray-500">
-          Posts you archive will appear here.
-        </p>
-      </div>
-    )}
-  </div>
-)}
 
-{/* QR PROFILE */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-gray-50 p-4">
+              <Camera size={21} />
+              <p className="mt-2 text-2xl font-bold">
+                {postCount}
+              </p>
+              <p className="text-xs text-gray-500">
+                Photo Posts
+              </p>
+            </div>
 
-{showQR && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5">
-    <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center">
+            <div className="rounded-xl bg-gray-50 p-4">
+              <Clapperboard size={21} />
+              <p className="mt-2 text-2xl font-bold">
+                {reelCount}
+              </p>
+              <p className="text-xs text-gray-500">
+                Reels
+              </p>
+            </div>
 
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold">Share Profile</h2>
-        <button onClick={() => setShowQR(false)}>
-          <X size={22} />
+            <div className="rounded-xl bg-gray-50 p-4">
+              <Users size={21} />
+              <p className="mt-2 text-2xl font-bold">
+                {followers}
+              </p>
+              <p className="text-xs text-gray-500">
+                Followers
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-gray-50 p-4">
+              <ShoppingBagIcon />
+              <p className="mt-2 text-2xl font-bold">
+                {shopPosts.length}
+              </p>
+              <p className="text-xs text-gray-500">
+                Shop Items
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-xl bg-blue-50 p-3">
+            <p className="text-sm font-semibold text-blue-900">
+              Insights information
+            </p>
+            <p className="mt-1 text-xs text-blue-800">
+              Views, reach and earnings are not available yet.
+              ChitPix needs post-view and earnings tracking
+              before these numbers can be displayed.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* =====================================
+          SHOP TAB BUTTON
+      ===================================== */}
+
+      <div className="mx-4 mt-3 grid grid-cols-4 gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab("POSTS")}
+          className={`rounded-lg py-2 text-xs font-semibold ${
+            activeTab === "POSTS"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          Posts
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("REELS")}
+          className={`rounded-lg py-2 text-xs font-semibold ${
+            activeTab === "REELS"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          Reels
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("TAGGED")}
+          className={`rounded-lg py-2 text-xs font-semibold ${
+            activeTab === "TAGGED"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          Tagged
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("SHOP")}
+          className={`rounded-lg py-2 text-xs font-semibold ${
+            activeTab === "SHOP"
+              ? "bg-black text-white"
+              : "bg-gray-100 text-gray-700"
+          }`}
+        >
+          Shop
         </button>
       </div>
 
-      <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-xl bg-gray-100">
-        <QrCode size={85} />
-      </div>
+      {/* =====================================
+          SELECTED POST DETAILS
+      ===================================== */}
 
-      <h3 className="mt-4 font-bold">{username}</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        Share your ChitPix profile with friends.
-      </p>
+      {selectedPost && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-[430px] overflow-hidden rounded-2xl bg-white">
 
-      <button
-        onClick={handleShareProfile}
-        className="mt-5 w-full rounded-xl bg-blue-600 py-3 font-semibold text-white"
-      >
-        <span className="inline-flex items-center gap-2">
-          <Share2 size={18} />
-          Share profile
-        </span>
-      </button>
-    </div>
-  </div>
-)}
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="font-bold">
+                Post details
+              </h3>
 
-{/* POST PREVIEW */}
+              <button
+                type="button"
+                onClick={() => setSelectedPost(null)}
+              >
+                <X size={23} />
+              </button>
+            </div>
 
-{selectedPost && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-3">
+            {selectedPost.image_url && (
+              <div className="max-h-[55vh] bg-black">
+                <img
+                  src={selectedPost.image_url}
+                  alt="Selected post"
+                  className="mx-auto max-h-[55vh] w-full object-contain"
+                />
+              </div>
+            )}
 
-    <button
-      onClick={closePostPreview}
-      className="absolute right-5 top-5 z-10 rounded-full bg-white/20 p-2 text-white"
-    >
-      <X size={25} />
-    </button>
+            <div className="space-y-3 p-4">
+              <p className="break-words text-sm">
+                {selectedPost.caption || "No caption"}
+              </p>
 
-    <div className="w-full max-w-lg overflow-hidden rounded-xl bg-white">
+              {Number(selectedPost.price || 0) > 0 && (
+                <p className="font-bold text-green-700">
+                  ₹{Number(selectedPost.price).toLocaleString("en-IN")}
+                </p>
+              )}
 
-      {getPostImage(selectedPost) && (
-        <img
-          src={getPostImage(selectedPost)}
-          alt={selectedPost.caption || "Post"}
-          className="max-h-[65vh] w-full bg-black object-contain"
+              <button
+                type="button"
+                onClick={() =>
+                  togglePinPost(String(selectedPost.id))
+                }
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 text-sm font-semibold"
+              >
+                <Star size={17} />
+                {pinnedPosts.includes(String(selectedPost.id))
+                  ? "Unpin from profile"
+                  : "Pin to profile"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => archivePost(selectedPost)}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 text-sm font-semibold"
+              >
+                <Archive size={17} />
+                Archive post
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================
+          SELECTED HIGHLIGHT
+      ===================================== */}
+
+      {selectedHighlight && (
+        <StoryViewerInline
+          users={[selectedHighlight]}
+          onClose={() => setSelectedHighlight(null)}
         />
       )}
 
-      <div className="p-4">
-        <p className="font-semibold">{username}</p>
+      {/* =====================================
+          PART 5 CONTINUES BELOW
+      ===================================== */}
+            {/* =====================================
+          SETTINGS SCREEN
+      ===================================== */}
 
-        {selectedPost.caption && (
-          <p className="mt-2 whitespace-pre-wrap text-sm">
-            {selectedPost.caption}
-          </p>
-        )}
+      {showSettings && (
+        <div className="fixed inset-0 z-[90] overflow-y-auto bg-white">
 
-        <p className="mt-2 text-xs text-gray-400">
-          {formatPostDate(selectedPost.created_at)}
-        </p>
+          {/* SETTINGS HEADER */}
 
-        {isOwnProfile && (
-          <div className="mt-4 flex gap-2">
+          <header className="sticky top-0 z-10 flex items-center gap-4 border-b bg-white px-4 py-4">
             <button
-              onClick={() => handlePostAction("pin", selectedPost)}
-              className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold"
+              type="button"
+              onClick={() => {
+                if (settingsSection && settingsSection !== "main") {
+                  setSettingsSection("main")
+                } else {
+                  setShowSettings(false)
+                }
+              }}
             >
-              {isPostPinned(selectedPost.id) ? "Unpin" : "Pin"}
+              <ArrowLeft size={23} />
             </button>
 
-            <button
-              onClick={() => handlePostAction("archive", selectedPost)}
-              className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold"
-            >
-              Archive
-            </button>
+            <h2 className="text-lg font-bold">
+              {settingsSection === "main"
+                ? "Settings and privacy"
+                : settingsSection}
+            </h2>
+          </header>
+
+          {/* MAIN SETTINGS MENU */}
+
+          {settingsSection === "main" && (
+            <div className="mx-auto max-w-[600px] px-4 py-4">
+
+              <div className="mb-5 rounded-xl bg-gray-50 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200">
+                    <UserRound size={25} />
+                  </div>
+
+                  <div>
+                    <p className="font-bold">{username}</p>
+                    <p className="text-xs text-gray-500">
+                      ChitPix account settings
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {settingsMenuItems.map((group: any) => (
+                <section key={group.title} className="mb-6">
+
+                  <h3 className="mb-2 text-sm font-bold text-gray-500">
+                    {group.title}
+                  </h3>
+
+                  <div className="divide-y divide-gray-100">
+                    {group.items.map((item: any) => {
+                      const Icon = item.icon
+
+                      return (
+                        <button
+                          type="button"
+                          key={item.label}
+                          onClick={() =>
+                            handleSettingsItemClick(item.label)
+                          }
+                          className="flex w-full items-center gap-4 py-4 text-left"
+                        >
+                          <Icon size={21} strokeWidth={1.7} />
+
+                          <span className="flex-1 text-sm font-medium">
+                            {item.label}
+                          </span>
+
+                          <ChevronRight
+                            size={19}
+                            className="text-gray-400"
+                          />
+                        </button>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
+
+              <button
+                type="button"
+                onClick={async () => {
+                  const { error } = await supabase.auth.signOut()
+
+                  if (error) {
+                    setNotice(error.message)
+                    return
+                  }
+
+                  router.push("/login")
+                }}
+                className="mt-2 flex w-full items-center gap-3 rounded-xl bg-red-50 p-4 text-left font-semibold text-red-600"
+              >
+                <LogOut size={20} />
+                Log out
+              </button>
+
+              <p className="py-6 text-center text-xs text-gray-400">
+                ChitPix Settings
+              </p>
+            </div>
+          )}
+
+          {/* ACCOUNT PRIVACY */}
+
+          {settingsSection === "Account privacy" && (
+            <div className="mx-auto max-w-[600px] p-4">
+
+              <div className="flex items-center gap-3 py-4">
+                <LockKeyhole size={24} />
+                <div className="flex-1">
+                  <p className="font-semibold">
+                    Private account
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Control who can see your posts.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    saveUserSettings({
+                      privateAccount: !userSettings.privateAccount,
+                    })
+                  }
+                  className={`h-7 w-12 rounded-full p-1 ${
+                    userSettings.privateAccount
+                      ? "bg-blue-600"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`block h-5 w-5 rounded-full bg-white transition-transform ${
+                      userSettings.privateAccount
+                        ? "translate-x-5"
+                        : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <p className="border-t py-4 text-xs text-gray-500">
+                Note: This saves your privacy preference in
+                user_settings. It does not yet enforce private
+                profile visibility across all app pages.
+              </p>
+            </div>
+          )}
+
+          {/* NOTIFICATIONS */}
+
+          {settingsSection === "Notifications" && (
+            <div className="p-4">
+
+              <h3 className="mb-3 font-bold">
+                Push notifications
+              </h3>
+
+              <div className="flex items-center justify-between border-b py-4">
+                <div>
+                  <p className="font-medium">
+                    Allow notifications
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Manage your notification preference.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    saveUserSettings({
+                      notifications: !userSettings.notifications,
+                    })
+                  }
+                  className={`h-7 w-12 rounded-full p-1 ${
+                    userSettings.notifications
+                      ? "bg-blue-600"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`block h-5 w-5 rounded-full bg-white transition-transform ${
+                      userSettings.notifications
+                        ? "translate-x-5"
+                        : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <p className="mt-3 text-xs text-gray-500">
+                This stores your notification preference.
+                Device push notification delivery needs
+                notification service integration.
+              </p>
+            </div>
+          )}
+
+          {/* SECURITY */}
+
+          {settingsSection === "Security" && (
+            <div className="p-4">
+              <ShieldCheck size={32} />
+
+              <h3 className="mt-3 font-bold">
+                Account Security
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-600">
+                Your ChitPix login is managed through Supabase
+                Authentication.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => router.push("/forgot-password")}
+                className="mt-4 w-full rounded-lg bg-gray-100 py-3 text-sm font-semibold"
+              >
+                Change or reset password
+              </button>
+            </div>
+          )}
+
+          {/* MESSAGES AND STORY REPLIES */}
+
+          {settingsSection === "Messages and story replies" && (
+            <div className="p-4">
+
+              <h3 className="font-bold">
+                Message preferences
+              </h3>
+
+              <div className="mt-4 flex items-center justify-between border-b py-4">
+                <div>
+                  <p className="font-medium">
+                    Allow message requests
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Save your message request preference.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    saveUserSettings({
+                      messageRequests: !userSettings.messageRequests,
+                    })
+                  }
+                  className={`h-7 w-12 rounded-full p-1 ${
+                    userSettings.messageRequests
+                      ? "bg-blue-600"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`block h-5 w-5 rounded-full bg-white ${
+                      userSettings.messageRequests
+                        ? "translate-x-5"
+                        : ""
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* COMMENTS */}
+
+          {settingsSection === "Comments" && (
+            <div className="p-4">
+              <h3 className="font-bold">
+                Comment controls
+              </h3>
+
+              <div className="mt-4 flex items-center justify-between border-b py-4">
+                <div>
+                  <p className="font-medium">
+                    Allow comments
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Save your comment preference.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    saveUserSettings({
+                      commentsAllowed: !userSettings.commentsAllowed,
+                    })
+                  }
+                  className={`h-7 w-12 rounded-full p-1 ${
+                    userSettings.commentsAllowed
+                      ? "bg-blue-600"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`block h-5 w-5 rounded-full bg-white ${
+                      userSettings.commentsAllowed
+                        ? "translate-x-5"
+                        : ""
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* LANGUAGE */}
+
+          {settingsSection === "Language" && (
+            <div className="p-4">
+              <h3 className="mb-3 font-bold">
+                App language preference
+              </h3>
+
+              {["English", "తెలుగు", "हिन्दी", "ಕನ್ನಡ"].map(
+                (language) => (
+                  <button
+                    type="button"
+                    key={language}
+                    onClick={() =>
+                      saveUserSettings({ language })
+                    }
+                    className="flex w-full items-center justify-between border-b py-4 text-sm"
+                  >
+                    {language}
+
+                    {userSettings.language === language && (
+                      <Check
+                        size={20}
+                        className="text-blue-600"
+                      />
+                    )}
+                  </button>
+                )
+              )}
+
+              <p className="mt-3 text-xs text-gray-500">
+                This saves your language preference. Full app
+                translation needs language support in the app.
+              </p>
+            </div>
+          )}
+
+          {/* DATA USAGE */}
+
+          {settingsSection === "Data usage and media quality" && (
+            <div className="p-4">
+              <h3 className="font-bold">
+                Data usage and media quality
+              </h3>
+
+              <div className="mt-4 flex items-center justify-between border-b py-4">
+                <div>
+                  <p className="font-medium">
+                    Save original photos
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Save your original photo preference.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    saveUserSettings({
+                      saveOriginalPhotos:
+                        !userSettings.saveOriginalPhotos,
+                    })
+                  }
+                  className={`h-7 w-12 rounded-full p-1 ${
+                    userSettings.saveOriginalPhotos
+                      ? "bg-blue-600"
+                      : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`block h-5 w-5 rounded-full bg-white ${
+                      userSettings.saveOriginalPhotos
+                        ? "translate-x-5"
+                        : ""
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* SAVED */}
+
+          {settingsSection === "Saved" && (
+            <div className="p-4">
+              <Bookmark size={32} />
+
+              <h3 className="mt-3 font-bold">
+                Saved posts
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Saved posts will appear here when the ChitPix
+                saved-post feature is connected to your database.
+              </p>
+            </div>
+          )}
+
+          {/* BLOCKED / RESTRICTED / OTHER SETTINGS */}
+
+          {[
+            "Tags and mentions",
+            "Sharing and reuse",
+            "Blocked accounts",
+            "Restricted accounts",
+            "Content preferences",
+            "Like and share counts",
+            "Muted accounts",
+            "Accessibility",
+            "Downloads",
+            "Help",
+            "About ChitPix",
+            "Report a problem",
+          ].includes(settingsSection) && (
+            <div className="p-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
+                <Settings size={27} />
+              </div>
+
+              <h3 className="mt-4 font-bold">
+                {settingsSection}
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                This ChitPix setting screen is ready for its
+                dedicated feature integration. The full action
+                will be enabled when its database and app
+                functionality are connected.
+              </p>
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* =====================================
+          PART 6 CONTINUES BELOW
+      ===================================== */}
+            {/* =====================================
+          EDIT PROFILE MODAL
+      ===================================== */}
+
+      {showEdit && (
+        <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50">
+          <div className="mx-auto min-h-screen max-w-[500px] bg-white">
+
+            <header className="sticky top-0 flex items-center justify-between border-b bg-white p-4">
+              <button
+                type="button"
+                onClick={() => setShowEdit(false)}
+              >
+                <X size={23} />
+              </button>
+
+              <h2 className="font-bold">
+                Edit Profile
+              </h2>
+
+              <button
+                type="button"
+                onClick={handleProfileSave}
+                className="font-bold text-blue-600"
+              >
+                Save
+              </button>
+            </header>
+
+            <div className="p-5">
+
+              {/* PROFILE PHOTO */}
+
+              <div className="mb-7 flex flex-col items-center">
+                <div className="h-24 w-24 overflow-hidden rounded-full bg-gray-100">
+                  {photo ? (
+                    <img
+                      src={photo}
+                      alt="Profile"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <UserRound size={42} />
+                    </div>
+                  )}
+                </div>
+
+                <label className="mt-3 cursor-pointer text-sm font-bold text-blue-600">
+                  {uploading
+                    ? "Uploading..."
+                    : "Change profile photo"}
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    className="hidden"
+                    onChange={(event) => {
+                      const file =
+                        event.target.files?.[0]
+
+                      if (file) {
+                        handlePhotoChange(file)
+                      }
+
+                      event.target.value = ""
+                    }}
+                  />
+                </label>
+              </div>
+
+              {/* USERNAME */}
+
+              <div className="mb-5">
+                <label className="mb-2 block text-sm font-semibold">
+                  Username
+                </label>
+
+                <input
+                  value={editName}
+                  onChange={(event) =>
+                    setEditName(event.target.value)
+                  }
+                  placeholder="Enter username"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* BIO */}
+
+              <div className="mb-5">
+                <label className="mb-2 block text-sm font-semibold">
+                  Bio
+                </label>
+
+                <textarea
+                  value={editBio}
+                  onChange={(event) =>
+                    setEditBio(event.target.value)
+                  }
+                  placeholder="Write something about yourself..."
+                  rows={4}
+                  maxLength={150}
+                  className="w-full resize-none rounded-lg border border-gray-300 px-3 py-3 text-sm outline-none focus:border-blue-500"
+                />
+
+                <p className="mt-1 text-right text-xs text-gray-400">
+                  {editBio.length}/150
+                </p>
+              </div>
+
+              {/* WEBSITE */}
+
+              <div className="mb-5">
+                <label className="mb-2 block text-sm font-semibold">
+                  Website
+                </label>
+
+                <input
+                  value={editLink}
+                  onChange={(event) =>
+                    setEditLink(event.target.value)
+                  }
+                  placeholder="https://example.com"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-3 text-sm outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <button
+                type="button"
+                disabled={uploading}
+                onClick={handleProfileSave}
+                className="w-full rounded-lg bg-blue-600 py-3 font-bold text-white disabled:opacity-50"
+              >
+                Save Profile
+              </button>
+
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+        </div>
+      )}
 
-{/* STORY HIGHLIGHT VIEW */}
+      {/* =====================================
+          YOUR ACTIVITY
+      ===================================== */}
 
-{selectedHighlight && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black p-5">
-    <div className="w-full max-w-sm rounded-2xl bg-white p-5 text-center">
-      <div className="mb-4 flex justify-end">
-        <button onClick={closeHighlight}>
-          <X size={23} />
-        </button>
-      </div>
+      {showActivity && (
+        <div className="fixed inset-0 z-[95] overflow-y-auto bg-white">
 
-      <div className="mx-auto flex h-32 w-32 items-center justify-center rounded-full bg-gray-100">
-        <Camera size={42} className="text-gray-500" />
-      </div>
+          <header className="sticky top-0 flex items-center gap-4 border-b bg-white p-4">
+            <button
+              type="button"
+              onClick={() => setShowActivity(false)}
+            >
+              <ArrowLeft size={23} />
+            </button>
 
-      <h3 className="mt-4 font-bold">
-        {selectedHighlight.title || "Story Highlight"}
-      </h3>
+            <h2 className="text-lg font-bold">
+              Your Activity
+            </h2>
+          </header>
 
-      <p className="mt-2 text-sm text-gray-500">
-        Story highlight preview
-      </p>
-    </div>
-  </div>
-)}
+          <div className="p-4">
 
-{/* FOLLOWERS / FOLLOWING */}
+            <div className="mb-5 rounded-xl bg-gray-50 p-4">
+              <h3 className="font-bold">
+                Profile overview
+              </h3>
 
-{(showFollowers || showFollowing) && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-    <div className="w-full max-w-sm rounded-2xl bg-white p-5">
+              <div className="mt-4 grid grid-cols-2 gap-3">
 
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="text-lg font-bold">
-          {showFollowers ? "Followers" : "Following"}
-        </h2>
+                <div className="rounded-lg bg-white p-3">
+                  <Camera size={20} />
+                  <p className="mt-2 text-xl font-bold">
+                    {postCount}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Posts
+                  </p>
+                </div>
 
-        <button
-          onClick={() => {
-            setShowFollowers(false)
-            setShowFollowing(false)
-          }}
+                <div className="rounded-lg bg-white p-3">
+                  <Clapperboard size={20} />
+                  <p className="mt-2 text-xl font-bold">
+                    {reelCount}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Reels
+                  </p>
+                </div>
+
+                <div className="rounded-lg bg-white p-3">
+                  <Users size={20} />
+                  <p className="mt-2 text-xl font-bold">
+                    {followers}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Followers
+                  </p>
+                </div>
+
+                <div className="rounded-lg bg-white p-3">
+                  <UserPlus size={20} />
+                  <p className="mt-2 text-xl font-bold">
+                    {following}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Following
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowActivity(false)
+                setShowArchive(true)
+              }}
+              className="flex w-full items-center gap-4 border-b py-4 text-left"
+            >
+              <Archive size={22} />
+              <span className="flex-1 text-sm font-semibold">
+                Archived posts
+              </span>
+              <ChevronRight size={19} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShowActivity(false)
+                openSettingsSection("Saved")
+              }}
+              className="flex w-full items-center gap-4 border-b py-4 text-left"
+            >
+              <Bookmark size={22} />
+              <span className="flex-1 text-sm font-semibold">
+                Saved posts
+              </span>
+              <ChevronRight size={19} />
+            </button>
+
+            <div className="mt-5 rounded-xl bg-blue-50 p-4">
+              <p className="text-sm font-semibold text-blue-900">
+                Activity insights
+              </p>
+
+              <p className="mt-1 text-xs text-blue-800">
+                Post views, profile visits and time spent
+                tracking are not connected yet.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* =====================================
+          FOLLOWERS MODAL
+      ===================================== */}
+
+      {showFollowers && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/50 p-4">
+
+          <div className="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white">
+
+            <div className="flex items-center justify-between border-b p-4">
+              <h2 className="font-bold">
+                Followers
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setShowFollowers(false)}
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="p-6 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                <Users size={30} />
+              </div>
+
+              <p className="mt-3 text-3xl font-bold">
+                {followers}
+              </p>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Total Followers
+              </p>
+
+              <p className="mt-4 text-xs text-gray-400">
+                Follower count is loaded from your
+                user_follows table.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* =====================================
+          FOLLOWING MODAL
+      ===================================== */}
+
+      {showFollowing && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/50 p-4">
+
+          <div className="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white">
+
+            <div className="flex items-center justify-between border-b p-4">
+              <h2 className="font-bold">
+                Following
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setShowFollowing(false)}
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="p-6 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+                <UserPlus size={30} />
+              </div>
+
+              <p className="mt-3 text-3xl font-bold">
+                {following}
+              </p>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Total Following
+              </p>
+
+              <p className="mt-4 text-xs text-gray-400">
+                Following count is loaded from your
+                user_follows table.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* =====================================
+          ARCHIVE SCREEN
+      ===================================== */}
+
+      {showArchive && (
+        <div className="fixed inset-0 z-[95] overflow-y-auto bg-white">
+
+          <header className="sticky top-0 flex items-center gap-4 border-b bg-white p-4">
+            <button
+              type="button"
+              onClick={() => setShowArchive(false)}
+            >
+              <ArrowLeft size={23} />
+            </button>
+
+            <h2 className="text-lg font-bold">
+              Archive
+            </h2>
+          </header>
+
+          {archivedPosts.length === 0 ? (
+            <div className="flex flex-col items-center px-5 py-20 text-center">
+              <Archive size={45} />
+
+              <h3 className="mt-4 text-lg font-bold">
+                No archived posts
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Posts you archive during this session
+                will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-[2px]">
+              {archivedPosts.map((post: any) => (
+                <button
+                  type="button"
+                  key={post.id}
+                  onClick={() => {
+                    setSelectedPost(post)
+                    setShowArchive(false)
+                  }}
+                  className="aspect-square overflow-hidden bg-gray-100"
+                >
+                  {post.image_url && (
+                    <img
+                      src={post.image_url}
+                      alt="Archived post"
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* =====================================
+          QR PROFILE SCREEN
+      ===================================== */}
+
+      {showQR && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+
+          <div className="w-full max-w-[350px] rounded-2xl bg-white p-5 text-center">
+
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold">
+                Share your profile
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setShowQR(false)}
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="mx-auto mt-6 flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-gray-100">
+              {photo ? (
+                <img
+                  src={photo}
+                  alt="Profile"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <UserRound size={42} />
+              )}
+            </div>
+
+            <h3 className="mt-3 font-bold">
+              {username}
+            </h3>
+
+            <p className="mt-1 text-xs text-gray-500">
+              ChitPix Profile
+            </p>
+
+            <div className="mt-5 rounded-xl bg-gray-50 p-4">
+              <QrCode
+                size={60}
+                className="mx-auto text-gray-700"
+              />
+
+              <p className="mt-3 break-all text-xs text-gray-600">
+                {getProfileUrl()}
+              </p>
+
+              <p className="mt-2 text-[11px] text-gray-400">
+                QR preview only. A scannable QR code
+                will need QR-code generation integration.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCopyProfileLink}
+              className="mt-4 w-full rounded-lg bg-blue-600 py-3 font-bold text-white"
+            >
+              Copy Profile Link
+            </button>
+
+            <button
+              type="button"
+              onClick={handleShareProfile}
+              className="mt-2 w-full rounded-lg bg-gray-100 py-3 font-bold"
+            >
+              Share Profile
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* =====================================
+          PART 7 CONTINUES BELOW
+      ===================================== */}
+            {/* =====================================
+          PROFILE MENU DRAWER
+      ===================================== */}
+
+      {showMenu && (
+        <div
+          className="fixed inset-0 z-[110] bg-black/40"
+          onClick={() => setShowMenu(false)}
         >
-          <X size={22} />
-        </button>
-      </div>
+          <div
+            className="absolute right-0 top-0 h-full w-[85%] max-w-[360px] overflow-y-auto bg-white shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
 
-      <p className="py-8 text-center text-sm text-gray-500">
-        {showFollowers
-          ? `${formatCount(followers)} followers`
-          : `${formatCount(following)} following`}
-      </p>
-    </div>
-  </div>
-)}
+            {/* MENU HEADER */}
 
-      {/* NOTICE */}
-{notice && (
-  <div className="fixed bottom-24 left-1/2 z-[70] -translate-x-1/2 rounded-lg bg-black/80 px-4 py-2 text-white shadow-lg">
-    {notice}
-    <button onClick={clearNotice} className="ml-2">
-      <X size={15} className="inline" />
-    </button>
-  </div>
-)}
-</main>
-  );
-      }
+            <div className="flex items-center justify-between border-b p-4">
+              <h2 className="text-lg font-bold">
+                ChitPix Menu
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setShowMenu(false)}
+              >
+                <X size={23} />
+              </button>
+            </div>
+
+            {/* PROFILE INFO */}
+
+            <div className="flex items-center gap-3 border-b p-4">
+              <div className="h-14 w-14 overflow-hidden rounded-full bg-gray-100">
+                {photo ? (
+                  <img
+                    src={photo}
+                    alt="Profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center">
+                    <UserRound size={28} />
+                  </div>
+                )}
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-bold">
+                  {username}
+                </p>
+
+                <p className="text-xs text-gray-500">
+                  ChitPix Creator
+                </p>
+              </div>
+            </div>
+
+            {/* MENU ITEMS */}
+
+            <div className="p-3">
+
+              {profileMenuItems.map((item: any) => {
+                const Icon = item.icon
+
+                return (
+                  <button
+                    type="button"
+                    key={item.label}
+                    onClick={item.action}
+                    className="flex w-full items-center gap-4 rounded-xl px-3 py-4 text-left hover:bg-gray-50"
+                  >
+                    <Icon size={22} strokeWidth={1.8} />
+
+                    <span className="flex-1 text-sm font-semibold">
+                      {item.label}
+                    </span>
+
+                    <ChevronRight
+                      size={18}
+                      className="text-gray-400"
+                    />
+                  </button>
+                )
+              })}
+
+            </div>
+
+            {/* CREATOR TOOLS */}
+
+            <div className="border-t p-4">
+              <h3 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-400">
+                Creator tools
+              </h3>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenu(false)
+                  openSettingsSection("Creator Dashboard")
+                }}
+                className="flex w-full items-center gap-3 rounded-xl py-3 text-left"
+              >
+                <BarChart3 size={21} />
+
+                <span className="flex-1 text-sm font-medium">
+                  Creator Dashboard
+                </span>
+
+                <ChevronRight size={18} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenu(false)
+                  setActiveTab("SHOP")
+                }}
+                className="flex w-full items-center gap-3 rounded-xl py-3 text-left"
+              >
+                <ShoppingBagIcon />
+
+                <span className="flex-1 text-sm font-medium">
+                  Mini Shop
+                </span>
+
+                <ChevronRight size={18} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMenu(false)
+                  toggleFeaturedProfile()
+                }}
+                className="flex w-full items-center gap-3 rounded-xl py-3 text-left"
+              >
+                <Star size={21} />
+
+                <span className="flex-1 text-sm font-medium">
+                  {featuredProfile
+                    ? "Disable Featured Profile"
+                    : "Enable Featured Profile"}
+                </span>
+
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            {/* SETTINGS */}
+
+            <div className="border-t p-4">
+              <button
+                type="button"
+                onClick={() => openSettingsSection("main")}
+                className="flex w-full items-center gap-3 rounded-xl py-3 text-left"
+              >
+                <Settings size={22} />
+
+                <span className="flex-1 text-sm font-semibold">
+                  Settings and privacy
+                </span>
+
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            {/* LOGOUT */}
+
+            <div className="border-t p-4">
+              <button
+                type="button"
+                onClick={async () => {
+                  const { error } =
+                    await supabase.auth.signOut()
+
+                  if (error) {
+                    setNotice(error.message)
+                    setShowMenu(false)
+                    return
+                  }
+
+                  router.push("/login")
+                }}
+                className="flex w-full items-center gap-3 rounded-xl py-3 text-left text-red-600"
+              >
+                <LogOut size={21} />
+
+                <span className="text-sm font-semibold">
+                  Log out
+                </span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* =====================================
+          NOTICE / SUCCESS MESSAGE
+      ===================================== */}
+
+      {notice && (
+        <div className="fixed bottom-24 left-1/2 z-[150] w-[90%] max-w-[420px] -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-xl bg-gray-900 px-4 py-3 text-white shadow-xl">
+
+            <Check size={19} className="shrink-0 text-green-400" />
+
+            <p className="flex-1 text-sm">
+              {notice}
+            </p>
+
+            <button
+              type="button"
+              onClick={closeNotice}
+              className="shrink-0"
+            >
+              <X size={18} />
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* =====================================
+          BOTTOM NAVIGATION
+      ===================================== */}
+
+      <BottomNav />
+
+      {/* =====================================
+          MAIN PROFILE PAGE END
+      ===================================== */}
+
+    </main>
+  )
+}
+// =====================================
+// CHITPIX SHOPPING BAG ICON
+// =====================================
+
+function ShoppingBagIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-label="Shopping bag"
+    >
+      <path d="M5 8h14l1 13H4L5 8Z" />
+      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
+    </svg>
+  )
+}
