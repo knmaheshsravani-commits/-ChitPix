@@ -108,9 +108,9 @@ export default function MessagesPage() {
 
       if (memberError) throw memberError
 
-      const conversationIds = [
-        ...new Set((memberships || []).map(item => item.conversation_id))
-      ]
+      const conversationIds = (memberships || [])
+  .map(item => item.conversation_id)
+  .filter((id, index, arr) => arr.indexOf(id) === index)
 
       if (conversationIds.length === 0) {
         setChats([])
@@ -141,13 +141,10 @@ export default function MessagesPage() {
 
       if (otherMemberError) throw otherMemberError
 
-      const otherUserIds = [
-        ...new Set(
-          (members || [])
-            .filter(item => item.user_id !== myId)
-            .map(item => item.user_id)
-        )
-      ]
+      const otherUserIds = (members || [])
+  .filter(item => item.user_id !== myId)
+  .map(item => item.user_id)
+  .filter((id, index, arr) => arr.indexOf(id) === index)
 
       if (otherUserIds.length === 0) {
         setChats([])
