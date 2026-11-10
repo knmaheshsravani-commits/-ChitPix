@@ -762,7 +762,7 @@ function PostCard({
           </button>
 
           <button
-            onClick={() => setShowShare(true)}
+            onClick={handleShare}
             aria-label="Share post"
             className="transition-transform active:scale-75"
           >
