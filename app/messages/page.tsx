@@ -2016,7 +2016,7 @@ return (
 
         {activeChat && (
           <div className="flex items-center gap-2">
-            {isGroupChat(activeChat) && (
+            {isGroupChat && (
               <button
                 onClick={openGroupMembers}
                 className="rounded-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800"
