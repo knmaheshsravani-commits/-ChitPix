@@ -472,62 +472,68 @@ function PostCard({
   }
 
   const handleCommentLike = async (comment: any) => {
-    if (!currentUserId) {
-      setMessage("Comment like cheyadaniki login avvali")
-      return
-    }
-    if (busy) return
+  if (!currentUserId) {
+    setMessage("Comment like cheyadaniki login avvali")
+    return
+  }
 
-    setBusy(true)
-    setMessage("")
+  if (busy) return
 
-    try {
-      if (likedComments[comment.id]) {
-        const { error } = await supabase
-          .from("comment_likes")
-          .delete()
-          .eq("comment_id", comment.id)
-          .eq("user_id", currentUserId)
+  setBusy(true)
+  setMessage("")
 
-        if (error) throw error
+  try {
+    if (likedComments[comment.id]) {
+      const { error } = await supabase
+        .from("comment_likes")
+        .delete()
+        .eq("comment_id", comment.id)
+        .eq("user_id", currentUserId)
 
-        setLikedComments(previous => ({ ...previous, [comment.id]: false }))
-        setCommentLikeCounts(previous => ({
-          ...previous,
-          [comment.id]: Math.max(0, (previous[comment.id] || 0) - 1),
-        }))
-      } else {
-        const { data: { user }, error: authError } =
-            
-        if (authError || !user) throw new Error("Malli login avvali")
+      if (error) throw error
 
-        const username =
-          user.user_metadata?.username ||
-          user.user_metadata?.full_name ||
-          user.email?.split("@")[0] ||
-          "ChitPix User"
+      setLikedComments((previous: any) => ({
+        ...previous,
+        [comment.id]: false,
+      }))
 
-        const { error } = await supabase.from("comment_likes").insert({
+      setCommentLikeCounts((previous: any) => ({
+        ...previous,
+        [comment.id]: Math.max(
+          0,
+          (previous[comment.id] || 0) - 1
+        ),
+      }))
+    } else {
+      const { error } = await supabase
+        .from("comment_likes")
+        .insert({
           comment_id: comment.id,
-          user_id: user.id,
-          username,
+          user_id: currentUserId,
+          username: username,
         })
 
-        if (error && error.code !== "23505") throw error
-
-        setLikedComments(previous => ({ ...previous, [comment.id]: true }))
-        if (!error) {
-          setCommentLikeCounts(previous => ({
-            ...previous,
-            [comment.id]: (previous[comment.id] || 0) + 1,
-          }))
-        }
+      if (error && error.code !== "23505") {
+        throw error
       }
-    } catch (error: any) {
-      setMessage(error.message || "Comment like update failed")
-    } finally {
-      setBusy(false)
+
+      setLikedComments((previous: any) => ({
+        ...previous,
+        [comment.id]: true,
+      }))
+
+      if (!error) {
+        setCommentLikeCounts((previous: any) => ({
+          ...previous,
+          [comment.id]: (previous[comment.id] || 0) + 1,
+        }))
+      }
     }
+  } catch (error: any) {
+    setMessage(error.message || "Comment like update failed")
+  } finally {
+    setBusy(false)
+  }
   }
 
   const handleShare = async () => {
