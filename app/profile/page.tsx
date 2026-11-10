@@ -1020,32 +1020,43 @@ export default function ProfilePage() {
     <main className="mx-auto min-h-screen w-full max-w-[600px] bg-white pb-24 text-gray-900">
 
       {/* TOP HEADER */}
+<header className="sticky top-0 z-30 flex w-full items-center justify-between gap-2 border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur">
 
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-bold tracking-tight">
-            {username}
-          </h1>
-        </div>
+  {/* USERNAME */}
+  <div className="min-w-0 flex-1">
+    <h1
+      title={username || "ChitPix"}
+      className="block max-w-full truncate whitespace-nowrap text-xl font-bold tracking-tight text-gray-900"
+    >
+      {username || "ChitPix"}
+    </h1>
+  </div>
 
-        <div className="flex items-center gap-5">
-          <button
-            type="button"
-            onClick={() => openSettingsSection("main")}
-            aria-label="Settings"
-          >
-            <Plus size={25} strokeWidth={1.8} />
-          </button>
+  {/* HEADER BUTTONS */}
+  <div className="flex shrink-0 items-center gap-4">
 
-          <button
-            type="button"
-            onClick={() => setShowMenu(true)}
-            aria-label="Profile menu"
-          >
-            <Menu size={25} strokeWidth={1.8} />
-          </button>
-        </div>
-      </header>
+    {/* SETTINGS */}
+    <button
+      type="button"
+      onClick={() => openSettingsSection("main")}
+      aria-label="Settings"
+      className="rounded-full p-2 transition hover:bg-gray-100 active:scale-95"
+    >
+      <Plus size={25} strokeWidth={1.8} />
+    </button>
+
+    {/* PROFILE MENU */}
+    <button
+      type="button"
+      onClick={() => setShowMenu(true)}
+      aria-label="Profile menu"
+      className="rounded-full p-2 transition hover:bg-gray-100 active:scale-95"
+    >
+      <Menu size={26} strokeWidth={1.8} />
+    </button>
+
+  </div>
+</header>
 
       {/* PROFILE DETAILS */}
 
