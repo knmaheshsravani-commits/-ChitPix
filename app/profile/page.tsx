@@ -325,6 +325,11 @@ export default function ProfilePage() {
 
   const [showFollowers, setShowFollowers] = useState(false)
   const [showFollowing, setShowFollowing] = useState(false)
+  // CHITPIX CONNECTIONS
+const [followersList, setFollowersList] = useState<any[]>([])
+const [followingList, setFollowingList] = useState<any[]>([])
+const [connectionsLoading, setConnectionsLoading] = useState(false)
+const [connectionSearch, setConnectionSearch] = useState("")
   const [showArchive, setShowArchive] = useState(false)
   const [showQR, setShowQR] = useState(false)
 
@@ -515,7 +520,67 @@ export default function ProfilePage() {
       setLoading(false)
     }
   }
+  // CHITPIX FOLLOWERS & FOLLOWING
+async function loadConnections(type: "followers" | "following") {
+  if (!profileUserId) return
 
+  try {
+    setConnectionsLoading(true)
+    setConnectionSearch("")
+
+    const column =
+      type === "followers" ? "follower_id" : "following_id"
+
+    const { data: followRows, error: followError } = await supabase
+      .from("user_follows")
+      .select("follower_id, following_id, created_at")
+      .eq(
+        type === "followers" ? "following_id" : "follower_id",
+        profileUserId
+      )
+      .order("created_at", { ascending: false })
+
+    if (followError) throw followError
+
+    const userIds = [
+      ...new Set((followRows || []).map((row: any) => row[column]))
+    ]
+
+    if (userIds.length === 0) {
+      if (type === "followers") setFollowersList([])
+      else setFollowingList([])
+      return
+    }
+
+    const { data: profilesData, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, username, avatar_url, bio")
+      .in("id", userIds)
+
+    if (profilesError) throw profilesError
+
+    const profileMap = new Map(
+      (profilesData || []).map((profile: any) => [profile.id, profile])
+    )
+
+    const result = userIds
+      .map((id: any) => profileMap.get(id))
+      .filter(Boolean)
+      .map((profile: any) => ({
+        ...profile,
+        avatar_url: fixR2Url(profile.avatar_url)
+      }))
+
+    if (type === "followers") setFollowersList(result)
+    else setFollowingList(result)
+
+  } catch (error: any) {
+    console.error("Connections loading error:", error)
+    setNotice(error.message || "Could not load connections")
+  } finally {
+    setConnectionsLoading(false)
+  }
+}
   // =====================================
   // SAVE USER SETTINGS
   // =====================================
@@ -1019,44 +1084,56 @@ export default function ProfilePage() {
   return (
     <main className="mx-auto min-h-screen w-full max-w-[600px] bg-white pb-24 text-gray-900">
 
-      {/* TOP HEADER */}
-<header className="sticky top-0 z-30 flex w-full items-center justify-between gap-2 border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur">
+            {/* CHITPIX PROFILE HEADER */}
 
-  {/* USERNAME */}
-  <div className="min-w-0 flex-1">
-    <h1
-      title={username || "ChitPix"}
-      className="block max-w-full truncate whitespace-nowrap text-xl font-bold tracking-tight text-gray-900"
-    >
-      {username || "ChitPix"}
-    </h1>
-  </div>
+      <header className="sticky top-0 z-30 flex w-full items-center justify-between gap-3 border-b border-gray-100 bg-white/95 px-4 py-3 backdrop-blur">
 
-  {/* HEADER BUTTONS */}
-  <div className="flex shrink-0 items-center gap-4">
+        {/* CHITPIX BRAND + USERNAME */}
 
-    {/* SETTINGS */}
-    <button
-      type="button"
-      onClick={() => openSettingsSection("main")}
-      aria-label="Settings"
-      className="rounded-full p-2 transition hover:bg-gray-100 active:scale-95"
-    >
-      <Plus size={25} strokeWidth={1.8} />
-    </button>
+        <div className="min-w-0 flex-1">
 
-    {/* PROFILE MENU */}
-    <button
-      type="button"
-      onClick={() => setShowMenu(true)}
-      aria-label="Profile menu"
-      className="rounded-full p-2 transition hover:bg-gray-100 active:scale-95"
-    >
-      <Menu size={26} strokeWidth={1.8} />
-    </button>
+          <p className="text-[10px] font-bold uppercase tracking-[2px] text-pink-600">
+            CHITPIX
+          </p>
 
-  </div>
-</header>
+          <h1
+            title={username || "ChitPix"}
+            className="max-w-full truncate whitespace-nowrap text-xl font-bold tracking-tight text-gray-900"
+          >
+            {username || "ChitPix"}
+          </h1>
+
+        </div>
+
+        {/* HEADER ACTIONS */}
+
+        <div className="flex shrink-0 items-center gap-2">
+
+          {/* SETTINGS */}
+
+          <button
+            type="button"
+            onClick={() => openSettingsSection("main")}
+            aria-label="ChitPix Settings"
+            className="flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-gray-100 active:scale-95"
+          >
+            <Settings size={24} strokeWidth={1.8} />
+          </button>
+
+          {/* CHITPIX MENU */}
+
+          <button
+            type="button"
+            onClick={() => setShowMenu(true)}
+            aria-label="Open ChitPix Menu"
+            className="flex h-11 w-11 items-center justify-center rounded-full transition hover:bg-gray-100 active:scale-95"
+          >
+            <Menu size={27} strokeWidth={1.8} />
+          </button>
+
+        </div>
+
+      </header>
 
       {/* PROFILE DETAILS */}
 
