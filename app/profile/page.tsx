@@ -2454,76 +2454,75 @@ async function loadConnections(type: "followers" | "following") {
           FOLLOWERS MODAL
       ===================================== */}
 
-      {showFollowers && (
-        <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/50 p-4">
+      
+{showFollowers && (
+  <div className="fixed inset-0 z-[200] flex h-[100dvh] flex-col bg-white">
 
-          <div className="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white">
+    <header className="flex shrink-0 items-center gap-4 border-b px-4 py-4">
+      <button
+        type="button"
+        onClick={() => setShowFollowers(false)}
+        aria-label="Close followers"
+      >
+        <X size={24} />
+      </button>
+      <h2 className="text-lg font-bold">Followers</h2>
+      <span className="ml-auto text-sm text-gray-500">
+        {followersList.length}
+      </span>
+    </header>
 
-            <div className="flex items-center justify-between border-b p-4">
-              <h2 className="font-bold">
-                Followers
-              </h2>
+    <div className="shrink-0 border-b p-4">
+      <input
+        type="text"
+        value={connectionSearch}
+        onChange={(e) => setConnectionSearch(e.target.value)}
+        placeholder="Search followers..."
+        className="w-full rounded-xl bg-gray-100 px-4 py-3 text-base outline-none"
+      />
+    </div>
 
-              <button
-                type="button"
-                onClick={() => setShowFollowers(false)}
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            <div className="p-4">
-  <input
-    type="text"
-    value={connectionSearch}
-    onChange={(e) => setConnectionSearch(e.target.value)}
-    placeholder="Search followers..."
-    className="w-full rounded-xl bg-gray-100 px-4 py-3 text-sm outline-none"
-  />
-
-  <div className="mt-4 max-h-[55vh] overflow-y-auto">
-    {connectionsLoading ? (
-      <p className="py-8 text-center text-gray-500">
-        Loading followers...
-      </p>
-    ) : followersList.filter((user: any) =>
-        (user.username || "").toLowerCase().includes(connectionSearch.toLowerCase())
-      ).length === 0 ? (
-      <p className="py-8 text-center text-gray-500">
-        No followers found
-      </p>
-    ) : (
-      followersList
-        .filter((user: any) =>
+    <div className="flex-1 overflow-y-auto px-4">
+      {connectionsLoading ? (
+        <p className="py-10 text-center text-gray-500">
+          Loading followers...
+        </p>
+      ) : followersList.filter((user: any) =>
           (user.username || "").toLowerCase().includes(connectionSearch.toLowerCase())
-        )
-        .map((user: any) => (
-          <div key={user.id} className="flex items-center gap-3 border-b py-3">
-            {user.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={user.username}
-                className="h-12 w-12 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 font-bold">
-                {(user.username || "U")[0].toUpperCase()}
+        ).length === 0 ? (
+        <p className="py-10 text-center text-gray-500">
+          No followers found
+        </p>
+      ) : (
+        followersList
+          .filter((user: any) =>
+            (user.username || "").toLowerCase().includes(connectionSearch.toLowerCase())
+          )
+          .map((user: any) => (
+            <div key={user.id} className="flex items-center gap-3 border-b py-4">
+              {user.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.username}
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 font-bold">
+                  {(user.username || "U")[0].toUpperCase()}
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold">{user.username}</p>
+                <p className="truncate text-sm text-gray-500">{user.bio || ""}</p>
               </div>
-            )}
-
-            <div className="min-w-0">
-              <p className="truncate font-semibold">{user.username}</p>
-              <p className="truncate text-xs text-gray-500">{user.bio || ""}</p>
             </div>
-          </div>
-        ))
-    )}
-  </div>
-</div>
-
-          </div>
-        </div>
+          ))
       )}
+    </div>
+  </div>
+)}
+      
 
       {/* =====================================
           FOLLOWING MODAL
