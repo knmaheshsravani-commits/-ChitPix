@@ -14,6 +14,7 @@ type Profile = {
   username: string | null
   avatar_url: string | null
   bio: string | null
+  role?: string | null
 }
 
 type ChatItem = {
