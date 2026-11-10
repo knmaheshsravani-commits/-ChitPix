@@ -892,22 +892,28 @@ async function loadConnections(type: "followers" | "following") {
   // =====================================
 
   const profileStats = [
-    {
-      label: "Posts",
-      value: posts.length,
-      onClick: () => setActiveTab("POSTS"),
+  {
+    label: "Posts",
+    value: posts.length,
+    onClick: () => setActiveTab("POSTS"),
+  },
+  {
+    label: "Followers",
+    value: followers,
+    onClick: () => {
+      setShowFollowers(true)
+      loadConnections("followers")
     },
-    {
-      label: "Followers",
-      value: followers,
-      onClick: () => setShowFollowers(true),
+  },
+  {
+    label: "Following",
+    value: following,
+    onClick: () => {
+      setShowFollowing(true)
+      loadConnections("following")
     },
-    {
-      label: "Following",
-      value: following,
-      onClick: () => setShowFollowing(true),
-    },
-  ]
+  },
+]
 
   // =====================================
   // NOTICE CLOSE
