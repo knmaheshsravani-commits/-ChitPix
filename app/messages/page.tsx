@@ -2199,7 +2199,7 @@ return (
               <p className="truncate font-semibold">{activeChatTitle}</p>
               <p className="text-xs text-gray-500">{activeChatStatus}</p>
             </div>
-            {isGroupChat(activeChat) && (
+            {isGroupChat && (
               <span className="text-xs text-gray-500">
                 {activeChat.memberCount} members
               </span>
@@ -2233,7 +2233,7 @@ return (
                     className={`flex ${mine ? "justify-end" : "justify-start"}`}
                   >
                     <div className={`max-w-[85%] ${mine ? "items-end" : "items-start"} flex flex-col`}>
-                      {isGroupChat(activeChat) && !mine && (
+                      {isGroupChat && !mine && (
                         <span className="mb-1 ml-2 text-xs text-gray-500">
                           {sender || "Member"}
                         </span>
@@ -2762,7 +2762,7 @@ return (
                 📁 {activeChat.isArchived ? "Unarchive chat" : "Archive chat"}
               </button>
 
-              {isGroupChat(activeChat) && (
+              {isGroupChat && (
                 <button
                   onClick={() => {
                     closeChatOptions();
