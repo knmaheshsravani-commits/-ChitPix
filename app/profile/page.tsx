@@ -2466,24 +2466,54 @@ async function loadConnections(type: "followers" | "following") {
               </button>
             </div>
 
-            <div className="p-6 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                <Users size={30} />
+            <div className="p-4">
+  <input
+    type="text"
+    value={connectionSearch}
+    onChange={(e) => setConnectionSearch(e.target.value)}
+    placeholder="Search followers..."
+    className="w-full rounded-xl bg-gray-100 px-4 py-3 text-sm outline-none"
+  />
+
+  <div className="mt-4 max-h-[55vh] overflow-y-auto">
+    {connectionsLoading ? (
+      <p className="py-8 text-center text-gray-500">
+        Loading followers...
+      </p>
+    ) : followersList.filter((user: any) =>
+        (user.username || "").toLowerCase().includes(connectionSearch.toLowerCase())
+      ).length === 0 ? (
+      <p className="py-8 text-center text-gray-500">
+        No followers found
+      </p>
+    ) : (
+      followersList
+        .filter((user: any) =>
+          (user.username || "").toLowerCase().includes(connectionSearch.toLowerCase())
+        )
+        .map((user: any) => (
+          <div key={user.id} className="flex items-center gap-3 border-b py-3">
+            {user.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.username}
+                className="h-12 w-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 font-bold">
+                {(user.username || "U")[0].toUpperCase()}
               </div>
+            )}
 
-              <p className="mt-3 text-3xl font-bold">
-                {followers}
-              </p>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Total Followers
-              </p>
-
-              <p className="mt-4 text-xs text-gray-400">
-                Follower count is loaded from your
-                user_follows table.
-              </p>
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{user.username}</p>
+              <p className="truncate text-xs text-gray-500">{user.bio || ""}</p>
             </div>
+          </div>
+        ))
+    )}
+  </div>
+</div>
 
           </div>
         </div>
