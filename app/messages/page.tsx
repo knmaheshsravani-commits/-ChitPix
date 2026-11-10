@@ -2143,7 +2143,7 @@ return (
                         />
                       ) : (
                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-200 text-xl dark:bg-gray-800">
-                          {isGroupChat(chat) ? "👥" : "👤"}
+                          {chat.conversation_type === "group" ? "👥" : "👤"}
                         </div>
                       )}
                     </div>
