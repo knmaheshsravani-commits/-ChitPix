@@ -2025,7 +2025,7 @@ return (
               </button>
             )}
             <button
-              onClick={showChatOptions}
+              onClick={() => setShowChatOptions(true)}
               className="rounded-full px-3 py-2 text-xl hover:bg-gray-100 dark:hover:bg-gray-800"
               aria-label="Chat options"
             >
@@ -2235,7 +2235,7 @@ return (
                     <div className={`max-w-[85%] ${mine ? "items-end" : "items-start"} flex flex-col`}>
                       {isGroupChat(activeChat) && !mine && (
                         <span className="mb-1 ml-2 text-xs text-gray-500">
-                          {sender?.username || "Member"}
+                          {sender || "Member"}
                         </span>
                       )}
 
