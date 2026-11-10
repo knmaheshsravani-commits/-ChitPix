@@ -933,7 +933,7 @@ function PostCard({
             )}
 
             <form
-              className="flex items-center gap-2 border-t p-3"
+              className="sticky bottom-0 z-20 flex w-full shrink-0 items-center gap-2 border-t bg-white p-3"
               onSubmit={event => {
                 event.preventDefault()
                 handleComment()
@@ -952,7 +952,7 @@ function PostCard({
                 onChange={event => setCommentText(event.target.value)}
                 placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
                 maxLength={1000}
-                className="min-w-0 flex-1 rounded-full bg-zinc-100 px-4 py-2 text-sm outline-none"
+                className="min-w-0 flex-1 rounded-full bg-zinc-100 px-4 py-3 text-sm outline-none"
               />
 
               <button
