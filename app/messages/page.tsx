@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import BottomNav from '../components/BottomNav'
 import { supabase } from '../../lib/supabase'
@@ -52,6 +52,22 @@ export default function MessagesPage() {
   const [chatLoading, setChatLoading] = useState(false)
   const [error, setError] = useState('')
   const [sending, setSending] = useState(false)
+
+  // DM extras
+  const [showNewChat, setShowNewChat] = useState(false)
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
+  const [followingUsers, setFollowingUsers] = useState<string[]>([])
+  const [showEmoji, setShowEmoji] = useState(false)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const photoInputRef = useRef<HTMLInputElement>(null)
+
+  const emojis = [
+    '😀', '😂', '😍', '🥰', '😘',
+    '😊', '😎', '😭', '😢', '😡',
+    '❤️', '🔥', '👍', '🙏', '👏',
+    '🎉', '💯', '🌹', '🥳', '🤗'
+  ]
 
   // LOAD LOGGED-IN USER AND PROFILES
   const loadUsers = useCallback(async () => {
@@ -109,8 +125,8 @@ export default function MessagesPage() {
       if (memberError) throw memberError
 
       const conversationIds = (memberships || [])
-  .map(item => item.conversation_id)
-  .filter((id, index, arr) => arr.indexOf(id) === index)
+        .map(item => item.conversation_id)
+        .filter((id, index, arr) => arr.indexOf(id) === index)
 
       if (conversationIds.length === 0) {
         setChats([])
@@ -142,9 +158,9 @@ export default function MessagesPage() {
       if (otherMemberError) throw otherMemberError
 
       const otherUserIds = (members || [])
-  .filter(item => item.user_id !== myId)
-  .map(item => item.user_id)
-  .filter((id, index, arr) => arr.indexOf(id) === index)
+        .filter(item => item.user_id !== myId)
+        .map(item => item.user_id)
+        .filter((id, index, arr) => arr.indexOf(id) === index)
 
       if (otherUserIds.length === 0) {
         setChats([])
@@ -241,12 +257,14 @@ export default function MessagesPage() {
   }, [myId, loadInbox])
 
   // PART 2 CONTINUES BELOW
-        
   // OPEN EXISTING CHAT
   const openChat = async (chat: ChatItem) => {
     setActiveChat(chat)
     setChatLoading(true)
     setMessages([])
+    setShowEmoji(false)
+    setText('')
+    setError('')
 
     await loadMessages(chat.conversation_id)
     setChatLoading(false)
@@ -267,8 +285,8 @@ export default function MessagesPage() {
 
       if (rpcError) throw rpcError
 
-      // RPC may return UUID directly or as an object/array
       const result = Array.isArray(data) ? data[0] : data
+
       const conversationId =
         typeof result === 'string'
           ? result
@@ -291,6 +309,7 @@ export default function MessagesPage() {
 
       setActiveChat(chat)
       setMessages([])
+      setShowNewChat(false)
 
       await loadMessages(conversationId)
       await loadInbox()
@@ -340,6 +359,7 @@ export default function MessagesPage() {
     try {
       setSending(true)
       setText('')
+      setError('')
 
       const { data, error: sendError } = await supabase
         .from('messages')
@@ -364,7 +384,6 @@ export default function MessagesPage() {
 
       if (sendError) throw sendError
 
-      // Add message immediately
       setMessages(previous => {
         if (previous.some(item => item.id === data.id)) {
           return previous
@@ -373,7 +392,6 @@ export default function MessagesPage() {
         return [...previous, data]
       })
 
-      // Refresh inbox preview
       setChats(previous =>
         previous.map(chat =>
           chat.conversation_id === activeChat.conversation_id
@@ -386,7 +404,6 @@ export default function MessagesPage() {
         )
       )
 
-      // Update conversation time
       await supabase
         .from('conversations')
         .update({ updated_at: new Date().toISOString() })
@@ -401,6 +418,195 @@ export default function MessagesPage() {
     }
   }
 
+  // CHECK FOLLOW STATUS
+  const checkFollowStatus = async (userId: string) => {
+    if (!myId || !userId) return
+
+    const { data, error: followError } = await supabase
+      .from('user_follows')
+      .select('follower_id')
+      .eq('follower_id', myId)
+      .eq('following_id', userId)
+      .maybeSingle()
+
+    if (followError) {
+      console.error('Follow status error:', followError)
+      return
+    }
+
+    setIsFollowing(!!data)
+  }
+
+  // CHECK FOLLOW STATUS WHEN CHAT OPENS
+  useEffect(() => {
+    if (activeChat?.user?.id && myId) {
+      setIsFollowing(false)
+      checkFollowStatus(activeChat.user.id)
+    } else {
+      setIsFollowing(false)
+    }
+  }, [activeChat?.user?.id, myId])
+
+  // FOLLOW / UNFOLLOW USER
+  const toggleFollow = async (userId: string) => {
+    if (!myId || !userId || followLoading) return
+
+    try {
+      setFollowLoading(true)
+      setError('')
+
+      if (isFollowing) {
+        const { error: deleteError } = await supabase
+          .from('user_follows')
+          .delete()
+          .eq('follower_id', myId)
+          .eq('following_id', userId)
+
+        if (deleteError) throw deleteError
+
+        setIsFollowing(false)
+        setFollowingUsers(previous =>
+          previous.filter(id => id !== userId)
+        )
+      } else {
+        const { error: insertError } = await supabase
+          .from('user_follows')
+          .insert({
+            follower_id: myId,
+            following_id: userId
+          })
+
+        if (insertError) throw insertError
+
+        setIsFollowing(true)
+        setFollowingUsers(previous =>
+          previous.includes(userId)
+            ? previous
+            : [...previous, userId]
+        )
+      }
+    } catch (err: any) {
+      console.error('Follow update error:', err)
+      setError(err.message || 'Follow update avvaledu.')
+    } finally {
+      setFollowLoading(false)
+    }
+  }
+
+  // SEND PHOTO THROUGH CLOUDFLARE R2
+  const sendPhoto = async (file: File) => {
+    if (!activeChat || !myId || uploadingPhoto) return
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image.')
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Photo size 10MB lopu undali.')
+      return
+    }
+
+    try {
+      setUploadingPhoto(true)
+      setError('')
+
+      const safeName = file.name.replace(
+        /[^a-zA-Z0-9._-]/g,
+        '_'
+      )
+
+      const response = await fetch('/api/r2-presign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fileName: `dm-${Date.now()}-${safeName}`,
+          contentType: file.type
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Photo upload URL dorakaledu.')
+      }
+
+      const uploadData = await response.json()
+
+      if (!uploadData.url || !uploadData.publicUrl) {
+        throw new Error('R2 upload response invalid.')
+      }
+
+      const uploadResponse = await fetch(uploadData.url, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type
+        },
+        body: file
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error('Photo R2 upload fail ayyindi.')
+      }
+
+      const { data, error: insertError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: activeChat.conversation_id,
+          sender_id: myId,
+          content: '',
+          message_type: 'image',
+          media_url: uploadData.publicUrl
+        })
+        .select(`
+          id,
+          conversation_id,
+          sender_id,
+          content,
+          message_type,
+          media_url,
+          reply_to,
+          created_at,
+          edited_at
+        `)
+        .single()
+
+      if (insertError) throw insertError
+
+      setMessages(previous => {
+        if (previous.some(item => item.id === data.id)) {
+          return previous
+        }
+
+        return [...previous, data]
+      })
+
+      setChats(previous =>
+        previous.map(chat =>
+          chat.conversation_id === activeChat.conversation_id
+            ? {
+                ...chat,
+                lastMessage: '📷 Photo',
+                lastMessageTime: data.created_at
+              }
+            : chat
+        )
+      )
+
+      await supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', activeChat.conversation_id)
+
+    } catch (err: any) {
+      console.error('Photo message error:', err)
+      setError(err.message || 'Photo send avvaledu.')
+    } finally {
+      setUploadingPhoto(false)
+    }
+  }
+
+  // PART 3 CONTINUES BELOW
   // REALTIME: RECEIVE NEW MESSAGES
   useEffect(() => {
     if (!activeChat?.conversation_id) return
@@ -434,7 +640,9 @@ export default function MessagesPage() {
                 ? {
                     ...chat,
                     lastMessage:
-                      newMessage.content || 'New message',
+                      newMessage.message_type === 'image'
+                        ? '📷 Photo'
+                        : newMessage.content || 'New message',
                     lastMessageTime: newMessage.created_at
                   }
                 : chat
@@ -455,25 +663,30 @@ export default function MessagesPage() {
     setMessages([])
     setText('')
     setError('')
+    setShowEmoji(false)
     loadInbox()
   }
 
-  // PART 3 CONTINUES BELOW
-  // NEW CHAT PANEL
-  const [showNewChat, setShowNewChat] = useState(false)
+  // EMOJI SELECTION
+  const addEmoji = (emoji: string) => {
+    setText(previous => previous + emoji)
+  }
 
+  // SEARCH USERS
   const filteredUsers = users.filter(user =>
     (user.username || '')
       .toLowerCase()
       .includes(search.toLowerCase())
   )
 
+  // SEARCH CHATS
   const filteredChats = chats.filter(chat =>
     (chat.user.username || '')
       .toLowerCase()
       .includes(search.toLowerCase())
   )
 
+  // FORMAT MESSAGE TIME
   const formatTime = (date: string) => {
     if (!date) return ''
 
@@ -554,6 +767,23 @@ export default function MessagesPage() {
                 <p className="text-xs text-green-600">
                   ChitPix member
                 </p>
+
+                {/* FOLLOW BUTTON */}
+                <button
+                  onClick={() => toggleFollow(activeChat.user.id)}
+                  disabled={followLoading}
+                  className={`mt-1 px-4 py-1 rounded-full text-xs font-semibold ${
+                    isFollowing
+                      ? 'bg-gray-200 text-black'
+                      : 'bg-blue-600 text-white'
+                  }`}
+                >
+                  {followLoading
+                    ? 'Please wait...'
+                    : isFollowing
+                    ? 'Following'
+                    : 'Follow'}
+                </button>
               </div>
             </div>
 
@@ -601,9 +831,14 @@ export default function MessagesPage() {
                         </p>
                       )}
 
-                      {!message.content &&
-                        message.message_type === 'image' && (
-                          <p className="text-sm">📷 Photo</p>
+                      {/* PHOTO MESSAGE */}
+                      {message.message_type === 'image' &&
+                        message.media_url && (
+                          <img
+                            src={message.media_url}
+                            alt="Shared photo"
+                            className="max-w-full max-h-72 rounded-xl object-contain"
+                          />
                         )}
 
                       {!message.content &&
@@ -626,29 +861,85 @@ export default function MessagesPage() {
               <div />
             </div>
 
-            {/* MESSAGE INPUT */}
-            <div className="border-t bg-white p-3 flex items-end gap-2">
-              <textarea
-                value={text}
-                onChange={e => setText(e.target.value)}
-                placeholder="Message..."
-                rows={1}
-                className="flex-1 resize-none bg-gray-100 rounded-2xl px-4 py-3 text-sm outline-none max-h-28"
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    sendMessage()
-                  }
+            {/* PART 4 CONTINUES BELOW */}
+                        {/* MESSAGE INPUT */}
+            <div className="border-t bg-white p-3">
+
+              {/* EMOJI PICKER */}
+              {showEmoji && (
+                <div className="grid grid-cols-5 gap-3 p-3 mb-2 bg-gray-100 rounded-xl">
+                  {emojis.map(emoji => (
+                    <button
+                      key={emoji}
+                      onClick={() => addEmoji(emoji)}
+                      className="text-2xl"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* HIDDEN PHOTO INPUT */}
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0]
+
+                  if (file) sendPhoto(file)
+
+                  e.currentTarget.value = ''
                 }}
               />
 
-              <button
-                onClick={sendMessage}
-                disabled={!text.trim() || sending}
-                className="bg-blue-600 text-white rounded-full px-5 py-3 font-semibold text-sm disabled:opacity-40"
-              >
-                {sending ? '...' : 'Send'}
-              </button>
+              <div className="flex items-end gap-2">
+
+                {/* PHOTO BUTTON */}
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="text-2xl px-1 disabled:opacity-40"
+                  aria-label="Send photo"
+                >
+                  {uploadingPhoto ? '⏳' : '📷'}
+                </button>
+
+                {/* EMOJI BUTTON */}
+                <button
+                  onClick={() => setShowEmoji(!showEmoji)}
+                  className="text-2xl px-1"
+                  aria-label="Open emojis"
+                >
+                  😊
+                </button>
+
+                {/* MESSAGE TEXT */}
+                <textarea
+                  value={text}
+                  onChange={e => setText(e.target.value)}
+                  placeholder="Message..."
+                  rows={1}
+                  className="flex-1 resize-none bg-gray-100 rounded-2xl px-4 py-3 text-sm outline-none max-h-28"
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      sendMessage()
+                    }
+                  }}
+                />
+
+                {/* SEND BUTTON */}
+                <button
+                  onClick={sendMessage}
+                  disabled={!text.trim() || sending}
+                  className="bg-blue-600 text-white rounded-full px-5 py-3 font-semibold text-sm disabled:opacity-40"
+                >
+                  {sending ? '...' : 'Send'}
+                </button>
+              </div>
             </div>
           </div>
         ) : (
@@ -750,10 +1041,9 @@ export default function MessagesPage() {
                   </p>
                 ) : (
                   filteredUsers.map(user => (
-                    <button
+                    <div
                       key={user.id}
-                      onClick={() => startNewChat(user)}
-                      className="w-full flex items-center gap-3 px-4 py-3 border-b border-gray-100 text-left hover:bg-gray-50"
+                      className="flex items-center gap-3 px-4 py-3 border-b border-gray-100"
                     >
                       <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0">
                         {user.avatar_url ? (
@@ -771,15 +1061,20 @@ export default function MessagesPage() {
                         <p className="font-semibold text-sm truncate">
                           {user.username || 'ChitPix User'}
                         </p>
+
                         <p className="text-xs text-gray-500 truncate">
                           {user.bio || 'ChitPix member'}
                         </p>
                       </div>
 
-                      <span className="text-blue-600 text-sm font-semibold">
+                      <button
+                        onClick={() => startNewChat(user)}
+                        disabled={chatLoading}
+                        className="text-blue-600 text-sm font-semibold"
+                      >
                         Message
-                      </span>
-                    </button>
+                      </button>
+                    </div>
                   ))
                 )}
               </div>
@@ -794,9 +1089,11 @@ export default function MessagesPage() {
                   {filteredChats.length === 0 ? (
                     <div className="text-center py-14 px-5">
                       <div className="text-5xl mb-3">💬</div>
+
                       <p className="font-semibold">
                         No conversations yet
                       </p>
+
                       <p className="text-sm text-gray-500 mt-2">
                         Start chatting with ChitPix users.
                       </p>
@@ -852,9 +1149,11 @@ export default function MessagesPage() {
               activeTab === 'requests' && (
                 <div className="text-center py-16 px-6">
                   <div className="text-5xl mb-3">📩</div>
+
                   <p className="font-semibold">
                     Message Requests
                   </p>
+
                   <p className="text-sm text-gray-500 mt-2">
                     Message requests will appear here once the
                     request system is connected.
@@ -868,4 +1167,4 @@ export default function MessagesPage() {
       {!activeChat && <BottomNav />}
     </div>
   )
-            }
+}
