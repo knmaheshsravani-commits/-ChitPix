@@ -2192,7 +2192,7 @@ return (
               />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800">
-                {isGroupChat(activeChat) ? "👥" : "👤"}
+                {isGroupChat ? "👥" : "👤"}
               </div>
             )}
             <div className="min-w-0 flex-1">
