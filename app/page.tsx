@@ -186,6 +186,10 @@ function PostCard({
   const [comments, setComments] = useState<any[]>([])
   const [commentText, setCommentText] = useState("")
   const [showComments, setShowComments] = useState(false)
+  const [commentLikeCounts, setCommentLikeCounts] = useState<Record<string, number>>({})
+  const [likedComments, setLikedComments] = useState<Record<string, boolean>>({})
+  const [replyingTo, setReplyingTo] = useState<any | null>(null)
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const [showMore, setShowMore] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -244,7 +248,7 @@ function PostCard({
     }
 
     loadPostActions()
-
+         
     return () => {
       cancelled = true
     }
@@ -390,6 +394,7 @@ function PostCard({
 
       const username =
         user.user_metadata?.username ||
+        user.user_metadata?.full_name ||
         user.email?.split("@")[0] ||
         "ChitPix User"
 
@@ -400,15 +405,18 @@ function PostCard({
           user_id: user.id,
           username,
           content: text,
+          parent_id: replyingTo?.id || null,
         })
-        .select("id, post_id, user_id, username, content, created_at")
+        .select("id, post_id, user_id, username, content, created_at, parent_id")
         .single()
 
       if (error) throw error
 
       setComments(previous => [...previous, data])
       setCommentText("")
-      setMessage("Comment posted successfully")
+      setReplyingTo(null)
+      setShowEmojiPicker(false)
+      setMessage(replyingTo ? "Reply posted successfully" : "Comment posted successfully")
     } catch (error: any) {
       setMessage(error.message || "Comment save avvaledu")
     } finally {
@@ -422,7 +430,7 @@ function PostCard({
 
     const { data, error } = await supabase
       .from("post_comments")
-      .select("id, post_id, user_id, username, content, created_at")
+      .select("id, post_id, user_id, username, content, created_at, parent_id")
       .eq("post_id", post.id)
       .order("created_at", { ascending: true })
 
@@ -431,7 +439,95 @@ function PostCard({
       return
     }
 
-    setComments(data || [])
+    const rows = data || []
+    setComments(rows)
+
+    if (rows.length === 0) {
+      setCommentLikeCounts({})
+      setLikedComments({})
+      return
+    }
+
+    const commentIds = rows.map((item: any) => item.id)
+    const { data: likeRows, error: likesError } = await supabase
+      .from("comment_likes")
+      .select("comment_id, user_id")
+      .in("comment_id", commentIds)
+
+    if (likesError) {
+      setMessage(likesError.message || "Comment likes load avvaledu")
+      return
+    }
+
+    const counts: Record<string, number> = {}
+    const mine: Record<string, boolean> = {}
+    ;(likeRows || []).forEach((like: any) => {
+      counts[like.comment_id] = (counts[like.comment_id] || 0) + 1
+      if (currentUserId && like.user_id === currentUserId) {
+        mine[like.comment_id] = true
+      }
+    })
+    setCommentLikeCounts(counts)
+    setLikedComments(mine)
+  }
+
+  const handleCommentLike = async (comment: any) => {
+    if (!currentUserId) {
+      setMessage("Comment like cheyadaniki login avvali")
+      return
+    }
+    if (busy) return
+
+    setBusy(true)
+    setMessage("")
+
+    try {
+      if (likedComments[comment.id]) {
+        const { error } = await supabase
+          .from("comment_likes")
+          .delete()
+          .eq("comment_id", comment.id)
+          .eq("user_id", currentUserId)
+
+        if (error) throw error
+
+        setLikedComments(previous => ({ ...previous, [comment.id]: false }))
+        setCommentLikeCounts(previous => ({
+          ...previous,
+          [comment.id]: Math.max(0, (previous[comment.id] || 0) - 1),
+        }))
+      } else {
+        const { data: { user }, error: authError } =
+            
+        if (authError || !user) throw new Error("Malli login avvali")
+
+        const username =
+          user.user_metadata?.username ||
+          user.user_metadata?.full_name ||
+          user.email?.split("@")[0] ||
+          "ChitPix User"
+
+        const { error } = await supabase.from("comment_likes").insert({
+          comment_id: comment.id,
+          user_id: user.id,
+          username,
+        })
+
+        if (error && error.code !== "23505") throw error
+
+        setLikedComments(previous => ({ ...previous, [comment.id]: true }))
+        if (!error) {
+          setCommentLikeCounts(previous => ({
+            ...previous,
+            [comment.id]: (previous[comment.id] || 0) + 1,
+          }))
+        }
+      }
+    } catch (error: any) {
+      setMessage(error.message || "Comment like update failed")
+    } finally {
+      setBusy(false)
+    }
   }
 
   const handleShare = async () => {
@@ -668,6 +764,22 @@ function PostCard({
             <ChitIcon name="share" size={26} />
           </button>
         </div>
+                  <button
+            onClick={loadComments}
+            aria-label="Open comments"
+            className="transition-transform active:scale-75"
+          >
+            <ChitIcon name="comment" size={27} />
+          </button>
+
+          <button
+            onClick={() => setShowShare(true)}
+            aria-label="Share post"
+            className="transition-transform active:scale-75"
+          >
+            <ChitIcon name="share" size={26} />
+          </button>
+        </div>
 
         <div className="flex items-center gap-4">
           <button
@@ -743,38 +855,113 @@ function PostCard({
             </div>
 
             <div className="min-h-[150px] flex-1 space-y-4 overflow-auto p-4">
-              {comments.length === 0 ? (
+              {comments.filter((item: any) => !item.parent_id).length === 0 ? (
                 <p className="py-8 text-center text-sm text-zinc-500">
                   Inka comments levu. First comment nuvvu cheyyi!
                 </p>
               ) : (
-                comments.map((comment: any) => (
-                  <div key={comment.id} className="text-sm">
-                    <p className="break-words">
-                      <b>{comment.username || "ChitPix User"}</b>{" "}
-                      {comment.content}
-                    </p>
-                    <p className="mt-1 text-xs text-zinc-400">
-                      {comment.created_at
-                        ? new Date(comment.created_at).toLocaleString()
-                        : ""}
-                    </p>
-                  </div>
-                ))
+                comments
+                  .filter((item: any) => !item.parent_id)
+                  .map((comment: any) => (
+                    <div key={comment.id} className="text-sm">
+                      <p className="break-words">
+                        <b>{comment.username || "ChitPix User"}</b>{" "}
+                        {comment.content}
+                      </p>
+                      <p className="mt-1 text-xs text-zinc-400">
+                        {comment.created_at
+                          ? new Date(comment.created_at).toLocaleString()
+                          : ""}
+                      </p>
+                      <div className="mt-1 flex items-center gap-4 text-xs font-semibold text-zinc-500">
+                        <button
+                          type="button"
+                          onClick={() => handleCommentLike(comment)}
+                          className={likedComments[comment.id] ? "text-rose-500" : ""}
+                          aria-label={likedComments[comment.id] ? "Unlike comment" : "Like comment"}
+                        >
+                          {likedComments[comment.id] ? "♥ Liked" : "♡ Like"}
+                          {` ${commentLikeCounts[comment.id] || 0}`}
+                        </button>
+                        <button type="button" onClick={() => setReplyingTo(comment)}>
+                          Reply
+                        </button>
+                      </div>
+
+                      {comments
+                        .filter((reply: any) => reply.parent_id === comment.id)
+                        .map((reply: any) => (
+                          <div key={reply.id} className="ml-5 mt-3 border-l-2 border-zinc-200 pl-3">
+                            <p className="break-words">
+                              <b>{reply.username || "ChitPix User"}</b>{" "}
+                              {reply.content}
+                            </p>
+                            <p className="mt-1 text-xs text-zinc-400">
+                              {reply.created_at
+                                ? new Date(reply.created_at).toLocaleString()
+                                : ""}
+                            </p>
+                            <div className="mt-1 flex items-center gap-4 text-xs font-semibold text-zinc-500">
+                              <button
+                                type="button"
+                                onClick={() => handleCommentLike(reply)}
+                                className={likedComments[reply.id] ? "text-rose-500" : ""}
+                              >
+                                {likedComments[reply.id] ? "♥ Liked" : "♡ Like"}
+                                {` ${commentLikeCounts[reply.id] || 0}`}
+                              </button>
+                              <button type="button" onClick={() => setReplyingTo(comment)}>
+                                Reply
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  ))
               )}
             </div>
 
+            {replyingTo && (
+              <div className="flex items-center justify-between bg-blue-50 px-4 py-2 text-xs text-blue-700">
+                <span>Replying to {replyingTo.username || "ChitPix User"}</span>
+                <button type="button" onClick={() => setReplyingTo(null)}>Cancel</button>
+              </div>
+            )}
+
+            {showEmojiPicker && (
+              <div className="flex flex-wrap gap-3 border-t px-4 py-3 text-xl">
+                {["😀", "😂", "😍", "🥰", "❤️", "🔥", "👏", "🙏", "👍", "😭", "😎", "🎉"].map(emoji => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setCommentText(value => value + emoji)}
+                    aria-label={`Add ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <form
-              className="flex gap-2 border-t p-3"
+              className="flex items-center gap-2 border-t p-3"
               onSubmit={event => {
                 event.preventDefault()
                 handleComment()
               }}
             >
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker(value => !value)}
+                className="text-xl"
+                aria-label="Open emoji picker"
+              >
+                😊
+              </button>
               <input
                 value={commentText}
                 onChange={event => setCommentText(event.target.value)}
-                placeholder="Add a comment..."
+                placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
                 maxLength={1000}
                 className="min-w-0 flex-1 rounded-full bg-zinc-100 px-4 py-2 text-sm outline-none"
               />
@@ -784,7 +971,7 @@ function PostCard({
                 disabled={busy || !commentText.trim()}
                 className="font-bold text-blue-600 disabled:opacity-50"
               >
-                {busy ? "Posting..." : "Post"}
+                {busy ? "Posting..." : replyingTo ? "Reply" : "Post"}
               </button>
             </form>
           </div>
@@ -826,8 +1013,7 @@ const [notifError, setNotifError] = useState("")
 
     const loadUser = async () => {
       const { data, error } = await supabase.auth.getUser()
-
-      if (!mounted) return
+          if (!mounted) return
 
       if (error || !data.user) {
         setCurrentUserId("")
@@ -1077,7 +1263,7 @@ try {
     body: JSON.stringify({
       type: "post",
       content_id: newPost.id,
-    }),
+          }),
   })
 
   const notificationResult = await notificationResponse.json()
@@ -1327,7 +1513,7 @@ try {
 
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+                            onClick={() => fileInputRef.current?.click()}
               className="w-full min-h-36 border-2 border-dashed rounded-xl bg-zinc-50 flex flex-col items-center justify-center gap-2 p-4"
             >
               <svg
@@ -1577,7 +1763,7 @@ try {
                           {!item.is_read && (
                             <button
                               onClick={async () => {
-                                try {
+                                                                try {
                                   const response = await fetch(
                                     "/api/notifications",
                                     {
@@ -1658,4 +1844,4 @@ try {
       <BottomNav />
     </main>
   )
-}
+      }
