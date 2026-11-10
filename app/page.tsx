@@ -505,12 +505,11 @@ function PostCard({
         ),
       }))
     } else {
-      const { error } = await supabase
+            const { error } = await supabase
         .from("comment_likes")
         .insert({
           comment_id: comment.id,
           user_id: currentUserId,
-          username: username,
         })
 
       if (error && error.code !== "23505") {
@@ -742,7 +741,7 @@ function PostCard({
         </div>
       )}
 
-      {/* Action buttons */}
+            {/* Action buttons */}
       <div className="flex items-center justify-between px-3 py-3">
         <div className="flex items-center gap-5">
           <button
@@ -755,22 +754,6 @@ function PostCard({
           </button>
 
           <button
-            onClick={loadComments}
-            aria-label="Open comments"
-            className="transition-transform active:scale-75"
-          >
-            <ChitIcon name="comment" size={27} />
-          </button>
-
-          <button
-            onClick={() => setShowShare(true)}
-            aria-label="Share post"
-            className="transition-transform active:scale-75"
-          >
-            <ChitIcon name="share" size={26} />
-          </button>
-        </div>
-                  <button
             onClick={loadComments}
             aria-label="Open comments"
             className="transition-transform active:scale-75"
