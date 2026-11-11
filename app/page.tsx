@@ -2114,10 +2114,14 @@ const formattedPosts: Post[] = postRows.map((post: any) => {
                 ) : (
                   <div className="space-y-2">
                     {notifications.map((item: any) => (
-                      <button
-                        type="button"
-                        key={item.id}
-                        onClick={() => markNotificationRead(item)}
+                      <div
+  key={item.id}
+  className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left ${
+    item.read || item.is_read
+      ? "bg-white"
+      : "bg-fuchsia-50"
+  }`}
+>
                         className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left ${
                           item.read || item.is_read
                             ? "bg-white"
