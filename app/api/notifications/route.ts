@@ -200,17 +200,22 @@ export async function GET() {
       }
     }
 
-    const result = notifications.map((n: any) => {
-      const actor = profiles.find(
-        (p: any) => p.id === n.actor_id
-      )
+    
+const result = notifications.map((n: any) => {
+  const actor = profiles.find(
+    (p: any) => p.id === n.actor_id
+  )
 
-      return {
-        ...n,
-        actor_username: actor?.username || "ChitPix User",
-        actor_avatar_url: actor?.avatar_url || null,
-      }
-    })
+  return {
+    ...n,
+    actor_id: n.actor_id,
+    actor_username: actor?.username || "ChitPix User",
+    actor_avatar: actor?.avatar_url || null,
+    actor_avatar_url: actor?.avatar_url || null,
+    avatar_url: actor?.avatar_url || null,
+  }
+})
+    
 
     return NextResponse.json(result)
   } catch (error) {
