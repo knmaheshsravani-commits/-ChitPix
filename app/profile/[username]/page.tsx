@@ -373,6 +373,7 @@ const visiblePosts = posts.filter((post: any) => {
   ))}
 </div>
         
+  
   <button
     onClick={() => setActiveTab("posts")}
     className={`border-b-2 py-4 text-center font-bold ${
@@ -395,9 +396,7 @@ const visiblePosts = posts.filter((post: any) => {
     ▶ REELS
   </button>
 </div>
-        
 
-        
 {activeTab === "reposts" || activeTab === "tagged" ? (
   <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
     <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-fuchsia-50 text-4xl text-fuchsia-500">
@@ -459,7 +458,6 @@ const visiblePosts = posts.filter((post: any) => {
   </div>
 )}
         </div>
-      </div>
 
       <BottomNav active="profile" avatar={avatar} />
     </main>
