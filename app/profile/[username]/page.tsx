@@ -22,7 +22,7 @@ export default function UserProfilePage() {
   const [followingCount, setFollowingCount] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
-
+  const [activeTab, setActiveTab] = useState<"posts" | "reels">("posts")
   useEffect(() => {
     let active = true
 
@@ -221,7 +221,23 @@ export default function UserProfilePage() {
   }
 
   const avatar = profile.avatar_url || profile.avatar || ""
+  
+const visiblePosts = posts.filter((post: any) => {
+  const src = String(
+    post.image_url || post.image || post.r2_url || post.url || ""
+  ).toLowerCase()
 
+  const type = String(
+    post.type || post.media_type || post.post_type || ""
+  ).toLowerCase()
+
+  const isVideo =
+    type.includes("video") ||
+    /\.(mp4|webm|mov|m4v|ogg)(\?|$)/.test(src)
+
+  return activeTab === "reels" ? isVideo : !isVideo
+})
+  
   return (
     <main className="min-h-screen bg-white pb-24 text-black">
       <div className="mx-auto max-w-[470px]">
@@ -239,73 +255,121 @@ export default function UserProfilePage() {
           </h1>
         </header>
 
-        <section className="p-5">
-          <div className="flex items-center gap-6">
-            {avatar ? (
-              <img
-                src={avatar}
-                alt="Profile photo"
-                className="h-24 w-24 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gray-200 text-3xl">
-                {String(profile.username || "U")[0].toUpperCase()}
-              </div>
-            )}
+        
+<section className="border-b border-slate-200 p-5">
+  <div className="flex items-center gap-5">
+    {/* PROFILE DP */}
+    {avatar ? (
+      <img
+        src={avatar}
+        alt="Profile photo"
+        className="h-24 w-24 shrink-0 rounded-full border-2 border-fuchsia-400 object-cover"
+      />
+    ) : (
+      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-orange-400 text-3xl font-bold text-white">
+        {String(profile.username || "U")[0].toUpperCase()}
+      </div>
+    )}
 
-            <div className="flex flex-1 justify-around text-center">
-              <div>
-                <b className="block text-xl">
-                  {posts.length}
-                </b>
-                <span className="text-sm">Posts</span>
-              </div>
+    {/* PROFILE COUNTS */}
+    <div className="grid flex-1 grid-cols-3 text-center">
+      <div>
+        <b className="block text-xl">{posts.length}</b>
+        <span className="text-xs text-slate-600">Posts</span>
+      </div>
 
-              <div>
-                <b className="block text-xl">
-                  {followersCount}
-                </b>
-                <span className="text-sm">Followers</span>
-              </div>
+      <div>
+        <b className="block text-xl">{followersCount}</b>
+        <span className="text-xs text-slate-600">Followers</span>
+      </div>
 
-              <div>
-                <b className="block text-xl">
-                  {followingCount}
-                </b>
-                <span className="text-sm">Following</span>
-              </div>
-            </div>
-          </div>
+      <div>
+        <b className="block text-xl">{followingCount}</b>
+        <span className="text-xs text-slate-600">Following</span>
+      </div>
+    </div>
+  </div>
 
-          <h2 className="mt-4 font-bold">
-            {profile.full_name || profile.username}
-          </h2>
+  {/* NAME AND BIO */}
+  <div className="mt-4">
+    <h2 className="font-bold text-slate-900">
+      {profile.full_name || profile.username}
+    </h2>
 
-          <p className="mt-1 whitespace-pre-line text-sm">
-            {profile.bio || ""}
-          </p>
+    <p className="mt-1 whitespace-pre-line text-sm text-slate-700">
+      {profile.bio || ""}
+    </p>
 
-          {currentUserId !== profile.id && (
-            <button
-              onClick={toggleFollow}
-              disabled={busy}
-              className="mt-4 w-full rounded-xl bg-blue-600 py-3 font-bold text-white disabled:opacity-50"
-            >
-              {busy
-                ? "Please wait..."
-                : following
-                  ? "Following"
-                  : "Follow"}
-            </button>
-          )}
-        </section>
+    {profile.website && (
+      <a
+        href={profile.website}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-1 block break-all text-sm font-semibold text-blue-600"
+      >
+        {profile.website}
+      </a>
+    )}
+  </div>
 
-        <h3 className="border-t p-4 text-center font-bold">
-          POSTS
-        </h3>
+  {/* ACTION BUTTONS */}
+  {currentUserId !== profile.id && (
+    <div className="mt-4 grid grid-cols-2 gap-2">
+      <button
+        onClick={toggleFollow}
+        disabled={busy}
+        className={`rounded-xl py-3 font-bold ${
+          following
+            ? "bg-slate-100 text-slate-900"
+            : "bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white"
+        } disabled:opacity-50`}
+      >
+        {busy
+          ? "Please wait..."
+          : following
+            ? "Following"
+            : "Follow"}
+      </button>
+
+      <button
+        onClick={() => router.push("/messages")}
+        className="rounded-xl bg-slate-100 py-3 font-bold text-slate-900"
+      >
+        Message
+      </button>
+    </div>
+  )}
+</section>
+        
+
+        
+<div className="grid grid-cols-2 border-t border-slate-200">
+  <button
+    onClick={() => setActiveTab("posts")}
+    className={`border-b-2 py-4 text-center font-bold ${
+      activeTab === "posts"
+        ? "border-fuchsia-500 text-fuchsia-600"
+        : "border-transparent text-slate-400"
+    }`}
+  >
+    ▦ POSTS
+  </button>
+
+  <button
+    onClick={() => setActiveTab("reels")}
+    className={`border-b-2 py-4 text-center font-bold ${
+      activeTab === "reels"
+        ? "border-fuchsia-500 text-fuchsia-600"
+        : "border-transparent text-slate-400"
+    }`}
+  >
+    ▶ REELS
+  </button>
+</div>
+        
 
         <div className="grid grid-cols-3 gap-1">
-          {posts.map((post: any, index: number) => {
+          {visiblePosts.map((post: any, index: number) => {
             const src =
               post.image_url ||
               post.image ||
