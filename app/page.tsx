@@ -827,7 +827,7 @@ function PostCard({
       {/* COMMENTS MODAL */}
       {showComments && (
         <div
-          className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/50"
+          className="fixed inset-0 z-[99999] flex items-end justify-center bg-black/50"
           onClick={() => {
             setShowComments(false)
             setShowEmojiPicker(false)
@@ -835,7 +835,7 @@ function PostCard({
           }}
         >
           <div
-            className="mx-auto flex h-[85dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-2xl bg-white"
+            className="sticky bottom-0 z-50 flex w-full shrink-0 items-center gap-2 border-t bg-white p-3 pb-[max(12px,env(safe-area-inset-bottom))]"
             onClick={(event) => event.stopPropagation()}
           >
             {/* HEADER */}
