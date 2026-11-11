@@ -22,7 +22,9 @@ export default function UserProfilePage() {
   const [followingCount, setFollowingCount] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
-  const [activeTab, setActiveTab] = useState<"posts" | "reels">("posts")
+  const [activeTab, setActiveTab] = useState<
+  "posts" | "reels" | "reposts" | "tagged"
+>("posts")
   useEffect(() => {
     let active = true
 
@@ -222,6 +224,7 @@ export default function UserProfilePage() {
 
   const avatar = profile.avatar_url || profile.avatar || ""
   
+
 const visiblePosts = posts.filter((post: any) => {
   const src = String(
     post.image_url || post.image || post.r2_url || post.url || ""
@@ -235,8 +238,12 @@ const visiblePosts = posts.filter((post: any) => {
     type.includes("video") ||
     /\.(mp4|webm|mov|m4v|ogg)(\?|$)/.test(src)
 
-  return activeTab === "reels" ? isVideo : !isVideo
+  if (activeTab === "posts") return !isVideo
+  if (activeTab === "reels") return isVideo
+
+  return false
 })
+  
   
   return (
     <main className="min-h-screen bg-white pb-24 text-black">
@@ -343,7 +350,29 @@ const visiblePosts = posts.filter((post: any) => {
         
 
         
-<div className="grid grid-cols-2 border-t border-slate-200">
+
+<div className="grid grid-cols-4 border-t border-slate-200">
+  {([
+    { id: "posts", label: "▦", title: "Posts" },
+    { id: "reels", label: "▶", title: "Reels" },
+    { id: "reposts", label: "⟳", title: "Reposts" },
+    { id: "tagged", label: "♙", title: "Tagged" },
+  ] as const).map((tab) => (
+    <button
+      key={tab.id}
+      onClick={() => setActiveTab(tab.id)}
+      aria-label={tab.title}
+      className={`border-b-2 py-4 text-center text-2xl ${
+        activeTab === tab.id
+          ? "border-fuchsia-500 text-fuchsia-600"
+          : "border-transparent text-slate-400"
+      }`}
+    >
+      {tab.label}
+    </button>
+  ))}
+</div>
+        
   <button
     onClick={() => setActiveTab("posts")}
     className={`border-b-2 py-4 text-center font-bold ${
@@ -368,45 +397,67 @@ const visiblePosts = posts.filter((post: any) => {
 </div>
         
 
-        <div className="grid grid-cols-3 gap-1">
-          {visiblePosts.map((post: any, index: number) => {
-            const src =
-              post.image_url ||
-              post.image ||
-              post.r2_url ||
-              post.url
+        
+{activeTab === "reposts" || activeTab === "tagged" ? (
+  <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
+    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-fuchsia-50 text-4xl text-fuchsia-500">
+      {activeTab === "reposts" ? "⟳" : "♙"}
+    </div>
 
-            if (!src) return null
+    <h3 className="text-lg font-bold text-slate-900">
+      {activeTab === "reposts"
+        ? "No reposts yet"
+        : "No tagged posts yet"}
+    </h3>
 
-            const isVideo =
-              String(post.type || post.media_type || "")
-                .toLowerCase()
-                .includes("video") ||
-              String(src).toLowerCase().includes(".mp4")
+    <p className="mt-2 text-sm text-slate-500">
+      {activeTab === "reposts"
+        ? "Posts you repost will appear here."
+        : "Posts where this user is tagged will appear here."}
+    </p>
+  </div>
+) : (
+  <div className="grid grid-cols-3 gap-1">
+    {visiblePosts.map((post: any, index: number) => {
+      const src =
+        post.image_url ||
+        post.image ||
+        post.r2_url ||
+        post.url
 
-            return (
-              <button
-                key={post.id || index}
-                onClick={() => router.push(`/post/${post.id}`)}
-                className="aspect-square overflow-hidden bg-gray-100"
-              >
-                {isVideo ? (
-                  <video
-                    src={src}
-                    muted
-                    playsInline
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <img
-                    src={src}
-                    alt="Post"
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </button>
-            )
-          })}
+      if (!src) return null
+
+      const isVideo =
+        String(post.type || post.media_type || "")
+          .toLowerCase()
+          .includes("video") ||
+        /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(String(src))
+
+      return (
+        <button
+          key={post.id || index}
+          onClick={() => router.push(`/post/${post.id}`)}
+          className="aspect-square overflow-hidden bg-gray-100"
+        >
+          {isVideo ? (
+            <video
+              src={src}
+              muted
+              playsInline
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <img
+              src={src}
+              alt="Post"
+              className="h-full w-full object-cover"
+            />
+          )}
+        </button>
+      )
+    })}
+  </div>
+)}
         </div>
       </div>
 
