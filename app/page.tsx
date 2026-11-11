@@ -824,10 +824,11 @@ function PostCard({
       )}
 
       
+      
       {/* COMMENTS MODAL */}
       {showComments && (
         <div
-          className="fixed inset-0 z-[99999] flex items-end justify-center bg-black/50"
+          className="fixed inset-0 z-[99999] flex items-end justify-center bg-black/60"
           onClick={() => {
             setShowComments(false)
             setShowEmojiPicker(false)
@@ -835,106 +836,120 @@ function PostCard({
           }}
         >
           <div
-            className="sticky bottom-0 z-50 flex w-full shrink-0 items-center gap-2 border-t bg-white p-3 pb-[max(12px,env(safe-area-inset-bottom))]"
+            className="flex h-[82dvh] max-h-[720px] w-full max-w-[480px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             {/* HEADER */}
-            <div className="flex shrink-0 items-center justify-between border-b p-4">
-              <b className="text-lg">Comments ({comments.length})</b>
+            <div className="flex h-16 shrink-0 items-center justify-between border-b border-zinc-200 px-5">
+              <b className="text-lg">
+                Comments ({comments.length})
+              </b>
+
               <button
                 type="button"
-                onClick={() => setShowComments(false)}
+                onClick={() => {
+                  setShowComments(false)
+                  setShowEmojiPicker(false)
+                  setReplyingTo(null)
+                }}
                 aria-label="Close comments"
+                className="rounded-full p-2 active:bg-zinc-100"
               >
                 <ChitIcon name="close" size={24} />
               </button>
             </div>
 
             {/* COMMENTS LIST */}
-            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
               {comments.filter((item: any) => !item.parent_id).length === 0 ? (
-                <p className="py-8 text-center text-sm text-zinc-500">
+                <p className="py-12 text-center text-sm text-zinc-500">
                   Inka comments levu. First comment nuvvu cheyyi!
                 </p>
               ) : (
-                comments
-                  .filter((item: any) => !item.parent_id)
-                  .map((comment: any) => (
-                    <div key={comment.id} className="text-sm">
-                      <p className="break-words">
-                        <b>{comment.username || "ChitPix User"}</b>{" "}
-                        {comment.content}
-                      </p>
+                <div className="space-y-5">
+                  {comments
+                    .filter((item: any) => !item.parent_id)
+                    .map((comment: any) => (
+                      <div key={comment.id} className="text-sm">
+                        <p className="break-words">
+                          <b>{comment.username || "ChitPix User"}</b>{" "}
+                          {comment.content}
+                        </p>
 
-                      <p className="mt-1 text-xs text-zinc-400">
-                        {comment.created_at
-                          ? new Date(comment.created_at).toLocaleString()
-                          : ""}
-                      </p>
+                        <p className="mt-1 text-xs text-zinc-400">
+                          {comment.created_at
+                            ? new Date(comment.created_at).toLocaleString()
+                            : ""}
+                        </p>
 
-                      <div className="mt-2 flex items-center gap-4 text-xs font-semibold text-zinc-500">
-                        <button
-                          type="button"
-                          onClick={() => handleCommentLike(comment)}
-                          className={likedComments[comment.id] ? "text-rose-500" : ""}
-                        >
-                          {likedComments[comment.id] ? "♥ Liked" : "♡ Like"}
-                          {" "}{commentLikeCounts[comment.id] || 0}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setReplyingTo(comment)}
-                        >
-                          Reply
-                        </button>
-                      </div>
-
-                      {comments
-                        .filter((reply: any) => reply.parent_id === comment.id)
-                        .map((reply: any) => (
-                          <div
-                            key={reply.id}
-                            className="ml-5 mt-3 border-l-2 border-zinc-200 pl-3"
+                        <div className="mt-2 flex items-center gap-4 text-xs font-semibold text-zinc-500">
+                          <button
+                            type="button"
+                            onClick={() => handleCommentLike(comment)}
+                            className={likedComments[comment.id] ? "text-rose-500" : ""}
                           >
-                            <p className="break-words">
-                              <b>{reply.username || "ChitPix User"}</b>{" "}
-                              {reply.content}
-                            </p>
-                            <p className="mt-1 text-xs text-zinc-400">
-                              {reply.created_at
-                                ? new Date(reply.created_at).toLocaleString()
-                                : ""}
-                            </p>
-                            <div className="mt-2 flex gap-4 text-xs font-semibold text-zinc-500">
-                              <button
-                                type="button"
-                                onClick={() => handleCommentLike(reply)}
-                                className={likedComments[reply.id] ? "text-rose-500" : ""}
-                              >
-                                {likedComments[reply.id] ? "♥ Liked" : "♡ Like"}
-                                {" "}{commentLikeCounts[reply.id] || 0}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setReplyingTo(comment)}
-                              >
-                                Reply
-                              </button>
+                            {likedComments[comment.id] ? "♥ Liked" : "♡ Like"}{" "}
+                            {commentLikeCounts[comment.id] || 0}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setReplyingTo(comment)}
+                          >
+                            Reply
+                          </button>
+                        </div>
+
+                        {comments
+                          .filter((reply: any) => reply.parent_id === comment.id)
+                          .map((reply: any) => (
+                            <div
+                              key={reply.id}
+                              className="ml-5 mt-3 border-l-2 border-zinc-200 pl-3"
+                            >
+                              <p className="break-words">
+                                <b>{reply.username || "ChitPix User"}</b>{" "}
+                                {reply.content}
+                              </p>
+
+                              <p className="mt-1 text-xs text-zinc-400">
+                                {reply.created_at
+                                  ? new Date(reply.created_at).toLocaleString()
+                                  : ""}
+                              </p>
+
+                              <div className="mt-2 flex gap-4 text-xs font-semibold text-zinc-500">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCommentLike(reply)}
+                                  className={likedComments[reply.id] ? "text-rose-500" : ""}
+                                >
+                                  {likedComments[reply.id] ? "♥ Liked" : "♡ Like"}{" "}
+                                  {commentLikeCounts[reply.id] || 0}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setReplyingTo(comment)}
+                                >
+                                  Reply
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                    </div>
-                  ))
+                          ))}
+                      </div>
+                    ))}
+                </div>
               )}
             </div>
 
             {/* REPLY STATUS */}
             {replyingTo && (
-              <div className="flex shrink-0 items-center justify-between bg-blue-50 px-4 py-2 text-xs text-blue-700">
+              <div className="flex shrink-0 items-center justify-between border-t bg-blue-50 px-4 py-2 text-xs text-blue-700">
                 <span>
                   Replying to {replyingTo.username || "ChitPix User"}
                 </span>
+
                 <button
                   type="button"
                   onClick={() => setReplyingTo(null)}
@@ -959,9 +974,9 @@ function PostCard({
               </div>
             )}
 
-            {/* COMMENT INPUT - ALWAYS VISIBLE */}
+            {/* COMMENT INPUT */}
             <form
-              className="relative z-30 flex w-full shrink-0 items-center gap-2 border-t bg-white p-3 pb-[max(12px,env(safe-area-inset-bottom))]"
+              className="flex w-full shrink-0 items-center gap-2 border-t bg-white px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))]"
               onSubmit={(event) => {
                 event.preventDefault()
                 handleComment()
@@ -994,11 +1009,9 @@ function PostCard({
             </form>
           </div>
         </div>
-      
       )}
-    </article>
-  )
-}
+      
+                
 
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([])
