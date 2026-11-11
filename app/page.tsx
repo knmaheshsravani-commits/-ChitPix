@@ -994,8 +994,12 @@ function PostCard({
             </form>
           </div>
         </div>
-      )}
       
+      )}
+    </article>
+  )
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([])
   const [currentUserId, setCurrentUserId] = useState("")
