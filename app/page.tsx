@@ -2115,6 +2115,7 @@ const formattedPosts: Post[] = postRows.map((post: any) => {
                   <div className="space-y-2">
                     {notifications.map((item: any) => (
                       <div
+                        <div
   key={item.id}
   className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left ${
     item.read || item.is_read
@@ -2122,6 +2123,39 @@ const formattedPosts: Post[] = postRows.map((post: any) => {
       : "bg-fuchsia-50"
   }`}
 >
+                        <button
+  type="button"
+  onClick={async () => {
+    await markNotificationRead(item)
+
+    if (item.actor_username) {
+      setShowNotif(false)
+      router.push(
+        `/profile/${encodeURIComponent(item.actor_username)}`
+      )
+    }
+  }}
+  className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-orange-400 text-white"
+  aria-label="Open user profile"
+>
+  {item.actor_avatar || item.actor_avatar_url || item.avatar_url ? (
+    <img
+      src={
+        item.actor_avatar ||
+        item.actor_avatar_url ||
+        item.avatar_url
+      }
+      alt="User profile"
+      className="h-full w-full object-cover"
+    />
+  ) : (
+    <span className="font-bold">
+      {(item.actor_username || item.username || "C")
+        .charAt(0)
+        .toUpperCase()}
+    </span>
+  )}
+</button>
                         className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left ${
                           item.read || item.is_read
                             ? "bg-white"
