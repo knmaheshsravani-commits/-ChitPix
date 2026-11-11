@@ -1033,12 +1033,12 @@ function PostCard({
                         <div className="mt-2 flex items-center gap-4">
                           <button
                             type="button"
-                            onClick={() => handleCommentLike(comment.id)}
+                            onClick={() => handleCommentLike(comment)}
                             className="text-xs font-semibold text-slate-500"
                           >
-                            {likedComments.includes(comment.id)
-                              ? "Liked"
-                              : "Like"}{" "}
+                            {likedComments[comment.id]
+  ? "Liked"
+  : "Like"}{" "}
                             {commentLikeCounts[comment.id] || 0}
                           </button>
                           <button
