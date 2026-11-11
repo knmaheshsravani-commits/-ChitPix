@@ -452,15 +452,14 @@ const visiblePosts = posts.filter((post: any) => {
               className="h-full w-full object-cover"
             />
           )}
-        </button>
-      )
-    })}
-  </div>
-)}
-        </div>
+                  </button>
+        )
+      })}
+    </div>
+  )}
+      </div>
 
       <BottomNav active="profile" avatar={avatar} />
     </main>
   )
-  }
-    
+      }
