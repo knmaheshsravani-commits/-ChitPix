@@ -901,7 +901,7 @@ function PostCard({
         {/* POST DETAILS */}
         <div className="px-4 pb-4 pt-3">
           <p className="text-sm font-bold text-slate-900">
-            {likesCount.toLocaleString("en-IN")} likes
+            {likes.toLocaleString("en-IN")} likes
           </p>
 
           {post.caption && (
