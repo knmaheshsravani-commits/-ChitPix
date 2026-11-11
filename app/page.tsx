@@ -2113,96 +2113,97 @@ const formattedPosts: Post[] = postRows.map((post: any) => {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {notifications.map((item: any) => (
-                      <div
-                        <div
-  key={item.id}
-  className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left ${
-    item.read || item.is_read
-      ? "bg-white"
-      : "bg-fuchsia-50"
-  }`}
->
-                        <button
-  type="button"
-  onClick={async () => {
-    await markNotificationRead(item)
+                    
+{notifications.map((item: any) => (
+  <div
+    key={item.id}
+    className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left ${
+      item.read || item.is_read
+        ? "bg-white"
+        : "bg-fuchsia-50"
+    }`}
+  >
+    <button
+      type="button"
+      onClick={async () => {
+        await markNotificationRead(item)
 
-    if (item.actor_username) {
-      setShowNotif(false)
-      router.push(
-        `/profile/${encodeURIComponent(item.actor_username)}`
-      )
-    }
-  }}
-  className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-orange-400 text-white"
-  aria-label="Open user profile"
->
-  {item.actor_avatar || item.actor_avatar_url || item.avatar_url ? (
-    <img
-      src={
-        item.actor_avatar ||
-        item.actor_avatar_url ||
-        item.avatar_url
-      }
-      alt="User profile"
-      className="h-full w-full object-cover"
-    />
-  ) : (
-    <span className="font-bold">
-      {(item.actor_username || item.username || "C")
-        .charAt(0)
-        .toUpperCase()}
-    </span>
-  )}
-</button>
-                        className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left ${
-                          item.read || item.is_read
-                            ? "bg-white"
-                            : "bg-fuchsia-50"
-                        }`}
-                      >
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-orange-400 text-white">
-                          {item.actor_avatar || item.avatar_url ? (
-                            <img
-                              src={item.actor_avatar || item.avatar_url}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span className="font-bold">
-                              {(item.actor_username || item.username || "C")
-                                .charAt(0)
-                                .toUpperCase()}
-                            </span>
-                          )}
-                        </div>
+        const username =
+          item.actor_username || item.username
 
-                        <div className="min-w-0 flex-1">
-                          <p className="break-words text-sm text-slate-800">
-                            <span className="font-bold">
-                              {item.actor_username ||
-                                item.username ||
-                                "ChitPix"}
-                            </span>{" "}
-                            {item.message ||
-                              item.content ||
-                              item.type ||
-                              "sent you an update"}
-                          </p>
+        if (username) {
+          setShowNotif(false)
+          router.push(
+            `/profile/${encodeURIComponent(username)}`
+          )
+        }
+      }}
+      className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 to-orange-400 text-white"
+      aria-label="Open user profile"
+    >
+      {item.actor_avatar ||
+      item.actor_avatar_url ||
+      item.avatar_url ? (
+        <img
+          src={
+            item.actor_avatar ||
+            item.actor_avatar_url ||
+            item.avatar_url
+          }
+          alt="User profile"
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span className="font-bold">
+          {(item.actor_username || item.username || "C")
+            .charAt(0)
+            .toUpperCase()}
+        </span>
+      )}
+    </button>
 
-                          <p className="mt-1 text-[11px] text-slate-400">
-                            {item.created_at
-                              ? new Date(item.created_at).toLocaleString()
-                              : ""}
-                          </p>
-                        </div>
+    <button
+      type="button"
+      onClick={async () => {
+        await markNotificationRead(item)
 
-                        {!item.read && !item.is_read && (
-                          <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-fuchsia-500" />
-                        )}
-                      </button>
-                    ))}
+        const username =
+          item.actor_username || item.username
+
+        if (username) {
+          setShowNotif(false)
+          router.push(
+            `/profile/${encodeURIComponent(username)}`
+          )
+        }
+      }}
+      className="min-w-0 flex-1 text-left"
+    >
+      <p className="break-words text-sm text-slate-800">
+        <span className="font-bold">
+          {item.actor_username ||
+            item.username ||
+            "ChitPix"}
+        </span>{" "}
+        {item.message ||
+          item.content ||
+          item.type ||
+          "sent you an update"}
+      </p>
+
+      <p className="mt-1 text-[11px] text-slate-400">
+        {item.created_at
+          ? new Date(item.created_at).toLocaleString()
+          : ""}
+      </p>
+    </button>
+
+    {!item.read && !item.is_read && (
+      <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-fuchsia-500" />
+    )}
+  </div>
+))}
+                    
                   </div>
                 )}
               </div>
