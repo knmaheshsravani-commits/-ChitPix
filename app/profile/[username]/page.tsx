@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation"
 import { supabase } from "../../../lib/supabase"
 import BottomNav from "../../components/BottomNav"
 
+type ProfileTab = "posts" | "reels" | "reposts" | "tagged"
+
 export default function UserProfilePage() {
   const params = useParams()
   const router = useRouter()
@@ -22,9 +24,8 @@ export default function UserProfilePage() {
   const [followingCount, setFollowingCount] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
-  const [activeTab, setActiveTab] = useState<
-  "posts" | "reels" | "reposts" | "tagged"
->("posts")
+  const [activeTab, setActiveTab] = useState<ProfileTab>("posts")
+
   useEffect(() => {
     let active = true
 
@@ -74,7 +75,6 @@ export default function UserProfilePage() {
 
         if (active) setPosts(userPosts || [])
 
-        // Count followers and following from user_follows.
         const [followersResult, followingResult] =
           await Promise.all([
             supabase
@@ -107,7 +107,6 @@ export default function UserProfilePage() {
           setFollowingCount(followingResult.count ?? 0)
         }
 
-        // Check whether the logged-in user follows this profile.
         if (user && user.id !== found.id) {
           const { data: relation, error: followError } =
             await supabase
@@ -195,7 +194,7 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen p-8 text-center">
+      <main className="min-h-screen bg-white p-8 text-center text-slate-700">
         Loading profile...
       </main>
     )
@@ -223,243 +222,267 @@ export default function UserProfilePage() {
   }
 
   const avatar = profile.avatar_url || profile.avatar || ""
-  
 
-const visiblePosts = posts.filter((post: any) => {
-  const src = String(
-    post.image_url || post.image || post.r2_url || post.url || ""
-  ).toLowerCase()
+  const visiblePosts = posts.filter((post: any) => {
+    const src = String(
+      post.image_url ||
+      post.image ||
+      post.r2_url ||
+      post.url ||
+      ""
+    ).toLowerCase()
 
-  const type = String(
-    post.type || post.media_type || post.post_type || ""
-  ).toLowerCase()
+    const type = String(
+      post.type ||
+      post.media_type ||
+      post.post_type ||
+      ""
+    ).toLowerCase()
 
-  const isVideo =
-    type.includes("video") ||
-    /\.(mp4|webm|mov|m4v|ogg)(\?|$)/.test(src)
+    const isVideo =
+      type.includes("video") ||
+      /\.(mp4|webm|mov|m4v|ogg)(\?|$)/.test(src)
 
-  if (activeTab === "posts") return !isVideo
-  if (activeTab === "reels") return isVideo
+    if (activeTab === "posts") return !isVideo
+    if (activeTab === "reels") return isVideo
 
-  return false
-})
-  
-  
+    return false
+  })
+
   return (
-    <main className="min-h-screen bg-white pb-24 text-black">
-      <div className="mx-auto max-w-[470px]">
-        <header className="flex items-center gap-4 border-b p-4">
-          <button
-            onClick={() => router.back()}
-            className="text-2xl"
-            aria-label="Go back"
-          >
-            ←
-          </button>
+    
+      <main className="min-h-screen bg-white pb-24 text-black">
+        <div className="mx-auto max-w-[470px]">
 
-          <h1 className="text-xl font-bold">
-            {profile.username}
-          </h1>
-        </header>
+          {/* PROFILE HEADER */}
+          <header className="sticky top-0 z-20 flex items-center gap-4 border-b bg-white p-4">
+            <button
+              onClick={() => router.back()}
+              className="text-2xl"
+              aria-label="Go back"
+            >
+              ←
+            </button>
 
-        
-<section className="border-b border-slate-200 p-5">
-  <div className="flex items-center gap-5">
-    {/* PROFILE DP */}
-    {avatar ? (
-      <img
-        src={avatar}
-        alt="Profile photo"
-        className="h-24 w-24 shrink-0 rounded-full border-2 border-fuchsia-400 object-cover"
-      />
-    ) : (
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-orange-400 text-3xl font-bold text-white">
-        {String(profile.username || "U")[0].toUpperCase()}
-      </div>
-    )}
+            <h1 className="text-xl font-bold">
+              {profile.username}
+            </h1>
+          </header>
 
-    {/* PROFILE COUNTS */}
-    <div className="grid flex-1 grid-cols-3 text-center">
-      <div>
-        <b className="block text-xl">{posts.length}</b>
-        <span className="text-xs text-slate-600">Posts</span>
-      </div>
+          {/* PROFILE DETAILS */}
+          <section className="border-b border-slate-200 p-5">
+            <div className="flex items-center gap-5">
 
-      <div>
-        <b className="block text-xl">{followersCount}</b>
-        <span className="text-xs text-slate-600">Followers</span>
-      </div>
+              {/* PROFILE DP */}
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt="Profile photo"
+                  className="h-24 w-24 shrink-0 rounded-full border-2 border-fuchsia-400 object-cover"
+                />
+              ) : (
+                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-orange-400 text-3xl font-bold text-white">
+                  {String(profile.username || "U")[0].toUpperCase()}
+                </div>
+              )}
 
-      <div>
-        <b className="block text-xl">{followingCount}</b>
-        <span className="text-xs text-slate-600">Following</span>
-      </div>
-    </div>
-  </div>
+              {/* COUNTS */}
+              <div className="grid flex-1 grid-cols-3 text-center">
+                <div>
+                  <b className="block text-xl">
+                    {posts.length}
+                  </b>
+                  <span className="text-xs text-slate-600">
+                    Posts
+                  </span>
+                </div>
 
-  {/* NAME AND BIO */}
-  <div className="mt-4">
-    <h2 className="font-bold text-slate-900">
-      {profile.full_name || profile.username}
-    </h2>
+                <div>
+                  <b className="block text-xl">
+                    {followersCount}
+                  </b>
+                  <span className="text-xs text-slate-600">
+                    Followers
+                  </span>
+                </div>
 
-    <p className="mt-1 whitespace-pre-line text-sm text-slate-700">
-      {profile.bio || ""}
-    </p>
+                <div>
+                  <b className="block text-xl">
+                    {followingCount}
+                  </b>
+                  <span className="text-xs text-slate-600">
+                    Following
+                  </span>
+                </div>
+              </div>
+            </div>
 
-    {profile.website && (
-      <a
-        href={profile.website}
-        target="_blank"
-        rel="noreferrer"
-        className="mt-1 block break-all text-sm font-semibold text-blue-600"
-      >
-        {profile.website}
-      </a>
-    )}
-  </div>
+            {/* NAME AND BIO */}
+            <div className="mt-4">
+              <h2 className="font-bold text-slate-900">
+                {profile.full_name || profile.username}
+              </h2>
 
-  {/* ACTION BUTTONS */}
-  {currentUserId !== profile.id && (
-    <div className="mt-4 grid grid-cols-2 gap-2">
-      <button
-        onClick={toggleFollow}
-        disabled={busy}
-        className={`rounded-xl py-3 font-bold ${
-          following
-            ? "bg-slate-100 text-slate-900"
-            : "bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white"
-        } disabled:opacity-50`}
-      >
-        {busy
-          ? "Please wait..."
-          : following
-            ? "Following"
-            : "Follow"}
-      </button>
+              <p className="mt-1 whitespace-pre-line text-sm text-slate-700">
+                {profile.bio || ""}
+              </p>
 
-      <button
-        onClick={() => router.push("/messages")}
-        className="rounded-xl bg-slate-100 py-3 font-bold text-slate-900"
-      >
-        Message
-      </button>
-    </div>
-  )}
-</section>
-        
+              {profile.website && (
+                <a
+                  href={profile.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 block break-all text-sm font-semibold text-blue-600"
+                >
+                  {profile.website}
+                </a>
+              )}
+            </div>
 
-        
+            {/* FOLLOW AND MESSAGE */}
+            {currentUserId !== profile.id && (
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                  onClick={toggleFollow}
+                  disabled={busy}
+                  className={`rounded-xl py-3 font-bold ${
+                    following
+                      ? "bg-slate-100 text-slate-900"
+                      : "bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white"
+                  } disabled:opacity-50`}
+                >
+                  {busy
+                    ? "Please wait..."
+                    : following
+                      ? "Following"
+                      : "Follow"}
+                </button>
 
-<div className="grid grid-cols-4 border-t border-slate-200">
-  {([
-    { id: "posts", label: "▦", title: "Posts" },
-    { id: "reels", label: "▶", title: "Reels" },
-    { id: "reposts", label: "⟳", title: "Reposts" },
-    { id: "tagged", label: "♙", title: "Tagged" },
-  ] as const).map((tab) => (
-    <button
-      key={tab.id}
-      onClick={() => setActiveTab(tab.id)}
-      aria-label={tab.title}
-      className={`border-b-2 py-4 text-center text-2xl ${
-        activeTab === tab.id
-          ? "border-fuchsia-500 text-fuchsia-600"
-          : "border-transparent text-slate-400"
-      }`}
-    >
-      {tab.label}
-    </button>
-  ))}
-</div>
-        
-  
-  <button
-    onClick={() => setActiveTab("posts")}
-    className={`border-b-2 py-4 text-center font-bold ${
-      activeTab === "posts"
-        ? "border-fuchsia-500 text-fuchsia-600"
-        : "border-transparent text-slate-400"
-    }`}
-  >
-    ▦ POSTS
-  </button>
+                <button
+                  onClick={() => router.push("/messages")}
+                  className="rounded-xl bg-slate-100 py-3 font-bold text-slate-900"
+                >
+                  Message
+                </button>
+              </div>
+            )}
+          </section>
 
-  <button
-    onClick={() => setActiveTab("reels")}
-    className={`border-b-2 py-4 text-center font-bold ${
-      activeTab === "reels"
-        ? "border-fuchsia-500 text-fuchsia-600"
-        : "border-transparent text-slate-400"
-    }`}
-  >
-    ▶ REELS
-  </button>
-</div>
+          {/* PROFILE TABS */}
+          <div className="grid grid-cols-4 border-b border-slate-200">
+            {([
+              { id: "posts", label: "▦", title: "Posts" },
+              { id: "reels", label: "▶", title: "Reels" },
+              { id: "reposts", label: "⟳", title: "Reposts" },
+              { id: "tagged", label: "♙", title: "Tagged" },
+            ] as const).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                aria-label={tab.title}
+                className={`border-b-2 py-4 text-center text-2xl ${
+                  activeTab === tab.id
+                    ? "border-fuchsia-500 text-fuchsia-600"
+                    : "border-transparent text-slate-400"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-{activeTab === "reposts" || activeTab === "tagged" ? (
-  <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
-    <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-fuchsia-50 text-4xl text-fuchsia-500">
-      {activeTab === "reposts" ? "⟳" : "♙"}
-    </div>
+          {/* POSTS / REELS / EMPTY TABS */}
+          {activeTab === "reposts" || activeTab === "tagged" ? (
+            <div className="flex min-h-[280px] flex-col items-center justify-center px-6 text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-fuchsia-50 text-4xl text-fuchsia-500">
+                {activeTab === "reposts" ? "⟳" : "♙"}
+              </div>
 
-    <h3 className="text-lg font-bold text-slate-900">
-      {activeTab === "reposts"
-        ? "No reposts yet"
-        : "No tagged posts yet"}
-    </h3>
+              <h3 className="text-lg font-bold text-slate-900">
+                {activeTab === "reposts"
+                  ? "No reposts yet"
+                  : "No tagged posts yet"}
+              </h3>
 
-    <p className="mt-2 text-sm text-slate-500">
-      {activeTab === "reposts"
-        ? "Posts you repost will appear here."
-        : "Posts where this user is tagged will appear here."}
-    </p>
-  </div>
-) : (
-  <div className="grid grid-cols-3 gap-1">
-    {visiblePosts.map((post: any, index: number) => {
-      const src =
-        post.image_url ||
-        post.image ||
-        post.r2_url ||
-        post.url
-
-      if (!src) return null
-
-      const isVideo =
-        String(post.type || post.media_type || "")
-          .toLowerCase()
-          .includes("video") ||
-        /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(String(src))
-
-      return (
-        <button
-          key={post.id || index}
-          onClick={() => router.push(`/post/${post.id}`)}
-          className="aspect-square overflow-hidden bg-gray-100"
-        >
-          {isVideo ? (
-            <video
-              src={src}
-              muted
-              playsInline
-              className="h-full w-full object-cover"
-            />
+              <p className="mt-2 text-sm text-slate-500">
+                {activeTab === "reposts"
+                  ? "Posts you repost will appear here."
+                  : "Posts where this user is tagged will appear here."}
+              </p>
+            </div>
           ) : (
-            <img
-              src={src}
-              alt="Post"
-              className="h-full w-full object-cover"
-            />
-          )}
-                  </button>
-        )
-      })}
-    </div>
-  )}
-      </div>
+            <div className="grid grid-cols-3 gap-1">
+              {visiblePosts.map((post: any, index: number) => {
+                const src =
+                  post.image_url ||
+                  post.image ||
+                  post.r2_url ||
+                  post.url
 
-      <BottomNav active="profile" avatar={avatar} />
-    </main>
-  )
-      }
+                if (!src) return null
+
+                const isVideo =
+                  String(
+                    post.type ||
+                    post.media_type ||
+                    post.post_type ||
+                    ""
+                  )
+                    .toLowerCase()
+                    .includes("video") ||
+                  /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(
+                    String(src)
+                  )
+
+                return (
+                  <button
+                    key={post.id || index}
+                    onClick={() => router.push(`/post/${post.id}`)}
+                    className="relative aspect-square overflow-hidden bg-slate-100"
+                  >
+                    {isVideo ? (
+                      <>
+                        <video
+                          src={src}
+                          muted
+                          playsInline
+                          className="h-full w-full object-cover"
+                        />
+                        <span className="absolute right-2 top-2 rounded bg-black/50 px-2 py-1 text-xs text-white">
+                          ▶
+                        </span>
+                      </>
+                    ) : (
+                      <img
+                        src={src}
+                        alt="Post"
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </button>
+                )
+              })}
+
+              {visiblePosts.length === 0 && (
+                <div className="col-span-3 flex min-h-[280px] flex-col items-center justify-center text-center">
+                  <div className="text-4xl text-slate-300">
+                    {activeTab === "reels" ? "▶" : "▦"}
+                  </div>
+                  <p className="mt-3 font-semibold text-slate-700">
+                    {activeTab === "reels"
+                      ? "No reels yet"
+                      : "No posts yet"}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+
+        {/* BOTTOM NAVIGATION */}
+        <BottomNav active="profile" avatar={avatar} />
+      </main>
+    )
+          }
