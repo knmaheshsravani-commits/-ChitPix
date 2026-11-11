@@ -1261,7 +1261,7 @@ export default function HomePage() {
       setLoading(false)
       return
     }
-
+    const postRows = data || []
     const userIds = postRows
   .map((post: any) => post.user_id)
   .filter(
