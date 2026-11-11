@@ -1120,10 +1120,12 @@ function PostCard({
             )}
 
             {/* COMMENT INPUT - ALWAYS AT BOTTOM */}
-            <form
-              onSubmit={handleComment}
-              className="flex shrink-0 items-center gap-2 border-t border-slate-200 bg-white p-3 pb-[max(12px,env(safe-area-inset-bottom))]"
-            >
+            
+<form
+  onSubmit={handleComment}
+  className="relative z-50 mt-auto flex w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white p-3 pb-[max(16px,env(safe-area-inset-bottom))]"
+>
+  
               <button
                 type="button"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -1286,20 +1288,31 @@ export default function HomePage() {
       profiles.map((profile: any) => [profile.id, profile])
     )
 
-    const formattedPosts: Post[] = postRows.map((post: any) => {
-      const profile: any = profileMap.get(post.user_id)
+    
+const formattedPosts: Post[] = postRows.map((post: any) => {
+  const profile: any = profileMap.get(post.user_id)
 
-      return {
-        ...post,
-        username:
-          post.username ||
-          profile?.username ||
-          profile?.full_name ||
-          "ChitPix User",
-        full_name: profile?.full_name || null,
-        avatar_url: profile?.avatar_url || null,
-      }
-    })
+  return {
+    ...post,
+    username:
+      profile?.username ||
+      post.username ||
+      profile?.full_name ||
+      "ChitPix User",
+    full_name: profile?.full_name || post.full_name || null,
+    avatar_url:
+      profile?.avatar_url ||
+      post.avatar_url ||
+      post.avatar ||
+      null,
+    avatar:
+      profile?.avatar_url ||
+      post.avatar_url ||
+      post.avatar ||
+      null,
+  }
+})
+    
 
     setPosts(formattedPosts)
     setLoading(false)
