@@ -823,27 +823,35 @@ function PostCard({
         </div>
       )}
 
-      {/* Comments modal */}
+      
+      {/* COMMENTS MODAL */}
       {showComments && (
         <div
-          className="fixed inset-0 z-[200] flex items-end bg-black/50"
-          onClick={() => setShowComments(false)}
+          className="fixed inset-0 z-[200] flex items-end justify-center bg-black/50"
+          onClick={() => {
+            setShowComments(false)
+            setShowEmojiPicker(false)
+            setReplyingTo(null)
+          }}
         >
           <div
-            className="mx-auto flex max-h-[75vh] w-full max-w-[480px] flex-col rounded-t-2xl bg-white"
-            onClick={event => event.stopPropagation()}
+            className="mx-auto flex h-[75dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-t-2xl bg-white"
+            onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b p-4">
-              <b>Comments ({comments.length})</b>
+            {/* HEADER */}
+            <div className="flex shrink-0 items-center justify-between border-b p-4">
+              <b className="text-lg">Comments ({comments.length})</b>
               <button
+                type="button"
                 onClick={() => setShowComments(false)}
                 aria-label="Close comments"
               >
-                <ChitIcon name="close" size={22} />
+                <ChitIcon name="close" size={24} />
               </button>
             </div>
 
-            <div className="min-h-[150px] flex-1 space-y-4 overflow-auto p-4">
+            {/* COMMENTS LIST */}
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
               {comments.filter((item: any) => !item.parent_id).length === 0 ? (
                 <p className="py-8 text-center text-sm text-zinc-500">
                   Inka comments levu. First comment nuvvu cheyyi!
@@ -857,22 +865,27 @@ function PostCard({
                         <b>{comment.username || "ChitPix User"}</b>{" "}
                         {comment.content}
                       </p>
+
                       <p className="mt-1 text-xs text-zinc-400">
                         {comment.created_at
                           ? new Date(comment.created_at).toLocaleString()
                           : ""}
                       </p>
-                      <div className="mt-1 flex items-center gap-4 text-xs font-semibold text-zinc-500">
+
+                      <div className="mt-2 flex items-center gap-4 text-xs font-semibold text-zinc-500">
                         <button
                           type="button"
                           onClick={() => handleCommentLike(comment)}
                           className={likedComments[comment.id] ? "text-rose-500" : ""}
-                          aria-label={likedComments[comment.id] ? "Unlike comment" : "Like comment"}
                         >
                           {likedComments[comment.id] ? "♥ Liked" : "♡ Like"}
-                          {` ${commentLikeCounts[comment.id] || 0}`}
+                          {" "}{commentLikeCounts[comment.id] || 0}
                         </button>
-                        <button type="button" onClick={() => setReplyingTo(comment)}>
+
+                        <button
+                          type="button"
+                          onClick={() => setReplyingTo(comment)}
+                        >
                           Reply
                         </button>
                       </div>
@@ -880,7 +893,10 @@ function PostCard({
                       {comments
                         .filter((reply: any) => reply.parent_id === comment.id)
                         .map((reply: any) => (
-                          <div key={reply.id} className="ml-5 mt-3 border-l-2 border-zinc-200 pl-3">
+                          <div
+                            key={reply.id}
+                            className="ml-5 mt-3 border-l-2 border-zinc-200 pl-3"
+                          >
                             <p className="break-words">
                               <b>{reply.username || "ChitPix User"}</b>{" "}
                               {reply.content}
@@ -890,16 +906,19 @@ function PostCard({
                                 ? new Date(reply.created_at).toLocaleString()
                                 : ""}
                             </p>
-                            <div className="mt-1 flex items-center gap-4 text-xs font-semibold text-zinc-500">
+                            <div className="mt-2 flex gap-4 text-xs font-semibold text-zinc-500">
                               <button
                                 type="button"
                                 onClick={() => handleCommentLike(reply)}
                                 className={likedComments[reply.id] ? "text-rose-500" : ""}
                               >
                                 {likedComments[reply.id] ? "♥ Liked" : "♡ Like"}
-                                {` ${commentLikeCounts[reply.id] || 0}`}
+                                {" "}{commentLikeCounts[reply.id] || 0}
                               </button>
-                              <button type="button" onClick={() => setReplyingTo(comment)}>
+                              <button
+                                type="button"
+                                onClick={() => setReplyingTo(comment)}
+                              >
                                 Reply
                               </button>
                             </div>
@@ -910,21 +929,29 @@ function PostCard({
               )}
             </div>
 
+            {/* REPLY STATUS */}
             {replyingTo && (
-              <div className="flex items-center justify-between bg-blue-50 px-4 py-2 text-xs text-blue-700">
-                <span>Replying to {replyingTo.username || "ChitPix User"}</span>
-                <button type="button" onClick={() => setReplyingTo(null)}>Cancel</button>
+              <div className="flex shrink-0 items-center justify-between bg-blue-50 px-4 py-2 text-xs text-blue-700">
+                <span>
+                  Replying to {replyingTo.username || "ChitPix User"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setReplyingTo(null)}
+                >
+                  Cancel
+                </button>
               </div>
             )}
 
+            {/* EMOJI PICKER */}
             {showEmojiPicker && (
-              <div className="flex flex-wrap gap-3 border-t px-4 py-3 text-xl">
-                {["😀", "😂", "😍", "🥰", "❤️", "🔥", "👏", "🙏", "👍", "😭", "😎", "🎉"].map(emoji => (
+              <div className="flex shrink-0 flex-wrap gap-3 border-t px-4 py-3 text-xl">
+                {["😀", "😂", "😍", "🥰", "❤️", "🔥", "👏", "🙏", "👍", "😭", "😎", "🎉"].map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
                     onClick={() => setCommentText(value => value + emoji)}
-                    aria-label={`Add ${emoji}`}
                   >
                     {emoji}
                   </button>
@@ -932,9 +959,10 @@ function PostCard({
               </div>
             )}
 
+            {/* COMMENT INPUT - ALWAYS VISIBLE */}
             <form
-              className="sticky bottom-0 z-20 flex w-full shrink-0 items-center gap-2 border-t bg-white p-3"
-              onSubmit={event => {
+              className="relative z-30 flex w-full shrink-0 items-center gap-2 border-t bg-white p-3 pb-[max(12px,env(safe-area-inset-bottom))]"
+              onSubmit={(event) => {
                 event.preventDefault()
                 handleComment()
               }}
@@ -942,23 +970,24 @@ function PostCard({
               <button
                 type="button"
                 onClick={() => setShowEmojiPicker(value => !value)}
-                className="text-xl"
+                className="shrink-0 text-2xl"
                 aria-label="Open emoji picker"
               >
                 😊
               </button>
+
               <input
                 value={commentText}
-                onChange={event => setCommentText(event.target.value)}
+                onChange={(event) => setCommentText(event.target.value)}
                 placeholder={replyingTo ? "Write a reply..." : "Add a comment..."}
                 maxLength={1000}
-                className="min-w-0 flex-1 rounded-full bg-zinc-100 px-4 py-3 text-sm outline-none"
+                className="min-w-0 flex-1 rounded-full bg-zinc-100 px-4 py-3 text-sm text-black outline-none"
               />
 
               <button
                 type="submit"
                 disabled={busy || !commentText.trim()}
-                className="font-bold text-blue-600 disabled:opacity-50"
+                className="shrink-0 font-bold text-blue-600 disabled:opacity-40"
               >
                 {busy ? "Posting..." : replyingTo ? "Reply" : "Post"}
               </button>
@@ -966,12 +995,7 @@ function PostCard({
           </div>
         </div>
       )}
-
-
-    </article>
-  )
-}
-
+      
 export default function HomePage() {
   const [posts, setPosts] = useState<any[]>([])
   const [currentUserId, setCurrentUserId] = useState("")
