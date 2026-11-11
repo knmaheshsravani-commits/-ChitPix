@@ -1262,14 +1262,12 @@ export default function HomePage() {
       return
     }
 
-    const postRows = data || []
-    const userIds = [
-      ...new Set(
-        postRows
-          .map((post: any) => post.user_id)
-          .filter(Boolean)
-      ),
-    ]
+    const userIds = postRows
+  .map((post: any) => post.user_id)
+  .filter(
+    (id: any, index: number, arr: any[]) =>
+      Boolean(id) && arr.indexOf(id) === index
+  )
 
     let profiles: any[] = []
 
