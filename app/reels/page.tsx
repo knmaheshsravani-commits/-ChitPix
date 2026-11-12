@@ -1025,11 +1025,20 @@ const toggleLike = async (postId: string) => {
 
   {/* PROFILE DP + USERNAME */}
   <button
-    onClick={() => {
-      if (post.user_id) {
-        router.push(`/profile/${post.user_id}`)
-      }
-    }}
+    
+onClick={() => {
+  const profileUsername =
+    post.username || post.user || ""
+
+  if (profileUsername) {
+    router.push(
+      `/profile/${encodeURIComponent(profileUsername)}`
+    )
+  } else {
+    alert("Username dorakaledu bro.")
+  }
+}}
+    
     className="flex min-w-0 items-center gap-3"
   >
     <img
