@@ -962,7 +962,7 @@ export default function UploadPage() {
       mediaName: selectedFile?.name || "",
       mediaType: selectedFile?.type || "",
       updatedAt: new Date().toISOString(),
-    } as DraftItem
+    } as unknown as DraftItem
 
     setDrafts((previous) => {
       const exists = previous.some((item) => item.id === draftId)
