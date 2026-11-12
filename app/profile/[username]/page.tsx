@@ -437,7 +437,13 @@ export default function UserProfilePage() {
                 return (
                   <button
                     key={post.id || index}
-                    onClick={() => router.push(`/post/${post.id}`)}
+                    onClick={() => {
+  router.push(
+    isVideo
+      ? `/reels/${post.id}`
+      : `/post/${post.id}`
+  )
+}}
                     className="relative aspect-square overflow-hidden bg-slate-100"
                   >
                     {isVideo ? (
