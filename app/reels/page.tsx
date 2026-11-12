@@ -860,14 +860,28 @@ export default function ReelsPage() {
   }
 
   // NOT INTERESTED
-  const markNotInterested = (postId: string) => {
-    setNotInterested((previous) => {
-      const updated = [...new Set([...previous, postId])]
+  
+const markNotInterested = (postId: string) => {
+  setNotInterested((previous) => {
+    const updated = new Set<string>()
 
-      localStorage.setItem(
-        "chitpix_reel_not_interested",
-        JSON.stringify(updated)
-      )
+    previous.forEach((id) => {
+      updated.add(id)
+    })
+
+    updated.add(postId)
+
+    localStorage.setItem(
+      "chitpix_reel_not_interested",
+      JSON.stringify(Array.from(updated))
+    )
+
+    setFeatureMessage("We'll show fewer Reels like this")
+
+    return updated
+  })
+}
+  
 
       return updated
     })
