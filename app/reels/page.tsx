@@ -1083,12 +1083,17 @@ export default function ReelsPage() {
   }, [reelHistory])
 
   // Playback for the currently visible reel
+  
+  // Playback for the currently visible reel
   useEffect(() => {
-    videoRefs.current.forEach((video: HTMLVideoElement | null, index: number) => {
+    Object.entries(videoRefs.current).forEach(([index, video]) => {
+      const reelIndex = Number(index)
+
       if (!video) return
 
-      if (index !== currentIndex) {
+      if (reelIndex !== currentIndex) {
         video.pause()
+        video.muted = true
         return
       }
 
@@ -1102,21 +1107,7 @@ export default function ReelsPage() {
       }
     })
   }, [currentIndex, visiblePosts, muted, isPlaying, playbackSpeed])
-
-  const handleVisibleFeedScroll = () => {
-    const container = containerRef.current
-    if (!container) return
-
-    const height = container.clientHeight
-    if (!height) return
-
-    const nextIndex = Math.max(
-      0,
-      Math.min(
-        visiblePosts.length - 1,
-        Math.round(container.scrollTop / height)
-      )
-    )
+  
 
     if (nextIndex !== currentIndex) {
       setCurrentIndex(nextIndex)
