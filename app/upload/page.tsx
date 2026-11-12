@@ -1309,7 +1309,7 @@ export default function UploadPage() {
 </div>
 
                 <div className="font-bold text-sm">
-                  {item.label}
+                  {item.name}
                 </div>
 
                 <div className="text-xs text-zinc-400 mt-1">
