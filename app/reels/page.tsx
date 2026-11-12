@@ -2047,7 +2047,7 @@ export default function ReelsPage() {
                     </div>
 
                     <button
-                      onClick={() => useThisAudio(audioPost)}
+                      onClick={() => useThisAudio()}
                       className="rounded-full bg-white px-3 py-2 text-xs font-bold text-black"
                     >
                       Use Audio
