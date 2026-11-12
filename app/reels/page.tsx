@@ -2008,8 +2008,8 @@ export default function ReelsPage() {
 
                     <button
                       onClick={() => {
-                        setShowAudioPanel(false)
-                        useThisAudio(audioPost)
+                        const useThisAudio = (selectedPost?: any) => {
+  const post = selectedPost || posts[currentIndex]
                       }}
                       className="rounded-full bg-white px-3 py-2 text-xs font-bold text-black"
                     >
