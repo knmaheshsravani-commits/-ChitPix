@@ -1407,7 +1407,7 @@ export default function ReelsPage() {
 
                   {/* REMIX */}
                   <button
-                    onClick={() => startRemix(post)}
+                    onClick={() => startRemix()}
                     className="flex flex-col items-center gap-1"
                     aria-label="Remix Reel"
                   >
@@ -1417,7 +1417,7 @@ export default function ReelsPage() {
 
                   {/* SHARE */}
                   <button
-                    onClick={() => doShare(post)}
+                    onClick={() => setShowShare(true)}
                     className="flex flex-col items-center gap-1"
                     aria-label="Share Reel"
                   >
@@ -1452,7 +1452,7 @@ export default function ReelsPage() {
 
                   {/* AUDIO DISC */}
                   <button
-                    onClick={() => openAudioPage(post)}
+                    onClick={() => openAudioPage()}
                     className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-white/60 bg-white/15"
                     aria-label="Open audio"
                   >
