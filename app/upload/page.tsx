@@ -1305,8 +1305,8 @@ export default function UploadPage() {
                 }`}
               >
                 <div className="text-2xl mb-2">
-                  {item.icon}
-                </div>
+  <item.icon size={28} />
+</div>
 
                 <div className="font-bold text-sm">
                   {item.label}
