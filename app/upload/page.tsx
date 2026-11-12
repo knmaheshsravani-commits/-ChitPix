@@ -925,8 +925,8 @@ export default function UploadPage() {
     })
   }
 
-  const updatePollType = (value: string) => {
-    setPollType(value)
+  const updatePollType = (value: "poll" | "quiz") => {
+  setPollType(value)
   }
 
   const updateScheduledAt = (value: string) => {
