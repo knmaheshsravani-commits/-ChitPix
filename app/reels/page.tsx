@@ -1109,17 +1109,36 @@ export default function ReelsPage() {
   }, [currentIndex, visiblePosts, muted, isPlaying, playbackSpeed])
   
 
+    
+  // HANDLE VISIBLE REEL SCROLL
+  const handleVisibleFeedScroll = () => {
+    const container = containerRef.current
+    if (!container || visiblePosts.length === 0) return
+
+    const height = container.clientHeight
+    if (!height) return
+
+    const nextIndex = Math.max(
+      0,
+      Math.min(
+        Math.round(container.scrollTop / height),
+        visiblePosts.length - 1
+      )
+    )
+
     if (nextIndex !== currentIndex) {
       setCurrentIndex(nextIndex)
       setProgress(0)
       setIsPlaying(true)
 
       const nextPost = visiblePosts[nextIndex]
+
       if (nextPost?.id) {
         addToWatchHistory(String(nextPost.id))
       }
     }
   }
+  
 
   const openCreateOptions = () => {
     setShowCreateMenu(true)
