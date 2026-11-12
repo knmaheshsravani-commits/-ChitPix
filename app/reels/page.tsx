@@ -1495,17 +1495,22 @@ export default function ReelsPage() {
 
                   {/* CAPTION */}
                   <button
-                    onClick={() => setCaptionExpand(!captionExpand)}
+                    onClick={() =>
+  setCaptionExpand((previous) => ({
+    ...previous,
+    [postId]: !previous[postId],
+  }))
+                    }
                     className="block max-w-full text-left"
                   >
                     <p
                       className={`text-sm leading-5 ${
-                        captionExpand ? "" : "line-clamp-2"
+                        captionExpand[postId] ? "" : "line-clamp-2"
                       }`}
                     >
                       {post.caption || "Enjoy this Reel on ChitPix ✨"}
                     </p>
-                    {!captionExpand && (post.caption || "").length > 75 && (
+                    {!captionExpand[postId] && (post.caption || "").length > 75 && (
                       <span className="mt-1 text-xs font-semibold text-white/70">
                         more
                       </span>
