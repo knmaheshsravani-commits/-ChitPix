@@ -1032,6 +1032,7 @@ export default function UploadPage() {
   const saveEditorHistory = () => {
     const snapshot = {
       filter,
+      caption,
       brightness,
       contrast,
       saturation,
@@ -1060,6 +1061,7 @@ export default function UploadPage() {
   }
 
   const restoreEditorSnapshot = (snapshot: EditorSnapshot) => {
+    setCaption(snapshot.caption)
     setFilter(snapshot.filter)
     setBrightness(snapshot.brightness)
     setContrast(snapshot.contrast)
