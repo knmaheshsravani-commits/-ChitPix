@@ -1,300 +1,4 @@
-"use client"
-
-import { useCallback, useEffect, useRef, useState } from "react"
-import { useRouter } from "next/navigation"
-import {
-  Heart,
-  MessageCircle,
-  Send,
-  Bookmark,
-  Volume2,
-  VolumeX,
-  MoreHorizontal,
-  Play,
-  Pause,
-  Plus,
-  X,
-  Smile,
-  Copy,
-  Download,
-  Music2,
-  ChevronDown,
-  LoaderCircle,
-  RefreshCw,
-  Flag,
-  UserRound,
-  Check,
-  Search,
-  Sparkles,
-  Clock3,
-  BarChart3,
-  ListVideo,
-  Repeat2,
-  Captions,
-  WandSparkles,
-  CalendarClock,
-  History,
-  Users,
-  Link2,
-  Scissors,
-} from "lucide-react"
-
-import BottomNav from "../components/BottomNav"
-import { supabase } from "../../lib/supabase"
-
-type Reel = {
-  id: string
-  videoUrl?: string
-  video_url?: string
-  url?: string
-  imageUrl?: string
-  image_url?: string
-  caption?: string
-  user?: string
-  username?: string
-  userAvatar?: string
-  avatar_url?: string
-  user_id?: string
-  likes?: number
-  comments?: number
-  views?: string
-  type?: string
-  audio_name?: string
-}
-
-type ReelComment = {
-  id: string | number
-  post_id?: string
-  user_id?: string
-  user: string
-  username: string
-  avatar: string
-  text: string
-  likes: number
-  time: string
-  parent_id?: string | null
-}
-
-type UserProfile = {
-  id?: string
-  username?: string
-  full_name?: string
-  avatar_url?: string
-}
-
-const DEFAULT_AVATAR =
-  "https://i.pravatar.cc/100?u=chitpix-user"
-
-const GRADIENTS = {
-  pink: "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600",
-  heart: "bg-gradient-to-tr from-orange-400 via-pink-500 to-rose-600",
-  blue: "bg-gradient-to-tr from-cyan-400 via-blue-500 to-purple-600",
-  purple: "bg-gradient-to-tr from-violet-500 via-purple-600 to-pink-500",
-  orange: "bg-gradient-to-tr from-yellow-400 via-orange-500 to-pink-500",
-}
-
-export default function ReelsPage() {
-  const router = useRouter()
-
-  // REEL FEED
-  const [posts, setPosts] = useState<Reel[]>([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [loadingReels, setLoadingReels] = useState(true)
-  const [reelsError, setReelsError] = useState("")
-  const [likesCount, setLikesCount] = useState<Record<string, number>>({})
-
-  // REEL ACTIONS
-  const [liked, setLiked] = useState<Record<string, boolean>>({})
-  const [saved, setSaved] = useState<Record<string, boolean>>({})
-  const [followed, setFollowed] = useState<Record<string, boolean>>({})
-  const [muted, setMuted] = useState(true)
-  const [isPlaying, setIsPlaying] = useState(true)
-  const [progress, setProgress] = useState(0)
-  const [captionExpand, setCaptionExpand] =
-    useState<Record<string, boolean>>({})
-
-  // MODALS
-  const [showComments, setShowComments] = useState(false)
-  const [showShare, setShowShare] = useState(false)
-  const [showMore, setShowMore] = useState(false)
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
-  const [showCreateMenu, setShowCreateMenu] = useState(false)
-  const [showAudioPanel, setShowAudioPanel] = useState(false)
-  const [showReferencePanel, setShowReferencePanel] = useState(false)
-  const [showAnalytics, setShowAnalytics] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
-  const [showCollections, setShowCollections] = useState(false)
-
-  // COMMENTS
-  const [comments, setComments] = useState<ReelComment[]>([])
-  const [commentsLoading, setCommentsLoading] = useState(false)
-  const [commentsError, setCommentsError] = useState("")
-  const [commentText, setCommentText] = useState("")
-  const [replyTo, setReplyTo] = useState<ReelComment | null>(null)
-  const [commentLikes, setCommentLikes] =
-    useState<Record<string, boolean>>({})
-  const [sortBy, setSortBy] = useState<"new" | "top">("new")
-  const [pinnedId, setPinnedId] = useState<string | number | null>(null)
-  const [postingComment, setPostingComment] = useState(false)
-
-  // SIGNED-IN USER
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [currentUsername, setCurrentUsername] = useState("ChitPix User")
-  const [currentAvatar, setCurrentAvatar] = useState(DEFAULT_AVATAR)
-
-  // NEW FEATURE STATES
-  const [reelHistory, setReelHistory] = useState<string[]>([])
-  const [collectionIds, setCollectionIds] = useState<string[]>([])
-  const [notInterested, setNotInterested] = useState<string[]>([])
-  const [feedMode, setFeedMode] = useState<"all" | "following">("all")
-  const [reelSearch, setReelSearch] = useState("")
-  const [showSearch, setShowSearch] = useState(false)
-  const [autoCaptions, setAutoCaptions] = useState(false)
-  const [playbackSpeed, setPlaybackSpeed] = useState(1)
-  const [loopEnabled, setLoopEnabled] = useState(true)
-  const [featureMessage, setFeatureMessage] = useState("")
-
-  // REFS
-  const containerRef = useRef<HTMLDivElement>(null)
-  const videoRefs = useRef<Record<number, HTMLVideoElement>>({})
-  const touchStartY = useRef<number | null>(null)
-  const likingRef = useRef<Record<string, boolean>>({})
-
-  // LOAD SIGNED-IN USER
-  useEffect(() => {
-    let active = true
-
-    const loadUser = async () => {
-      try {
-        const { data, error } = await supabase.auth.getUser()
-        if (error || !data.user || !active) return
-
-        const user = data.user
-
-        let username =
-          user.user_metadata?.username ||
-          user.user_metadata?.full_name ||
-          user.email?.split("@")[0] ||
-          "ChitPix User"
-
-        let avatar =
-          user.user_metadata?.avatar_url ||
-          user.user_metadata?.picture ||
-          DEFAULT_AVATAR
-
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, username, full_name, avatar_url")
-          .eq("id", user.id)
-          .maybeSingle()
-
-        if (profileError) {
-          console.warn("Profile lookup:", profileError.message)
-        }
-
-        if (!active) return
-
-        const savedProfile = profile as UserProfile | null
-
-        if (savedProfile) {
-          username =
-            savedProfile.username ||
-            savedProfile.full_name ||
-            username
-
-          avatar = savedProfile.avatar_url || avatar
-        }
-
-        setCurrentUserId(user.id)
-        setCurrentUsername(username)
-        setCurrentAvatar(avatar)
-      } catch (error) {
-        console.error("Current user load error:", error)
       }
-    }
-
-    void loadUser()
-
-    return () => {
-      active = false
-    }
-  }, [])
-
-  // LOAD REELS FROM EXISTING API
-  const loadReels = useCallback(async () => {
-    setLoadingReels(true)
-    setReelsError("")
-
-    try {
-      const savedMute = localStorage.getItem("reels_muted")
-      if (savedMute !== null) setMuted(savedMute === "true")
-
-      const response = await fetch("/api/reels?limit=50", {
-        cache: "no-store",
-      })
-
-      if (!response.ok) {
-        throw new Error("Reels API request failed")
-      }
-
-      const data = await response.json()
-      let reels: Reel[] = data.reels || data.posts || []
-
-      // FALLBACK TO EXISTING POSTS API
-      if (reels.length === 0) {
-        const fallback = await fetch("/api/posts?limit=50", {
-          cache: "no-store",
-        })
-
-        if (fallback.ok) {
-          const fallbackData = await fallback.json()
-          const allPosts: Reel[] = fallbackData.posts || []
-
-          reels = allPosts.filter((post) => {
-            const media =
-              post.videoUrl || post.video_url || post.url || ""
-
-            return (
-              post.type === "video" ||
-              /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(media)
-            )
-          })
-        }
-      }
-
-      setPosts(reels)
-    } catch (error) {
-      console.error("Reels loading error:", error)
-      setReelsError("Reels load avvaledu bro. Malli try cheyyi.")
-      setPosts([])
-    } finally {
-      setLoadingReels(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    void loadReels()
-  }, [loadReels])
-
-  // LOAD REEL LIKES FROM SUPABASE
-  useEffect(() => {
-    if (!posts.length) return
-
-    let active = true
-
-    const loadReelLikes = async () => {
-      const postIds = posts.map((post) => String(post.id))
-
-      const { data, error } = await supabase
-        .from("post_likes")
-        .select("post_id, user_id")
-        .in("post_id", postIds)
-
-      if (error) {
-        console.error("Reel likes loading error:", error)
-        return
-      }
-
       if (!active) return
 
       const counts: Record<string, number> = {}
@@ -324,32 +28,619 @@ export default function ReelsPage() {
     }
   }, [posts, currentUserId])
 
-  // PLAY ONLY THE CURRENT REEL
+  // LIKE / UNLIKE REEL
+  const toggleLike = async (post: Reel) => {
+    const postId = String(post.id)
+
+    if (!currentUserId) {
+      setFeatureMessage("Like cheyyadaniki login avvu bro.")
+      return
+    }
+
+    if (likingRef.current[postId]) return
+    likingRef.current[postId] = true
+
+    const wasLiked = !!liked[postId]
+
+    setLiked((prev) => ({
+      ...prev,
+      [postId]: !wasLiked,
+    }))
+
+    setLikesCount((prev) => ({
+      ...prev,
+      [postId]: Math.max(
+        0,
+        (prev[postId] ?? Number(post.likes || 0)) +
+          (wasLiked ? -1 : 1)
+      ),
+    }))
+
+    try {
+      if (wasLiked) {
+        const { error } = await supabase
+          .from("post_likes")
+          .delete()
+          .eq("post_id", postId)
+          .eq("user_id", currentUserId)
+
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from("post_likes")
+          .insert({
+            post_id: postId,
+            user_id: currentUserId,
+          })
+
+        if (error) throw error
+      }
+    } catch (error) {
+      console.error("Reel like error:", error)
+
+      setLiked((prev) => ({
+        ...prev,
+        [postId]: wasLiked,
+      }))
+
+      setLikesCount((prev) => ({
+        ...prev,
+        [postId]: Math.max(
+          0,
+          (prev[postId] ?? 0) +
+            (wasLiked ? 1 : -1)
+        ),
+      }))
+    } finally {
+      likingRef.current[postId] = false
+    }
+  }
+
+  // LOAD COMMENTS
+  const loadComments = async (postId: string) => {
+    setCommentsLoading(true)
+    setCommentsError("")
+
+    try {
+      const { data, error } = await supabase
+        .from("post_comments")
+        .select("*")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+
+      const formatted: ReelComment[] = (data || []).map(
+        (item: any) => ({
+          id: item.id,
+          post_id: item.post_id,
+          user_id: item.user_id,
+          user: item.user || item.username || "User",
+          username: item.username || item.user || "User",
+          avatar: item.avatar || DEFAULT_AVATAR,
+          text: item.comment || item.text || "",
+          likes: Number(item.likes || 0),
+          time: item.created_at || "",
+          parent_id: item.parent_id || null,
+        })
+      )
+
+      setComments(formatted)
+    } catch (error: any) {
+      console.error("Comments loading error:", error)
+      setCommentsError(error.message || "Comments load avvaledu.")
+    } finally {
+      setCommentsLoading(false)
+    }
+  }
+
+  // OPEN COMMENTS
+  const openComments = async (post: Reel) => {
+    setShowComments(true)
+    setReplyTo(null)
+    setCommentText("")
+    await loadComments(String(post.id))
+  }
+
+  // ADD COMMENT
+  const addComment = async () => {
+    const post = posts[currentIndex]
+    const message = commentText.trim()
+
+    if (!post?.id || !message) return
+
+    if (!currentUserId) {
+      setFeatureMessage("Comment cheyyadaniki login avvu bro.")
+      return
+    }
+
+    setPostingComment(true)
+
+    try {
+      const { data, error } = await supabase
+        .from("post_comments")
+        .insert({
+          post_id: post.id,
+          user_id: currentUserId,
+          user: currentUsername,
+          username: currentUsername,
+          avatar: currentAvatar,
+          comment: message,
+          text: message,
+          parent_id: replyTo?.id || null,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      const newComment: ReelComment = {
+        id: data.id,
+        post_id: String(post.id),
+        user_id: currentUserId,
+        user: currentUsername,
+        username: currentUsername,
+        avatar: currentAvatar,
+        text: message,
+        likes: 0,
+        time: data.created_at || new Date().toISOString(),
+        parent_id: replyTo?.id ? String(replyTo.id) : null,
+      }
+
+      setComments((prev) => [newComment, ...prev])
+      setCommentText("")
+      setReplyTo(null)
+    } catch (error: any) {
+      console.error("Add comment error:", error)
+      setFeatureMessage(error.message || "Comment post avvaledu bro.")
+    } finally {
+      setPostingComment(false)
+    }
+  }
+
+  // COMMENT LIKE
+  const toggleCommentLike = async (comment: ReelComment) => {
+    const id = String(comment.id)
+    const wasLiked = !!commentLikes[id]
+
+    setCommentLikes((prev) => ({
+      ...prev,
+      [id]: !wasLiked,
+    }))
+
+    setComments((prev) =>
+      prev.map((item) =>
+        String(item.id) === id
+          ? {
+              ...item,
+              likes: Math.max(
+                0,
+                item.likes + (wasLiked ? -1 : 1)
+              ),
+            }
+          : item
+      )
+    )
+  }
+
+  // SAVE / UNSAVE REEL
+  const toggleSave = (post: Reel) => {
+    const id = String(post.id)
+
+    setSaved((prev) => {
+      const next = {
+        ...prev,
+        [id]: !prev[id],
+      }
+
+      try {
+        localStorage.setItem(
+          "chitpix_saved_reels",
+          JSON.stringify(next)
+        )
+      } catch {}
+
+      return next
+    })
+
+    setFeatureMessage(
+      saved[id] ? "Removed from saved." : "Reel saved!"
+    )
+  }
+
+  // LOAD SAVED REELS
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("chitpix_saved_reels")
+      if (stored) setSaved(JSON.parse(stored))
+    } catch {}
+  }, [])
+
+  // FOLLOW / UNFOLLOW CREATOR
+  const toggleFollow = async (post: Reel) => {
+    const creatorId = String(post.user_id || post.username || post.user || "")
+
+    if (!creatorId) return
+
+    setFollowed((prev) => ({
+      ...prev,
+      [creatorId]: !prev[creatorId],
+    }))
+
+    setFeatureMessage(
+      followed[creatorId] ? "Unfollowed" : "Following"
+    )
+  }
+
+  // SHARE REEL
+  const shareReel = async (post: Reel) => {
+    const url = `${window.location.origin}/reels/${post.id}`
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "ChitPix Reel",
+          text: post.caption || "Watch this Reel on ChitPix",
+          url,
+        })
+      } else {
+        await navigator.clipboard.writeText(url)
+        setFeatureMessage("Reel link copied!")
+      }
+    } catch (error) {
+      console.error("Share error:", error)
+    }
+  }
+
+  // EMOJI OPTIONS
+  const emojis = [
+    "❤️", "😂", "🔥", "😍", "👏",
+    "😮", "😢", "🙌", "💯", "🥰",
+  ]
+
+  // ADD EMOJI TO COMMENT
+  const addEmoji = (emoji: string) => {
+    setCommentText((prev) => prev + emoji)
+    setShowEmojiPicker(false)
+  }
+
+  // FILTER REELS
+  const visiblePosts = posts.filter((post) => {
+    if (notInterested.includes(String(post.id))) return false
+
+    if (
+      feedMode === "following" &&
+      !followed[String(post.user_id || post.username || post.user || "")]
+    ) {
+      return false
+    }
+
+    if (reelSearch.trim()) {
+      const search = reelSearch.toLowerCase()
+      const caption = (post.caption || "").toLowerCase()
+      const username = (
+        post.username ||
+        post.user ||
+        ""
+      ).toLowerCase()
+
+      if (
+        !caption.includes(search) &&
+        !username.includes(search)
+      ) {
+        return false
+      }
+    }
+
+    return true
+  })
+
+  // AUDIO PAGE - SHOW ALL REELS USING SAME AUDIO
+  const currentReel = posts[currentIndex]
+
+  const currentAudioName =
+    currentReel?.audio_name || "Original audio · ChitPix"
+
+  const audioReels = posts.filter(
+    (post) =>
+      (post.audio_name || "Original audio · ChitPix") ===
+      currentAudioName
+  )
+
+  const openAudioPage = () => {
+    setShowAudioPanel(true)
+  }
+
+  // USE THIS AUDIO
+  const useThisAudio = () => {
+    const post = posts[currentIndex]
+
+    if (!post) return
+
+    const audioName =
+      post.audio_name || "Original audio · ChitPix"
+
+    try {
+      sessionStorage.setItem(
+        "chitpix_selected_audio",
+        JSON.stringify({
+          name: audioName,
+          reelId: post.id,
+          creator: post.username || post.user || "ChitPix User",
+        })
+      )
+
+      router.push("/upload?type=reel&useAudio=1")
+    } catch (error) {
+      console.error("Audio selection error:", error)
+      setFeatureMessage("Audio selection failed.")
+    }
+  }
+
+  // USE CURRENT REEL AS EDITING REFERENCE
+  const useAsReference = () => {
+    const post = posts[currentIndex]
+    if (!post) return
+
+    try {
+      sessionStorage.setItem(
+        "chitpix_reel_reference",
+        JSON.stringify({
+          reelId: post.id,
+          caption: post.caption || "",
+          username: post.username || post.user || "",
+          mediaUrl:
+            post.videoUrl ||
+            post.video_url ||
+            post.url ||
+            "",
+        })
+      )
+
+      setShowReferencePanel(false)
+      router.push("/upload?type=reel&reference=1")
+    } catch (error) {
+      console.error("Reference save error:", error)
+      setFeatureMessage("Reference save avvaledu bro.")
+    }
+  }
+
+  // CREATE A REMIX / SEQUENCE REQUEST
+  const startRemix = () => {
+    const post = posts[currentIndex]
+    if (!post) return
+
+    try {
+      sessionStorage.setItem(
+        "chitpix_remix_source",
+        JSON.stringify({
+          reelId: post.id,
+          username: post.username || post.user || "",
+          caption: post.caption || "",
+        })
+      )
+
+      setShowCreateMenu(false)
+      router.push("/upload?type=reel&remix=1")
+    } catch (error) {
+      console.error("Remix request error:", error)
+      setFeatureMessage("Remix start avvaledu bro.")
+    }
+  }
+
+  // OPEN CREATOR PROFILE USING USERNAME
+  const openCreatorProfile = (post: Reel) => {
+    const username = post.username || post.user
+
+    if (username) {
+      router.push(
+        `/profile/${encodeURIComponent(username)}`
+      )
+    } else {
+      setFeatureMessage("Creator username dorakaledu.")
+    }
+  }
+
+  // OPEN REEL DETAIL
+  const openReelDetail = (post: Reel) => {
+    router.push(`/reels/${encodeURIComponent(post.id)}`)
+  }
+
+  // REPORT REEL
+  const reportCurrentReel = async () => {
+    const post = posts[currentIndex]
+
+    if (!post?.id || !currentUserId) {
+      alert("Report cheyyadaniki login avvu bro.")
+      return
+    }
+
+    const reason = window.prompt(
+      "Report reason enter cheyyi:"
+    )
+
+    if (!reason?.trim()) return
+
+    try {
+      const { error } = await supabase
+        .from("post_reports")
+        .insert({
+          post_id: post.id,
+          reporter_id: currentUserId,
+          reason: reason.trim(),
+        })
+
+      if (error) throw error
+
+      setShowMore(false)
+      alert("Report submitted. Thank you.")
+    } catch (error) {
+      console.error("Report error:", error)
+      alert("Report submit avvaledu bro.")
+    }
+  }
+
+  // REEL PLAYBACK SPEED OPTIONS
+  const speedOptions = [0.5, 1, 1.5, 2]
+
+  // REEL ANALYTICS - DISPLAY ONLY AVAILABLE DATA
+  const currentReelLikes =
+    likesCount[String(currentReel?.id)] ??
+    Number(currentReel?.likes || 0)
+
+  const currentReelComments =
+    Number(currentReel?.comments || 0)
+
+  const currentReelViews =
+    currentReel?.views || "Not available"
+
+  // PART 4 CONTINUES: UI, header, feed and Reel player
+
+  // Save watch history
+  useEffect(() => {
+    try {
+      localStorage.setItem("chitpix_reel_history", JSON.stringify(reelHistory))
+    } catch {}
+  }, [reelHistory])
+
+  // Playback for the currently visible reel
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([index, video]) => {
       const reelIndex = Number(index)
 
+      if (!video) return
+
       if (reelIndex !== currentIndex) {
         video.pause()
         video.muted = true
-      } else {
-        video.muted = muted
-        video.playbackRate = playbackSpeed
+        return
+      }
 
-        if (isPlaying) {
-          void video.play().catch((error) => {
-            console.log("Reel playback:", error)
-          })
-        } else {
-          video.pause()
-        }
+      video.muted = muted
+      video.playbackRate = playbackSpeed
+
+      if (isPlaying) {
+        video.play().catch(() => {})
+      } else {
+        video.pause()
       }
     })
-  }, [currentIndex, posts, muted, isPlaying, playbackSpeed])
+  }, [currentIndex, visiblePosts, muted, isPlaying, playbackSpeed])
 
-  // PART 2 CONTINUES: comments, likes, follow, save and sharing
-        
-  // LOAD SAVED COMMENTS FOR SELECTED REEL
+  // HANDLE VISIBLE REEL SCROLL
+  const handleVisibleFeedScroll = () => {
+    const container = containerRef.current
+    if (!container || visiblePosts.length === 0) return
+
+    const height = container.clientHeight
+    if (!height) return
+
+    const nextIndex = Math.max(
+      0,
+      Math.min(
+        Math.round(container.scrollTop / height),
+        visiblePosts.length - 1
+      )
+    )
+
+    if (nextIndex !== currentIndex) {
+      setCurrentIndex(nextIndex)
+      setProgress(0)
+      setIsPlaying(true)
+
+      const nextPost = visiblePosts[nextIndex]
+
+      if (nextPost?.id) {
+        addToWatchHistory(String(nextPost.id))
+      }
+    }
+  }
+
+  const openCreateOptions = () => {
+    setShowCreateMenu(true)
+    setIsPlaying(false)
+  }
+
+  return (
+    <main className="relative h-[100dvh] w-full overflow-hidden bg-black text-white">
+
+      {/* REELS FEED */}
+      <div
+        ref={containerRef}
+        onScroll={handleVisibleFeedScroll}
+        className="h-[calc(100dvh-68px)] snap-y snap-mandatory overflow-y-auto overscroll-y-contain scrollbar-hide"
+      >
+        {loadingReels ? (
+          <div className="flex h-full items-center justify-center">
+            <LoaderCircle className="animate-spin" size={32} />
+            <span className="ml-3 text-sm text-white/70">Loading Reels...</span>
+          </div>
+        ) : reelsError ? (
+          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+            <p className="text-base font-semibold">Reels load avvaledu bro</p>
+            <p className="mt-2 text-sm text-white/60">{reelsError}</p>
+            <button
+              onClick={loadReels}
+              className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-bold text-black"
+            >
+              <RefreshCw size={15} className="mr-2 inline" />
+              Try Again
+            </button>
+          </div>
+        ) : visiblePosts.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+            <Play size={42} className="mb-4 text-white/30" />
+            <p className="text-base font-semibold">No Reels yet</p>
+            <p className="mt-2 text-sm text-white/50">
+              Follow creators or upload your first Reel.
+            </p>
+            <button
+              onClick={openCreateOptions}
+              className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-bold text-black"
+            >
+              <Plus size={16} className="mr-2 inline" />
+              Create Reel
+            </button>
+          </div>
+        ) : (
+          visiblePosts.map((post, index) => {
+            const postId = String(post.id)
+            const isCurrent = index === currentIndex
+            const videoUrl =
+              post.videoUrl || post.video_url || post.url || ""
+            const creator =
+              post.username || post.user || "ChitPix User"
+            const avatar =
+              post.userAvatar || post.avatar_url || DEFAULT_AVATAR
+            const isLiked = !!liked[postId]
+            const isSaved = !!saved[postId]
+            const creatorKey = String(
+              post.user_id || post.username || post.user || ""
+            )
+
+            return (
+              <section
+                key={post.id}
+                className="relative h-full min-h-full w-full snap-start snap-always bg-black"
+                onTouchStart={(event) => {
+                  touchStartY.current = event.touches[0].clientY
+                }}
+                onTouchEnd={(event) => {
+                  const endY = event.changedTouches[0].clientY
+                  const startY = touchStartY.current
+
+                  if (startY === null) return
+
+                  const difference = startY - endY
+
+                  if (Math.abs(difference) > 60) {
+                    setIsPlaying(true)
+                  }
+
+                  touchStartY.current = null
+                }}
+              >
+                  // LOAD SAVED COMMENTS FOR SELECTED REEL
   const loadComments = useCallback(async (postId: string) => {
     setCommentsLoading(true)
     setCommentsError("")
@@ -665,9 +956,8 @@ export default function ReelsPage() {
         [userId]: true,
       }))
     }
-  }
-
-  // MUTE / UNMUTE
+                }
+                  // MUTE / UNMUTE
   const toggleMute = () => {
     setMuted((previous) => {
       const next = !previous
@@ -805,8 +1095,6 @@ export default function ReelsPage() {
     return String(count)
   }
 
-  // PART 3 CONTINUES: new Reel features and feed helpers
-          
   // SAVE REEL TO WATCH HISTORY
   const addToWatchHistory = (postId: string) => {
     setReelHistory((previous) => {
@@ -859,7 +1147,7 @@ export default function ReelsPage() {
     })
   }
 
-    // NOT INTERESTED
+  // NOT INTERESTED
   const markNotInterested = (postId: string) => {
     setNotInterested((previous) => {
       const updated = previous.includes(postId)
@@ -899,7 +1187,7 @@ export default function ReelsPage() {
       const caption = (post.caption || "").toLowerCase()
       const username = (
         post.username ||
-        post.user ||
+        post.profiles?.username ||
         ""
       ).toLowerCase()
 
@@ -913,8 +1201,7 @@ export default function ReelsPage() {
 
     return true
   })
-
-  // AUDIO PAGE - SHOW ALL REELS USING SAME AUDIO
+                  // AUDIO PAGE - SHOW ALL REELS USING SAME AUDIO
   const currentReel = posts[currentIndex]
 
   const currentAudioName =
@@ -1062,7 +1349,7 @@ export default function ReelsPage() {
   // REEL PLAYBACK SPEED OPTIONS
   const speedOptions = [0.5, 1, 1.5, 2]
 
-  // REEL ANALYTICS - DISPLAY ONLY AVAILABLE DATA
+  // REEL ANALYTICS
   const currentReelLikes =
     likesCount[String(currentReel?.id)] ??
     Number(currentReel?.likes || 0)
@@ -1073,18 +1360,17 @@ export default function ReelsPage() {
   const currentReelViews =
     currentReel?.views || "Not available"
 
-  // PART 4 CONTINUES: UI, header, feed and Reel player
-        
-  // Save watch history
+  // SAVE WATCH HISTORY
   useEffect(() => {
     try {
-      localStorage.setItem("chitpix_reel_history", JSON.stringify(reelHistory))
+      localStorage.setItem(
+        "chitpix_reel_history",
+        JSON.stringify(reelHistory)
+      )
     } catch {}
   }, [reelHistory])
 
-  // Playback for the currently visible reel
-  
-  // Playback for the currently visible reel
+  // PLAYBACK FOR CURRENTLY VISIBLE REEL
   useEffect(() => {
     Object.entries(videoRefs.current).forEach(([index, video]) => {
       const reelIndex = Number(index)
@@ -1107,9 +1393,7 @@ export default function ReelsPage() {
       }
     })
   }, [currentIndex, visiblePosts, muted, isPlaying, playbackSpeed])
-  
 
-    
   // HANDLE VISIBLE REEL SCROLL
   const handleVisibleFeedScroll = () => {
     const container = containerRef.current
@@ -1138,7 +1422,6 @@ export default function ReelsPage() {
       }
     }
   }
-  
 
   const openCreateOptions = () => {
     setShowCreateMenu(true)
@@ -1154,15 +1437,21 @@ export default function ReelsPage() {
         onScroll={handleVisibleFeedScroll}
         className="h-[calc(100dvh-68px)] snap-y snap-mandatory overflow-y-auto overscroll-y-contain scrollbar-hide"
       >
-         {loadingReels ? (
+        {loadingReels ? (
           <div className="flex h-full items-center justify-center">
             <LoaderCircle className="animate-spin" size={32} />
-            <span className="ml-3 text-sm text-white/70">Loading Reels...</span>
+            <span className="ml-3 text-sm text-white/70">
+              Loading Reels...
+            </span>
           </div>
         ) : reelsError ? (
           <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-            <p className="text-base font-semibold">Reels load avvaledu bro</p>
-            <p className="mt-2 text-sm text-white/60">{reelsError}</p>
+            <p className="text-base font-semibold">
+              Reels load avvaledu bro
+            </p>
+            <p className="mt-2 text-sm text-white/60">
+              {reelsError}
+            </p>
             <button
               onClick={loadReels}
               className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-bold text-black"
@@ -1199,8 +1488,7 @@ export default function ReelsPage() {
               post.imageUrl ||
               post.image_url ||
               ""
-
-            const isVideo =
+                        const isVideo =
               /\.(mp4|webm|mov|m4v)(\?|$)/i.test(media) ||
               post.type === "video" ||
               post.type === "reel"
@@ -1354,8 +1642,6 @@ export default function ReelsPage() {
                   </button>
                 )}
 
-                {/* PART 5 CONTINUES: REEL ACTIONS, CREATOR AND CAPTION */}
-                  
                 {/* RIGHT SIDE ACTION BUTTONS */}
                 <div className="absolute bottom-28 right-3 z-20 flex flex-col items-center gap-5">
 
@@ -1459,8 +1745,7 @@ export default function ReelsPage() {
                     <Music2 size={22} />
                   </button>
                 </div>
-
-                {/* BOTTOM CREATOR DETAILS */}
+                                {/* BOTTOM CREATOR DETAILS */}
                 <div className="absolute bottom-5 left-4 right-20 z-20">
 
                   <div className="mb-3 flex items-center gap-2">
@@ -1496,10 +1781,10 @@ export default function ReelsPage() {
                   {/* CAPTION */}
                   <button
                     onClick={() =>
-  setCaptionExpand((previous) => ({
-    ...previous,
-    [postId]: !previous[postId],
-  }))
+                      setCaptionExpand((previous) => ({
+                        ...previous,
+                        [postId]: !previous[postId],
+                      }))
                     }
                     className="block max-w-full text-left"
                   >
@@ -1570,7 +1855,7 @@ export default function ReelsPage() {
           })
         )}
       </div>
-                        
+
       {/* COMMENTS MODAL */}
       {showComments && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70">
@@ -1708,8 +1993,7 @@ export default function ReelsPage() {
                   ))
               )}
             </div>
-
-            {/* REPLY INDICATOR */}
+                        {/* REPLY INDICATOR */}
             {replyTo && (
               <div className="flex items-center justify-between border-t border-white/10 px-4 py-2">
                 <span className="text-xs text-white/60">
@@ -1882,7 +2166,7 @@ export default function ReelsPage() {
           </div>
         </div>
       )}
-                  
+
       {/* CREATE REEL MENU */}
       {showCreateMenu && (
         <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/75">
@@ -2007,10 +2291,7 @@ export default function ReelsPage() {
                     </div>
 
                     <button
-                      onClick={() => {
-                        const useThisAudio = (selectedPost?: any) => {
-  const post = selectedPost || posts[currentIndex]
-                      }}
+                      onClick={useThisAudio}
                       className="rounded-full bg-white px-3 py-2 text-xs font-bold text-black"
                     >
                       Use Audio
@@ -2040,7 +2321,7 @@ export default function ReelsPage() {
 
             <button
               onClick={() => {
-                if (currentReel) useAsReference(currentReel)
+                if (currentReel) useAsReference()
                 setShowReferencePanel(false)
               }}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 font-bold text-black"
@@ -2051,8 +2332,7 @@ export default function ReelsPage() {
           </div>
         </div>
       )}
-
-      {/* WATCH HISTORY */}
+            {/* WATCH HISTORY */}
       {showHistory && (
         <div className="fixed inset-0 z-[127] flex items-end justify-center bg-black/75">
           <div className="max-h-[75dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-[#171717] p-5 pb-9">
@@ -2326,7 +2606,7 @@ export default function ReelsPage() {
           </div>
         </div>
       )}
-              
+
       {/* FEATURE MESSAGE / TOAST */}
       {featureMessage && (
         <div className="fixed bottom-24 left-1/2 z-[200] w-max max-w-[90%] -translate-x-1/2">
@@ -2360,4 +2640,4 @@ export default function ReelsPage() {
 
     </main>
   )
-}
+          }
