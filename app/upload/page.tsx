@@ -2158,7 +2158,7 @@ export default function UploadPage() {
             <select
               value={pollType}
               onChange={(event) =>
-                updatePollType(event.target.value)
+                updatePollType(event.target.value as "poll" | "quiz")
               }
               className="w-full rounded-xl bg-black border border-zinc-700 p-3 text-sm"
             >
