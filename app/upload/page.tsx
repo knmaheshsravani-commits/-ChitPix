@@ -1868,7 +1868,7 @@ export default function UploadPage() {
                     key={fps}
                     onClick={() => updateExportFPS(String(fps))}
                     className={`rounded-xl border py-3 text-sm ${
-                      exportFPS === fps
+                      exportFPS === String(fps)
                         ? "border-fuchsia-500 bg-fuchsia-500/20"
                         : "border-white/10 bg-white/5"
                     }`}
