@@ -2079,7 +2079,7 @@ export default function ReelsPage() {
 
             <button
               onClick={() => {
-                if (currentReel) useAsReference(currentReel)
+                if (currentReel) useAsReference()
                 setShowReferencePanel(false)
               }}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-white py-3 font-bold text-black"
