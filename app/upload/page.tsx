@@ -156,9 +156,11 @@ type MediaKind = "image" | "video"
 type DraftItem = {
   id: string
   caption: string
-  mediaUrl: string
-  mediaType: MediaKind
-  createdAt: string
+  price: string
+  mode: CreatorMode
+  mediaName: string
+  mediaType: string
+  updatedAt: string
 }
 
 type AudioItem = {
