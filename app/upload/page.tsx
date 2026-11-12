@@ -1520,7 +1520,7 @@ export default function UploadPage() {
                   {FILTERS.map((item) => (
                     <button
                       key={item.name}
-                      onClick={() => applyFilter(item.value)}
+                      onClick={() => applyFilter(item)}
                       className={`rounded-xl border p-3 text-sm ${
                         activeFilter === item.name
                           ? "border-fuchsia-500 bg-fuchsia-500/20"
