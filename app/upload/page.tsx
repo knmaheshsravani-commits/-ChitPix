@@ -181,15 +181,21 @@ type TemplateItem = {
 
 type EditorSnapshot = {
   filter: string
+  caption: string
   brightness: number
   contrast: number
   saturation: number
   speed: number
   volume: number
+  muted: boolean
   rotation: number
   flipH: boolean
   flipV: boolean
-  caption: string
+  textOverlay: string
+  sticker: string
+  cropRatio: string
+  trimStart: number
+  trimEnd: number
 }
 
 // FILTER PRESETS
