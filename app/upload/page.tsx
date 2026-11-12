@@ -260,6 +260,7 @@ export default function UploadPage() {
 
   // MEDIA
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [mediaKind, setMediaKind] = useState<MediaKind>(null)
   const [preview, setPreview] = useState("")
   const [caption, setCaption] = useState("")
   const [price, setPrice] = useState("")
