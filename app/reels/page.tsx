@@ -2246,26 +2246,26 @@ export default function ReelsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl bg-white/[0.07] p-4">
                 <Heart className="mb-2 text-pink-400" size={22} />
-                <p className="text-xl font-bold">{analytics.likes}</p>
+                <p className="text-xl font-bold">{currentReelLikes}</p>
                 <p className="text-xs text-white/50">Likes</p>
               </div>
 
               <div className="rounded-xl bg-white/[0.07] p-4">
                 <MessageCircle className="mb-2 text-sky-400" size={22} />
-                <p className="text-xl font-bold">{analytics.comments}</p>
+                <p className="text-xl font-bold">{currentReelComments}</p>
                 <p className="text-xs text-white/50">Comments</p>
               </div>
 
               <div className="rounded-xl bg-white/[0.07] p-4">
                 <Play className="mb-2 text-green-400" size={22} />
-                <p className="text-xl font-bold">{analytics.views}</p>
+                <p className="text-xl font-bold">{currentReelViews}</p>
                 <p className="text-xs text-white/50">Views</p>
               </div>
 
               <div className="rounded-xl bg-white/[0.07] p-4">
                 <BarChart3 className="mb-2 text-purple-400" size={22} />
                 <p className="text-xl font-bold">
-                  {analytics.likes + analytics.comments}
+                  {currentReelLikes + currentReelComments}
                 </p>
                 <p className="text-xs text-white/50">Likes + Comments</p>
               </div>
