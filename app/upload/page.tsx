@@ -1304,13 +1304,13 @@ export default function UploadPage() {
                     : "border-zinc-700 bg-zinc-900"
                 }`}
               >
-                <div className="text-2xl mb-2">
+                 <div className="text-2xl mb-2">
   <item.icon size={28} />
 </div>
 
-                <div className="font-bold text-sm">
-                  {item.name}
-                </div>
+<div className="font-bold text-sm">
+  {item.title}
+</div>
 
                 <div className="text-xs text-zinc-400 mt-1">
                   {item.description}
