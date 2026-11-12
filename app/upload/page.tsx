@@ -1442,7 +1442,7 @@ export default function UploadPage() {
                   max={100}
                   value={volume}
                   onChange={(e) =>
-                    setVideoVolume(Number(e.target.value))
+  setVolume(Number(e.target.value))
                   }
                   className="mt-3 w-full accent-fuchsia-500"
                 />
