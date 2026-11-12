@@ -1403,7 +1403,7 @@ export default function ReelsPage() {
 
                   {/* COMMENTS */}
                   <button
-                    onClick={() => openComments(post)}
+                    onClick={() => openComments()}
                     className="flex flex-col items-center gap-1"
                     aria-label="Comments"
                   >
