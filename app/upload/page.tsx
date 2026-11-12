@@ -1630,7 +1630,7 @@ export default function UploadPage() {
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <button
-                    onClick={rotateMedia}
+                    onClick={() => setRotation((v) => v + 90)}
                     className="rounded-xl bg-white/10 py-3 text-sm"
                   >
                     <RotateCw size={17} className="mr-2 inline" />
@@ -1647,7 +1647,7 @@ export default function UploadPage() {
                 </div>
 
                 <button
-                  onClick={flipVertical}
+                  onClick={() => setFlipH((v) => !v)}
                   className="mt-2 w-full rounded-xl bg-white/10 py-3 text-sm"
                 >
                   <FlipVertical size={17} className="mr-2 inline" />
