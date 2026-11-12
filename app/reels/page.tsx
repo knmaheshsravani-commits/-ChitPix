@@ -1372,7 +1372,7 @@ export default function ReelsPage() {
                 {/* PART 5 CONTINUES */}
                             
                 {/* RIGHT SIDE ACTIONS */}
-                <div className="absolute bottom-28 right-3 z-30 flex flex-col items-center gap-5 text-white">
+                <div className="absolute bottom-24 right-3 z-30 flex flex-col items-center gap-5 text-white">
 
                   {/* CREATOR AVATAR */}
                   <button
