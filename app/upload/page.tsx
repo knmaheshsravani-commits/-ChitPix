@@ -317,8 +317,7 @@ export default function UploadPage() {
 
   // POLL / QUIZ
   const [pollQuestion, setPollQuestion] = useState("")
-  const [pollOption1, setPollOption1] = useState("")
-  const [pollOption2, setPollOption2] = useState("")
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""])
   const [pollType, setPollType] = useState<"poll" | "quiz">("poll")
 
   // COLLAB
@@ -332,7 +331,7 @@ export default function UploadPage() {
 
   // EXPORT
   const [exportQuality, setExportQuality] = useState("1080p")
-  const [exportFPS, setExportFPS] = useState("30")
+  const [exportFPS, setExportFPS] = useState<number>(30)
   const [exporting, setExporting] = useState(false)
   const [showExportPanel, setShowExportPanel] = useState(false)
 
