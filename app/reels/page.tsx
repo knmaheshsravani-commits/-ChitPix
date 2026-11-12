@@ -1519,7 +1519,7 @@ export default function ReelsPage() {
 
                   {/* AUDIO NAME */}
                   <button
-                    onClick={() => openAudioPage(post)}
+                    onClick={() => openAudioPage()}
                     className="mt-3 flex max-w-full items-center gap-2 text-xs text-white/90"
                   >
                     <Music2 size={14} />
