@@ -39,7 +39,41 @@ function fixR2Url(post: Post | string | null | undefined): string {
     post.image_url || post.r2_url || post.url || ""
   ).trim()
 }
+// PROFILE AVATAR URL FIX
+function fixAvatarUrl(value: any): string {
+  if (!value) return ""
 
+  let raw = ""
+
+  if (typeof value === "string") {
+    raw = value
+  } else if (typeof value === "object") {
+    raw =
+      value.avatar_url ||
+      value.avatar ||
+      value.image_url ||
+      value.url ||
+      value.publicUrl ||
+      value.r2Url ||
+      ""
+  }
+
+  raw = String(raw).trim()
+
+  if (!raw) return ""
+
+  if (/^(https?:\/\/|data:image\/|blob:)/i.test(raw)) {
+    return raw
+  }
+
+  if (raw.startsWith("r2://")) {
+    return `${R2_PUBLIC.replace(/\/$/, "")}/${raw
+      .slice(5)
+      .replace(/^\/+/, "")}`
+  }
+
+  return raw
+}
 function getMediaType(post: Post): "video" | "image" {
   const url = fixR2Url(post).toLowerCase().split("?")[0]
   return /\.(mp4|webm|mov|m4v|ogg)$/.test(url)
@@ -229,7 +263,15 @@ function PostCard({
 
   const mediaUrl = fixR2Url(post)
   const mediaType = getMediaType(post)
+  const avatarUrl = fixAvatarUrl(
+  post.avatar_url || post.avatar
+)
 
+const [avatarFailed, setAvatarFailed] = useState(false)
+
+useEffect(() => {
+  setAvatarFailed(false)
+}, [avatarUrl])
   const isOwner =
     !!currentUserId && currentUserId === post.user_id
 
@@ -727,13 +769,15 @@ function PostCard({
             className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400 p-[2px]"
           >
             <div className="h-full w-full overflow-hidden rounded-full bg-white">
-              {post.avatar_url || post.avatar ? (
-                <img
-                  src={post.avatar_url || post.avatar || ""}
-                  alt="Profile"
-                  className="h-full w-full rounded-full object-cover"
-                />
-              ) : (
+              {avatarUrl && !avatarFailed ? (
+  <img
+    src={avatarUrl}
+    alt={`${post.username || "User"} profile`}
+    className="h-full w-full rounded-full object-cover"
+    loading="lazy"
+    onError={() => setAvatarFailed(true)}
+  />
+) : (
                 <div className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">
                   {(post.username || "U").charAt(0).toUpperCase()}
                 </div>
@@ -1292,24 +1336,29 @@ export default function HomePage() {
 const formattedPosts: Post[] = postRows.map((post: any) => {
   const profile: any = profileMap.get(post.user_id)
 
+  const avatarUrl = fixAvatarUrl(
+    profile?.avatar_url ||
+    post.avatar_url ||
+    post.avatar ||
+    null
+  )
+
   return {
     ...post,
+
     username:
       profile?.username ||
       post.username ||
       profile?.full_name ||
       "ChitPix User",
-    full_name: profile?.full_name || post.full_name || null,
-    avatar_url:
-      profile?.avatar_url ||
-      post.avatar_url ||
-      post.avatar ||
+
+    full_name:
+      profile?.full_name ||
+      post.full_name ||
       null,
-    avatar:
-      profile?.avatar_url ||
-      post.avatar_url ||
-      post.avatar ||
-      null,
+
+    avatar_url: avatarUrl,
+    avatar: avatarUrl,
   }
 })
     
