@@ -1,7 +1,15 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ChangeEvent,
+} from "react"
+
 import { useRouter } from "next/navigation"
+
 import {
   ArrowLeft,
   Upload,
@@ -39,14 +47,150 @@ import {
   Film,
   Maximize,
   Settings,
+  Search,
+  Image,
+  Clock,
+  Heart,
+  Send,
+  Palette,
+  Layers,
+  Check,
+  Eye,
+  Bookmark,
+  Mic,
+  Hash,
+  Calendar,
+  UserPlus,
+  MessageCircle,
+  RefreshCw,
+  ChevronDown,
+  ChevronRight,
+  RotateCw as RotateIcon,
 } from "lucide-react"
 
 import { supabase } from "../../lib/supabase"
 
+// CLOUD STORAGE
 const R2_PUBLIC =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
   "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
 
+// ALL CREATOR MODES
+const CREATOR_MODES = [
+  {
+    id: "reel",
+    title: "New Reel",
+    description: "Create and publish a video",
+    icon: Video,
+  },
+  {
+    id: "draft",
+    title: "Draft Reel",
+    description: "Continue saved creations",
+    icon: Save,
+  },
+  {
+    id: "effects",
+    title: "Video Effects",
+    description: "Apply creative effects",
+    icon: WandSparkles,
+  },
+  {
+    id: "edit",
+    title: "Video Editor",
+    description: "Edit video and audio",
+    icon: Film,
+  },
+  {
+    id: "audio",
+    title: "Audio Library",
+    description: "Choose and preview audio",
+    icon: Music2,
+  },
+  {
+    id: "schedule",
+    title: "Schedule Reel",
+    description: "Prepare a scheduled post",
+    icon: CalendarClock,
+  },
+  {
+    id: "poll",
+    title: "Poll / Quiz",
+    description: "Create interactive polls",
+    icon: MessageCircle,
+  },
+  {
+    id: "collab",
+    title: "Collab Reel",
+    description: "Invite another creator",
+    icon: Users,
+  },
+  {
+    id: "photo",
+    title: "Photo Editor",
+    description: "Edit photos and filters",
+    icon: Image,
+  },
+  {
+    id: "templates",
+    title: "Templates",
+    description: "Start with a creative layout",
+    icon: Layers,
+  },
+] as const
+
+type CreatorMode =
+  | "reel"
+  | "draft"
+  | "effects"
+  | "edit"
+  | "audio"
+  | "schedule"
+  | "poll"
+  | "collab"
+  | "photo"
+  | "templates"
+
+type MediaKind = "image" | "video"
+
+type DraftItem = {
+  id: string
+  caption: string
+  mediaUrl: string
+  mediaType: MediaKind
+  createdAt: string
+}
+
+type AudioItem = {
+  id: string
+  title: string
+  artist: string
+  url: string
+  duration?: number
+}
+
+type TemplateItem = {
+  id: string
+  name: string
+  description: string
+  filter: string
+  emoji: string
+}
+
+type EditorSnapshot = {
+  filter: string
+  brightness: number
+  contrast: number
+  saturation: number
+  speed: number
+  volume: number
+  rotation: number
+  flipH: boolean
+  flipV: boolean
+  caption: string
+}
+
+// FILTER PRESETS
 const FILTERS = [
   { name: "Normal", value: "none" },
   { name: "Bright", value: "brightness(1.2) saturate(1.2)" },
@@ -58,6 +202,8 @@ const FILTERS = [
   { name: "Fade", value: "contrast(0.85) brightness(1.1)" },
   { name: "Dream", value: "brightness(1.1) saturate(0.8)" },
   { name: "Vivid", value: "saturate(1.7) contrast(1.1)" },
+  { name: "Golden", value: "sepia(0.3) saturate(1.5)" },
+  { name: "Mono", value: "grayscale(1) contrast(1.2)" },
 ]
 
 const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3]
@@ -73,38 +219,57 @@ const EDIT_TABS = [
   "Stickers",
 ]
 
-type EditorHistory = {
-  filter: string
-  brightness: number
-  contrast: number
-  saturation: number
-  speed: number
-  volume: number
-  rotation: number
-  flipH: boolean
-  flipV: boolean
-  caption: string
-}
+const STICKERS = [
+  "❤️",
+  "🔥",
+  "😍",
+  "😂",
+  "✨",
+  "🌟",
+  "🎉",
+  "👏",
+  "😎",
+  "💯",
+  "🌈",
+  "🚀",
+  "🥰",
+  "💖",
+  "👍",
+  "🎬",
+  "🎵",
+  "⭐",
+  "🌸",
+  "☀️",
+]
 
+// MAIN CREATOR PAGE
 export default function UploadPage() {
   const router = useRouter()
 
+  // FILE AND VIDEO REFERENCES
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
 
-  const [mode, setMode] = useState("reel")
+  // USER
   const [userId, setUserId] = useState("")
   const [username, setUsername] = useState("")
 
+  // CURRENT MODE
+  const [mode, setMode] = useState<CreatorMode>("reel")
+
+  // MEDIA
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState("")
   const [caption, setCaption] = useState("")
   const [price, setPrice] = useState("")
 
+  // STATUS
   const [uploading, setUploading] = useState(false)
   const [notice, setNotice] = useState("")
+  const [loading, setLoading] = useState(true)
 
-  // Editor state
+  // EDITOR SETTINGS
   const [activeTab, setActiveTab] = useState("Trim")
   const [filter, setFilter] = useState("none")
   const [activeFilter, setActiveFilter] = useState("Normal")
@@ -121,89 +286,125 @@ export default function UploadPage() {
   const [flipH, setFlipH] = useState(false)
   const [flipV, setFlipV] = useState(false)
 
+  // VIDEO TIMELINE
   const [duration, setDuration] = useState(0)
   const [trimStart, setTrimStart] = useState(0)
   const [trimEnd, setTrimEnd] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [playing, setPlaying] = useState(false)
+  const [splitPoints, setSplitPoints] = useState<number[]>([])
+  const [timelineZoom, setTimelineZoom] = useState(1)
 
-  const [audioName, setAudioName] = useState("")
+  // AUDIO
   const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [audioName, setAudioName] = useState("")
+  const [audioPreview, setAudioPreview] = useState("")
+  const [audioSearch, setAudioSearch] = useState("")
+  const [selectedAudio, setSelectedAudio] = useState<AudioItem | null>(null)
+
+  // TEXT AND STICKERS
   const [textOverlay, setTextOverlay] = useState("")
   const [sticker, setSticker] = useState("")
+  const [cropRatio, setCropRatio] = useState("9:16")
 
+  // DRAFTS
+  const [drafts, setDrafts] = useState<DraftItem[]>([])
+  const [selectedDraftId, setSelectedDraftId] = useState("")
+
+  // SCHEDULE
   const [scheduledAt, setScheduledAt] = useState("")
-  const [collaborator, setCollaborator] = useState("")
 
+  // POLL / QUIZ
   const [pollQuestion, setPollQuestion] = useState("")
   const [pollOption1, setPollOption1] = useState("")
   const [pollOption2, setPollOption2] = useState("")
+  const [pollType, setPollType] = useState<"poll" | "quiz">("poll")
 
-  // Undo / redo history
-  const [history, setHistory] = useState<EditorHistory[]>([])
+  // COLLAB
+  const [collaborator, setCollaborator] = useState("")
+
+  // PHOTO EDITOR
+  const [photoFormat, setPhotoFormat] = useState("original")
+
+  // TEMPLATES
+  const [selectedTemplate, setSelectedTemplate] = useState("")
+
+  // EXPORT
+  const [exportQuality, setExportQuality] = useState("1080p")
+  const [exportFPS, setExportFPS] = useState("30")
+  const [exporting, setExporting] = useState(false)
+  const [showExportPanel, setShowExportPanel] = useState(false)
+
+  // UI PANELS
+  const [showTimeline, setShowTimeline] = useState(true)
+  const [showAudioPanel, setShowAudioPanel] = useState(false)
+  const [showTextPanel, setShowTextPanel] = useState(false)
+  const [showStickerPanel, setShowStickerPanel] = useState(false)
+
+  // HISTORY
+  const [history, setHistory] = useState<EditorSnapshot[]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
 
+  // MEDIA TYPE
   const isVideo =
     selectedFile?.type.startsWith("video/") || false
 
   const isImage =
     selectedFile?.type.startsWith("image/") || false
 
-  
-  // READ URL MODE AND LOAD USER
+  // READ MODE FROM URL AND LOAD USER
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
 
-    let selectedMode = params.get("type") || "reel"
+    let nextMode: CreatorMode = "reel"
 
-    if (params.get("draft") === "1") selectedMode = "draft"
-    else if (params.get("effects") === "1") selectedMode = "effects"
-    else if (params.get("edit") === "1") selectedMode = "edit"
-    else if (params.get("schedule") === "1") selectedMode = "schedule"
-    else if (params.get("poll") === "1") selectedMode = "poll"
-    else if (params.get("collab") === "1") selectedMode = "collab"
+    if (params.get("type") === "post") nextMode = "photo"
+    if (params.get("type") === "reel") nextMode = "reel"
 
-    setMode(selectedMode)
+    if (params.get("draft") === "1") nextMode = "draft"
+    else if (params.get("effects") === "1") nextMode = "effects"
+    else if (params.get("edit") === "1") nextMode = "edit"
+    else if (params.get("audio") === "1") nextMode = "audio"
+    else if (params.get("schedule") === "1") nextMode = "schedule"
+    else if (params.get("poll") === "1") nextMode = "poll"
+    else if (params.get("collab") === "1") nextMode = "collab"
+    else if (params.get("photo") === "1") nextMode = "photo"
+    else if (params.get("templates") === "1") nextMode = "templates"
 
-    async function loadUser() {
-      const { data, error } = await supabase.auth.getUser()
+    setMode(nextMode)
 
-      if (error || !data.user) {
-        setNotice("Munduga ChitPix lo login avvu")
-        return
+    const loadUser = async () => {
+      try {
+        const { data, error } = await supabase.auth.getUser()
+
+        if (error || !data.user) {
+          setNotice("Munduga ChitPix lo login avvu")
+          return
+        }
+
+        setUserId(data.user.id)
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", data.user.id)
+          .maybeSingle()
+
+        setUsername(
+          profile?.username ||
+          data.user.user_metadata?.username ||
+          data.user.email?.split("@")[0] ||
+          "ChitPix User"
+        )
+      } catch (error) {
+        console.error("User loading error:", error)
+        setNotice("User details load avvaledu")
+      } finally {
+        setLoading(false)
       }
-
-      setUserId(data.user.id)
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("username")
-        .eq("id", data.user.id)
-        .maybeSingle()
-
-      setUsername(
-        profile?.username ||
-        data.user.user_metadata?.username ||
-        data.user.email?.split("@")[0] ||
-        "ChitPix User"
-      )
     }
 
     loadUser()
-
-    try {
-      const draft = localStorage.getItem("chitpix_reel_draft")
-
-      if (draft) {
-        const parsed = JSON.parse(draft)
-
-        setCaption(parsed.caption || "")
-        setAudioName(parsed.audioName || "")
-        setTextOverlay(parsed.textOverlay || "")
-      }
-    } catch {
-      console.log("Draft restore skipped")
-    }
   }, [])
 
   // CREATE AND CLEAN MEDIA PREVIEW
@@ -218,11 +419,28 @@ export default function UploadPage() {
       return
     }
 
-    const url = URL.createObjectURL(selectedFile)
-    setPreview(url)
+    const objectUrl = URL.createObjectURL(selectedFile)
+    setPreview(objectUrl)
 
-    return () => URL.revokeObjectURL(url)
+    return () => {
+      URL.revokeObjectURL(objectUrl)
+    }
   }, [selectedFile])
+
+  // AUDIO PREVIEW URL
+  useEffect(() => {
+    if (!audioFile) {
+      setAudioPreview("")
+      return
+    }
+
+    const objectUrl = URL.createObjectURL(audioFile)
+    setAudioPreview(objectUrl)
+
+    return () => {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }, [audioFile])
 
   // VIDEO PLAYBACK SETTINGS
   useEffect(() => {
@@ -234,650 +452,285 @@ export default function UploadPage() {
     video.muted = muted
   }, [speed, volume, muted, preview])
 
-  // VIDEO FILTER STYLE
+  // FILTER AND TRANSFORM STYLES
   const videoFilter =
     `${filter} brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`
 
   const videoTransform =
     `rotate(${rotation}deg) scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
 
-  // PAGE TITLE
-  const pageTitle = {
-    reel: "Create New Reel",
-    post: "Create Post",
-    draft: "Edit Draft Reel",
-    effects: "Video Effects",
-    edit: "Video Editor",
-    schedule: "Schedule Reel",
-    poll: "Poll / Quiz Reel",
-    collab: "Collab Reel",
-  }[mode] || "Create on ChitPix"
+  // PART 2 CONTINUES
+  // ================================
+  // PART 2: MEDIA & EDITOR FUNCTIONS
+  // ================================
 
-  // FORMAT VIDEO TIME
-  const formatTime = (seconds: number) => {
-    if (!Number.isFinite(seconds)) return "0:00"
-
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-
-    return `${mins}:${String(secs).padStart(2, "0")}`
+  const showNotice = (message: string) => {
+    setNotice(message)
+    window.setTimeout(() => {
+      setNotice("")
+    }, 3500)
   }
 
-  // CAPTURE CURRENT EDIT SETTINGS
-  const getEditorSnapshot = (): EditorHistory => ({
-    filter,
-    brightness,
-    contrast,
-    saturation,
-    speed,
-    volume,
-    rotation,
-    flipH,
-    flipV,
-    caption,
-  })
-
-  // SAVE EDIT HISTORY
-  const saveHistory = useCallback(() => {
-    const snapshot = getEditorSnapshot()
-
-    setHistory((previous) => {
-      const updated = previous.slice(0, historyIndex + 1)
-      updated.push(snapshot)
-      return updated.slice(-30)
-    })
-
-    setHistoryIndex((previous) =>
-      Math.min(previous + 1, 29)
-    )
-  }, [
-    historyIndex,
-    filter,
-    brightness,
-    contrast,
-    saturation,
-    speed,
-    volume,
-    rotation,
-    flipH,
-    flipV,
-    caption,
-  ])
-
-  // RESTORE EDIT SETTINGS
-  const restoreHistory = (snapshot: EditorHistory) => {
-    setFilter(snapshot.filter)
-    setBrightness(snapshot.brightness)
-    setContrast(snapshot.contrast)
-    setSaturation(snapshot.saturation)
-    setSpeed(snapshot.speed)
-    setVolume(snapshot.volume)
-    setRotation(snapshot.rotation)
-    setFlipH(snapshot.flipH)
-    setFlipV(snapshot.flipV)
-    setCaption(snapshot.caption)
-  }
-
-  // UNDO
-  const undoEdit = () => {
-    if (historyIndex <= 0) return
-
-    const nextIndex = historyIndex - 1
-    setHistoryIndex(nextIndex)
-    restoreHistory(history[nextIndex])
-  }
-
-  // REDO
-  const redoEdit = () => {
-    if (historyIndex >= history.length - 1) return
-
-    const nextIndex = historyIndex + 1
-    setHistoryIndex(nextIndex)
-    restoreHistory(history[nextIndex])
-  }
-
-  // SELECT PHOTO OR VIDEO
-  const handleSelectFile = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
-    if (
-      !file.type.startsWith("image/") &&
-      !file.type.startsWith("video/")
-    ) {
-      setNotice("Photo leda video select cheyyi")
+    const validImage = file.type.startsWith("image/")
+    const validVideo = file.type.startsWith("video/")
+
+    if (!validImage && !validVideo) {
+      showNotice("Please select an image or video file.")
+      event.target.value = ""
       return
     }
 
-    const maxSize = file.type.startsWith("video/")
-      ? 100 * 1024 * 1024
-      : 15 * 1024 * 1024
+    const maxSize = 500 * 1024 * 1024
 
     if (file.size > maxSize) {
-      setNotice(
-        file.type.startsWith("video/")
-          ? "Video size 100MB lopala undali"
-          : "Photo size 15MB lopala undali"
-      )
+      showNotice("File size must be below 500 MB.")
+      event.target.value = ""
       return
     }
 
     setSelectedFile(file)
-    setHistory([])
-    setHistoryIndex(-1)
+    setMediaKind(validVideo ? "video" : "image")
+    setCurrentTime(0)
+    setTrimStart(0)
+    setTrimEnd(0)
+    setDuration(0)
+    setPlaying(false)
+    setSplitPoints([])
+    setRotation(0)
+    setFlipH(false)
+    setFlipV(false)
+    setCaption("")
     setNotice("Media selected successfully!")
-    event.target.value = ""
   }
 
-  // REMOVE SELECTED MEDIA
-  const removeSelectedFile = () => {
-    setSelectedFile(null)
+  const openFilePicker = () => {
+    fileInputRef.current?.click()
+  }
 
+  const clearMedia = () => {
+    setSelectedFile(null)
+    setPreview("")
+    setMediaKind(null)
+    setCurrentTime(0)
+    setDuration(0)
+    setTrimStart(0)
+    setTrimEnd(0)
+    setPlaying(false)
+    setSplitPoints([])
+    setCaption("")
+    setNotice("")
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
-
-    setNotice("Media removed")
   }
 
-  // VIDEO METADATA
-  const handleVideoLoaded = () => {
+  const handleVideoMetadata = () => {
     const video = videoRef.current
     if (!video) return
 
-    const total = video.duration
+    const videoDuration = Number.isFinite(video.duration)
+      ? video.duration
+      : 0
 
-    if (!Number.isFinite(total)) return
-
-    setDuration(total)
-    setTrimStart(0)
-    setTrimEnd(total)
-    setCurrentTime(0)
+    setDuration(videoDuration)
+    setTrimEnd(videoDuration)
   }
 
-  // UPDATE VIDEO TIME
-  const handleTimeUpdate = () => {
+  const handleVideoTimeUpdate = () => {
     const video = videoRef.current
     if (!video) return
 
     setCurrentTime(video.currentTime)
 
-    if (
-      trimEnd > 0 &&
-      video.currentTime >= trimEnd
-    ) {
+    if (trimEnd > trimStart && video.currentTime >= trimEnd) {
       video.pause()
       video.currentTime = trimStart
       setPlaying(false)
     }
   }
 
-  // PLAY / PAUSE
   const toggleVideoPlayback = async () => {
     const video = videoRef.current
     if (!video) return
 
-    if (video.paused) {
-      if (
-        video.currentTime < trimStart ||
-        video.currentTime >= trimEnd
-      ) {
-        video.currentTime = trimStart
-      }
+    try {
+      if (video.paused) {
+        if (
+          trimEnd > trimStart &&
+          video.currentTime >= trimEnd
+        ) {
+          video.currentTime = trimStart
+        }
 
-      try {
         await video.play()
         setPlaying(true)
-      } catch {
-        setNotice("Video playback start avvaledu")
+      } else {
+        video.pause()
+        setPlaying(false)
       }
-    } else {
-      video.pause()
+    } catch {
       setPlaying(false)
+      showNotice("Unable to play this video.")
     }
   }
 
-  // SEEK VIDEO
   const seekVideo = (value: number) => {
     const video = videoRef.current
     if (!video) return
 
-    const safeTime = Math.max(
-      trimStart,
-      Math.min(value, trimEnd || duration)
-    )
-
-    video.currentTime = safeTime
-    setCurrentTime(safeTime)
-  }
-
-  // CHANGE TRIM START
-  const changeTrimStart = (value: number) => {
     const safeValue = Math.max(
       0,
-      Math.min(value, trimEnd - 0.5)
+      Math.min(value, duration || 0)
     )
 
-    setTrimStart(safeValue)
-    seekVideo(safeValue)
-    saveHistory()
+    video.currentTime = safeValue
+    setCurrentTime(safeValue)
   }
 
-  // CHANGE TRIM END
-  const changeTrimEnd = (value: number) => {
-    const safeValue = Math.min(
-      duration,
-      Math.max(value, trimStart + 0.5)
+  const updateTrimStart = (value: number) => {
+    const safeValue = Math.max(
+      0,
+      Math.min(value, duration)
     )
 
-    setTrimEnd(safeValue)
-    saveHistory()
-  }
-
-  // RESET VIDEO EDIT SETTINGS
-  const resetEditor = () => {
-    setFilter("none")
-    setActiveFilter("Normal")
-    setBrightness(100)
-    setContrast(100)
-    setSaturation(100)
-    setSpeed(1)
-    setVolume(100)
-    setMuted(false)
-    setRotation(0)
-    setFlipH(false)
-    setFlipV(false)
+    setTrimStart(
+      Math.min(safeValue, Math.max(0, trimEnd - 0.5))
+    )
 
     if (videoRef.current) {
-      videoRef.current.currentTime = 0
-      videoRef.current.playbackRate = 1
-    }
-
-    setNotice("Editor settings reset")
-  }
-
-  // SAVE DRAFT
-  const saveDraft = () => {
-    try {
-      localStorage.setItem(
-        "chitpix_reel_draft",
-        JSON.stringify({
-          caption,
-          audioName,
-          textOverlay,
-          savedAt: new Date().toISOString(),
-        })
-      )
-
-      setNotice("Draft saved on this device!")
-    } catch {
-      setNotice("Draft save failed")
+      videoRef.current.currentTime = safeValue
     }
   }
 
-  
-  // APPLY VIDEO FILTER
-  const applyFilter = (item: (typeof FILTERS)[number]) => {
-    saveHistory()
-    setFilter(item.value)
-    setActiveFilter(item.name)
-    setNotice(`${item.name} filter selected`)
-  }
+  const updateTrimEnd = (value: number) => {
+    const safeValue = Math.max(
+      0,
+      Math.min(value, duration)
+    )
 
-  // BRIGHTNESS CONTROL
-  const changeBrightness = (value: number) => {
-    saveHistory()
-    setBrightness(value)
-  }
-
-  // CONTRAST CONTROL
-  const changeContrast = (value: number) => {
-    saveHistory()
-    setContrast(value)
-  }
-
-  // SATURATION CONTROL
-  const changeSaturation = (value: number) => {
-    saveHistory()
-    setSaturation(value)
-  }
-
-  // VIDEO SPEED
-  const changeSpeed = (value: number) => {
-    saveHistory()
-    setSpeed(value)
-
-    if (videoRef.current) {
-      videoRef.current.playbackRate = value
-    }
-
-    setNotice(`Playback speed ${value}x`)
-  }
-
-  // VIDEO VOLUME
-  const changeVolume = (value: number) => {
-    setVolume(value)
-
-    if (videoRef.current) {
-      videoRef.current.volume = value / 100
-      videoRef.current.muted = value === 0
-    }
-
-    setMuted(value === 0)
-  }
-
-  // MUTE / UNMUTE
-  const toggleMute = () => {
-    const nextMuted = !muted
-    setMuted(nextMuted)
-
-    if (videoRef.current) {
-      videoRef.current.muted = nextMuted
-    }
-  }
-
-  // ROTATE VIDEO
-  const rotateVideo = (direction: number) => {
-    saveHistory()
-    setRotation((previous) => (previous + direction + 360) % 360)
-  }
-
-  // FLIP HORIZONTAL
-  const flipHorizontal = () => {
-    saveHistory()
-    setFlipH((previous) => !previous)
-  }
-
-  // FLIP VERTICAL
-  const flipVertical = () => {
-    saveHistory()
-    setFlipV((previous) => !previous)
-  }
-
-  // SELECT EDITING TAB
-  const selectEditTab = (tab: string) => {
-    setActiveTab(tab)
-  }
-
-  // SELECT AUDIO FILE
-  const handleAudioSelect = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    if (!file.type.startsWith("audio/")) {
-      setNotice("Audio file select cheyyi")
-      return
-    }
-
-    if (file.size > 20 * 1024 * 1024) {
-      setNotice("Audio file 20MB lopala undali")
-      return
-    }
-
-    setAudioFile(file)
-    setAudioName(file.name.replace(/\.[^/.]+$/, ""))
-    setNotice("Audio selected successfully!")
-    event.target.value = ""
-  }
-
-  // REMOVE AUDIO
-  const removeAudio = () => {
-    setAudioFile(null)
-    setAudioName("")
-    setNotice("Audio removed")
-  }
-
-  // ADD TEXT OVERLAY
-  const updateTextOverlay = (value: string) => {
-    setTextOverlay(value.slice(0, 150))
-  }
-
-  // ADD STICKER
-  const addSticker = (value: string) => {
-    setSticker(value)
-    setNotice("Sticker added to preview")
-  }
-
-  // REMOVE STICKER
-  const removeSticker = () => {
-    setSticker("")
-  }
-
-  // CHANGE TRIM RANGE
-  const resetTrim = () => {
-    setTrimStart(0)
-    setTrimEnd(duration)
-
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0
-    }
-
-    setCurrentTime(0)
-    setNotice("Trim range reset")
-  }
-
-  // SPLIT MARKER
-  const splitAtCurrentTime = () => {
-    if (!isVideo || duration <= 0) {
-      setNotice("Munduga video select cheyyi")
-      return
-    }
-
-    if (
-      currentTime <= trimStart ||
-      currentTime >= trimEnd
-    ) {
-      setNotice("Video madhyalo split position select cheyyi")
-      return
-    }
-
-    setNotice(
-      `Split marker added at ${formatTime(currentTime)}. Actual video splitting will be done during export.`
+    setTrimEnd(
+      Math.max(safeValue, Math.min(duration, trimStart + 0.5))
     )
   }
 
-  // CROP PRESET
-  const [cropRatio, setCropRatio] = useState("9:16")
-
-  const cropPresets = [
-    { label: "Reels", value: "9:16" },
-    { label: "Square", value: "1:1" },
-    { label: "Portrait", value: "4:5" },
-    { label: "Landscape", value: "16:9" },
-    { label: "Original", value: "original" },
-  ]
-
-  // SET CROP PRESET
-  const selectCropRatio = (value: string) => {
-    setCropRatio(value)
-    setNotice(`${value} crop preview selected`)
-  }
-
-  // RESET ALL EDITS
-  const resetAllEdits = () => {
-    resetEditor()
-    resetTrim()
-    setTextOverlay("")
-    setSticker("")
-    setCropRatio("9:16")
-    setNotice("All editor settings reset")
-  }
-
-  // CHECK MEDIA BEFORE EDITING
-  const requireVideo = () => {
-    if (!selectedFile || !isVideo) {
-      setNotice("Video select chesina tarvatha use cheyyi")
-      return false
-    }
-
-    return true
-  }
-
-  
-  // EDITOR PANEL STATES
-  const [showExportPanel, setShowExportPanel] = useState(false)
-  const [showAudioPanel, setShowAudioPanel] = useState(false)
-  const [showTextPanel, setShowTextPanel] = useState(false)
-  const [showStickerPanel, setShowStickerPanel] = useState(false)
-
-  // EXPORT SETTINGS
-  const [exportQuality, setExportQuality] = useState("1080p")
-  const [exportFPS, setExportFPS] = useState("30")
-  const [exporting, setExporting] = useState(false)
-
-  // TIMELINE SETTINGS
-  const [timelineZoom, setTimelineZoom] = useState(1)
-  const [showTimeline, setShowTimeline] = useState(true)
-  const [splitPoints, setSplitPoints] = useState<number[]>([])
-
-  // AUDIO PREVIEW URL
-  const [audioPreview, setAudioPreview] = useState("")
-
-  useEffect(() => {
-    if (!audioFile) {
-      setAudioPreview("")
-      return
-    }
-
-    const url = URL.createObjectURL(audioFile)
-    setAudioPreview(url)
-
-    return () => URL.revokeObjectURL(url)
-  }, [audioFile])
-
-  // ADD SPLIT POINT
   const addSplitPoint = () => {
-    if (!requireVideo()) return
+    if (!isVideo || duration <= 0) {
+      showNotice("Select a video first.")
+      return
+    }
 
     if (
       currentTime <= trimStart ||
       currentTime >= trimEnd
     ) {
-      setNotice("Video madhyalo position select cheyyi")
+      showNotice("Move the playhead inside the video.")
       return
     }
 
-    if (splitPoints.some(
-      (point) => Math.abs(point - currentTime) < 0.2
-    )) {
-      setNotice("Split point already exists")
-      return
-    }
+    setSplitPoints((previous) => {
+      if (previous.some((point) => Math.abs(point - currentTime) < 0.5)) {
+        return previous
+      }
 
-    setSplitPoints((previous) =>
-      [...previous, currentTime].sort((a, b) => a - b)
-    )
+      return [...previous, currentTime].sort((a, b) => a - b)
+    })
 
-    setNotice(`Split marker added at ${formatTime(currentTime)}`)
+    showNotice("Split marker added.")
   }
 
-  // REMOVE SPLIT POINT
   const removeSplitPoint = (point: number) => {
     setSplitPoints((previous) =>
       previous.filter((item) => item !== point)
     )
   }
 
-  // TIMELINE ZOOM
-  const zoomTimeline = (value: number) => {
-    setTimelineZoom(Math.max(0.5, Math.min(3, value)))
+  const rotateMedia = () => {
+    setRotation((previous) => (previous + 90) % 360)
   }
 
-  // SEEK TO TIMELINE POSITION
-  const seekTimeline = (value: number) => {
-    if (!duration) return
-
-    const time = Math.max(
-      trimStart,
-      Math.min(trimEnd, value)
-    )
-
-    seekVideo(time)
+  const toggleHorizontalFlip = () => {
+    setFlipH((previous) => !previous)
   }
 
-  // RESET TIMELINE
-  const resetTimeline = () => {
-    setSplitPoints([])
-    setTimelineZoom(1)
-    resetTrim()
-    setNotice("Timeline reset")
+  const toggleVerticalFlip = () => {
+    setFlipV((previous) => !previous)
   }
 
-  // EXPORT SETTINGS
-  const updateExportQuality = (value: string) => {
-    setExportQuality(value)
-  }
-
-  const updateExportFPS = (value: string) => {
-    setExportFPS(value)
-  }
-
-  // OPEN EXPORT PANEL
-  const openExportPanel = () => {
-    if (!selectedFile) {
-      setNotice("Munduga media select cheyyi")
-      return
-    }
-
-    setShowExportPanel(true)
-  }
-
-  // CLOSE ALL EDITOR PANELS
-  const closeEditorPanels = () => {
-    setShowExportPanel(false)
-    setShowAudioPanel(false)
-    setShowTextPanel(false)
-    setShowStickerPanel(false)
-  }
-
-  // EDITOR FILTER PREVIEW
-  const getPreviewStyle = () => ({
-    filter: videoFilter,
-    transform: videoTransform,
-    aspectRatio:
-      cropRatio === "original"
-        ? undefined
-        : cropRatio.replace(":", "/"),
-    objectFit: "contain" as const,
-  })
-
-  // RESET FILTERS
-  const resetFilters = () => {
-    saveHistory()
-    setFilter("none")
-    setActiveFilter("Normal")
+  const resetEditor = () => {
+    setFilter("normal")
     setBrightness(100)
     setContrast(100)
     setSaturation(100)
-    setNotice("Filters reset")
-  }
-
-  // CHANGE TEXT
-  const clearTextOverlay = () => {
+    setSpeed(1)
+    setVolume(1)
+    setMuted(false)
+    setRotation(0)
+    setFlipH(false)
+    setFlipV(false)
     setTextOverlay("")
-    setNotice("Text removed")
+    setSticker("")
+    setCropRatio("original")
+
+    if (isVideo) {
+      setTrimStart(0)
+      setTrimEnd(duration)
+      setSplitPoints([])
+      seekVideo(0)
+    }
+
+    showNotice("Editor settings reset.")
   }
 
-  // CHANGE STICKER
-  const stickerOptions = [
-    "❤️", "🔥", "😍", "😂", "✨",
-    "🌟", "🎉", "👏", "😎", "💯",
-    "🌈", "🚀", "🥰", "💖", "👍",
-  ]
+  const selectFilter = (filterName: string) => {
+    setFilter(filterName)
+  }
 
-  // MEDIA VALIDATION
-  const canPublish =
-    Boolean(selectedFile) &&
-    Boolean(userId) &&
-    !uploading
+  const updateBrightness = (value: number) => {
+    setBrightness(Math.max(0, Math.min(200, value)))
+  }
 
-      // PART 5: UPLOAD AND PUBLISH LOGIC
-  
-  const uploadFileToR2 = async (file: File): Promise<string> => {
+  const updateContrast = (value: number) => {
+    setContrast(Math.max(0, Math.min(200, value)))
+  }
+
+  const updateSaturation = (value: number) => {
+    setSaturation(Math.max(0, Math.min(200, value)))
+  }
+
+  const updateSpeed = (value: number) => {
+    setSpeed(value)
+
+    if (videoRef.current) {
+      videoRef.current.playbackRate = value
+    }
+  }
+
+  const updateVolume = (value: number) => {
+    const safeValue = Math.max(0, Math.min(1, value))
+    setVolume(safeValue)
+
+    if (videoRef.current) {
+      videoRef.current.volume = safeValue
+    }
+  }
+
+  const toggleMute = () => {
+    setMuted((previous) => {
+      const nextValue = !previous
+
+      if (videoRef.current) {
+        videoRef.current.muted = nextValue
+      }
+
+      return nextValue
+    })
+  }
+
+  const uploadToR2 = async (file: File): Promise<string> => {
     const response = await fetch("/api/r2-presign", {
       method: "POST",
       headers: {
@@ -890,26 +743,16 @@ export default function UploadPage() {
     })
 
     if (!response.ok) {
-      throw new Error("R2 presign request failed")
+      throw new Error("Could not create upload link.")
     }
 
     const data = await response.json()
 
-    const uploadUrl =
-      data.uploadUrl ||
-      data.signedUrl ||
-      data.url
-
-    const publicUrl =
-      data.publicUrl ||
-      data.public_url ||
-      ""
-
-    if (!uploadUrl) {
-      throw new Error("Upload URL not received from server")
+    if (!data.uploadUrl) {
+      throw new Error("Upload URL is missing.")
     }
 
-    const uploadResponse = await fetch(uploadUrl, {
+    const uploadResponse = await fetch(data.uploadUrl, {
       method: "PUT",
       headers: {
         "Content-Type": file.type,
@@ -918,1274 +761,2082 @@ export default function UploadPage() {
     })
 
     if (!uploadResponse.ok) {
-      throw new Error("Media upload to R2 failed")
+      throw new Error("Media upload to storage failed.")
     }
 
-    if (publicUrl) {
-      return publicUrl
+    const publicUrl =
+      data.publicUrl ||
+      (data.key
+        ? `${R2_PUBLIC.replace(/\/$/, "")}/${data.key}`
+        : "")
+
+    if (!publicUrl) {
+      throw new Error("Public media URL is missing.")
     }
 
-    const key =
-      data.key ||
-      data.fileName ||
-      data.filename
-
-    if (key) {
-      return `${R2_PUBLIC.replace(/\/$/, "")}/${key}`
-    }
-
-    throw new Error("Public media URL not received")
+    return publicUrl
   }
 
-  const handlePublish = async () => {
-    if (!selectedFile) {
-      setNotice("Please select a photo or video first")
+  // PART 3 CONTINUES
+      
+  // ================================
+  // PART 3: AUDIO, TEXT & STICKERS
+  // ================================
+
+  const handleAudioChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith("audio/")) {
+      showNotice("Please select a valid audio file.")
+      event.target.value = ""
       return
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      showNotice("Audio file must be below 50 MB.")
+      event.target.value = ""
+      return
+    }
+
+    setAudioFile(file)
+    setAudioName(file.name)
+    setSelectedAudio(null)
+    showNotice("Audio selected successfully!")
+  }
+
+  const clearAudio = () => {
+    setAudioFile(null)
+    setAudioName("")
+    setAudioPreview("")
+    setSelectedAudio(null)
+
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+  }
+
+  const playAudioPreview = async () => {
+    const audio = audioRef.current
+
+    if (!audio) {
+      showNotice("Select an audio file first.")
+      return
+    }
+
+    try {
+      if (audio.paused) {
+        await audio.play()
+      } else {
+        audio.pause()
+      }
+    } catch {
+      showNotice("Unable to play audio preview.")
+    }
+  }
+
+  const handleAudioSearch = (value: string) => {
+    setAudioSearch(value)
+  }
+
+  const addTextOverlay = (value: string) => {
+    setTextOverlay(value)
+    setShowTextPanel(true)
+  }
+
+  const clearTextOverlay = () => {
+    setTextOverlay("")
+  }
+
+  const addSticker = (value: string) => {
+    setSticker(value)
+    setShowStickerPanel(false)
+  }
+
+  const removeSticker = () => {
+    setSticker("")
+  }
+
+  const updateCropRatio = (value: string) => {
+    setCropRatio(value)
+  }
+
+  const applyPhotoFormat = (value: string) => {
+    setPhotoFormat(value)
+    setCropRatio(value)
+  }
+
+  const toggleAudioPanel = () => {
+    setShowAudioPanel((previous) => !previous)
+  }
+
+  const toggleTextPanel = () => {
+    setShowTextPanel((previous) => !previous)
+  }
+
+  const toggleStickerPanel = () => {
+    setShowStickerPanel((previous) => !previous)
+  }
+
+  const toggleTimeline = () => {
+    setShowTimeline((previous) => !previous)
+  }
+
+  const updateTimelineZoom = (value: number) => {
+    setTimelineZoom(Math.max(1, Math.min(5, value)))
+  }
+
+  const updateCaption = (value: string) => {
+    setCaption(value)
+  }
+
+  const updatePrice = (value: string) => {
+    setPrice(value)
+  }
+
+  const updateCollaborator = (value: string) => {
+    setCollaborator(value)
+  }
+
+  const updatePollQuestion = (value: string) => {
+    setPollQuestion(value)
+  }
+
+  const updatePollOption = (index: number, value: string) => {
+    setPollOptions((previous) =>
+      previous.map((option, optionIndex) =>
+        optionIndex === index ? value : option
+      )
+    )
+  }
+
+  const addPollOption = () => {
+    setPollOptions((previous) => {
+      if (previous.length >= 4) return previous
+      return [...previous, ""]
+    })
+  }
+
+  const removePollOption = (index: number) => {
+    setPollOptions((previous) => {
+      if (previous.length <= 2) return previous
+      return previous.filter((_, optionIndex) => optionIndex !== index)
+    })
+  }
+
+  const updatePollType = (value: string) => {
+    setPollType(value)
+  }
+
+  const updateScheduledAt = (value: string) => {
+    setScheduledAt(value)
+  }
+
+  const updateExportQuality = (value: string) => {
+    setExportQuality(value)
+  }
+
+  const updateExportFPS = (value: number) => {
+    setExportFPS(value)
+  }
+
+  // PART 4 CONTINUES
+  // ================================
+  // PART 4: DRAFTS & EDITOR HISTORY
+  // ================================
+
+  const saveDraft = () => {
+    if (!selectedFile && !caption.trim()) {
+      showNotice("Select media or enter a caption first.")
+      return
+    }
+
+    const draftId = selectedDraftId || `draft-${Date.now()}`
+
+    const draft = {
+      id: draftId,
+      caption,
+      price,
+      mode,
+      mediaName: selectedFile?.name || "",
+      mediaType: selectedFile?.type || "",
+      updatedAt: new Date().toISOString(),
+    } as DraftItem
+
+    setDrafts((previous) => {
+      const exists = previous.some((item) => item.id === draftId)
+
+      const updated = exists
+        ? previous.map((item) =>
+            item.id === draftId ? draft : item
+          )
+        : [draft, ...previous]
+
+      try {
+        localStorage.setItem("chitpix_upload_drafts", JSON.stringify(updated))
+      } catch {
+        showNotice("Draft saved for this session only.")
+      }
+
+      return updated
+    })
+
+    setSelectedDraftId(draftId)
+    showNotice("Draft details saved successfully!")
+  }
+
+  const loadDraft = (draft: DraftItem) => {
+    setSelectedDraftId(draft.id)
+    setCaption(draft.caption || "")
+    setPrice(draft.price || "")
+
+    showNotice(
+      draft.mediaName
+        ? "Draft details loaded. Please select its media file again."
+        : "Draft loaded successfully."
+    )
+  }
+
+  const deleteDraft = (draftId: string) => {
+    setDrafts((previous) => {
+      const updated = previous.filter((item) => item.id !== draftId)
+
+      try {
+        localStorage.setItem("chitpix_upload_drafts", JSON.stringify(updated))
+      } catch {
+        // Keep the in-memory draft list updated.
+      }
+
+      return updated
+    })
+
+    if (selectedDraftId === draftId) {
+      setSelectedDraftId(null)
+    }
+
+    showNotice("Draft deleted.")
+  }
+
+  const startNewDraft = () => {
+    clearMedia()
+    setCaption("")
+    setPrice("")
+    setSelectedDraftId(null)
+    resetEditor()
+    showNotice("New draft started.")
+  }
+
+  const saveEditorHistory = () => {
+    const snapshot = {
+      filter,
+      brightness,
+      contrast,
+      saturation,
+      speed,
+      volume,
+      muted,
+      rotation,
+      flipH,
+      flipV,
+      textOverlay,
+      sticker,
+      cropRatio,
+      trimStart,
+      trimEnd,
+    } as EditorSnapshot
+
+    setHistory((previous) => {
+      const updated = [
+        ...previous.slice(0, historyIndex + 1),
+        snapshot,
+      ].slice(-30)
+
+      setHistoryIndex(updated.length - 1)
+      return updated
+    })
+  }
+
+  const restoreEditorSnapshot = (snapshot: EditorSnapshot) => {
+    setFilter(snapshot.filter)
+    setBrightness(snapshot.brightness)
+    setContrast(snapshot.contrast)
+    setSaturation(snapshot.saturation)
+    setSpeed(snapshot.speed)
+    setVolume(snapshot.volume)
+    setMuted(snapshot.muted)
+    setRotation(snapshot.rotation)
+    setFlipH(snapshot.flipH)
+    setFlipV(snapshot.flipV)
+    setTextOverlay(snapshot.textOverlay)
+    setSticker(snapshot.sticker)
+    setCropRatio(snapshot.cropRatio)
+    setTrimStart(snapshot.trimStart)
+    setTrimEnd(snapshot.trimEnd)
+
+    if (videoRef.current) {
+      videoRef.current.playbackRate = snapshot.speed
+      videoRef.current.volume = snapshot.volume
+      videoRef.current.muted = snapshot.muted
+    }
+  }
+
+  const undoEditor = () => {
+    if (historyIndex <= 0) {
+      showNotice("No more changes to undo.")
+      return
+    }
+
+    const nextIndex = historyIndex - 1
+    const snapshot = history[nextIndex]
+
+    if (!snapshot) return
+
+    setHistoryIndex(nextIndex)
+    restoreEditorSnapshot(snapshot)
+    showNotice("Undo successful.")
+  }
+
+  const redoEditor = () => {
+    if (historyIndex >= history.length - 1) {
+      showNotice("No more changes to redo.")
+      return
+    }
+
+    const nextIndex = historyIndex + 1
+    const snapshot = history[nextIndex]
+
+    if (!snapshot) return
+
+    setHistoryIndex(nextIndex)
+    restoreEditorSnapshot(snapshot)
+    showNotice("Redo successful.")
+  }
+
+  // PART 5 CONTINUES
+      
+  // ================================
+  // PART 5: UPLOAD & PUBLISH
+  // ================================
+
+  const validatePost = () => {
+    if (!selectedFile) {
+      showNotice("Please select a photo or video first.")
+      return false
     }
 
     if (!userId) {
-      setNotice("Please login before publishing")
-      return
+      showNotice("Please login before publishing.")
+      return false
     }
 
-    if (uploading) return
+    if (mode === "poll") {
+      if (!pollQuestion.trim()) {
+        showNotice("Please enter a poll question.")
+        return false
+      }
+
+      const validOptions = pollOptions.filter((item) => item.trim())
+
+      if (validOptions.length < 2) {
+        showNotice("Please enter at least two poll options.")
+        return false
+      }
+    }
+
+    if (mode === "schedule" && !scheduledAt) {
+      showNotice("Please select a publishing date and time.")
+      return false
+    }
+
+    return true
+  }
+
+  const publishPost = async () => {
+    if (!validatePost()) return
+
+    if (!selectedFile) return
+
+    setLoading(true)
 
     try {
-      setUploading(true)
-      setNotice("Uploading media...")
+      showNotice("Uploading your media...")
 
-      const mediaUrl = await uploadFileToR2(selectedFile)
+      const mediaUrl = await uploadToR2(selectedFile)
 
-      setNotice("Saving your post...")
+      const postData = {
+        user_id: userId,
+        image_url: mediaUrl,
+        r2_url: mediaUrl,
+        caption: caption.trim(),
+        username: username || "user",
+        price: price.trim() || null,
+      }
 
       const { error } = await supabase
         .from("posts")
-        .insert({
-          user_id: userId,
-          image_url: mediaUrl,
-          r2_url: mediaUrl,
-          caption: caption.trim(),
-          username: username || "ChitPix User",
-          price: price ? Number(price) : null,
-        })
+        .insert([postData])
 
       if (error) {
-        throw error
+        console.error("Post insert error:", error)
+        throw new Error(error.message)
       }
 
       setNotice("Published successfully!")
 
-      setSelectedFile(null)
-      setPreview("")
+      clearMedia()
       setCaption("")
       setPrice("")
-      setTextOverlay("")
-      setSticker("")
-      setAudioFile(null)
-      setAudioName("")
+      setSelectedDraftId(null)
 
-      setTimeout(() => {
+      window.setTimeout(() => {
         router.push("/")
       }, 1200)
-    } catch (error: any) {
-      console.error("Publish error:", error)
-      setNotice(
-        error?.message || "Upload failed. Please try again."
-      )
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const handleSaveDraft = () => {
-    if (!selectedFile) {
-      setNotice("Select a media file before saving draft")
-      return
-    }
-
-    try {
-      const draftData = {
-        caption,
-        price,
-        mode,
-        filter,
-        activeFilter,
-        brightness,
-        contrast,
-        saturation,
-        speed,
-        volume,
-        rotation,
-        flipH,
-        flipV,
-        textOverlay,
-        sticker,
-        trimStart,
-        trimEnd,
-        savedAt: new Date().toISOString(),
-      }
-
-      localStorage.setItem(
-        "chitpix-upload-draft",
-        JSON.stringify(draftData)
-      )
-
-      setNotice("Draft details saved successfully!")
     } catch (error) {
-      console.error("Draft save error:", error)
-      setNotice("Unable to save draft details")
+      console.error("Publish error:", error)
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong."
+
+      showNotice(`Publish failed: ${message}`)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleCancelUpload = () => {
-    if (uploading) return
-
-    setSelectedFile(null)
-    setPreview("")
-    setNotice("")
-    setCaption("")
-    setPrice("")
-    setTextOverlay("")
-    setSticker("")
-    setAudioFile(null)
-    setAudioName("")
-  }
-
-  const handleExportPreview = () => {
-    if (!selectedFile) {
-      setNotice("Please select a video first")
-      return
+  const formatDuration = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds < 0) {
+      return "00:00"
     }
 
-    if (!isVideo) {
-      setNotice("Video export is available for video files")
-      return
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = Math.floor(seconds % 60)
+
+    return `${String(minutes).padStart(2, "0")}:${String(
+      remainingSeconds
+    ).padStart(2, "0")}`
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) {
+      return "0 MB"
     }
 
-    setNotice(
-      "Preview settings are ready. Permanent video export needs a video rendering engine."
-    )
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`
+    }
+
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
-  const goBack = () => {
-    if (uploading) return
-    router.back()
+  const getMediaTypeLabel = () => {
+    if (isVideo) return "Video"
+    if (isImage) return "Photo"
+    return "No media selected"
   }
 
-    // PART 6: MAIN EDITOR UI
+  const canPublish = Boolean(selectedFile && userId && !loading)
+
+  // PART 6 CONTINUES
+  // ================================
+  // PART 6: CREATE PAGE UI
+  // ================================
 
   return (
-    <main className="min-h-screen bg-[#09090b] text-white pb-28">
+    <main className="min-h-screen bg-black text-white px-3 py-5 pb-28">
+      <div className="max-w-3xl mx-auto">
 
-      {/* TOP HEADER */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b border-white/10 bg-[#09090b]/95 px-4 py-3 backdrop-blur">
-        <button
-          onClick={goBack}
-          className="rounded-full bg-white/10 p-2"
-        >
-          <ArrowLeft size={22} />
-        </button>
-
-        <div className="text-center">
-          <h1 className="text-lg font-bold">
-            {pageTitle}
-          </h1>
-          <p className="text-[11px] text-gray-400">
-            ChitPix Creator Studio
-          </p>
-        </div>
-
-        <button
-          onClick={handleSaveDraft}
-          className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-2 text-sm"
-        >
-          <Save size={16} />
-          Draft
-        </button>
-      </header>
-
-      {/* HIDDEN FILE INPUT */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*,video/*"
-        className="hidden"
-        onChange={handleSelectFile}
-      />
-
-      {/* MEDIA SELECT AREA */}
-      {!selectedFile && (
-        <section className="mx-4 mt-6 rounded-3xl border border-dashed border-white/25 bg-white/[0.04] p-8 text-center">
-
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-fuchsia-500/15">
-            <Upload size={34} className="text-fuchsia-400" />
-          </div>
-
-          <h2 className="text-xl font-bold">
-            Create something amazing
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-400">
-            Select a photo or video from your phone
-          </p>
-
+        <header className="flex items-center justify-between mb-6">
           <button
-            onClick={() => fileInputRef.current?.click()}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-fuchsia-600 to-purple-600 py-4 font-semibold"
+            type="button"
+            onClick={() => router.back()}
+            className="text-white text-2xl"
           >
-            <ImagePlus size={20} />
-            Choose Media
+            ←
           </button>
 
-          <div className="mt-5 flex justify-center gap-6 text-xs text-gray-400">
-            <span className="flex items-center gap-1">
-              <ImagePlus size={15} />
-              Photos
-            </span>
-            <span className="flex items-center gap-1">
-              <Video size={15} />
-              Videos
-            </span>
+          <h1 className="text-xl font-bold">
+            Create on ChitPix
+          </h1>
+
+          <button
+            type="button"
+            onClick={saveDraft}
+            className="text-sm font-semibold text-pink-400"
+          >
+            Save Draft
+          </button>
+        </header>
+
+        {notice && (
+          <div className="mb-4 rounded-xl bg-zinc-800 border border-zinc-700 p-3 text-sm text-center">
+            {notice}
+          </div>
+        )}
+
+        <section className="mb-6">
+          <h2 className="text-lg font-bold mb-3">
+            Choose Create Option
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+
+            {CREATOR_MODES.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setMode(item.id)}
+                className={`rounded-xl border p-4 text-left transition ${
+                  mode === item.id
+                    ? "border-pink-500 bg-pink-500/15"
+                    : "border-zinc-700 bg-zinc-900"
+                }`}
+              >
+                <div className="text-2xl mb-2">
+                  {item.icon}
+                </div>
+
+                <div className="font-bold text-sm">
+                  {item.label}
+                </div>
+
+                <div className="text-xs text-zinc-400 mt-1">
+                  {item.description}
+                </div>
+              </button>
+            ))}
+
           </div>
         </section>
-      )}
 
-      {/* SELECTED MEDIA EDITOR */}
-      {selectedFile && (
-        <section className="px-3 pt-4">
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
 
-          {/* PREVIEW HEADER */}
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold">
-                Editing Preview
-              </h2>
-              <p className="text-xs text-gray-400">
-                {selectedFile.name}
-              </p>
-            </div>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-bold text-lg">
+              Add Photo or Video
+            </h2>
 
-            <button
-              onClick={removeSelectedFile}
-              className="rounded-full bg-red-500/15 p-2 text-red-400"
-            >
-              <Trash2 size={18} />
-            </button>
-          </div>
-
-          {/* MEDIA PREVIEW */}
-          <div className="relative mx-auto flex max-h-[520px] min-h-[300px] w-full max-w-md items-center justify-center overflow-hidden rounded-3xl bg-black">
-
-            {isVideo && preview && (
-              <video
-                ref={videoRef}
-                src={preview}
-                className="max-h-[520px] w-full object-contain"
-                style={{
-                  filter: videoFilter,
-                  transform: videoTransform,
-                }}
-                playsInline
-                onLoadedMetadata={handleVideoLoaded}
-                onTimeUpdate={handleTimeUpdate}
-                onPlay={() => setPlaying(true)}
-                onPause={() => setPlaying(false)}
-              />
-            )}
-
-            {isImage && preview && (
-              <img
-                src={preview}
-                alt="ChitPix preview"
-                className="max-h-[520px] w-full object-contain"
-                style={{
-                  filter: videoFilter,
-                  transform: videoTransform,
-                }}
-              />
-            )}
-
-            {/* TEXT OVERLAY */}
-            {textOverlay && (
-              <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 w-[85%] -translate-x-1/2 -translate-y-1/2 text-center text-2xl font-extrabold text-white [text-shadow:0_2px_8px_black]">
-                {textOverlay}
-              </div>
-            )}
-
-            {/* STICKER OVERLAY */}
-            {sticker && (
-              <div className="pointer-events-none absolute bottom-8 right-6 z-10 text-5xl">
-                {sticker}
-              </div>
-            )}
-
-            {/* IMAGE/VIDEO TYPE LABEL */}
-            <div className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs">
-              {isVideo ? "VIDEO" : "PHOTO"}
-            </div>
-
-            {/* PLAY / PAUSE */}
-            {isVideo && (
+            {selectedFile && (
               <button
-                onClick={toggleVideoPlayback}
-                className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 p-3"
+                type="button"
+                onClick={clearMedia}
+                className="text-red-400 text-sm"
               >
-                {playing ? (
-                  <Pause size={22} />
-                ) : (
-                  <Play size={22} />
-                )}
+                Remove
               </button>
             )}
           </div>
 
-          {/* MEDIA ACTIONS */}
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
+          {!preview ? (
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center justify-center gap-2 rounded-xl bg-white/10 py-3 text-sm"
+              type="button"
+              onClick={openFilePicker}
+              className="w-full min-h-52 border-2 border-dashed border-zinc-600 rounded-xl flex flex-col items-center justify-center gap-3 bg-black/30"
             >
-              <Plus size={17} />
-              Replace
+              <span className="text-5xl">＋</span>
+
+              <span className="font-bold">
+                Select Photo or Video
+              </span>
+
+              <span className="text-xs text-zinc-400">
+                JPG, PNG, WEBP, MP4 and supported formats
+              </span>
             </button>
+          ) : (
+            <div className="relative rounded-xl overflow-hidden bg-black">
+
+              {isVideo ? (
+                <video
+                  ref={videoRef}
+                  src={preview}
+                  className="w-full max-h-[520px] object-contain"
+                  controls
+                  playsInline
+                  onLoadedMetadata={handleVideoMetadata}
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  style={{
+                    filter: videoFilter,
+                    transform: videoTransform,
+                  }}
+                />
+              ) : (
+                <img
+                  src={preview}
+                  alt="Selected media preview"
+                  className="w-full max-h-[520px] object-contain"
+                  style={{
+                    filter: videoFilter,
+                    transform: videoTransform,
+                  }}
+                />
+              )}
+
+              {sticker && (
+                <div className="absolute top-4 right-4 text-4xl pointer-events-none">
+                  {sticker}
+                </div>
+              )}
+
+              {textOverlay && (
+                <div className="absolute left-3 right-3 bottom-5 text-center font-bold text-2xl text-white drop-shadow-lg pointer-events-none">
+                  {textOverlay}
+                </div>
+              )}
+
+            </div>
+          )}
+
+          {selectedFile && (
+            <div className="mt-3 flex justify-between text-xs text-zinc-400">
+              <span>{getMediaTypeLabel()}</span>
+              <span>{formatFileSize(selectedFile.size)}</span>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={openFilePicker}
+            className="w-full mt-3 rounded-xl bg-zinc-800 py-3 font-semibold"
+          >
+            {selectedFile ? "Change Media" : "Choose from Gallery"}
+          </button>
+
+        </section>
+
+        {/* PART 7 CONTINUES */}
+        
+        {/* ================================
+            PART 7: CAPTION, PRICE & FILTERS
+        ================================= */}
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-3">
+            Write Caption
+          </h2>
+
+          <textarea
+            value={caption}
+            onChange={(event) => updateCaption(event.target.value)}
+            placeholder="What's happening? Write your caption..."
+            rows={4}
+            maxLength={2200}
+            className="w-full resize-y rounded-xl bg-black border border-zinc-700 p-3 text-sm outline-none focus:border-pink-500"
+          />
+
+          <div className="flex justify-between text-xs text-zinc-500 mt-2">
+            <span>Add hashtags and emojis to your caption.</span>
+            <span>{caption.length}/2200</span>
+          </div>
+
+          <div className="mt-3">
+            <label className="block text-sm font-semibold mb-2">
+              Price Tag (Optional)
+            </label>
+
+            <input
+              type="text"
+              value={price}
+              onChange={(event) => updatePrice(event.target.value)}
+              placeholder="Example: ₹499"
+              className="w-full rounded-xl bg-black border border-zinc-700 p-3 text-sm outline-none focus:border-pink-500"
+            />
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold text-lg">
+              Photo Filters
+            </h2>
 
             <button
+              type="button"
               onClick={resetEditor}
-              className="flex items-center justify-center gap-2 rounded-xl bg-white/10 py-3 text-sm"
+              className="text-xs text-pink-400 font-semibold"
             >
-              <RotateCcw size={17} />
               Reset
             </button>
-
-            <button
-              onClick={openExportPanel}
-              className="flex items-center justify-center gap-2 rounded-xl bg-fuchsia-600 py-3 text-sm font-semibold"
-            >
-              <Download size={17} />
-              Export
-            </button>
-
           </div>
 
-          {/* EDITOR TABS */}
-          <div className="mt-6">
-            <div className="flex gap-2 overflow-x-auto pb-3">
-              {EDIT_TABS.map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => selectEditTab(tab)}
-                  className={`shrink-0 rounded-full px-4 py-2 text-sm ${
-                    activeTab === tab
-                      ? "bg-fuchsia-600 text-white"
-                      : "bg-white/10 text-gray-300"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { name: "Normal", value: "normal" },
+              { name: "Vintage", value: "sepia(0.7)" },
+              { name: "Black & White", value: "grayscale(1)" },
+              { name: "Warm", value: "sepia(0.3) saturate(1.4)" },
+              { name: "Cool", value: "hue-rotate(15deg) saturate(1.2)" },
+              { name: "Bright", value: "brightness(1.2)" },
+              { name: "Dream", value: "contrast(0.9) saturate(1.5)" },
+              { name: "Fade", value: "contrast(0.8) brightness(1.1)" },
+              { name: "Dramatic", value: "contrast(1.4) saturate(1.2)" },
+            ].map((item) => (
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => selectFilter(item.value)}
+                className={`rounded-xl border p-3 text-xs font-semibold ${
+                  filter === item.value
+                    ? "border-pink-500 bg-pink-500/15 text-pink-300"
+                    : "border-zinc-700 bg-black"
+                }`}
+              >
+                {item.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <label>Brightness</label>
+                <span>{brightness}%</span>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={brightness}
+                onChange={(event) =>
+                  updateBrightness(Number(event.target.value))
+                }
+                className="w-full accent-pink-500"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <label>Contrast</label>
+                <span>{contrast}%</span>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={contrast}
+                onChange={(event) =>
+                  updateContrast(Number(event.target.value))
+                }
+                className="w-full accent-pink-500"
+              />
+            </div>
+
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <label>Saturation</label>
+                <span>{saturation}%</span>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={saturation}
+                onChange={(event) =>
+                  updateSaturation(Number(event.target.value))
+                }
+                className="w-full accent-pink-500"
+              />
             </div>
           </div>
+        </section>
 
-                    {/* PART 7: EDITING TOOLS */}
+        {/* PART 8 CONTINUES */}
+        
+        {/* ================================
+            PART 8: VIDEO EDITING TOOLS
+        ================================= */}
 
-          <div className="mt-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-lg">
+              Video Editor
+            </h2>
 
-            {/* TRIM PANEL */}
-            {activeTab === "Trim" && (
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 font-bold">
-                  <Scissors size={18} />
-                  Trim Video
-                </h3>
+            <button
+              type="button"
+              onClick={toggleTimeline}
+              className="text-sm text-pink-400 font-semibold"
+            >
+              {showTimeline ? "Hide Timeline" : "Show Timeline"}
+            </button>
+          </div>
 
-                {isVideo ? (
-                  <>
-                    <div className="mb-4 flex justify-between text-sm">
-                      <span className="text-gray-400">
-                        Start: {formatTime(trimStart)}
-                      </span>
-                      <span className="text-gray-400">
-                        End: {formatTime(trimEnd || duration)}
-                      </span>
-                    </div>
+          {!isVideo ? (
+            <p className="text-sm text-zinc-400">
+              Select a video to use video editing tools.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={toggleVideoPlayback}
+                  className="rounded-xl bg-black border border-zinc-700 p-3 font-semibold"
+                >
+                  {playing ? "⏸ Pause" : "▶ Play"}
+                </button>
 
-                    <label className="text-xs text-gray-400">
-                      Start Time
+                <button
+                  type="button"
+                  onClick={addSplitPoint}
+                  className="rounded-xl bg-black border border-zinc-700 p-3 font-semibold"
+                >
+                  ✂ Add Split
+                </button>
+
+                <button
+                  type="button"
+                  onClick={rotateMedia}
+                  className="rounded-xl bg-black border border-zinc-700 p-3 font-semibold"
+                >
+                  ↻ Rotate
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleHorizontalFlip}
+                  className="rounded-xl bg-black border border-zinc-700 p-3 font-semibold"
+                >
+                  ⇋ Flip Horizontal
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleVerticalFlip}
+                  className="rounded-xl bg-black border border-zinc-700 p-3 font-semibold"
+                >
+                  ⇅ Flip Vertical
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => seekVideo(0)}
+                  className="rounded-xl bg-black border border-zinc-700 p-3 font-semibold"
+                >
+                  ⏮ Start
+                </button>
+              </div>
+
+              <div className="mt-5">
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Playback Position</span>
+                  <span>
+                    {formatDuration(currentTime)} / {formatDuration(duration)}
+                  </span>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max={duration || 1}
+                  step="0.1"
+                  value={Math.min(currentTime, duration || 0)}
+                  onChange={(event) =>
+                    seekVideo(Number(event.target.value))
+                  }
+                  className="w-full accent-pink-500"
+                />
+              </div>
+
+              <div className="mt-5 space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <label>Trim Start</label>
+                    <span>{formatDuration(trimStart)}</span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max={duration || 1}
+                    step="0.1"
+                    value={Math.min(trimStart, duration || 0)}
+                    onChange={(event) =>
+                      updateTrimStart(Number(event.target.value))
+                    }
+                    className="w-full accent-pink-500"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <label>Trim End</label>
+                    <span>{formatDuration(trimEnd)}</span>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max={duration || 1}
+                    step="0.1"
+                    value={Math.min(trimEnd, duration || 0)}
+                    onChange={(event) =>
+                      updateTrimEnd(Number(event.target.value))
+                    }
+                    className="w-full accent-pink-500"
+                  />
+                </div>
+              </div>
+
+              {showTimeline && (
+                <div className="mt-5 rounded-xl bg-black border border-zinc-700 p-3">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="font-semibold text-sm">
+                      Video Timeline
+                    </span>
+
+                    <span className="text-xs text-zinc-400">
+                      {formatDuration(Math.max(0, trimEnd - trimStart))}
+                    </span>
+                  </div>
+
+                  <div className="h-3 rounded-full bg-zinc-700 overflow-hidden">
+                    <div
+                      className="h-full bg-pink-500 rounded-full"
+                      style={{
+                        width: duration
+                          ? `${Math.max(0, Math.min(100, ((trimEnd - trimStart) / duration) * 100))}%`
+                          : "0%",
+                      }}
+                    />
+                  </div>
+
+                  <div className="mt-3 flex justify-between text-xs text-zinc-400">
+                    <span>Start: {formatDuration(trimStart)}</span>
+                    <span>End: {formatDuration(trimEnd)}</span>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="text-xs text-zinc-400">
+                      Timeline Zoom: {timelineZoom}x
                     </label>
+
                     <input
                       type="range"
-                      min={0}
-                      max={duration || 1}
-                      step={0.1}
-                      value={trimStart}
-                      onChange={(e) =>
-                        changeTrimStart(Number(e.target.value))
+                      min="1"
+                      max="5"
+                      step="1"
+                      value={timelineZoom}
+                      onChange={(event) =>
+                        updateTimelineZoom(Number(event.target.value))
                       }
-                      className="my-3 w-full accent-fuchsia-500"
+                      className="w-full accent-pink-500 mt-2"
                     />
+                  </div>
 
-                    <label className="text-xs text-gray-400">
-                      End Time
-                    </label>
-                    <input
-                      type="range"
-                      min={trimStart}
-                      max={duration || 1}
-                      step={0.1}
-                      value={trimEnd || duration}
-                      onChange={(e) =>
-                        changeTrimEnd(Number(e.target.value))
-                      }
-                      className="my-3 w-full accent-fuchsia-500"
-                    />
+                  <div className="mt-4">
+                    <p className="text-sm font-semibold mb-2">
+                      Split Markers
+                    </p>
 
-                    <div className="mt-4 flex gap-2">
-                      <button
-                        onClick={resetTrim}
-                        className="flex-1 rounded-xl bg-white/10 py-3 text-sm"
-                      >
-                        <RotateCcw size={15} className="mr-1 inline" />
-                        Reset Trim
-                      </button>
-
-                      <button
-                        onClick={addSplitPoint}
-                        className="flex-1 rounded-xl bg-fuchsia-600 py-3 text-sm"
-                      >
-                        <Split size={15} className="mr-1 inline" />
-                        Add Split
-                      </button>
-                    </div>
-
-                    {splitPoints.length > 0 && (
-                      <div className="mt-4">
-                        <p className="mb-2 text-xs text-gray-400">
-                          Split markers
-                        </p>
-                        {splitPoints.map((point, index) => (
+                    {splitPoints.length === 0 ? (
+                      <p className="text-xs text-zinc-500">
+                        No split markers added.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {splitPoints.map((point) => (
                           <div
-                            key={`${point}-${index}`}
-                            className="mb-2 flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm"
+                            key={point}
+                            className="flex justify-between items-center text-xs bg-zinc-900 rounded-lg p-2"
                           >
-                            <span>{formatTime(point)}</span>
+                            <span>{formatDuration(point)}</span>
+
                             <button
-                              onClick={() => removeSplitPoint(index)}
+                              type="button"
+                              onClick={() => removeSplitPoint(point)}
                               className="text-red-400"
                             >
-                              <X size={16} />
+                              Remove
                             </button>
                           </div>
                         ))}
                       </div>
                     )}
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-400">
-                    Trim tools are available for videos.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* AUDIO PANEL */}
-            {activeTab === "Audio" && (
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 font-bold">
-                  <Music2 size={18} />
-                  Audio Studio
-                </h3>
-
-                <label className="block rounded-xl bg-fuchsia-600 py-3 text-center text-sm font-semibold">
-                  <Music2 size={17} className="mr-2 inline" />
-                  Choose Audio
-                  <input
-                    type="file"
-                    accept="audio/*"
-                    className="hidden"
-                    onChange={(e) => handleAudioSelect(e)}
-                  />
-                </label>
-
-                {audioName && (
-                  <div className="mt-3 flex items-center justify-between rounded-xl bg-white/10 p-3">
-                    <div className="flex items-center gap-2">
-                      <Music2 size={18} className="text-fuchsia-400" />
-                      <span className="max-w-[190px] truncate text-sm">
-                        {audioName}
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={removeAudio}
-                      className="text-red-400"
-                    >
-                      <Trash2 size={18} />
-                    </button>
                   </div>
-                )}
+                </div>
+              )}
 
-                {audioPreview && (
-                  <audio
-                    src={audioPreview}
-                    controls
-                    className="mt-3 w-full"
-                  />
-                )}
-
-                <label className="mt-5 block text-sm">
-                  Original Video Volume: {volume}%
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={volume}
-                  onChange={(e) =>
-  setVolume(Number(e.target.value))
-                  }
-                  className="mt-3 w-full accent-fuchsia-500"
-                />
-
-                <button
-                  onClick={toggleMute}
-                  className="mt-3 w-full rounded-xl bg-white/10 py-3 text-sm"
-                >
-                  {muted ? (
-                    <>
-                      <VolumeX size={17} className="mr-2 inline" />
-                      Unmute Video
-                    </>
-                  ) : (
-                    <>
-                      <Volume2 size={17} className="mr-2 inline" />
-                      Mute Video
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* TEXT PANEL */}
-            {activeTab === "Text" && (
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 font-bold">
-                  <Type size={18} />
-                  Add Text
-                </h3>
-
-                <textarea
-                  value={textOverlay}
-                  onChange={(e) =>
-                    updateTextOverlay(e.target.value)
-                  }
-                  placeholder="Type your text here..."
-                  rows={3}
-                  className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm outline-none focus:border-fuchsia-500"
-                />
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {["Hello!", "ChitPix ❤️", "Good Vibes ✨", "My Story"].map(
-                    (item) => (
-                      <button
-                        key={item}
-                        onClick={() => updateTextOverlay(item)}
-                        className="rounded-full bg-white/10 px-3 py-2 text-xs"
-                      >
-                        {item}
-                      </button>
-                    )
-                  )}
+              <div className="mt-5">
+                <div className="flex justify-between text-sm mb-2">
+                  <label>Video Speed</label>
+                  <span>{speed}x</span>
                 </div>
 
-                <button
-                  onClick={clearTextOverlay}
-                  className="mt-4 w-full rounded-xl bg-white/10 py-3 text-sm"
-                >
-                  <Trash2 size={16} className="mr-2 inline" />
-                  Remove Text
-                </button>
-              </div>
-            )}
-
-            {/* FILTERS PANEL */}
-            {activeTab === "Filters" && (
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 font-bold">
-                  <WandSparkles size={18} />
-                  Photo & Video Filters
-                </h3>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {FILTERS.map((item) => (
+                <div className="grid grid-cols-4 gap-2">
+                  {SPEEDS.map((item) => (
                     <button
-                      key={item.name}
-                      onClick={() => applyFilter(item)}
-                      className={`rounded-xl border p-3 text-sm ${
-                        activeFilter === item.name
-                          ? "border-fuchsia-500 bg-fuchsia-500/20"
-                          : "border-white/10 bg-white/5"
+                      key={item}
+                      type="button"
+                      onClick={() => updateSpeed(item)}
+                      className={`rounded-lg border p-2 text-xs font-semibold ${
+                        speed === item
+                          ? "border-pink-500 bg-pink-500/15 text-pink-300"
+                          : "border-zinc-700 bg-black"
                       }`}
                     >
-                      <Sparkles
-                        size={18}
-                        className="mx-auto mb-2 text-fuchsia-400"
-                      />
-                      {item.name}
+                      {item}x
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="mt-5">
+                <div className="flex justify-between text-sm mb-2">
+                  <label>Video Volume</label>
+                  <span>{Math.round(volume * 100)}%</span>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={volume}
+                  onChange={(event) =>
+                    updateVolume(Number(event.target.value))
+                  }
+                  className="w-full accent-pink-500"
+                />
 
                 <button
-                  onClick={resetFilters}
-                  className="mt-4 w-full rounded-xl bg-white/10 py-3 text-sm"
+                  type="button"
+                  onClick={toggleMute}
+                  className="mt-3 rounded-lg bg-black border border-zinc-700 px-4 py-2 text-sm"
                 >
-                  Reset Filters
+                  {muted ? "🔇 Unmute" : "🔊 Mute"}
                 </button>
               </div>
-            )}
+            </>
+          )}
+        </section>
 
-            {/* ADJUST PANEL */}
-            {activeTab === "Adjust" && (
-              <div>
-                <h3 className="mb-5 flex items-center gap-2 font-bold">
-                  <SlidersHorizontal size={18} />
-                  Adjust Image
-                </h3>
+        {/* PART 9 CONTINUES */}
+                            
+        {/* ================================
+            PART 9: AUDIO, TEXT & STICKERS
+        ================================= */}
 
-                {[
-                  {
-                    label: "Brightness",
-                    value: brightness,
-                    setter: setBrightness,
-                  },
-                  {
-                    label: "Contrast",
-                    value: contrast,
-                    setter: setContrast,
-                  },
-                  {
-                    label: "Saturation",
-                    value: saturation,
-                    setter: setSaturation,
-                  },
-                ].map((item) => (
-                  <div key={item.label} className="mb-5">
-                    <div className="mb-2 flex justify-between text-sm">
-                      <span>{item.label}</span>
-                      <span className="text-gray-400">
-                        {item.value}%
-                      </span>
-                    </div>
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-lg">
+              Audio Studio
+            </h2>
 
-                    <input
-                      type="range"
-                      min={0}
-                      max={200}
-                      value={item.value}
-                      onChange={(e) =>
-                        item.setter(Number(e.target.value))
-                      }
-                      className="w-full accent-fuchsia-500"
-                    />
+            <button
+              type="button"
+              onClick={toggleAudioPanel}
+              className="text-sm text-pink-400"
+            >
+              {showAudioPanel ? "Close" : "Open"}
+            </button>
+          </div>
+
+          {showAudioPanel && (
+            <>
+              <input
+                type="file"
+                accept="audio/*"
+                onChange={handleAudioChange}
+                className="block w-full text-sm text-zinc-300 file:mr-3 file:rounded-lg file:border-0 file:bg-pink-600 file:px-4 file:py-2 file:text-white"
+              />
+
+              {audioName && (
+                <div className="mt-3 rounded-xl bg-black border border-zinc-700 p-3">
+                  <p className="text-sm font-semibold break-all">
+                    🎵 {audioName}
+                  </p>
+
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      type="button"
+                      onClick={playAudioPreview}
+                      className="rounded-lg bg-pink-600 px-4 py-2 text-sm font-semibold"
+                    >
+                      Play / Pause Preview
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={clearAudio}
+                      className="rounded-lg bg-zinc-800 px-4 py-2 text-sm"
+                    >
+                      Remove
+                    </button>
                   </div>
-                ))}
+                </div>
+              )}
+
+              <audio
+                ref={audioRef}
+                src={audioPreview || undefined}
+                controls
+                className="hidden"
+              />
+
+              <div className="mt-4">
+                <label className="text-sm font-semibold block mb-2">
+                  Search Audio
+                </label>
+
+                <input
+                  type="text"
+                  value={audioSearch}
+                  onChange={(event) =>
+                    handleAudioSearch(event.target.value)
+                  }
+                  placeholder="Search your audio..."
+                  className="w-full rounded-xl bg-black border border-zinc-700 p-3 text-sm outline-none focus:border-pink-500"
+                />
+
+                <p className="text-xs text-zinc-500 mt-2">
+                  Upload your own audio file. No external music catalog is connected yet.
+                </p>
+              </div>
+            </>
+          )}
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-lg">
+              Text Studio
+            </h2>
+
+            <button
+              type="button"
+              onClick={toggleTextPanel}
+              className="text-sm text-pink-400"
+            >
+              {showTextPanel ? "Close" : "Open"}
+            </button>
+          </div>
+
+          {showTextPanel && (
+            <>
+              <textarea
+                value={textOverlay}
+                onChange={(event) =>
+                  addTextOverlay(event.target.value)
+                }
+                rows={3}
+                maxLength={150}
+                placeholder="Write text on your photo or video..."
+                className="w-full rounded-xl bg-black border border-zinc-700 p-3 text-sm outline-none focus:border-pink-500"
+              />
+
+              <div className="flex justify-between items-center mt-3">
+                <span className="text-xs text-zinc-500">
+                  {textOverlay.length}/150 characters
+                </span>
 
                 <button
-                  onClick={resetFilters}
-                  className="w-full rounded-xl bg-white/10 py-3 text-sm"
+                  type="button"
+                  onClick={clearTextOverlay}
+                  className="text-sm text-red-400"
                 >
-                  Reset Adjustments
+                  Clear Text
                 </button>
               </div>
-            )}
+            </>
+          )}
 
-            {/* CROP PANEL */}
-            {activeTab === "Crop" && (
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 font-bold">
-                  <Crop size={18} />
-                  Crop & Transform
-                </h3>
+          {textOverlay && (
+            <div className="mt-3 rounded-xl bg-black p-3 text-center">
+              <p className="font-bold text-lg break-words">
+                {textOverlay}
+              </p>
+              <span className="text-xs text-zinc-500">
+                Preview text overlay
+              </span>
+            </div>
+          )}
+        </section>
 
-                <p className="mb-3 text-xs text-gray-400">
-                  Select preview aspect ratio
-                </p>
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-lg">
+              Stickers
+            </h2>
+
+            <button
+              type="button"
+              onClick={toggleStickerPanel}
+              className="text-sm text-pink-400"
+            >
+              {showStickerPanel ? "Close" : "Open"}
+            </button>
+          </div>
+
+          {showStickerPanel && (
+            <div className="grid grid-cols-5 gap-3">
+              {STICKERS.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => addSticker(item)}
+                  className={`rounded-xl bg-black border p-3 text-2xl ${
+                    sticker === item
+                      ? "border-pink-500 bg-pink-500/15"
+                      : "border-zinc-700"
+                  }`}
+                >
+                  {item}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {sticker && (
+            <div className="flex justify-between items-center mt-3 rounded-xl bg-black p-3">
+              <span className="text-3xl">{sticker}</span>
+
+              <button
+                type="button"
+                onClick={removeSticker}
+                className="text-sm text-red-400"
+              >
+                Remove Sticker
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* PART 10 CONTINUES */}
+        
+        {/* ================================
+            PART 10: PHOTO FORMATS, TEMPLATES & POLLS
+        ================================= */}
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-4">
+            Photo Formats
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: "Original", value: "original" },
+              { label: "Square 1:1", value: "1 / 1" },
+              { label: "Portrait 4:5", value: "4 / 5" },
+              { label: "Story 9:16", value: "9 / 16" },
+            ].map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => applyPhotoFormat(item.value)}
+                className={`rounded-xl border p-3 text-xs font-semibold ${
+                  cropRatio === item.value
+                    ? "border-pink-500 bg-pink-500/15 text-pink-300"
+                    : "border-zinc-700 bg-black"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="text-xs text-zinc-500 mt-3">
+            Format selection changes the preview layout. It does not permanently crop the original file.
+          </p>
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-4">
+            Creative Templates
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[
+              { name: "Travel", emoji: "🌍", color: "from-blue-600 to-cyan-500" },
+              { name: "Food", emoji: "🍕", color: "from-orange-600 to-yellow-500" },
+              { name: "Fashion", emoji: "👗", color: "from-pink-600 to-purple-500" },
+              { name: "Birthday", emoji: "🎂", color: "from-purple-600 to-pink-500" },
+              { name: "Business", emoji: "💼", color: "from-emerald-600 to-teal-500" },
+              { name: "Lifestyle", emoji: "✨", color: "from-indigo-600 to-blue-500" },
+            ].map((item) => (
+              <button
+                key={item.name}
+                type="button"
+                onClick={() => {
+                  setSelectedTemplate(item.name)
+                  setTextOverlay(item.emoji + " " + item.name)
+                  showNotice(`${item.name} template selected.`)
+                }}
+                className={`rounded-xl border p-4 bg-gradient-to-br ${item.color} ${
+                  selectedTemplate === item.name
+                    ? "border-white ring-2 ring-pink-400"
+                    : "border-white/10"
+                }`}
+              >
+                <div className="text-3xl mb-2">{item.emoji}</div>
+                <div className="font-bold text-sm">{item.name}</div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-4">
+            Poll Creator
+          </h2>
+
+          <input
+            type="text"
+            value={pollQuestion}
+            onChange={(event) =>
+              updatePollQuestion(event.target.value)
+            }
+            placeholder="Ask your followers a question..."
+            maxLength={200}
+            className="w-full rounded-xl bg-black border border-zinc-700 p-3 text-sm outline-none focus:border-pink-500"
+          />
+
+          <div className="mt-4 space-y-3">
+            {pollOptions.map((option, index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  type="text"
+                  value={option}
+                  onChange={(event) =>
+                    updatePollOption(index, event.target.value)
+                  }
+                  placeholder={`Option ${index + 1}`}
+                  maxLength={100}
+                  className="min-w-0 flex-1 rounded-xl bg-black border border-zinc-700 p-3 text-sm outline-none focus:border-pink-500"
+                />
+
+                {pollOptions.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => removePollOption(index)}
+                    className="rounded-lg bg-zinc-800 px-3 text-red-400"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={addPollOption}
+            disabled={pollOptions.length >= 4}
+            className="mt-3 rounded-lg bg-zinc-800 px-4 py-2 text-sm disabled:opacity-40"
+          >
+            + Add Option
+          </button>
+
+          <div className="mt-4">
+            <label className="block text-sm font-semibold mb-2">
+              Poll Type
+            </label>
+
+            <select
+              value={pollType}
+              onChange={(event) =>
+                updatePollType(event.target.value)
+              }
+              className="w-full rounded-xl bg-black border border-zinc-700 p-3 text-sm"
+            >
+              <option value="single">Single Choice</option>
+              <option value="multiple">Multiple Choice</option>
+            </select>
+          </div>
+
+          <div className="mt-4 rounded-xl bg-black border border-zinc-700 p-3">
+            <p className="text-sm font-semibold mb-2">
+              Poll Preview
+            </p>
+
+            <p className="text-sm mb-3">
+              {pollQuestion || "Your poll question will appear here"}
+            </p>
+
+            {pollOptions.map((option, index) => (
+              <div
+                key={index}
+                className="rounded-lg border border-zinc-700 p-2 mb-2 text-sm"
+              >
+                {option || `Option ${index + 1}`}
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-zinc-500 mt-3">
+            Poll preview is ready. Publishing and voting require poll database/API support.
+          </p>
+        </section>
+
+        {/* PART 11 CONTINUES */}
+        
+        {/* ================================
+            PART 11: SCHEDULE & COLLABORATION
+        ================================= */}
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-4">
+            Schedule Your Post
+          </h2>
+
+          <p className="text-sm text-zinc-400 mb-3">
+            Choose when you want your post to be published.
+          </p>
+
+          <label className="block text-sm font-semibold mb-2">
+            Publishing Date & Time
+          </label>
+
+          <input
+            type="datetime-local"
+            value={scheduledAt}
+            min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+              .toISOString()
+              .slice(0, 16)}
+            onChange={(event) =>
+              updateScheduledAt(event.target.value)
+            }
+            className="w-full rounded-xl bg-black border border-zinc-700 p-3 text-sm outline-none focus:border-pink-500"
+          />
+
+          {scheduledAt && (
+            <div className="mt-3 rounded-xl bg-black border border-zinc-700 p-3">
+              <p className="text-sm text-emerald-400 font-semibold">
+                Scheduled time selected
+              </p>
+              <p className="text-xs text-zinc-400 mt-1">
+                {new Date(scheduledAt).toLocaleString()}
+              </p>
+            </div>
+          )}
+
+          <p className="text-xs text-zinc-500 mt-3">
+            Selecting a time does not schedule automatic publishing yet. A server-side scheduler and database support are required.
+          </p>
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-2">
+            Collaboration
+          </h2>
+
+          <p className="text-sm text-zinc-400 mb-4">
+            Add another ChitPix username as a collaboration partner.
+          </p>
+
+          <label className="block text-sm font-semibold mb-2">
+            Collaborator Username
+          </label>
+
+          <div className="flex gap-2">
+            <span className="rounded-xl bg-black border border-zinc-700 px-3 flex items-center text-zinc-400">
+              @
+            </span>
+
+            <input
+              type="text"
+              value={collaborator}
+              onChange={(event) =>
+                updateCollaborator(
+                  event.target.value.replace(/^@/, "")
+                )
+              }
+              placeholder="Enter username"
+              className="min-w-0 flex-1 rounded-xl bg-black border border-zinc-700 p-3 text-sm outline-none focus:border-pink-500"
+            />
+          </div>
+
+          {collaborator.trim() && (
+            <div className="mt-3 rounded-xl bg-black border border-zinc-700 p-3">
+              <p className="text-sm font-semibold">
+                Collaboration preview
+              </p>
+
+              <p className="text-sm text-pink-400 mt-1">
+                @{collaborator.replace(/^@/, "")}
+              </p>
+            </div>
+          )}
+
+          <p className="text-xs text-zinc-500 mt-3">
+            Sending invitations and accepting collaborations require a users lookup and collaboration database/API.
+          </p>
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-3">
+            Editor History
+          </h2>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={undoEditor}
+              disabled={historyIndex <= 0}
+              className="flex-1 rounded-xl bg-black border border-zinc-700 p-3 font-semibold disabled:opacity-40"
+            >
+              ↶ Undo
+            </button>
+
+            <button
+              type="button"
+              onClick={redoEditor}
+              disabled={historyIndex >= history.length - 1}
+              className="flex-1 rounded-xl bg-black border border-zinc-700 p-3 font-semibold disabled:opacity-40"
+            >
+              ↷ Redo
+            </button>
+          </div>
+
+          <p className="text-xs text-zinc-500 mt-3">
+            History: {Math.max(0, historyIndex + 1)} / {history.length}
+          </p>
+
+          <button
+            type="button"
+            onClick={saveEditorHistory}
+            className="w-full mt-3 rounded-xl bg-zinc-800 p-3 text-sm font-semibold"
+          >
+            Save Current Editor State
+          </button>
+        </section>
+
+        {/* PART 12 CONTINUES */}
+        
+        {/* ================================
+            PART 12: EXPORT SETTINGS & PREVIEW
+        ================================= */}
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-lg">
+              Export Settings
+            </h2>
+
+            <button
+              type="button"
+              onClick={() => setShowExportPanel((previous) => !previous)}
+              className="text-sm text-pink-400 font-semibold"
+            >
+              {showExportPanel ? "Close" : "Open"}
+            </button>
+          </div>
+
+          {showExportPanel && (
+            <>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">
+                  Export Quality
+                </label>
 
                 <div className="grid grid-cols-3 gap-2">
-                  {cropPresets.map((item) => (
+                  {[
+                    { label: "720p", value: "720p" },
+                    { label: "1080p", value: "1080p" },
+                    { label: "4K", value: "4K" },
+                  ].map((item) => (
                     <button
                       key={item.value}
-                      onClick={() => selectCropRatio(item.value)}
-                      className={`rounded-xl border p-3 text-sm ${
-                        cropRatio === item.value
-                          ? "border-fuchsia-500 bg-fuchsia-500/20"
-                          : "border-white/10 bg-white/5"
+                      type="button"
+                      onClick={() => updateExportQuality(item.value)}
+                      className={`rounded-xl border p-3 text-sm font-semibold ${
+                        exportQuality === item.value
+                          ? "border-pink-500 bg-pink-500/15 text-pink-300"
+                          : "border-zinc-700 bg-black"
                       }`}
                     >
                       {item.label}
                     </button>
                   ))}
                 </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setRotation((v) => v + 90)}
-                    className="rounded-xl bg-white/10 py-3 text-sm"
-                  >
-                    <RotateCw size={17} className="mr-2 inline" />
-                    Rotate
-                  </button>
-
-                  <button
-                    onClick={flipHorizontal}
-                    className="rounded-xl bg-white/10 py-3 text-sm"
-                  >
-                    <FlipHorizontal size={17} className="mr-2 inline" />
-                    Flip
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => setFlipH((v) => !v)}
-                  className="mt-2 w-full rounded-xl bg-white/10 py-3 text-sm"
-                >
-                  <FlipVertical size={17} className="mr-2 inline" />
-                  Flip Vertical
-                </button>
               </div>
-            )}
 
-            {/* SPEED PANEL */}
-            {activeTab === "Speed" && (
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 font-bold">
-                  <Gauge size={18} />
-                  Video Speed
-                </h3>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">
+                  Frame Rate
+                </label>
 
-                {isVideo ? (
-                  <div className="grid grid-cols-4 gap-2">
-                    {SPEEDS.map((item) => (
-                      <button
-                        key={item}
-                        onClick={() => changeSpeed(item)}
-                        className={`rounded-xl border py-3 text-sm ${
-                          speed === item
-                            ? "border-fuchsia-500 bg-fuchsia-500/20"
-                            : "border-white/10 bg-white/5"
-                        }`}
-                      >
-                        {item}x
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400">
-                    Speed controls are available for videos.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* STICKERS PANEL */}
-            {activeTab === "Stickers" && (
-              <div>
-                <h3 className="mb-4 flex items-center gap-2 font-bold">
-                  <Sticker size={18} />
-                  Stickers
-                </h3>
-
-                <div className="grid grid-cols-5 gap-3">
-                  {stickerOptions.map((item) => (
+                <div className="grid grid-cols-3 gap-2">
+                  {[24, 30, 60].map((fps) => (
                     <button
-                      key={item}
-                      onClick={() => addSticker(item)}
-                      className={`rounded-xl p-3 text-2xl ${
-                        sticker === item
-                          ? "bg-fuchsia-500/30"
-                          : "bg-white/10"
+                      key={fps}
+                      type="button"
+                      onClick={() => updateExportFPS(fps)}
+                      className={`rounded-xl border p-3 text-sm font-semibold ${
+                        exportFPS === fps
+                          ? "border-pink-500 bg-pink-500/15 text-pink-300"
+                          : "border-zinc-700 bg-black"
                       }`}
                     >
-                      {item}
+                      {fps} FPS
                     </button>
                   ))}
                 </div>
-
-                <button
-                  onClick={removeSticker}
-                  className="mt-4 w-full rounded-xl bg-white/10 py-3 text-sm"
-                >
-                  <Trash2 size={16} className="mr-2 inline" />
-                  Remove Sticker
-                </button>
               </div>
+
+              <div className="rounded-xl bg-black border border-zinc-700 p-3">
+                <p className="text-sm font-semibold">
+                  Export Summary
+                </p>
+
+                <div className="flex justify-between text-sm mt-3">
+                  <span className="text-zinc-400">Quality</span>
+                  <span>{exportQuality}</span>
+                </div>
+
+                <div className="flex justify-between text-sm mt-2">
+                  <span className="text-zinc-400">Frame Rate</span>
+                  <span>{exportFPS} FPS</span>
+                </div>
+
+                <div className="flex justify-between text-sm mt-2">
+                  <span className="text-zinc-400">Media</span>
+                  <span>{getMediaTypeLabel()}</span>
+                </div>
+
+                <div className="flex justify-between text-sm mt-2">
+                  <span className="text-zinc-400">File Size</span>
+                  <span>
+                    {selectedFile
+                      ? formatFileSize(selectedFile.size)
+                      : "Not selected"}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-xs text-zinc-500 mt-3">
+                These are export preferences only. Actual resolution conversion, trimming and rendering need a video processing engine.
+              </p>
+            </>
+          )}
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-3">
+            Final Preview
+          </h2>
+
+          {!selectedFile ? (
+            <div className="rounded-xl bg-black border border-zinc-700 p-8 text-center">
+              <div className="text-4xl mb-3">🖼️</div>
+              <p className="text-sm text-zinc-400">
+                Select a photo or video to see your final preview.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl overflow-hidden bg-black border border-zinc-700">
+              {isVideo ? (
+                <video
+                  src={preview}
+                  controls
+                  playsInline
+                  className="w-full max-h-[450px] object-contain"
+                  style={{
+                    filter: videoFilter,
+                    transform: videoTransform,
+                  }}
+                />
+              ) : (
+                <img
+                  src={preview}
+                  alt="Final media preview"
+                  className="w-full max-h-[450px] object-contain"
+                  style={{
+                    filter: videoFilter,
+                    transform: videoTransform,
+                  }}
+                />
+              )}
+
+              {sticker && (
+                <div className="p-2 text-center text-3xl">
+                  {sticker}
+                </div>
+              )}
+
+              {textOverlay && (
+                <div className="p-3 text-center font-bold break-words">
+                  {textOverlay}
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedFile && (
+            <div className="mt-3 rounded-xl bg-black p-3">
+              <p className="text-sm font-semibold">
+                {selectedFile.name}
+              </p>
+
+              <p className="text-xs text-zinc-500 mt-1">
+                {getMediaTypeLabel()} · {formatFileSize(selectedFile.size)}
+              </p>
+            </div>
+          )}
+        </section>
+
+        {/* PART 13 CONTINUES */}
+        
+        {/* ================================
+            PART 13: DRAFT MANAGER & PUBLISH
+        ================================= */}
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-bold text-lg">
+              My Drafts
+            </h2>
+
+            <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs">
+              {drafts.length} Saved
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={saveDraft}
+            disabled={!selectedFile && !caption.trim()}
+            className="w-full rounded-xl bg-zinc-800 border border-zinc-700 p-3 font-semibold disabled:opacity-40"
+          >
+            + Save Current Draft
+          </button>
+
+          {drafts.length === 0 ? (
+            <div className="py-7 text-center">
+              <div className="text-4xl mb-2">📂</div>
+              <p className="text-sm text-zinc-400">
+                Your saved drafts will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {drafts.map((draft) => (
+                <div
+                  key={draft.id}
+                  className="rounded-xl bg-black border border-zinc-700 p-3"
+                >
+                  <div className="flex justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate">
+                        {draft.caption || "Untitled Draft"}
+                      </p>
+
+                      <p className="text-xs text-zinc-500 mt-1">
+                        {draft.mediaName || "No media attached"}
+                      </p>
+
+                      <p className="text-xs text-zinc-500 mt-1">
+                        {draft.updatedAt
+                          ? new Date(draft.updatedAt).toLocaleString()
+                          : "Saved draft"}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => loadDraft(draft)}
+                        className="rounded-lg bg-pink-600 px-3 py-2 text-xs font-semibold"
+                      >
+                        Load
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => deleteDraft(draft.id)}
+                        className="rounded-lg bg-zinc-800 px-3 py-2 text-xs text-red-400"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={startNewDraft}
+            className="w-full mt-3 rounded-xl border border-zinc-700 p-3 text-sm font-semibold"
+          >
+            Start New Draft
+          </button>
+        </section>
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-3">
+            Publish Preview
+          </h2>
+
+          <div className="rounded-xl bg-black border border-zinc-700 p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-9 h-9 rounded-full bg-pink-600 flex items-center justify-center font-bold">
+                {(username || "U").charAt(0).toUpperCase()}
+              </div>
+
+              <div>
+                <p className="text-sm font-bold">
+                  @{username || "user"}
+                </p>
+                <p className="text-xs text-zinc-500">
+                  ChitPix Creator
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm whitespace-pre-wrap break-words">
+              {caption || "Your caption will appear here..."}
+            </p>
+
+            {price.trim() && (
+              <p className="text-sm text-emerald-400 mt-2">
+                Price: {price}
+              </p>
             )}
 
-          </div>
-
-                    {/* PART 8: TIMELINE AND EXPORT */}
-
-          {/* VIDEO TIMELINE */}
-          {isVideo && (
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-bold">
-                  <Film size={18} />
-                  Video Timeline
-                </h3>
-
-                <button
-                  onClick={() => setShowTimeline(!showTimeline)}
-                  className="rounded-lg bg-white/10 px-3 py-2 text-xs"
-                >
-                  {showTimeline ? "Hide" : "Show"}
-                </button>
-              </div>
-
-              {showTimeline && (
-                <>
-                  <div className="mb-3 flex items-center justify-between text-xs text-gray-400">
-                    <span>{formatTime(currentTime)}</span>
-                    <span>{formatTime(duration)}</span>
-                  </div>
-
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 1}
-                    step={0.1}
-                    value={currentTime}
-                    onChange={(e) =>
-                      seekTimeline(Number(e.target.value))
-                    }
-                    className="w-full accent-fuchsia-500"
-                  />
-
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm text-gray-300">
-                      Timeline Zoom
-                    </span>
-                    <span className="text-xs text-gray-400">
-                      {timelineZoom}x
-                    </span>
-                  </div>
-
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      onClick={() => zoomTimeline(-1)}
-                      className="flex-1 rounded-xl bg-white/10 py-2"
-                    >
-                      −
-                    </button>
-
-                    <button
-                      onClick={resetTimeline}
-                      className="flex-1 rounded-xl bg-white/10 py-2 text-sm"
-                    >
-                      Reset
-                    </button>
-
-                    <button
-                      onClick={() => zoomTimeline(1)}
-                      className="flex-1 rounded-xl bg-white/10 py-2"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div className="mt-4 rounded-xl bg-black/40 p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="text-xs text-gray-400">
-                        Video Track
-                      </span>
-                      <Video size={15} className="text-fuchsia-400" />
-                    </div>
-
-                    <div className="h-8 overflow-hidden rounded-lg bg-gradient-to-r from-fuchsia-900/70 via-purple-800/70 to-fuchsia-900/70">
-                      <div className="flex h-full items-center justify-center text-xs">
-                        {selectedFile.name}
-                      </div>
-                    </div>
-
-                    {splitPoints.length > 0 && (
-                      <p className="mt-2 text-xs text-gray-400">
-                        {splitPoints.length} split marker(s) added
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* EXPORT SETTINGS PANEL */}
-          {showExportPanel && (
-            <div className="mt-5 rounded-2xl border border-fuchsia-500/30 bg-[#17101f] p-4">
-
-              <div className="mb-4 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 font-bold">
-                  <Download size={19} />
-                  Export Settings
-                </h3>
-
-                <button
-                  onClick={closeEditorPanels}
-                  className="rounded-full bg-white/10 p-2"
-                >
-                  <X size={17} />
-                </button>
-              </div>
-
-              <label className="mb-2 block text-sm text-gray-300">
-                Export Quality
-              </label>
-
-              <div className="grid grid-cols-3 gap-2">
-                {["720p", "1080p", "4K"].map((quality) => (
-                  <button
-                    key={quality}
-                    onClick={() => updateExportQuality(quality)}
-                    className={`rounded-xl border py-3 text-sm ${
-                      exportQuality === quality
-                        ? "border-fuchsia-500 bg-fuchsia-500/20"
-                        : "border-white/10 bg-white/5"
-                    }`}
-                  >
-                    {quality}
-                  </button>
-                ))}
-              </div>
-
-              <label className="mb-2 mt-5 block text-sm text-gray-300">
-                Frame Rate
-              </label>
-
-              <div className="grid grid-cols-3 gap-2">
-                {[24, 30, 60].map((fps) => (
-                  <button
-                    key={fps}
-                    onClick={() => updateExportFPS(String(fps))}
-                    className={`rounded-xl border py-3 text-sm ${
-                      exportFPS === String(fps)
-                        ? "border-fuchsia-500 bg-fuchsia-500/20"
-                        : "border-white/10 bg-white/5"
-                    }`}
-                  >
-                    {fps} FPS
-                  </button>
-                ))}
-              </div>
-
-              <p className="mt-4 text-xs leading-5 text-amber-300">
-                Export quality and FPS are preferences only at this stage.
-                Permanent edited-video rendering requires a video encoder.
+            {selectedFile && (
+              <p className="text-xs text-zinc-500 mt-3">
+                Attached: {selectedFile.name}
               </p>
+            )}
+          </div>
+        </section>
 
-              <button
-                onClick={handleExportPreview}
-                disabled={exporting}
-                className="mt-4 w-full rounded-xl bg-fuchsia-600 py-3 font-semibold disabled:opacity-50"
-              >
-                <Download size={17} className="mr-2 inline" />
-                Prepare Export
-              </button>
-            </div>
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-3">
+            Ready to Publish?
+          </h2>
+
+          {!userId && (
+            <p className="rounded-xl bg-red-500/10 border border-red-500/30 p-3 text-sm text-red-300 mb-3">
+              Please login to your ChitPix account before publishing.
+            </p>
           )}
 
-          {/* CAPTION AND POST DETAILS */}
-          <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-
-            <h3 className="mb-4 text-lg font-bold">
-              Post Details
-            </h3>
-
-            <label className="mb-2 block text-sm text-gray-300">
-              Caption
-            </label>
-
-            <textarea
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="Write a caption for your post..."
-              rows={4}
-              className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm outline-none focus:border-fuchsia-500"
-            />
-
-            <div className="mt-2 flex justify-between text-xs text-gray-500">
-              <span>Add hashtags and describe your post</span>
-              <span>{caption.length} characters</span>
-            </div>
-
-            <label className="mb-2 mt-5 block text-sm text-gray-300">
-              Price (Optional)
-            </label>
-
-            <input
-              type="number"
-              min="0"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Enter price"
-              className="w-full rounded-xl border border-white/10 bg-black/40 p-3 text-sm outline-none focus:border-fuchsia-500"
-            />
-
-            <p className="mt-2 text-xs text-gray-500">
-              Leave empty if your post has no price.
+          {!selectedFile && (
+            <p className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-3 text-sm text-yellow-300 mb-3">
+              Please select a photo or video first.
             </p>
-          </div>
+          )}
 
-          {/* PUBLISH ACTIONS */}
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          {mode === "schedule" && (
+            <p className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-3 text-sm text-yellow-300 mb-3">
+              Automatic scheduled publishing is not connected yet. Use normal publishing for now.
+            </p>
+          )}
 
+          <button
+            type="button"
+            onClick={publishPost}
+            disabled={!canPublish || mode === "schedule"}
+            className="w-full rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 p-4 font-bold text-white disabled:opacity-40"
+          >
+            {loading
+              ? "Uploading..."
+              : "🚀 Publish to ChitPix"}
+          </button>
+
+          <button
+            type="button"
+            onClick={saveDraft}
+            disabled={!selectedFile && !caption.trim()}
+            className="w-full mt-3 rounded-xl bg-zinc-800 p-3 font-semibold disabled:opacity-40"
+          >
+            Save as Draft
+          </button>
+
+          <p className="text-xs text-zinc-500 text-center mt-3">
+            Please check your media and caption before publishing.
+          </p>
+        </section>
+
+        {/* PART 14 CONTINUES */}
+        
+        {/* ================================
+            PART 14: FINAL CREATOR TOOLS
+        ================================= */}
+
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-4">
+            Quick Editor Tools
+          </h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <button
-              onClick={handleCancelUpload}
-              disabled={uploading}
-              className="rounded-xl border border-white/15 bg-white/5 py-4 font-semibold disabled:opacity-50"
+              type="button"
+              onClick={rotateMedia}
+              disabled={!selectedFile}
+              className="rounded-xl bg-black border border-zinc-700 p-3 text-sm font-semibold disabled:opacity-40"
             >
-              Cancel
+              ↻ Rotate
             </button>
 
             <button
-              onClick={handlePublish}
-              disabled={!canPublish || uploading}
-              className="rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 py-4 font-bold disabled:opacity-50"
+              type="button"
+              onClick={toggleHorizontalFlip}
+              disabled={!selectedFile}
+              className="rounded-xl bg-black border border-zinc-700 p-3 text-sm font-semibold disabled:opacity-40"
             >
-              {uploading ? (
-                <>
-                  <LoaderCircle
-                    size={18}
-                    className="mr-2 inline animate-spin"
-                  />
-                  Publishing...
-                </>
-              ) : (
-                <>
-                  <Upload size={18} className="mr-2 inline" />
-                  Publish
-                </>
-              )}
+              ⇋ Flip H
             </button>
 
+            <button
+              type="button"
+              onClick={toggleVerticalFlip}
+              disabled={!selectedFile}
+              className="rounded-xl bg-black border border-zinc-700 p-3 text-sm font-semibold disabled:opacity-40"
+            >
+              ⇅ Flip V
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleAudioPanel}
+              className="rounded-xl bg-black border border-zinc-700 p-3 text-sm font-semibold"
+            >
+              🎵 Audio
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleTextPanel}
+              className="rounded-xl bg-black border border-zinc-700 p-3 text-sm font-semibold"
+            >
+              T Text
+            </button>
+
+            <button
+              type="button"
+              onClick={toggleStickerPanel}
+              className="rounded-xl bg-black border border-zinc-700 p-3 text-sm font-semibold"
+            >
+              ✨ Stickers
+            </button>
           </div>
 
-                    {/* PART 9: EXTRA CREATOR TOOLS */}
+          <button
+            type="button"
+            onClick={resetEditor}
+            disabled={!selectedFile}
+            className="w-full mt-3 rounded-xl border border-zinc-700 bg-zinc-800 p-3 text-sm font-semibold disabled:opacity-40"
+          >
+            Reset All Editor Settings
+          </button>
+        </section>
 
-          {/* UNDO AND REDO */}
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <section className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-4">
+            Upload Checklist
+          </h2>
 
-            <h3 className="mb-3 font-bold">
-              Edit History
-            </h3>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={undoEdit}
-                disabled={historyIndex <= 0}
-                className="rounded-xl bg-white/10 py-3 text-sm disabled:opacity-30"
-              >
-                <Undo2 size={17} className="mr-2 inline" />
-                Undo
-              </button>
-
-              <button
-                onClick={redoEdit}
-                disabled={historyIndex >= history.length - 1}
-                className="rounded-xl bg-white/10 py-3 text-sm disabled:opacity-30"
-              >
-                <Redo2 size={17} className="mr-2 inline" />
-                Redo
-              </button>
-            </div>
-
-            <p className="mt-3 text-xs text-gray-500">
-              History stores supported editor settings.
-            </p>
-          </div>
-
-          {/* QUICK CREATOR ACTIONS */}
-          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-
-            <h3 className="mb-4 font-bold">
-              Quick Creator Actions
-            </h3>
-
-            <div className="grid grid-cols-2 gap-3">
-
-              <button
-                onClick={handleSaveDraft}
-                className="rounded-xl bg-white/10 p-4 text-left"
-              >
-                <Save size={21} className="mb-2 text-fuchsia-400" />
-                <p className="text-sm font-semibold">
-                  Save Draft
-                </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Save your editing settings
-                </p>
-              </button>
-
-              <button
-                onClick={resetAllEdits}
-                className="rounded-xl bg-white/10 p-4 text-left"
-              >
-                <RotateCcw size={21} className="mb-2 text-fuchsia-400" />
-                <p className="text-sm font-semibold">
-                  Reset All
-                </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Reset editor adjustments
-                </p>
-              </button>
-
-              <button
-                onClick={() => selectEditTab("Filters")}
-                className="rounded-xl bg-white/10 p-4 text-left"
-              >
-                <WandSparkles size={21} className="mb-2 text-fuchsia-400" />
-                <p className="text-sm font-semibold">
-                  Quick Filters
-                </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Explore creative filters
-                </p>
-              </button>
-
-              <button
-                onClick={() => selectEditTab("Text")}
-                className="rounded-xl bg-white/10 p-4 text-left"
-              >
-                <Type size={21} className="mb-2 text-fuchsia-400" />
-                <p className="text-sm font-semibold">
-                  Add Text
-                </p>
-                <p className="mt-1 text-xs text-gray-400">
-                  Add words to your preview
-                </p>
-              </button>
-
-            </div>
-          </div>
-
-          {/* SELECTED MEDIA INFORMATION */}
-          {selectedFile && (
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-
-              <h3 className="mb-3 font-bold">
-                Media Information
-              </h3>
-
-              <div className="space-y-3 text-sm">
-
-                <div className="flex justify-between gap-3">
-                  <span className="text-gray-400">
-                    File name
-                  </span>
-                  <span className="max-w-[65%] truncate text-right">
-                    {selectedFile.name}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-gray-400">
-                    File type
-                  </span>
-                  <span>
-                    {selectedFile.type || "Unknown"}
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span className="text-gray-400">
-                    File size
-                  </span>
-                  <span>
-                    {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                  </span>
-                </div>
-
-                {isVideo && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">
-                      Duration
-                    </span>
-                    <span>
-                      {formatTime(duration)}
-                    </span>
-                  </div>
-                )}
-
-              </div>
-            </div>
-          )}
-
-          {/* STATUS MESSAGE */}
-          {notice && (
-            <div className="mt-5 rounded-xl border border-white/10 bg-white/10 p-4 text-center">
-
-              <p className="text-sm">
-                {notice}
-              </p>
-
-              <button
-                onClick={() => setNotice("")}
-                className="mt-2 text-xs text-fuchsia-300"
-              >
-                Dismiss
-              </button>
-
-            </div>
-          )}
-
-          {/* CREATOR FOOTER */}
-          <div className="mb-8 mt-8 text-center">
-
-            <div className="mb-2 flex items-center justify-center gap-2">
-              <Sparkles size={17} className="text-fuchsia-400" />
-              <span className="font-bold">
-                ChitPix Creator Studio
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-zinc-300">Media selected</span>
+              <span className={selectedFile ? "text-emerald-400" : "text-zinc-500"}>
+                {selectedFile ? "✓ Ready" : "Not selected"}
               </span>
             </div>
 
-            <p className="text-xs text-gray-500">
-              Create • Edit • Share
-            </p>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-zinc-300">Account login</span>
+              <span className={userId ? "text-emerald-400" : "text-red-400"}>
+                {userId ? "✓ Logged in" : "Login required"}
+              </span>
+            </div>
 
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-zinc-300">Caption</span>
+              <span className={caption.trim() ? "text-emerald-400" : "text-zinc-500"}>
+                {caption.trim() ? "✓ Added" : "Optional"}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-zinc-300">Media type</span>
+              <span className="text-zinc-400">
+                {getMediaTypeLabel()}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-zinc-300">Upload status</span>
+              <span className={loading ? "text-yellow-400" : "text-zinc-400"}>
+                {loading ? "Uploading..." : "Waiting"}
+              </span>
+            </div>
           </div>
-
-                    {/* END OF EDITOR CONTENT */}
-
         </section>
-      )}
 
-      {/* GLOBAL UPLOAD STATUS */}
-      {uploading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6">
+        <section className="rounded-2xl bg-gradient-to-br from-pink-600/20 to-purple-600/20 border border-pink-500/30 p-4 mb-5">
+          <h2 className="font-bold text-lg mb-2">
+            ❤️ Create with ChitPix
+          </h2>
 
-          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#18121f] p-6 text-center">
+          <p className="text-sm text-zinc-300">
+            Make your photos and videos creative. Add captions,
+            choose filters, preview your content and share it
+            with the ChitPix community.
+          </p>
 
-            <LoaderCircle
-              size={42}
-              className="mx-auto mb-4 animate-spin text-fuchsia-400"
-            />
-
-            <h3 className="text-lg font-bold">
-              Publishing your creation
-            </h3>
-
-            <p className="mt-2 text-sm text-gray-400">
-              Please wait. Do not close the app.
-            </p>
-
-            <p className="mt-4 text-xs text-fuchsia-300">
-              {notice}
-            </p>
-
+          <div className="flex flex-wrap gap-2 mt-4">
+            <span className="rounded-full bg-black/40 px-3 py-1 text-xs">
+              Photo
+            </span>
+            <span className="rounded-full bg-black/40 px-3 py-1 text-xs">
+              Video
+            </span>
+            <span className="rounded-full bg-black/40 px-3 py-1 text-xs">
+              Filters
+            </span>
+            <span className="rounded-full bg-black/40 px-3 py-1 text-xs">
+              Audio
+            </span>
+            <span className="rounded-full bg-black/40 px-3 py-1 text-xs">
+              Stickers
+            </span>
+            <span className="rounded-full bg-black/40 px-3 py-1 text-xs">
+              Templates
+            </span>
           </div>
-        </div>
-      )}
+        </section>
 
+        {/* PART 15 CONTINUES */}
+        
+        {/* ================================
+            PART 15: FINAL PAGE FOOTER
+        ================================= */}
+
+        <footer className="mt-8 mb-6 text-center">
+          <div className="border-t border-zinc-800 pt-5">
+            <p className="text-sm font-bold text-white">
+              ChitPix ❤️
+            </p>
+
+            <p className="text-xs text-zinc-500 mt-2">
+              Create • Share • Connect
+            </p>
+
+            <p className="text-xs text-zinc-600 mt-2">
+              Made for the ChitPix community.
+            </p>
+          </div>
+        </footer>
+
+      </div>
     </main>
   )
 }
