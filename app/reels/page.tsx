@@ -1388,7 +1388,7 @@ export default function ReelsPage() {
 
                   {/* LIKE */}
                   <button
-                    onClick={() => toggleLike(post)}
+                    onClick={() => toggleLike(postid)}
                     className="flex flex-col items-center gap-1"
                     aria-label="Like Reel"
                   >
