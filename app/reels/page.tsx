@@ -1395,7 +1395,7 @@ export default function ReelsPage() {
 
                   {/* COMMENT */}
                   <button
-                    onClick={() => openComments(postId)}
+                    onClick={() => openComments()}
                     className="flex flex-col items-center gap-1"
                     aria-label="Comments"
                   >
