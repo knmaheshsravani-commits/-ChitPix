@@ -54,9 +54,21 @@ export default function UploadPage() {
   const [pollOption1, setPollOption1] = useState("")
   const [pollOption2, setPollOption2] = useState("")
 
+  
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    setMode(params.get("type") || "reel")
+
+    let selectedMode = params.get("type") || "reel"
+
+    if (params.get("draft") === "1") selectedMode = "draft"
+    else if (params.get("effects") === "1") selectedMode = "effects"
+    else if (params.get("edit") === "1") selectedMode = "edit"
+    else if (params.get("schedule") === "1") selectedMode = "schedule"
+    else if (params.get("poll") === "1") selectedMode = "poll"
+    else if (params.get("collab") === "1") selectedMode = "collab"
+
+    setMode(selectedMode)
+    
 
     async function loadUser() {
       const { data, error } = await supabase.auth.getUser()
