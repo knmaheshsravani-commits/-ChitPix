@@ -859,29 +859,17 @@ export default function ReelsPage() {
     })
   }
 
-  // NOT INTERESTED
-  
-const markNotInterested = (postId: string) => {
-  setNotInterested((previous) => {
-    const updated = new Set<string>()
+    // NOT INTERESTED
+  const markNotInterested = (postId: string) => {
+    setNotInterested((previous) => {
+      const updated = previous.includes(postId)
+        ? previous
+        : [...previous, postId]
 
-    previous.forEach((id) => {
-      updated.add(id)
-    })
-
-    updated.add(postId)
-
-    localStorage.setItem(
-      "chitpix_reel_not_interested",
-      JSON.stringify(Array.from(updated))
-    )
-
-    setFeatureMessage("We'll show fewer Reels like this")
-
-    return updated
-  })
-}
-  
+      localStorage.setItem(
+        "chitpix_reel_not_interested",
+        JSON.stringify(updated)
+      )
 
       return updated
     })
@@ -1156,15 +1144,15 @@ const markNotInterested = (postId: string) => {
         onScroll={handleVisibleFeedScroll}
         className="h-[calc(100dvh-68px)] snap-y snap-mandatory overflow-y-auto overscroll-y-contain scrollbar-hide"
       >
-        {loading ? (
+         {loadingReels ? (
           <div className="flex h-full items-center justify-center">
             <LoaderCircle className="animate-spin" size={32} />
             <span className="ml-3 text-sm text-white/70">Loading Reels...</span>
           </div>
-        ) : error ? (
+        ) : reelsError ? (
           <div className="flex h-full flex-col items-center justify-center px-6 text-center">
             <p className="text-base font-semibold">Reels load avvaledu bro</p>
-            <p className="mt-2 text-sm text-white/60">{error}</p>
+            <p className="mt-2 text-sm text-white/60">{reelsError}</p>
             <button
               onClick={loadReels}
               className="mt-5 rounded-full bg-white px-5 py-2 text-sm font-bold text-black"
