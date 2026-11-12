@@ -6,38 +6,54 @@ import StoryViewer from "./StoryViewer"
 import StoryComposer from "./StoryComposer"
 import { supabase } from "../../lib/supabase"
 
+
 const R2_PUBLIC =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
   "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
+
+// =====================================
+// STORIES MEDIA URL FIX
+// =====================================
 
 function fixR2Url(p: any) {
   const value =
     typeof p === "string"
       ? p
-      : p?.image_url ||
+      : p?.imageUrl ||
+        p?.image_url ||
+        p?.videoUrl ||
+        p?.video_url ||
+        p?.r2Url ||
+        p?.r2_url ||
+        p?.publicUrl ||
+        p?.public_url ||
         p?.url ||
         p?.image ||
-        p?.publicUrl ||
-        p?.video_url ||
         p?.key ||
         ""
 
   if (!value) return ""
 
-  if (/^https?:\/\//i.test(value)) return value
+  const url = String(value).trim()
 
-  const cleanPath = String(value).replace(/^\/+/, "")
+  if (/^https?:\/\//i.test(url)) {
+    return url
+  }
+
+  const cleanPath = url.replace(/^\/+/, "")
+  const baseUrl = R2_PUBLIC.replace(/\/$/, "")
 
   if (
     cleanPath.startsWith("stories/") ||
     cleanPath.startsWith("posts/") ||
     cleanPath.startsWith("avatars/")
   ) {
-    return `${R2_PUBLIC.replace(/\/$/, "")}/${cleanPath}`
+    return `${baseUrl}/${cleanPath}`
   }
 
-  return `${R2_PUBLIC.replace(/\/$/, "")}/stories/${cleanPath}`
+  return `${baseUrl}/stories/${cleanPath}`
 }
+
 
 function cleanUsername(value: any) {
   return String(value || "").trim().replace(/^@/, "")
@@ -335,11 +351,15 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fileName: `stories/${Date.now()}-${file.name}`,
-          contentType: file.type,
-          fileSize: file.size,
-        }),
-      })
+  image_url: presignData.publicUrl,
+  image: presignData.publicUrl,
+  video_url: file.type.startsWith("video/")
+    ? presignData.publicUrl
+    : "",
+  username,
+  user_id: loggedUser.id,
+  avatar_url: profile?.avatar_url || "",
+}),
 
       const presignData = await presignRes.json()
 
