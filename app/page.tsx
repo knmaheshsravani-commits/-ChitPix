@@ -40,6 +40,7 @@ function fixR2Url(post: Post | string | null | undefined): string {
   ).trim()
 }
 // PROFILE AVATAR URL FIX
+
 function fixAvatarUrl(value: any): string {
   if (!value) return ""
 
@@ -50,11 +51,15 @@ function fixAvatarUrl(value: any): string {
   } else if (typeof value === "object") {
     raw =
       value.avatar_url ||
+      value.avatarUrl ||
       value.avatar ||
       value.image_url ||
       value.url ||
       value.publicUrl ||
+      value.public_url ||
       value.r2Url ||
+      value.r2_url ||
+      value.key ||
       ""
   }
 
@@ -66,14 +71,23 @@ function fixAvatarUrl(value: any): string {
     return raw
   }
 
-  if (raw.startsWith("r2://")) {
-    return `${R2_PUBLIC.replace(/\/$/, "")}/${raw
-      .slice(5)
-      .replace(/^\/+/, "")}`
+  const baseUrl = R2_PUBLIC.replace(/\/$/, "")
+  const cleanPath = raw.replace(/^\/+/, "")
+
+  if (cleanPath.startsWith("r2://")) {
+    return `${baseUrl}/${cleanPath.slice(5)}`
   }
 
-  return raw
+  if (
+    cleanPath.startsWith("avatars/") ||
+    cleanPath.startsWith("profiles/")
+  ) {
+    return `${baseUrl}/${cleanPath}`
+  }
+
+  return `${baseUrl}/avatars/${cleanPath}`
 }
+
 function getMediaType(post: Post): "video" | "image" {
   const url = fixR2Url(post).toLowerCase().split("?")[0]
   return /\.(mp4|webm|mov|m4v|ogg)$/.test(url)
@@ -1163,40 +1177,42 @@ useEffect(() => {
               </div>
             )}
 
-            {/* COMMENT INPUT - ALWAYS AT BOTTOM */}
             
+{/* COMMENT INPUT - ALWAYS AT BOTTOM */}
 <form
-  onSubmit={handleComment}
-  className="relative z-50 mt-auto flex w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white p-3 pb-[max(16px,env(safe-area-inset-bottom))]"
+  onSubmit={(e) => {
+    e.preventDefault()
+    handleComment()
+  }}
+  className="sticky bottom-0 z-[100] flex min-h-[72px] w-full shrink-0 items-center gap-2 border-t border-slate-200 bg-white px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))]"
 >
-  
-              <button
-                type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="rounded-full bg-slate-100 p-2 text-xl"
-                aria-label="Choose emoji"
-              >
-                😊
-              </button>
+  <button
+    type="button"
+    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+    className="shrink-0 rounded-full bg-slate-100 p-2 text-xl"
+    aria-label="Choose emoji"
+  >
+    😊
+  </button>
 
-              <input
-                type="text"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder={
-                  replyingTo ? "Write a reply..." : "Add a comment..."
-                }
-                className="min-w-0 flex-1 rounded-full bg-slate-100 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-fuchsia-300"
-              />
+  <input
+    type="text"
+    value={commentText}
+    onChange={(e) => setCommentText(e.target.value)}
+    placeholder={
+      replyingTo ? "Write a reply..." : "Add a comment..."
+    }
+    className="min-w-0 flex-1 rounded-full bg-slate-100 px-4 py-3 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-fuchsia-300"
+  />
 
-              <button
-                type="submit"
-                disabled={!commentText.trim() || busy}
-                className="rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 px-4 py-3 text-sm font-bold text-white disabled:opacity-40"
-              >
-                Post
-              </button>
-            </form>
+  <button
+    type="submit"
+    disabled={!commentText.trim() || busy}
+    className="shrink-0 rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 px-4 py-3 text-sm font-bold text-white disabled:opacity-40"
+  >
+    Post
+  </button>
+</form>
           </section>
         </div>
       )}
