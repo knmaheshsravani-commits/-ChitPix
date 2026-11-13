@@ -1349,8 +1349,72 @@ export default function HomePage() {
     )
 
     
+
+const userIds = [
+  ...new Set(
+    postRows
+      .map((post: any) => post.user_id)
+      .filter(Boolean)
+  ),
+]
+
+const usernames = [
+  ...new Set(
+    postRows
+      .map((post: any) => post.username)
+      .filter(Boolean)
+  ),
+]
+
+let profiles: any[] = []
+
+if (userIds.length > 0) {
+  const { data: rows, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, username, full_name, avatar_url")
+    .in("id", userIds)
+
+  if (profileError) {
+    console.error("Profile ID lookup error:", profileError)
+  } else {
+    profiles = rows || []
+  }
+}
+
+if (usernames.length > 0) {
+  const { data: rows, error: usernameError } = await supabase
+    .from("profiles")
+    .select("id, username, full_name, avatar_url")
+    .in("username", usernames)
+
+  if (usernameError) {
+    console.error("Profile username lookup error:", usernameError)
+  } else {
+    const existingIds = new Set(profiles.map((p: any) => p.id))
+    profiles = [
+      ...profiles,
+      ...(rows || []).filter((p: any) => !existingIds.has(p.id)),
+    ]
+  }
+}
+
+const profileById = new Map(
+  profiles.map((profile: any) => [profile.id, profile])
+)
+
+const profileByUsername = new Map(
+  profiles.map((profile: any) => [
+    String(profile.username || "").toLowerCase(),
+    profile,
+  ])
+)
+
 const formattedPosts: Post[] = postRows.map((post: any) => {
-  const profile: any = profileMap.get(post.user_id)
+  const profile: any =
+    profileById.get(post.user_id) ||
+    profileByUsername.get(
+      String(post.username || "").toLowerCase()
+    )
 
   const avatarUrl = fixAvatarUrl(
     profile?.avatar_url ||
@@ -1361,22 +1425,17 @@ const formattedPosts: Post[] = postRows.map((post: any) => {
 
   return {
     ...post,
-
     username:
       profile?.username ||
       post.username ||
       profile?.full_name ||
       "ChitPix User",
-
-    full_name:
-      profile?.full_name ||
-      post.full_name ||
-      null,
-
+    full_name: profile?.full_name || post.full_name || null,
     avatar_url: avatarUrl,
     avatar: avatarUrl,
   }
 })
+    
     
 
     setPosts(formattedPosts)
