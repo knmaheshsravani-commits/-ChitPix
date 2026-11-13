@@ -1394,7 +1394,15 @@ const formattedPosts: Post[] = postRows.map((post: any) => {
     profileByUsername.get(
       String(post.username || "").toLowerCase()
     )
-
+   
+console.log("DP DEBUG:", {
+  postUsername: post.username,
+  postUserId: post.user_id,
+  profileFound: !!profile,
+  profileUsername: profile?.username,
+  profileAvatar: profile?.avatar_url,
+})
+  
   const avatarUrl = fixAvatarUrl(
     profile?.avatar_url ||
     post.avatar_url ||
