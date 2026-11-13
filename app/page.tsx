@@ -1325,13 +1325,15 @@ export default function HomePage() {
     }
     const postRows = data || []
 
-const userIds = [
-  ...new Set(
+
+const userIds = Array.from(
+  new Set(
     postRows
       .map((post: any) => post.user_id)
       .filter(Boolean)
-  ),
-]
+  )
+)
+    
 
 const usernames = [
   ...new Set(
