@@ -1331,23 +1331,24 @@ export default function HomePage() {
       Boolean(id) && arr.indexOf(id) === index
   )
 
-    let profiles: any[] = []
+    
+let profiles: any[] = []
 
-    if (userIds.length > 0) {
-      const { data: profileRows, error: profileError } = await supabase
-        .from("profiles")
-        .select("id, username, full_name, avatar_url")
-        .in("id", userIds)
+if (userIds.length > 0) {
+  const { data: profileRows, error: profileError } = await supabase
+    .from("profiles")
+    .select("id, username, full_name, avatar_url")
+    .in("id", userIds)
 
-      if (!profileError) {
-        profiles = profileRows || []
-      }
-    }
+  if (!profileError) {
+    profiles = profileRows || []
+  }
+}
 
-    const profileMap = new Map(
-      profiles.map((profile: any) => [profile.id, profile])
-    )
-
+const profileMap = new Map(
+  profiles.map((profile: any) => [profile.id, profile])
+)
+    
     
 
 const userIds = [
