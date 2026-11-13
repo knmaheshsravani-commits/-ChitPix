@@ -1324,32 +1324,6 @@ export default function HomePage() {
       return
     }
     const postRows = data || []
-    const userIds = postRows
-  .map((post: any) => post.user_id)
-  .filter(
-    (id: any, index: number, arr: any[]) =>
-      Boolean(id) && arr.indexOf(id) === index
-  )
-
-    
-let profiles: any[] = []
-
-if (userIds.length > 0) {
-  const { data: profileRows, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, username, full_name, avatar_url")
-    .in("id", userIds)
-
-  if (!profileError) {
-    profiles = profileRows || []
-  }
-}
-
-const profileMap = new Map(
-  profiles.map((profile: any) => [profile.id, profile])
-)
-    
-    
 
 const userIds = [
   ...new Set(
