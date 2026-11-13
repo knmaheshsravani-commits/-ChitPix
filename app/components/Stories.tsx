@@ -94,15 +94,48 @@ function isActiveStory(story: any) {
   return true
 }
 
-function getStoryOwner(story: any) {
-  const userId =
-    story?.user_id ||
-    story?.userId ||
-    story?.profile_id ||
-    story?.profile?.id ||
-    story?.profiles?.id ||
-    story?.user?.id ||
+
+const R2_PUBLIC =
+  process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
+  "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
+
+function getStoryImage(story: any) {
+  const value =
+    story?.imageUrl ||
+    story?.image_url ||
+    story?.videoUrl ||
+    story?.video_url ||
+    story?.r2Url ||
+    story?.r2_url ||
+    story?.publicUrl ||
+    story?.public_url ||
+    story?.url ||
+    story?.image ||
+    story?.key ||
     ""
+
+  if (!value) return ""
+
+  const url = String(value).trim()
+
+  if (/^https?:\/\//i.test(url)) {
+    return url
+  }
+
+  const cleanPath = url.replace(/^\/+/, "")
+  const baseUrl = R2_PUBLIC.replace(/\/$/, "")
+
+  if (
+    cleanPath.startsWith("stories/") ||
+    cleanPath.startsWith("posts/") ||
+    cleanPath.startsWith("avatars/")
+  ) {
+    return `${baseUrl}/${cleanPath}`
+  }
+
+  return `${baseUrl}/stories/${cleanPath}`
+}
+
 
   const username = cleanUsername(
     story?.username ||
