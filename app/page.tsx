@@ -1335,13 +1335,15 @@ const userIds = Array.from(
 )
     
 
-const usernames = [
-  ...new Set(
+
+const usernames = Array.from(
+  new Set(
     postRows
       .map((post: any) => post.username)
       .filter(Boolean)
-  ),
-]
+  )
+)
+    
 
 let profiles: any[] = []
 
