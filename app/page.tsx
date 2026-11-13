@@ -1029,7 +1029,7 @@ useEffect(() => {
       {/* COMMENTS BOTTOM SHEET */}
       {showComments && (
         <div
-          className="fixed inset-0 z-[99999] flex items-end justify-center bg-black/55"
+          className="fixed inset-0 z-[100000] flex items-end justify-center bg-black/55"
           onClick={() => {
             setShowComments(false)
             setShowEmojiPicker(false)
