@@ -6,7 +6,6 @@ import StoryViewer from "./StoryViewer"
 import StoryComposer from "./StoryComposer"
 import { supabase } from "../../lib/supabase"
 
-
 const R2_PUBLIC =
   process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
   "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
@@ -54,10 +53,17 @@ function fixR2Url(p: any) {
   return `${baseUrl}/stories/${cleanPath}`
 }
 
+// =====================================
+// USERNAME FIX
+// =====================================
 
 function cleanUsername(value: any) {
   return String(value || "").trim().replace(/^@/, "")
 }
+
+// =====================================
+// STORY TIME
+// =====================================
 
 function getStoryTime(story: any) {
   const value =
@@ -70,8 +76,13 @@ function getStoryTime(story: any) {
   if (!value) return 0
 
   const time = new Date(value).getTime()
+
   return Number.isFinite(time) ? time : 0
 }
+
+// =====================================
+// 24 HOURS STORY EXPIRY
+// =====================================
 
 function isActiveStory(story: any) {
   const now = Date.now()
@@ -80,6 +91,7 @@ function isActiveStory(story: any) {
 
   if (expiry) {
     const expiryTime = new Date(expiry).getTime()
+
     if (Number.isFinite(expiryTime) && expiryTime <= now) {
       return false
     }
@@ -94,48 +106,19 @@ function isActiveStory(story: any) {
   return true
 }
 
+// =====================================
+// GET STORY OWNER
+// =====================================
 
-const R2_PUBLIC =
-  process.env.NEXT_PUBLIC_R2_PUBLIC_URL ||
-  "https://pub-62904f82f9ea4d4ebf8da6283b4e5e65.r2.dev"
-
-function getStoryImage(story: any) {
-  const value =
-    story?.imageUrl ||
-    story?.image_url ||
-    story?.videoUrl ||
-    story?.video_url ||
-    story?.r2Url ||
-    story?.r2_url ||
-    story?.publicUrl ||
-    story?.public_url ||
-    story?.url ||
-    story?.image ||
-    story?.key ||
+function getStoryOwner(story: any) {
+  const userId =
+    story?.user_id ||
+    story?.userId ||
+    story?.profile_id ||
+    story?.profile?.id ||
+    story?.profiles?.id ||
+    story?.user?.id ||
     ""
-
-  if (!value) return ""
-
-  const url = String(value).trim()
-
-  if (/^https?:\/\//i.test(url)) {
-    return url
-  }
-
-  const cleanPath = url.replace(/^\/+/, "")
-  const baseUrl = R2_PUBLIC.replace(/\/$/, "")
-
-  if (
-    cleanPath.startsWith("stories/") ||
-    cleanPath.startsWith("posts/") ||
-    cleanPath.startsWith("avatars/")
-  ) {
-    return `${baseUrl}/${cleanPath}`
-  }
-
-  return `${baseUrl}/stories/${cleanPath}`
-}
-
 
   const username = cleanUsername(
     story?.username ||
@@ -164,6 +147,10 @@ function getStoryImage(story: any) {
   return null
 }
 
+// =====================================
+// STORIES BAR COMPONENT
+// =====================================
+
 export default function StoriesBar({ onSelectUser, onAdd }: any) {
   const [stories, setStories] = useState<any[]>([])
   const [seen, setSeen] = useState<any>({})
@@ -178,7 +165,10 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
 
   const fileRef = useRef<HTMLInputElement>(null)
 
-  // GET LOGGED-IN USER AND PROFILE DP
+  // =====================================
+  // GET LOGGED-IN USER AND PROFILE
+  // =====================================
+
   const loadMyProfile = useCallback(async () => {
     try {
       const { data } = await supabase.auth.getUser()
@@ -202,13 +192,26 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         )
       )
 
-      setMyAvatar(profile?.avatar_url || "")
+      const avatar = profile?.avatar_url || ""
+
+      setMyAvatar(
+        avatar && !/^https?:\/\//i.test(avatar)
+          ? fixR2Url(
+              avatar.startsWith("avatars/")
+                ? avatar
+                : `avatars/${avatar.replace(/^\/+/, "")}`
+            )
+          : avatar
+      )
     } catch (error) {
       console.error("My profile load error:", error)
     }
   }, [])
 
+  // =====================================
   // LOAD ALL USERS STORIES
+  // =====================================
+
   const loadStories = useCallback(async () => {
     try {
       setLoadingStories(true)
@@ -217,7 +220,9 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         cache: "no-store",
       })
 
-      if (!res.ok) throw new Error("Stories load failed")
+      if (!res.ok) {
+        throw new Error("Stories load failed")
+      }
 
       const data = await res.json()
 
@@ -235,25 +240,29 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         if (!s) return
 
         const owner = getStoryOwner(s)
+
         if (!owner) return
 
         const image = fixR2Url(s)
+
         if (!image || !isActiveStory(s)) return
 
         const ownerKey = owner.key
+
+        const storyAvatar =
+          s.avatar_url ||
+          s.avatar ||
+          s.profile?.avatar_url ||
+          s.profiles?.avatar_url ||
+          s.user?.avatar_url ||
+          ""
 
         if (!grouped[ownerKey]) {
           grouped[ownerKey] = {
             id: ownerKey,
             user_id: owner.userId,
             username: owner.username || "user",
-            avatar:
-              s.avatar_url ||
-              s.avatar ||
-              s.profile?.avatar_url ||
-              s.profiles?.avatar_url ||
-              s.user?.avatar_url ||
-              "",
+            avatar: storyAvatar,
             stories: [],
             verified: !!s.verified,
             isCloseFriend: !!s.isCloseFriend,
@@ -268,20 +277,13 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           image_url: image,
         })
 
-        if (
-          s.avatar_url ||
-          s.avatar ||
-          s.profile?.avatar_url ||
-          s.profiles?.avatar_url
-        ) {
-          grouped[ownerKey].avatar =
-            s.avatar_url ||
-            s.avatar ||
-            s.profile?.avatar_url ||
-            s.profiles?.avatar_url
+        if (storyAvatar) {
+          grouped[ownerKey].avatar = storyAvatar
         }
 
-        if (s.verified) grouped[ownerKey].verified = true
+        if (s.verified) {
+          grouped[ownerKey].verified = true
+        }
       })
 
       const users = Object.values(grouped)
@@ -290,6 +292,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
           user.stories.sort(
             (a: any, b: any) => getStoryTime(a) - getStoryTime(b)
           )
+
           return user
         })
 
@@ -297,9 +300,11 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         const aLatest = Math.max(
           ...a.stories.map((s: any) => getStoryTime(s))
         )
+
         const bLatest = Math.max(
           ...b.stories.map((s: any) => getStoryTime(s))
         )
+
         return bLatest - aLatest
       })
 
@@ -311,7 +316,11 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     }
   }, [])
 
-  // INITIAL LOAD + AUTO REFRESH
+  // PART 2 CONTINUES BELOW
+// =====================================
+// INITIAL LOAD + AUTO REFRESH
+// =====================================
+
   useEffect(() => {
     let active = true
 
@@ -321,7 +330,9 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     fetch("/api/story_views", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
-        if (active) setSeen(data.views || {})
+        if (active) {
+          setSeen(data.views || {})
+        }
       })
       .catch(() => {})
 
@@ -338,21 +349,30 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     }
   }, [loadMyProfile, loadStories])
 
+  // =====================================
   // FIND MY OWN STORIES
+  // =====================================
+
   const myStories = stories.find(
     (user: any) =>
       currentUserId &&
       String(user.user_id || "") === String(currentUserId)
   )
 
-  // OTHER USERS ONLY
+  // =====================================
+  // OTHER USERS STORIES
+  // =====================================
+
   const otherUsersStories = stories.filter(
     (user: any) =>
       !currentUserId ||
       String(user.user_id || "") !== String(currentUserId)
   )
 
-  // OPEN COMPOSER
+  // =====================================
+  // OPEN STORY COMPOSER
+  // =====================================
+
   const handleAddClick = () => {
     if (typeof onAdd === "function") {
       try {
@@ -365,7 +385,10 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     setShowComposer(true)
   }
 
-  // UPLOAD STORY
+  // =====================================
+  // UPLOAD STORY TO CLOUDFLARE R2
+  // =====================================
+
   const handleFile = async (file: File) => {
     if (!file) return
 
@@ -380,41 +403,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     setUploading(true)
 
     try {
-      const presignRes = await fetch("/api/r2-presign", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-  image_url: presignData.publicUrl,
-  image: presignData.publicUrl,
-  video_url: file.type.startsWith("video/")
-    ? presignData.publicUrl
-    : "",
-  username,
-  user_id: loggedUser.id,
-  avatar_url: profile?.avatar_url || "",
-}),
-
-      const presignData = await presignRes.json()
-
-      if (
-        !presignRes.ok ||
-        !presignData.url ||
-        !presignData.publicUrl
-      ) {
-        throw new Error(
-          presignData.error || "R2 upload URL dorakaledu"
-        )
-      }
-
-      const uploadRes = await fetch(presignData.url, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
-      })
-
-      if (!uploadRes.ok) {
-        throw new Error(`R2 upload failed: ${uploadRes.status}`)
-      }
+      // GET LOGGED-IN USER
 
       const { data: authData, error: authError } =
         await supabase.auth.getUser()
@@ -424,6 +413,8 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
       }
 
       const loggedUser = authData.user
+
+      // GET USER PROFILE
 
       const { data: profile, error: profileError } =
         await supabase
@@ -439,14 +430,69 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         loggedUser.user_metadata?.username ||
         loggedUser.email?.split("@")[0]
 
-      if (!username) throw new Error("Username not found")
+      if (!username) {
+        throw new Error("Username not found")
+      }
+
+      // CREATE R2 FILE KEY
+
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-")
+
+      const fileName = `stories/${Date.now()}-${safeFileName}`
+
+      // REQUEST PRESIGNED URL
+
+      const presignRes = await fetch("/api/r2-presign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fileName,
+          contentType: file.type,
+          fileSize: file.size,
+        }),
+      })
+
+      const presignData = await presignRes.json()
+
+      if (
+        !presignRes.ok ||
+        !presignData.url ||
+        !presignData.publicUrl
+      ) {
+        throw new Error(
+          presignData.error || "R2 upload URL dorakaledu"
+        )
+      }
+
+      // UPLOAD FILE TO R2
+
+      const uploadRes = await fetch(presignData.url, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      })
+
+      if (!uploadRes.ok) {
+        throw new Error(`R2 upload failed: ${uploadRes.status}`)
+      }
+
+      // SAVE STORY RECORD
+
+      const isVideo = file.type.startsWith("video/")
 
       const saveRes = await fetch("/api/stories", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           image_url: presignData.publicUrl,
           image: presignData.publicUrl,
+          video_url: isVideo ? presignData.publicUrl : "",
           username,
           user_id: loggedUser.id,
           avatar_url: profile?.avatar_url || "",
@@ -461,33 +507,70 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         )
       }
 
+      // UPDATE PROFILE STATE
+
       setCurrentUserId(loggedUser.id)
       setMyUsername(cleanUsername(username))
-      setMyAvatar(profile?.avatar_url || "")
+
+      const avatar = profile?.avatar_url || ""
+
+      setMyAvatar(
+        avatar && !/^https?:\/\//i.test(avatar)
+          ? fixR2Url(
+              avatar.startsWith("avatars/")
+                ? avatar
+                : `avatars/${avatar.replace(/^\/+/, "")}`
+            )
+          : avatar
+      )
+
+      // RELOAD STORIES
 
       await loadStories()
+
       alert("Story uploaded successfully!")
     } catch (error) {
       console.error("Story upload error:", error)
-      alert("Story upload failed! Please try again.")
+
+      alert(
+        error instanceof Error
+          ? `Story upload failed: ${error.message}`
+          : "Story upload failed! Please try again."
+      )
     } finally {
       setUploading(false)
-      if (fileRef.current) fileRef.current.value = ""
+
+      if (fileRef.current) {
+        fileRef.current.value = ""
+      }
     }
   }
 
+  // =====================================
+  // FILE INPUT CHANGE
+  // =====================================
+
   const handleInputChange = (e: any) => {
     const file = e.target.files?.[0]
-    if (file) handleFile(file)
+
+    if (file) {
+      handleFile(file)
+    }
   }
 
+  // =====================================
   // PUBLISH FROM STORY COMPOSER
+  // =====================================
+
   const handleComposerPublish = async (file: File) => {
     setShowComposer(false)
     await handleFile(file)
   }
 
+  // =====================================
   // OPEN STORY
+  // =====================================
+
   const openStory = (user: any) => {
     if (!user?.stories?.length) return
 
@@ -498,6 +581,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         const index = stories.findIndex(
           (item: any) => item.id === user.id
         )
+
         onSelectUser(user, index)
       } catch (error) {
         console.error("Parent story callback error:", error)
@@ -505,11 +589,21 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
     }
   }
 
+  // =====================================
   // CLOSE STORY
+  // =====================================
+
   const closeStory = () => {
     setSelectedUser(null)
-                  }
-   return (
+  }
+
+  // PART 3 CONTINUES BELOW
+      
+// =====================================
+// STORIES BAR UI
+// =====================================
+
+  return (
     <>
       {/* INSTAGRAM STYLE STORIES BAR */}
       <div className="w-full bg-white border-b border-zinc-100 py-3 px-3 flex gap-2 overflow-x-auto overflow-y-hidden scrollbar-hide select-none">
@@ -524,65 +618,64 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
         />
 
         {/* YOUR STORY - PROFILE DP */}
-<div className="relative flex flex-col items-center min-w-[76px] shrink-0">
+        <div className="relative flex flex-col items-center min-w-[76px] shrink-0">
 
-  {/* PROFILE DP */}
-  <button
-    type="button"
-    onClick={() => {
-      if (myStories?.stories?.length) {
-        openStory(myStories)
-      } else {
-        handleAddClick()
-      }
-    }}
-    className="flex flex-col items-center touch-manipulation"
-  >
-    <div
-      className={`relative w-[70px] h-[70px] rounded-full p-[3px] ${
-        myStories?.stories?.length
-          ? "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
-          : "bg-zinc-200"
-      }`}
-    >
-      <div className="w-full h-full rounded-full bg-white p-[2px]">
-        {myAvatar ? (
-          <img
-            src={myAvatar}
-            alt="Your profile"
-            className="w-full h-full rounded-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full rounded-full bg-zinc-100 flex items-center justify-center text-2xl font-bold text-zinc-500">
-            {myUsername?.charAt(0)?.toUpperCase() || "Y"}
-          </div>
-        )}
-      </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (myStories?.stories?.length) {
+                openStory(myStories)
+              } else {
+                handleAddClick()
+              }
+            }}
+            className="flex flex-col items-center touch-manipulation"
+          >
+            <div
+              className={`relative w-[70px] h-[70px] rounded-full p-[3px] ${
+                myStories?.stories?.length
+                  ? "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600"
+                  : "bg-zinc-200"
+              }`}
+            >
+              <div className="w-full h-full rounded-full bg-white p-[2px]">
+                {myAvatar ? (
+                  <img
+                    src={myAvatar}
+                    alt="Your profile"
+                    className="w-full h-full rounded-full object-cover"
+                    onError={() => setMyAvatar("")}
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-zinc-100 flex items-center justify-center text-2xl font-bold text-zinc-500">
+                    {myUsername?.charAt(0)?.toUpperCase() || "Y"}
+                  </div>
+                )}
+              </div>
 
-      {uploading && (
-        <span className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center text-white">
-          ⏳
-        </span>
-      )}
-    </div>
+              {uploading && (
+                <span className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center text-white">
+                  ⏳
+                </span>
+              )}
+            </div>
 
-    <span className="text-[12px] mt-1 text-black max-w-[76px] truncate">
-      Your Story
-    </span>
-  </button>
+            <span className="text-[12px] mt-1 text-black max-w-[76px] truncate">
+              Your Story
+            </span>
+          </button>
 
-  {/* ALWAYS VISIBLE ADD STORY BUTTON */}
-  <button
-    type="button"
-    onClick={handleAddClick}
-    disabled={uploading}
-    aria-label="Add new story"
-    className="absolute top-[43px] right-0 z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-xl font-bold text-white shadow-md active:scale-90"
-  >
-    +
-  </button>
-
-</div>
+          {/* ADD STORY BUTTON */}
+          <button
+            type="button"
+            onClick={handleAddClick}
+            disabled={uploading}
+            aria-label="Add new story"
+            className="absolute top-[43px] right-0 z-10 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-500 text-xl font-bold text-white shadow-md active:scale-90"
+          >
+            +
+          </button>
+        </div>
 
         {/* OTHER USERS STORIES */}
         {otherUsersStories.map((user: any) => {
@@ -614,10 +707,7 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
                       alt={user.username}
                       loading="lazy"
                       onError={(e) => {
-                        e.currentTarget.src =
-                          `https://i.pravatar.cc/100?u=${encodeURIComponent(
-                            user.username
-                          )}`
+                        e.currentTarget.style.display = "none"
                       }}
                       className="w-full h-full rounded-full object-cover"
                     />
@@ -650,7 +740,6 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
             No Stories yet
           </div>
         )}
-
       </div>
 
       {/* STORY COMPOSER */}
@@ -673,4 +762,4 @@ export default function StoriesBar({ onSelectUser, onAdd }: any) {
       )}
     </>
   )
-}
+        }
