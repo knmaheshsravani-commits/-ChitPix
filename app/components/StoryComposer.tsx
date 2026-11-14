@@ -2027,7 +2027,7 @@ export default function StoryComposer({
           />
 
           {/* TEXT LAYERS */}
-          {textLayers.map((item) => (
+          {textItems.map((item) => (
             <div
               key={item.id}
               className="absolute left-1/2 -translate-x-1/2 rounded px-2 py-1 text-center font-bold"
