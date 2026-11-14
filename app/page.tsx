@@ -180,14 +180,23 @@ function ChitIcon({
         </svg>
       )
 
-    case "share":
-    case "send":
-      return (
-        <svg {...common}>
-          <path d="m22 2-7 20-4-9-9-4Z" />
-          <path d="M22 2 11 13" />
-        </svg>
-      )
+    
+case "share":
+  return (
+    <svg {...common}>
+      <path d="m22 2-7 20-4-9-9-4Z" />
+      <path d="M22 2 11 13" />
+    </svg>
+  )
+
+case "send":
+  return (
+    <svg {...common}>
+      <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8.5Z" />
+      <path d="M8 12h.01M12 12h.01M16 12h.01" />
+    </svg>
+  )
+      
 
     case "bookmark":
       return (
@@ -953,64 +962,83 @@ const handleProfile = () => {
           </div>
         )}
 
+        
         {/* ACTION BUTTONS */}
-        <div className="flex items-center gap-5 px-4 pt-4">
+        <div className="grid grid-cols-5 items-center px-4 pt-4 pb-2">
+
+          {/* LIKE */}
           <button
             type="button"
             onClick={handleLike}
             disabled={busy}
-            className={liked ? "text-pink-600" : "text-slate-800"}
+            className={`flex flex-col items-center justify-center gap-1 ${
+              liked ? "text-pink-600" : "text-slate-800"
+            }`}
             aria-label="Like post"
           >
-            <ChitIcon name="heart" size={26} active={liked} />
-<span className="ml-1 text-sm font-semibold">{likes.toLocaleString("en-IN")}</span>
+            <ChitIcon name="heart" size={29} active={liked} />
+            <span className="text-sm font-semibold">
+              {likes.toLocaleString("en-IN")}
+            </span>
           </button>
 
+          {/* COMMENT */}
           <button
             type="button"
             onClick={() => {
               setShowComments(true)
               loadComments()
             }}
-            className="text-slate-800"
+            className="flex flex-col items-center justify-center gap-1 text-slate-800"
             aria-label="Comments"
           >
-            <ChitIcon name="comment" size={26} />
-<span className="ml-1 text-sm font-semibold">
-  {commentCount.toLocaleString("en-IN")}
-</span>
-</button>
+            <ChitIcon name="comment" size={29} />
+            <span className="text-sm font-semibold">
+              {commentCount.toLocaleString("en-IN")}
+            </span>
+          </button>
 
+          {/* SHARE */}
           <button
             type="button"
             onClick={handleShare}
-            className="text-slate-800"
+            className="flex flex-col items-center justify-center gap-1 text-slate-800"
             aria-label="Share post"
           >
-            <ChitIcon name="share" size={26} />
-<span className="ml-1 text-sm font-semibold">{shareCount.toLocaleString("en-IN")}</span>
+            <ChitIcon name="share" size={29} />
+            <span className="text-sm font-semibold">
+              {shareCount.toLocaleString("en-IN")}
+            </span>
           </button>
 
+          {/* DM */}
           <button
             type="button"
             onClick={handleDM}
-            className="text-slate-800"
+            className="flex flex-col items-center justify-center gap-1 text-slate-800"
             aria-label="Send post"
           >
-            <ChitIcon name="send" size={25} />
+            <ChitIcon name="send" size={29} />
+            <span className="text-sm font-semibold">DM</span>
           </button>
 
-          <div className="flex-1" />
-
+          {/* SAVE */}
           <button
             type="button"
             onClick={handleSave}
-            className={saved ? "text-fuchsia-600" : "text-slate-800"}
+            className={`flex flex-col items-center justify-center gap-1 ${
+              saved ? "text-fuchsia-600" : "text-slate-800"
+            }`}
             aria-label="Save post"
           >
-            <ChitIcon name="bookmark" size={25} active={saved} />
+            <ChitIcon name="bookmark" size={29} active={saved} />
+            <span className="text-sm font-semibold">
+              {saved ? "Saved" : "Save"}
+            </span>
           </button>
+
         </div>
+        
 
         {/* POST DETAILS */}
         <div className="px-4 pb-4 pt-3">
