@@ -93,8 +93,10 @@ export default function BottomNav({
   }
 
   const buttonClass = (selected: boolean) =>
-    `flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-colors ${
-      selected ? "bg-neutral-100" : "bg-transparent"
+    `flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-all duration-200 ${
+      selected
+        ? "bg-neutral-100 scale-105"
+        : "bg-transparent active:scale-90"
     }`
 
   const stroke = {
@@ -105,115 +107,93 @@ export default function BottomNav({
     strokeLinejoin: "round" as const,
   }
 
+  // PART 2 CONTINUES BELOW
   return (
-    <nav
-      aria-label="Main navigation"
-      className="fixed bottom-0 left-1/2 z-[99999] flex h-[64px] w-full max-w-[480px] -translate-x-1/2 items-center justify-around border-t border-neutral-100 bg-white px-2"
-      style={{
-        backgroundColor: "#ffffff",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
-    >
-      {/* 1. HOME */}
-      <button
-        type="button"
-        aria-label="Home"
-        aria-current={isHome ? "page" : undefined}
-        onClick={() => goTo("/", "home")}
-        className={buttonClass(isHome)}
-        style={{ color: "#111111" }}
-      >
-        <svg width="24" height="24" viewBox="0 0 40 40" {...stroke}>
-          <path d="M4 18.5 20 5 36 18.5" />
-          <path d="M8 17v18h9V24h6v11h9V17" />
-        </svg>
-      </button>
+    <nav className="fixed bottom-0 left-0 right-0 z-[999] border-t border-gray-200 bg-white/95 backdrop-blur-md dark:border-gray-800 dark:bg-black/95">
+      <div className="mx-auto flex h-[62px] max-w-[600px] items-center justify-around px-2">
 
-      {/* 2. SEARCH */}
-      <button
-        type="button"
-        aria-label="Search"
-        aria-current={isSearch ? "page" : undefined}
-        onClick={() => goTo("/search", "search")}
-        className={buttonClass(isSearch)}
-        style={{ color: "#111111" }}
-      >
-        <svg width="24" height="24" viewBox="0 0 40 40" {...stroke}>
-          <circle cx="17.5" cy="17.5" r="13" />
-          <path d="m27 27 9 9" />
-        </svg>
-      </button>
+        {/* 1. HOME */}
+        <button
+          type="button"
+          onClick={() => goTo("/", "home")}
+          className={buttonClass(isHome)}
+          aria-label="Home"
+        >
+          <svg width="25" height="25" viewBox="0 0 24 24" {...stroke}>
+            <path d="m3 10 9-7 9 7" />
+            <path d="M5 9v11h14V9" />
+            <path d="M9 20v-7h6v7" />
+          </svg>
+        </button>
 
-      {/* 3. DIRECT MESSAGE */}
-      <button
-        type="button"
-        aria-label="Direct messages"
-        aria-current={isDM ? "page" : undefined}
-        onClick={() => goTo("/messages", "messages")}
-        className={buttonClass(isDM)}
-        style={{ color: "#111111" }}
-      >
-        <svg width="24" height="24" viewBox="0 0 40 40" {...stroke}>
-          <path d="M36 4 4 17.5l13 5.5L23 36 36 4Z" />
-          <path d="m17 23 19-19" />
-        </svg>
-      </button>
+        {/* 2. SEARCH */}
+        <button
+          type="button"
+          onClick={() => goTo("/search", "search")}
+          className={buttonClass(isSearch)}
+          aria-label="Search"
+        >
+          <svg width="25" height="25" viewBox="0 0 24 24" {...stroke}>
+            <circle cx="11" cy="11" r="7.5" />
+            <path d="m16.5 16.5 4 4" />
+          </svg>
+        </button>
 
-      {/* 4. REELS */}
-      <button
-        type="button"
-        aria-label="Reels"
-        aria-current={isReels ? "page" : undefined}
-        onClick={() => goTo("/reels", "reels")}
-        className={buttonClass(isReels)}
-        style={{ color: "#111111" }}
-      >
-        <svg width="24" height="24" viewBox="0 0 40 40" {...stroke}>
-          <rect x="3" y="5" width="34" height="30" rx="6" />
-          <path d="M3 14h34" />
-          <path d="m9 5 6 9" />
-          <path d="m20 5 6 9" />
-          <path d="m17 19 10 6-10 6V19Z" fill="currentColor" />
-        </svg>
-      </button>
+        {/* 3. DM */}
+        <button
+          type="button"
+          onClick={() => goTo("/messages", "dm")}
+          className={buttonClass(isDM)}
+          aria-label="Messages"
+        >
+          <svg width="25" height="25" viewBox="0 0 24 24" {...stroke}>
+            <path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-4-.9L3 21l1.9-5.5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3H13a8.5 8.5 0 0 1 8 8.5Z" />
+            <path d="M8 12h.01M12 12h.01M16 12h.01" />
+          </svg>
+        </button>
 
-      {/* 5. PROFILE DP */}
-      <button
-        type="button"
-        aria-label="Profile"
-        aria-current={isProfile ? "page" : undefined}
-        onClick={() => goTo("/profile", "profile")}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-      >
-        <div
-          className={`h-8 w-8 overflow-hidden rounded-full ${
-            isProfile
-              ? "ring-2 ring-black ring-offset-1"
-              : "border border-neutral-300"
-          }`}
+        {/* 4. REELS */}
+        <button
+          type="button"
+          onClick={() => goTo("/reels", "reels")}
+          className={buttonClass(isReels)}
+          aria-label="Reels"
+        >
+          <svg width="25" height="25" viewBox="0 0 24 24" {...stroke}>
+            <rect x="3" y="3" width="18" height="18" rx="4" />
+            <path d="m10 8 6 4-6 4Z" />
+            <path d="m3 8 18 0" />
+            <path d="m8 3 4 5" />
+            <path d="m15 3 4 5" />
+          </svg>
+        </button>
+
+        {/* 5. PROFILE */}
+        <button
+          type="button"
+          onClick={() => goTo("/profile", "profile")}
+          className={buttonClass(isProfile)}
+          aria-label="Profile"
         >
           {profilePhoto ? (
             <img
               src={profilePhoto}
-              alt="My profile"
-              className="h-full w-full object-cover"
-              onError={() => setProfilePhoto("")}
+              alt="Profile"
+              className={`h-[27px] w-[27px] rounded-full object-cover ${
+                isProfile
+                  ? "ring-2 ring-black ring-offset-2 dark:ring-white dark:ring-offset-black"
+                  : "border border-gray-300 dark:border-gray-600"
+              }`}
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-neutral-100">
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 30 30"
-                {...stroke}
-              >
-                <circle cx="15" cy="10" r="6" />
-                <path d="M4 27c0-7 4-11 11-11s11 4 11 11" />
-              </svg>
-            </div>
+            <svg width="25" height="25" viewBox="0 0 24 24" {...stroke}>
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21a8 8 0 0 1 16 0" />
+            </svg>
           )}
-        </div>
-      </button>
+        </button>
+
+      </div>
     </nav>
   )
 }
