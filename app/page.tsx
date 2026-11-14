@@ -260,7 +260,7 @@ const [shareCount, setShareCount] = useState(0)
   const [saved, setSaved] = useState(false)
   const [followed, setFollowed] = useState(false)
   const [likes, setLikes] = useState(0)
-
+  const [commentCount, setCommentCount] = useState(0)
   const [comments, setComments] = useState<any[]>([])
   const [commentText, setCommentText] = useState("")
   const [showComments, setShowComments] = useState(false)
@@ -577,6 +577,7 @@ if (!cancelled && !sharesError) {
       if (error) throw error
 
       setComments(previous => [...previous, data])
+      setCommentCount(previous => previous + 1)
       setCommentText("")
       setReplyingTo(null)
       setShowEmojiPicker(false)
@@ -612,6 +613,7 @@ if (!cancelled && !sharesError) {
     }
 
     const rows = data || []
+    setCommentCount(rows.length)
     setComments(rows)
 
     if (rows.length === 0) {
@@ -724,24 +726,41 @@ if (!cancelled && !sharesError) {
           
   // PART 3 - Post actions and UI
 
-  const handleShare = async () => {
-    const link = `${window.location.origin}/post/${post.id}`
+  
+const handleShare = async () => {
+  const link = `${window.location.origin}/post/${post.id}`
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "ChitPix",
-          text: post.caption || "Check out this post on ChitPix!",
-          url: link,
-        })
-      } else {
-        await navigator.clipboard.writeText(link)
-        setMessage("Post link copied!")
-      }
-    } catch (error) {
-      console.log("Share cancelled or unavailable:", error)
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "ChitPix",
+        text: post.caption || "Check out this post on ChitPix!",
+        url: link,
+      })
+    } else {
+      await navigator.clipboard.writeText(link)
+      setMessage("Post link copied!")
     }
+
+    if (currentUserId) {
+      const { error } = await supabase
+        .from("post_shares")
+        .insert({
+          post_id: post.id,
+          user_id: currentUserId,
+        })
+
+      if (error) {
+        console.error("Share count save failed:", error)
+      } else {
+        setShareCount(value => value + 1)
+      }
+    }
+  } catch (error) {
+    console.log("Share cancelled or unavailable:", error)
   }
+}
+  
 
   const handleCopyLink = async () => {
     try {
@@ -944,6 +963,7 @@ const handleProfile = () => {
             aria-label="Like post"
           >
             <ChitIcon name="heart" size={26} active={liked} />
+<span className="ml-1 text-sm font-semibold">{likes.toLocaleString("en-IN")}</span>
           </button>
 
           <button
@@ -965,6 +985,7 @@ const handleProfile = () => {
             aria-label="Share post"
           >
             <ChitIcon name="share" size={26} />
+<span className="ml-1 text-sm font-semibold">{shareCount.toLocaleString("en-IN")}</span>
           </button>
 
           <button
