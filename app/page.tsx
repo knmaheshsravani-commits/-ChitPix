@@ -794,19 +794,27 @@ const handleProfile = () => {
             className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400 p-[2px]"
           >
             <div className="h-full w-full overflow-hidden rounded-full bg-white">
-              {avatarUrl && !avatarFailed ? (
+              
+{avatarUrl && !avatarFailed ? (
   <img
     src={avatarUrl}
     alt={`${post.username || "User"} profile`}
     className="h-full w-full rounded-full object-cover"
-    loading="lazy"
-    onError={() => setAvatarFailed(true)}
+    loading="eager"
+    onLoad={() => {
+      console.log("HOME DP LOADED:", post.username, avatarUrl)
+    }}
+    onError={() => {
+      console.error("HOME DP FAILED:", post.username, avatarUrl)
+      setAvatarFailed(true)
+    }}
   />
 ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">
-                  {(post.username || "U").charAt(0).toUpperCase()}
-                </div>
-              )}
+  <div className="flex h-full w-full items-center justify-center text-sm font-bold text-slate-500">
+    {(post.username || "U").charAt(0).toUpperCase()}
+  </div>
+)}
+              
             </div>
           </button>
 
