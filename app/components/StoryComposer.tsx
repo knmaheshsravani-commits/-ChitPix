@@ -2091,7 +2091,7 @@ export default function StoryComposer({
         />
 
         <input
-          ref={cameraInputRef}
+          ref={cameraRef}
           type="file"
           accept="image/*,video/*"
           capture="environment"
