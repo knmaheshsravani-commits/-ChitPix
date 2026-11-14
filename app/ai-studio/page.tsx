@@ -2,7 +2,12 @@
 
 import React, { useEffect, useRef, useState } from "react";
 
+// =====================================
+// CHITPIX PHOTO FILTERS
+// =====================================
+
 type FilterItem = {
+  id: string;
   name: string;
   icon: string;
   css: string;
@@ -10,26 +15,26 @@ type FilterItem = {
 };
 
 const PHOTO_FILTERS: FilterItem[] = [
-  { name: "Normal", icon: "✨", css: "none", category: "Basic" },
-  { name: "Beauty", icon: "💖", css: "brightness(1.08) contrast(1.04) saturate(1.15)", category: "Beauty" },
-  { name: "Portrait", icon: "👤", css: "brightness(1.08) saturate(1.12) contrast(1.08)", category: "Beauty" },
-  { name: "Vintage", icon: "📷", css: "sepia(.4) contrast(.95) saturate(.8)", category: "Retro" },
-  { name: "Cinematic", icon: "🎬", css: "contrast(1.25) saturate(.85) brightness(.95)", category: "Art" },
-  { name: "Warm", icon: "🌅", css: "sepia(.18) saturate(1.3)", category: "Basic" },
-  { name: "Cool", icon: "❄️", css: "saturate(.9) hue-rotate(12deg)", category: "Basic" },
-  { name: "B&W", icon: "⚫", css: "grayscale(1)", category: "Art" },
-  { name: "Dream", icon: "🌸", css: "brightness(1.12) saturate(1.2) contrast(.92)", category: "Beauty" },
-  { name: "Drama", icon: "🔥", css: "contrast(1.4) saturate(1.15)", category: "Art" },
-  { name: "Soft", icon: "☁️", css: "brightness(1.08) contrast(.88) saturate(.9)", category: "Beauty" },
-  { name: "Glow", icon: "✨", css: "brightness(1.2) contrast(1.05) saturate(1.2)", category: "Beauty" },
-  { name: "Golden", icon: "🌞", css: "sepia(.25) saturate(1.5) brightness(1.05)", category: "Retro" },
-  { name: "Rose", icon: "🌹", css: "sepia(.12) hue-rotate(325deg) saturate(1.3)", category: "Beauty" },
-  { name: "Ocean", icon: "🌊", css: "hue-rotate(15deg) saturate(1.25) contrast(1.05)", category: "Art" },
-  { name: "Forest", icon: "🌿", css: "hue-rotate(25deg) saturate(1.3)", category: "Art" },
-  { name: "Noir", icon: "🎞️", css: "grayscale(1) contrast(1.5)", category: "Retro" },
-  { name: "Pop", icon: "🎨", css: "saturate(1.7) contrast(1.12)", category: "Art" },
-  { name: "Retro", icon: "📼", css: "sepia(.3) contrast(1.15) saturate(.9)", category: "Retro" },
-  { name: "Fade", icon: "🌫️", css: "contrast(.85) brightness(1.08) saturate(.75)", category: "Retro" },
+  { id: "none", name: "Normal", icon: "✨", css: "none", category: "Basic" },
+  { id: "beauty", name: "Beauty", icon: "💖", css: "brightness(1.08) contrast(1.04) saturate(1.15)", category: "Beauty" },
+  { id: "portrait", name: "Portrait", icon: "👤", css: "brightness(1.08) saturate(1.12) contrast(1.08)", category: "Beauty" },
+  { id: "vintage", name: "Vintage", icon: "📷", css: "sepia(.4) contrast(.95) saturate(.8)", category: "Retro" },
+  { id: "cinematic", name: "Cinematic", icon: "🎬", css: "contrast(1.25) saturate(.85) brightness(.95)", category: "Art" },
+  { id: "warm", name: "Warm", icon: "🌅", css: "sepia(.18) saturate(1.3)", category: "Basic" },
+  { id: "cool", name: "Cool", icon: "❄️", css: "saturate(.9) hue-rotate(12deg)", category: "Basic" },
+  { id: "bw", name: "B&W", icon: "⚫", css: "grayscale(1)", category: "Art" },
+  { id: "dream", name: "Dream", icon: "🌸", css: "brightness(1.12) saturate(1.2) contrast(.92)", category: "Beauty" },
+  { id: "drama", name: "Drama", icon: "🔥", css: "contrast(1.4) saturate(1.15)", category: "Art" },
+  { id: "soft", name: "Soft", icon: "☁️", css: "brightness(1.08) contrast(.88) saturate(.9)", category: "Beauty" },
+  { id: "glow", name: "Glow", icon: "✨", css: "brightness(1.2) contrast(1.05) saturate(1.2)", category: "Beauty" },
+  { id: "golden", name: "Golden", icon: "🌞", css: "sepia(.25) saturate(1.5) brightness(1.05)", category: "Retro" },
+  { id: "rose", name: "Rose", icon: "🌹", css: "sepia(.12) hue-rotate(325deg) saturate(1.3)", category: "Beauty" },
+  { id: "ocean", name: "Ocean", icon: "🌊", css: "hue-rotate(15deg) saturate(1.25) contrast(1.05)", category: "Art" },
+  { id: "forest", name: "Forest", icon: "🌿", css: "hue-rotate(25deg) saturate(1.3)", category: "Art" },
+  { id: "noir", name: "Noir", icon: "🎞️", css: "grayscale(1) contrast(1.5)", category: "Retro" },
+  { id: "pop", name: "Pop", icon: "🎨", css: "saturate(1.7) contrast(1.12)", category: "Art" },
+  { id: "retro", name: "Retro", icon: "📼", css: "sepia(.3) contrast(1.15) saturate(.9)", category: "Retro" },
+  { id: "fade", name: "Fade", icon: "🌫️", css: "contrast(.85) brightness(1.08) saturate(.75)", category: "Retro" },
 ];
 
 const FILTER_CATEGORIES = [
@@ -39,6 +44,10 @@ const FILTER_CATEGORIES = [
   "Retro",
   "Art",
 ];
+
+// =====================================
+// DEFAULT EDIT SETTINGS
+// =====================================
 
 const DEFAULT_EDIT = {
   brightness: 100,
@@ -58,12 +67,13 @@ type EditSettings = typeof DEFAULT_EDIT;
 type EditorSnapshot = {
   edit: EditSettings;
   activeFilter: string;
-  overlayText: string;
-  textColor: string;
-  textSize: number;
-  textBold: boolean;
-  sticker: string;
+  textOverlay: string;
+  stickers: string[];
 };
+
+// =====================================
+// MAIN COMPONENT
+// =====================================
 
 export default function AIStudioPage() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -72,16 +82,16 @@ export default function AIStudioPage() {
 
   // PHOTO STATES
 
-  const [image, setImage] = useState("");
+  const [image, setImage] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
 
   // FILTER STATES
 
-  const [activeFilter, setActiveFilter] = useState("Normal");
-  const [category, setCategory] = useState("All");
+  const [activeFilter, setActiveFilter] = useState("none");
+  const [activeCategory, setActiveCategory] = useState("All");
 
-  // PHOTO ADJUSTMENT STATES
+  // EDIT SETTINGS
 
   const [edit, setEdit] = useState<EditSettings>({
     ...DEFAULT_EDIT,
@@ -89,20 +99,16 @@ export default function AIStudioPage() {
 
   // TEXT AND STICKER STATES
 
-  const [overlayText, setOverlayText] = useState("");
-  const [textColor, setTextColor] = useState("#ffffff");
-  const [textSize, setTextSize] = useState(28);
-  const [textBold, setTextBold] = useState(true);
-  const [sticker, setSticker] = useState("");
+  const [textOverlay, setTextOverlay] = useState("");
+  const [stickers, setStickers] = useState<string[]>([]);
 
   // HISTORY STATES
 
   const historyRef = useRef<EditorSnapshot[]>([]);
-  const futureRef = useRef<EditorSnapshot[]>([]);
-  const currentSnapshotRef = useRef<EditorSnapshot | null>(null);
+  const historyIndexRef = useRef(-1);
 
   const [historyCount, setHistoryCount] = useState(0);
-  const [futureCount, setFutureCount] = useState(0);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   // EXPORT STATES
 
@@ -112,20 +118,25 @@ export default function AIStudioPage() {
   // SELECTED FILTER
 
   const selectedFilter =
-    PHOTO_FILTERS.find((f) => f.name === activeFilter)?.css || "none";
+    PHOTO_FILTERS.find((filter) => filter.id === activeFilter)?.css || "none";
 
-  // LIVE PHOTO PREVIEW STYLE
+  // IMAGE PREVIEW STYLE
 
   const imageStyle: React.CSSProperties = {
-    filter: `${selectedFilter} brightness(${edit.brightness}%) contrast(${edit.contrast}%) saturate(${edit.saturation}%) sepia(${edit.warmth}%) blur(${edit.blur}px)`,
+    filter: [
+      selectedFilter,
+      `brightness(${edit.brightness}%)`,
+      `contrast(${edit.contrast}%)`,
+      `saturate(${edit.saturation}%)`,
+      `blur(${edit.blur}px)`,
+    ].join(" "),
     transform: `rotate(${edit.rotation}deg) scale(${edit.zoom / 100}) scaleX(${edit.flipH ? -1 : 1}) scaleY(${edit.flipV ? -1 : 1})`,
     transition: "all .2s ease",
   };
 
-  // PART 2 CONTINUES BELOW
-  // =========================
-  // PART 2: EDITOR FUNCTIONS
-  // =========================
+  // =====================================
+  // HISTORY FUNCTIONS
+  // =====================================
 
   const createSnapshot = (): EditorSnapshot => ({
     edit: { ...edit },
@@ -144,17 +155,19 @@ export default function AIStudioPage() {
   const saveHistory = () => {
     const snapshot = createSnapshot();
 
-    historyRef.current = [
+    const nextHistory = [
       ...historyRef.current.slice(0, historyIndexRef.current + 1),
       snapshot,
     ];
 
-    if (historyRef.current.length > 30) {
-      historyRef.current.shift();
+    if (nextHistory.length > 30) {
+      nextHistory.shift();
     }
 
-    historyIndexRef.current = historyRef.current.length - 1;
-    setHistoryCount(historyRef.current.length);
+    historyRef.current = nextHistory;
+    historyIndexRef.current = nextHistory.length - 1;
+
+    setHistoryCount(nextHistory.length);
     setHistoryIndex(historyIndexRef.current);
   };
 
@@ -184,6 +197,10 @@ export default function AIStudioPage() {
     }
   };
 
+  // =====================================
+  // PHOTO UPLOAD
+  // =====================================
+
   const uploadPhoto = (file?: File) => {
     if (!file) return;
 
@@ -197,11 +214,13 @@ export default function AIStudioPage() {
       return;
     }
 
-    if (image) {
-      URL.revokeObjectURL(image);
+    if (imageUrlRef.current) {
+      URL.revokeObjectURL(imageUrlRef.current);
     }
 
     const newUrl = URL.createObjectURL(file);
+
+    imageUrlRef.current = newUrl;
 
     setImage(newUrl);
     setFileName(file.name);
@@ -222,13 +241,19 @@ export default function AIStudioPage() {
 
     historyRef.current = [initialSnapshot];
     historyIndexRef.current = 0;
+
     setHistoryCount(1);
     setHistoryIndex(0);
   };
 
+  // =====================================
+  // REMOVE PHOTO
+  // =====================================
+
   const removePhoto = () => {
-    if (image) {
-      URL.revokeObjectURL(image);
+    if (imageUrlRef.current) {
+      URL.revokeObjectURL(imageUrlRef.current);
+      imageUrlRef.current = "";
     }
 
     setImage(null);
@@ -243,34 +268,46 @@ export default function AIStudioPage() {
 
     historyRef.current = [];
     historyIndexRef.current = -1;
+
     setHistoryCount(0);
     setHistoryIndex(-1);
+
+    if (fileRef.current) {
+      fileRef.current.value = "";
+    }
+
+    if (cameraRef.current) {
+      cameraRef.current.value = "";
+    }
   };
 
-  const resetAllEdits = () => {
-    setActiveFilter("none");
-    setEdit({ ...DEFAULT_EDIT });
-    setTextOverlay("");
-    setStickers([]);
-    setExportMessage("");
-    saveHistory();
-  };
+  // =====================================
+  // UPDATE EDIT SETTINGS
+  // =====================================
 
   const updateEdit = <K extends keyof EditSettings>(
     key: K,
     value: EditSettings[K]
   ) => {
+    saveHistory();
+
     setEdit((previous) => ({
       ...previous,
       [key]: value,
     }));
+
     setExportMessage("");
   };
 
   const selectFilter = (filterId: string) => {
+    saveHistory();
     setActiveFilter(filterId);
     setExportMessage("");
   };
+
+  // =====================================
+  // IMAGE INPUT HANDLERS
+  // =====================================
 
   const handleImageUpload = (
     event: React.ChangeEvent<HTMLInputElement>
@@ -284,36 +321,74 @@ export default function AIStudioPage() {
     event.target.value = "";
   };
 
+  // =====================================
+  // TEXT FUNCTIONS
+  // =====================================
+
+  const updateText = (value: string) => {
+    saveHistory();
+    setTextOverlay(value);
+    setExportMessage("");
+  };
+
+  const clearTextOverlay = () => {
+    saveHistory();
+    setTextOverlay("");
+    setExportMessage("");
+  };
+
+  // =====================================
+  // STICKER FUNCTIONS
+  // =====================================
+
   const addSticker = (sticker: string) => {
+    saveHistory();
     setStickers((previous) => [...previous, sticker]);
     setExportMessage("");
   };
 
   const removeSticker = (index: number) => {
+    saveHistory();
+
     setStickers((previous) =>
       previous.filter((_, stickerIndex) => stickerIndex !== index)
     );
   };
 
-  const clearTextOverlay = () => {
+  // =====================================
+  // RESET ALL EDITS
+  // =====================================
+
+  const resetAllEdits = () => {
+    saveHistory();
+
+    setActiveFilter("none");
+    setEdit({ ...DEFAULT_EDIT });
     setTextOverlay("");
+    setStickers([]);
     setExportMessage("");
   };
 
-  // Clean up the temporary image URL when the page is removed.
+  // =====================================
+  // CLEANUP
+  // =====================================
+
   useEffect(() => {
     return () => {
-      if (image) {
-        URL.revokeObjectURL(image);
+      if (imageUrlRef.current) {
+        URL.revokeObjectURL(imageUrlRef.current);
       }
     };
-  }, [image]);
+  }, []);
 
-  // =========================
-  // PART 3 CONTINUES BELOW
-  // =========================
-        return (
+  // PART 2 CONTINUES BELOW
+        // =====================================
+  // PART 2: PHOTO STUDIO UI
+  // =====================================
+
+  return (
     <main className="min-h-screen bg-[#f7f5fc] pb-10 text-slate-900">
+
       {/* HEADER */}
       <header className="sticky top-0 z-40 border-b bg-white px-4 py-4">
         <div className="mx-auto flex max-w-xl items-center justify-between">
@@ -325,6 +400,7 @@ export default function AIStudioPage() {
               AI PHOTO STUDIO
             </p>
           </div>
+
           <span className="rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 px-4 py-2 text-sm font-bold text-white">
             ✨ AI Studio
           </span>
@@ -332,12 +408,17 @@ export default function AIStudioPage() {
       </header>
 
       <div className="mx-auto max-w-xl space-y-5 p-4">
+
         {/* WELCOME */}
         <section className="rounded-3xl bg-gradient-to-r from-fuchsia-600 to-pink-500 p-6 text-white shadow-lg">
-          <p className="text-sm font-semibold text-white/80">WELCOME TO</p>
+          <p className="text-sm font-semibold text-white/80">
+            WELCOME TO
+          </p>
+
           <h2 className="mt-2 text-2xl font-black">
             AI Photo Studio ✨
           </h2>
+
           <p className="mt-2 text-sm text-white/90">
             Create beautiful photos with ChitPix editing tools.
           </p>
@@ -345,8 +426,11 @@ export default function AIStudioPage() {
 
         {/* PHOTO UPLOAD */}
         <section className="rounded-3xl bg-white p-4 shadow-sm">
+
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold">📸 Your Photo</h2>
+            <h2 className="text-lg font-bold">
+              📸 Your Photo
+            </h2>
 
             {image && (
               <button
@@ -354,42 +438,58 @@ export default function AIStudioPage() {
                 onClick={removePhoto}
                 className="text-sm font-bold text-red-500"
               >
-                Remove
+                Remove Photo
               </button>
             )}
           </div>
 
           {image ? (
-            <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-2xl bg-black">
+            <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-2xl bg-black p-2">
               <img
                 src={image}
-                alt="Photo preview"
+                alt="ChitPix photo preview"
                 className="max-h-[500px] w-full object-contain"
                 style={imageStyle}
               />
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="flex min-h-[300px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-fuchsia-300 bg-fuchsia-50 p-6 text-center"
-            >
-              <span className="text-6xl">🖼️</span>
-              <span className="mt-4 text-lg font-bold">
+            <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-fuchsia-300 bg-fuchsia-50 p-6 text-center">
+
+              <span className="text-6xl">
+                🖼️
+              </span>
+
+              <h3 className="mt-4 text-lg font-bold">
                 Upload Your Photo
-              </span>
-              <span className="mt-2 text-sm text-slate-500">
-                Select a photo from your phone
-              </span>
-              <span className="mt-5 rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 px-7 py-3 font-bold text-white">
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Select a photo from your phone gallery.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="mt-5 w-full rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 px-7 py-3 font-bold text-white"
+              >
                 + Select Photo
-              </span>
-              <span className="mt-3 text-xs text-slate-400">
+              </button>
+
+              <button
+                type="button"
+                onClick={() => cameraRef.current?.click()}
+                className="mt-3 w-full rounded-full border border-fuchsia-300 bg-white px-7 py-3 font-bold text-fuchsia-700"
+              >
+                📷 Take Photo
+              </button>
+
+              <p className="mt-4 text-xs text-slate-400">
                 JPG · PNG · WEBP · Maximum 20MB
-              </span>
-            </button>
+              </p>
+            </div>
           )}
 
+          {/* GALLERY INPUT */}
           <input
             ref={fileRef}
             type="file"
@@ -398,11 +498,23 @@ export default function AIStudioPage() {
             onChange={handleImageUpload}
           />
 
+          {/* CAMERA INPUT */}
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleImageUpload}
+          />
+
           {image && (
             <div className="mt-3">
+
               <p className="truncate text-xs text-slate-500">
                 Selected: {fileName}
               </p>
+
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
@@ -410,6 +522,7 @@ export default function AIStudioPage() {
               >
                 Change Photo
               </button>
+
             </div>
           )}
 
@@ -418,37 +531,40 @@ export default function AIStudioPage() {
               {error}
             </p>
           )}
+
         </section>
 
-        {/* FILTER CATEGORIES AND FILTERS */}
+        {/* PHOTO FILTERS */}
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
+
             <h2 className="mb-2 text-lg font-bold">
               ✨ ChitPix Photo Filters
             </h2>
+
             <p className="mb-4 text-sm text-slate-500">
               Choose your favourite photo style.
             </p>
 
+            {/* FILTER CATEGORIES */}
             <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-              {["All", ...Array.from(
-                new Set(PHOTO_FILTERS.map((filter) => filter.category))
-              )].map((category) => (
+              {FILTER_CATEGORIES.map((item) => (
                 <button
-                  key={category}
+                  key={item}
                   type="button"
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => setActiveCategory(item)}
                   className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${
-                    activeCategory === category
+                    activeCategory === item
                       ? "bg-fuchsia-600 text-white"
                       : "bg-slate-100 text-slate-600"
                   }`}
                 >
-                  {category}
+                  {item}
                 </button>
               ))}
             </div>
 
+            {/* FILTER GRID */}
             <div className="grid grid-cols-3 gap-3">
               {PHOTO_FILTERS
                 .filter(
@@ -461,13 +577,16 @@ export default function AIStudioPage() {
                     key={filter.id}
                     type="button"
                     onClick={() => selectFilter(filter.id)}
-                    className={`flex min-h-[75px] flex-col items-center justify-center gap-1 rounded-2xl border p-2 ${
+                    className={`flex min-h-[85px] flex-col items-center justify-center gap-2 rounded-2xl border p-2 ${
                       activeFilter === filter.id
                         ? "border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 ring-2 ring-fuchsia-200"
                         : "border-slate-200 bg-white text-slate-700"
                     }`}
                   >
-                    <span className="text-xl">{filter.icon}</span>
+                    <span className="text-2xl">
+                      {filter.icon}
+                    </span>
+
                     <span className="text-xs font-bold">
                       {filter.name}
                     </span>
@@ -475,122 +594,227 @@ export default function AIStudioPage() {
                 ))}
             </div>
 
+            {/* RESET FILTER */}
             <button
               type="button"
               onClick={() => selectFilter("none")}
               className="mt-5 w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700"
             >
-              Reset Filter
+              ↻ Reset Filter
             </button>
+
           </section>
         )}
 
-        {/* BASIC ADJUSTMENTS */}
+        {/* PART 3 CONTINUES BELOW */}
+                {/* ================================= */}
+        {/* PHOTO ADJUSTMENTS */}
+        {/* ================================= */}
+
         {image && (
-          <section className="space-y-4 rounded-3xl bg-white p-4 shadow-sm">
+          <section className="space-y-5 rounded-3xl bg-white p-4 shadow-sm">
+
             <div>
-              <h2 className="text-lg font-bold">🎚️ Photo Adjustments</h2>
+              <h2 className="text-lg font-bold">
+                🎚️ Photo Adjustments
+              </h2>
+
               <p className="mt-1 text-sm text-slate-500">
-                Adjust your photo brightness, colour and clarity.
+                Adjust your photo to create your own style.
               </p>
             </div>
 
-            {([
-              {
-                key: "brightness",
-                label: "☀️ Brightness",
-                min: 0,
-                max: 200,
-                value: edit.brightness,
-              },
-              {
-                key: "contrast",
-                label: "◐ Contrast",
-                min: 0,
-                max: 200,
-                value: edit.contrast,
-              },
-              {
-                key: "saturation",
-                label: "🌈 Saturation",
-                min: 0,
-                max: 200,
-                value: edit.saturation,
-              },
-              {
-                key: "warmth",
-                label: "🌅 Warmth",
-                min: -100,
-                max: 100,
-                value: edit.warmth,
-              },
-              {
-                key: "blur",
-                label: "💧 Blur",
-                min: 0,
-                max: 10,
-                value: edit.blur,
-              },
-            ] as const).map((control) => (
-              <div key={control.key}>
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-semibold">
-                    {control.label}
-                  </label>
-                  <span className="text-sm font-bold text-fuchsia-600">
-                    {control.value}
-                  </span>
-                </div>
+            {/* BRIGHTNESS */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-semibold">
+                  ☀️ Brightness
+                </label>
 
-                <input
-                  type="range"
-                  min={control.min}
-                  max={control.max}
-                  value={control.value}
-                  onChange={(event) =>
-                    updateEdit(
-                      control.key,
-                      Number(event.target.value)
-                    )
-                  }
-                  className="w-full accent-fuchsia-600"
-                />
+                <span className="font-bold text-fuchsia-600">
+                  {edit.brightness}%
+                </span>
               </div>
-            ))}
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={edit.brightness}
+                onChange={(event) =>
+                  updateEdit("brightness", Number(event.target.value))
+                }
+                className="w-full accent-fuchsia-600"
+              />
+            </div>
+
+            {/* CONTRAST */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-semibold">
+                  ◐ Contrast
+                </label>
+
+                <span className="font-bold text-fuchsia-600">
+                  {edit.contrast}%
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={edit.contrast}
+                onChange={(event) =>
+                  updateEdit("contrast", Number(event.target.value))
+                }
+                className="w-full accent-fuchsia-600"
+              />
+            </div>
+
+            {/* SATURATION */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-semibold">
+                  🌈 Saturation
+                </label>
+
+                <span className="font-bold text-fuchsia-600">
+                  {edit.saturation}%
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="200"
+                value={edit.saturation}
+                onChange={(event) =>
+                  updateEdit("saturation", Number(event.target.value))
+                }
+                className="w-full accent-fuchsia-600"
+              />
+            </div>
+
+            {/* WARMTH */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-semibold">
+                  🌅 Warmth
+                </label>
+
+                <span className="font-bold text-fuchsia-600">
+                  {edit.warmth}
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min="-100"
+                max="100"
+                value={edit.warmth}
+                onChange={(event) =>
+                  updateEdit("warmth", Number(event.target.value))
+                }
+                className="w-full accent-fuchsia-600"
+              />
+            </div>
+
+            {/* BLUR */}
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-semibold">
+                  💧 Blur
+                </label>
+
+                <span className="font-bold text-fuchsia-600">
+                  {edit.blur}px
+                </span>
+              </div>
+
+              <input
+                type="range"
+                min="0"
+                max="10"
+                step="1"
+                value={edit.blur}
+                onChange={(event) =>
+                  updateEdit("blur", Number(event.target.value))
+                }
+                className="w-full accent-fuchsia-600"
+              />
+            </div>
+
+            {/* RESET ADJUSTMENTS */}
+            <button
+              type="button"
+              onClick={() => {
+                setEdit((previous) => ({
+                  ...previous,
+                  brightness: 100,
+                  contrast: 100,
+                  saturation: 100,
+                  warmth: 0,
+                  blur: 0,
+                }));
+
+                setExportMessage("");
+              }}
+              className="w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700"
+            >
+              ↻ Reset Adjustments
+            </button>
+
           </section>
         )}
 
-        {/* ROTATE, FLIP AND ZOOM */}
+        {/* ================================= */}
+        {/* ROTATE AND FLIP */}
+        {/* ================================= */}
+
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
+
             <h2 className="mb-4 text-lg font-bold">
               🔄 Transform Photo
             </h2>
 
             <div className="grid grid-cols-2 gap-3">
+
+              {/* ROTATE RIGHT */}
               <button
                 type="button"
                 onClick={() =>
-                  updateEdit("rotation", (edit.rotation + 90) % 360)
+                  updateEdit(
+                    "rotation",
+                    (edit.rotation + 90) % 360
+                  )
                 }
                 className="rounded-xl bg-fuchsia-50 p-3 font-bold text-fuchsia-700"
               >
                 ↻ Rotate Right
               </button>
 
+              {/* ROTATE LEFT */}
               <button
                 type="button"
                 onClick={() =>
-                  updateEdit("rotation", (edit.rotation + 270) % 360)
+                  updateEdit(
+                    "rotation",
+                    (edit.rotation + 270) % 360
+                  )
                 }
                 className="rounded-xl bg-fuchsia-50 p-3 font-bold text-fuchsia-700"
               >
                 ↺ Rotate Left
               </button>
 
+              {/* FLIP HORIZONTAL */}
               <button
                 type="button"
-                onClick={() => updateEdit("flipH", !edit.flipH)}
+                onClick={() =>
+                  updateEdit("flipH", !edit.flipH)
+                }
                 className={`rounded-xl p-3 font-bold ${
                   edit.flipH
                     ? "bg-fuchsia-600 text-white"
@@ -600,9 +824,12 @@ export default function AIStudioPage() {
                 ↔ Flip Horizontal
               </button>
 
+              {/* FLIP VERTICAL */}
               <button
                 type="button"
-                onClick={() => updateEdit("flipV", !edit.flipV)}
+                onClick={() =>
+                  updateEdit("flipV", !edit.flipV)
+                }
                 className={`rounded-xl p-3 font-bold ${
                   edit.flipV
                     ? "bg-fuchsia-600 text-white"
@@ -611,12 +838,18 @@ export default function AIStudioPage() {
               >
                 ↕ Flip Vertical
               </button>
+
             </div>
 
+            {/* ZOOM */}
             <div className="mt-5">
-              <div className="mb-2 flex justify-between">
-                <label className="text-sm font-semibold">🔍 Zoom</label>
-                <span className="text-sm font-bold text-fuchsia-600">
+
+              <div className="mb-2 flex items-center justify-between">
+                <label className="text-sm font-semibold">
+                  🔍 Zoom
+                </label>
+
+                <span className="font-bold text-fuchsia-600">
                   {edit.zoom}%
                 </span>
               </div>
@@ -631,14 +864,39 @@ export default function AIStudioPage() {
                 }
                 className="w-full accent-fuchsia-600"
               />
+
             </div>
+
+            {/* RESET TRANSFORM */}
+            <button
+              type="button"
+              onClick={() => {
+                setEdit((previous) => ({
+                  ...previous,
+                  rotation: 0,
+                  flipH: false,
+                  flipV: false,
+                  zoom: 100,
+                }));
+
+                setExportMessage("");
+              }}
+              className="mt-4 w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700"
+            >
+              ↻ Reset Transform
+            </button>
+
           </section>
         )}
 
         {/* PART 4 CONTINUES BELOW */}
-                {/* VIGNETTE EFFECT */}
+                {/* ================================= */}
+        {/* VIGNETTE EFFECT */}
+        {/* ================================= */}
+
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
+
             <h2 className="mb-2 text-lg font-bold">
               🌑 Vignette Effect
             </h2>
@@ -651,6 +909,7 @@ export default function AIStudioPage() {
               <label className="text-sm font-semibold">
                 Vignette Strength
               </label>
+
               <span className="font-bold text-fuchsia-600">
                 {edit.vignette}%
               </span>
@@ -672,28 +931,30 @@ export default function AIStudioPage() {
               onClick={() => updateEdit("vignette", 0)}
               className="mt-3 w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700"
             >
-              Reset Vignette
+              ↻ Reset Vignette
             </button>
+
           </section>
         )}
 
+        {/* ================================= */}
         {/* TEXT EDITOR */}
+        {/* ================================= */}
+
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
+
             <h2 className="mb-2 text-lg font-bold">
               📝 Add Text to Photo
             </h2>
 
             <p className="mb-4 text-sm text-slate-500">
-              Write a caption or your favourite quote.
+              Write your favourite caption or quote.
             </p>
 
             <textarea
               value={textOverlay}
-              onChange={(event) => {
-                setTextOverlay(event.target.value);
-                setExportMessage("");
-              }}
+              onChange={(event) => updateText(event.target.value)}
               placeholder="Type your photo text here..."
               rows={3}
               maxLength={120}
@@ -704,10 +965,23 @@ export default function AIStudioPage() {
               <span className="text-xs text-slate-400">
                 Maximum 120 characters
               </span>
+
               <span className="text-xs font-semibold text-slate-500">
                 {textOverlay.length}/120
               </span>
             </div>
+
+            {textOverlay && (
+              <div className="mt-4 rounded-xl bg-slate-900 p-4 text-center">
+                <p className="break-words text-lg font-black text-white">
+                  {textOverlay}
+                </p>
+
+                <p className="mt-1 text-xs text-slate-400">
+                  Text preview
+                </p>
+              </div>
+            )}
 
             <button
               type="button"
@@ -718,22 +992,16 @@ export default function AIStudioPage() {
               Clear Text
             </button>
 
-            {textOverlay && (
-              <div className="mt-4 rounded-xl bg-slate-900 p-4 text-center">
-                <p className="break-words text-lg font-black text-white">
-                  {textOverlay}
-                </p>
-                <p className="mt-1 text-xs text-slate-400">
-                  Text preview
-                </p>
-              </div>
-            )}
           </section>
         )}
 
+        {/* ================================= */}
         {/* STICKER COLLECTION */}
+        {/* ================================= */}
+
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
+
             <h2 className="mb-2 text-lg font-bold">
               🎨 Photo Stickers
             </h2>
@@ -773,6 +1041,7 @@ export default function AIStudioPage() {
 
             {stickers.length > 0 && (
               <div className="mt-5">
+
                 <h3 className="mb-3 text-sm font-bold">
                   Selected Stickers
                 </h3>
@@ -786,18 +1055,25 @@ export default function AIStudioPage() {
                       className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-xl"
                       title="Remove sticker"
                     >
-                      {sticker} <span className="text-xs">✕</span>
+                      {sticker}{" "}
+                      <span className="text-xs">✕</span>
                     </button>
                   ))}
                 </div>
+
               </div>
             )}
+
           </section>
         )}
 
+        {/* ================================= */}
         {/* UNDO AND REDO */}
+        {/* ================================= */}
+
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
+
             <h2 className="mb-2 text-lg font-bold">
               ↩️ Editing History
             </h2>
@@ -807,6 +1083,7 @@ export default function AIStudioPage() {
             </p>
 
             <div className="grid grid-cols-2 gap-3">
+
               <button
                 type="button"
                 onClick={undo}
@@ -824,15 +1101,20 @@ export default function AIStudioPage() {
               >
                 ↷ Redo
               </button>
+
             </div>
 
             <p className="mt-3 text-center text-xs text-slate-400">
               History: {Math.max(0, historyIndex + 1)} / {historyCount}
             </p>
+
           </section>
         )}
 
-        {/* RESET ALL EDITS */}
+        {/* ================================= */}
+        {/* RESET ALL EDITING */}
+        {/* ================================= */}
+
         {image && (
           <button
             type="button"
@@ -844,397 +1126,387 @@ export default function AIStudioPage() {
         )}
 
         {/* PART 5 CONTINUES BELOW */}
-                {/* EXPORT PHOTO */}
-        {image && (
-          <section className="rounded-3xl bg-white p-5 shadow-sm">
-            <h2 className="mb-2 text-lg font-bold">
-              📥 Save Your Edited Photo
-            </h2>
+              {/* PART 5: EXPORT AND SHARE */}
 
-            <p className="mb-4 text-sm text-slate-500">
-              Export your edited photo and save it to your phone.
-            </p>
+      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <h2 className="mb-3 text-lg font-bold text-gray-900">
+          Save Your Photo
+        </h2>
 
-            <button
-              type="button"
-              disabled={exporting}
-              onClick={async () => {
-                if (!image) return;
+        <p className="mb-4 text-sm text-gray-500">
+          Edited photo ni download or share cheyyachu.
+        </p>
 
-                try {
-                  setExporting(true);
-                  setExportMessage("");
-                  setError("");
+        <button
+          type="button"
+          disabled={!image || exporting}
+          onClick={async () => {
+            if (!image) return;
 
-                  const sourceImage = new Image();
+            try {
+              setExporting(true);
+              setError("");
+              setExportMessage("");
 
-                  sourceImage.src = image;
+              const source = new window.Image();
+              source.crossOrigin = "anonymous";
 
-                  await new Promise<void>((resolve, reject) => {
-                    sourceImage.onload = () => resolve();
-                    sourceImage.onerror = () =>
-                      reject(new Error("Could not load your photo."));
-                  });
+              await new Promise<void>((resolve, reject) => {
+                source.onload = () => resolve();
+                source.onerror = () =>
+                  reject(new Error("Photo load avvaledu. Malli try cheyyi."));
+                source.src = image;
+              });
 
-                  const canvas = document.createElement("canvas");
-                  const context = canvas.getContext("2d");
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
 
-                  if (!context) {
-                    throw new Error("Photo export is not supported.");
-                  }
+              if (!ctx) {
+                throw new Error("Photo export support ledu.");
+              }
 
-                  const rotation =
-                    ((edit.rotation % 360) + 360) % 360;
+              const rotation = ((edit.rotation % 360) + 360) % 360;
+              const sideways = rotation === 90 || rotation === 270;
 
-                  const sideways = rotation === 90 || rotation === 270;
+              canvas.width = sideways ? source.height : source.width;
+              canvas.height = sideways ? source.width : source.height;
 
-                  canvas.width = sideways
-                    ? sourceImage.naturalHeight
-                    : sourceImage.naturalWidth;
+              ctx.save();
+              ctx.translate(canvas.width / 2, canvas.height / 2);
+              ctx.rotate((rotation * Math.PI) / 180);
 
-                  canvas.height = sideways
-                    ? sourceImage.naturalWidth
-                    : sourceImage.naturalHeight;
+              ctx.scale(
+                (edit.flipH ? -1 : 1) * (edit.zoom / 100),
+                (edit.flipV ? -1 : 1) * (edit.zoom / 100)
+              );
 
-                  context.save();
+              const filter = [
+                selectedFilter?.css || "",
+                `brightness(${edit.brightness}%)`,
+                `contrast(${edit.contrast}%)`,
+                `saturate(${edit.saturation}%)`,
+                `blur(${edit.blur}px)`,
+              ]
+                .filter(Boolean)
+                .join(" ");
 
-                  context.translate(
+              ctx.filter = filter;
+
+              ctx.drawImage(
+                source,
+                -source.width / 2,
+                -source.height / 2,
+                source.width,
+                source.height
+              );
+
+              ctx.restore();
+              ctx.filter = "none";
+
+              // Warmth effect
+              if (edit.warmth !== 0) {
+                ctx.fillStyle =
+                  edit.warmth > 0
+                    ? `rgba(255, 145, 45, ${Math.abs(edit.warmth) / 500})`
+                    : `rgba(65, 135, 255, ${Math.abs(edit.warmth) / 500})`;
+
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+
+              // Vignette effect
+              if (edit.vignette > 0) {
+                const radius = Math.max(canvas.width, canvas.height) * 0.75;
+                const gradient = ctx.createRadialGradient(
+                  canvas.width / 2,
+                  canvas.height / 2,
+                  radius * 0.2,
+                  canvas.width / 2,
+                  canvas.height / 2,
+                  radius
+                );
+
+                gradient.addColorStop(0, "rgba(0,0,0,0)");
+                gradient.addColorStop(
+                  1,
+                  `rgba(0,0,0,${edit.vignette / 100})`
+                );
+
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+
+              // Text overlay
+              if (textOverlay.trim()) {
+                const fontSize = Math.max(
+                  20,
+                  Math.round(canvas.width * 0.045)
+                );
+
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "bottom";
+                ctx.lineWidth = Math.max(2, fontSize * 0.08);
+                ctx.strokeStyle = "rgba(0,0,0,0.65)";
+                ctx.fillStyle = "#ffffff";
+
+                const lines = textOverlay.split("\n");
+                const lineHeight = fontSize * 1.3;
+                const startY =
+                  canvas.height - 30 - (lines.length - 1) * lineHeight;
+
+                lines.forEach((line, index) => {
+                  ctx.strokeText(
+                    line,
                     canvas.width / 2,
-                    canvas.height / 2
+                    startY + index * lineHeight
                   );
-
-                  context.rotate((rotation * Math.PI) / 180);
-
-                  context.scale(
-                    (edit.flipH ? -1 : 1) * (edit.zoom / 100),
-                    (edit.flipV ? -1 : 1) * (edit.zoom / 100)
-                  );
-
-                  context.filter = [
-                    selectedFilter,
-                    `brightness(${edit.brightness}%)`,
-                    `contrast(${edit.contrast}%)`,
-                    `saturate(${edit.saturation}%)`,
-                    `blur(${edit.blur}px)`,
-                  ]
-                    .filter((value) => value && value !== "none")
-                    .join(" ");
-
-                  context.drawImage(
-                    sourceImage,
-                    -sourceImage.naturalWidth / 2,
-                    -sourceImage.naturalHeight / 2,
-                    sourceImage.naturalWidth,
-                    sourceImage.naturalHeight
-                  );
-
-                  context.restore();
-
-                  // Warmth overlay
-                  if (edit.warmth !== 0) {
-                    context.save();
-
-                    context.globalAlpha =
-                      Math.abs(edit.warmth) / 500;
-
-                    context.fillStyle =
-                      edit.warmth > 0 ? "#ff9b42" : "#65aaff";
-
-                    context.fillRect(
-                      0,
-                      0,
-                      canvas.width,
-                      canvas.height
-                    );
-
-                    context.restore();
-                  }
-
-                  // Vignette effect
-                  if (edit.vignette > 0) {
-                    context.save();
-
-                    const radius = Math.max(
-                      canvas.width,
-                      canvas.height
-                    );
-
-                    const gradient = context.createRadialGradient(
-                      canvas.width / 2,
-                      canvas.height / 2,
-                      radius * 0.15,
-                      canvas.width / 2,
-                      canvas.height / 2,
-                      radius * 0.7
-                    );
-
-                    gradient.addColorStop(0, "rgba(0,0,0,0)");
-                    gradient.addColorStop(
-                      1,
-                      `rgba(0,0,0,${edit.vignette / 100})`
-                    );
-
-                    context.fillStyle = gradient;
-                    context.fillRect(
-                      0,
-                      0,
-                      canvas.width,
-                      canvas.height
-                    );
-
-                    context.restore();
-                  }
-
-                  // Add text overlay
-                  if (textOverlay.trim()) {
-                    context.save();
-
-                    const fontSize = Math.max(
-                      24,
-                      Math.round(canvas.width * 0.055)
-                    );
-
-                    context.font = `bold ${fontSize}px Arial`;
-                    context.textAlign = "center";
-                    context.textBaseline = "middle";
-                    context.fillStyle = "#ffffff";
-                    context.shadowColor = "rgba(0,0,0,0.8)";
-                    context.shadowBlur = 8;
-
-                    const words = textOverlay.split("\n");
-                    const lineHeight = fontSize * 1.4;
-
-                    words.forEach((line, index) => {
-                      context.fillText(
-                        line,
-                        canvas.width / 2,
-                        canvas.height * 0.85 +
-                          (index - (words.length - 1) / 2) *
-                            lineHeight,
-                        canvas.width * 0.9
-                      );
-                    });
-
-                    context.restore();
-                  }
-
-                  // Add selected stickers
-                  if (stickers.length > 0) {
-                    context.save();
-
-                    const stickerSize = Math.max(
-                      30,
-                      Math.round(canvas.width * 0.09)
-                    );
-
-                    context.font = `${stickerSize}px Arial`;
-                    context.textAlign = "center";
-                    context.textBaseline = "middle";
-
-                    stickers.forEach((sticker, index) => {
-                      const columns = 5;
-                      const column = index % columns;
-                      const row = Math.floor(index / columns);
-
-                      context.fillText(
-                        sticker,
-                        canvas.width * (0.12 + column * 0.17),
-                        canvas.height * (0.12 + row * 0.12)
-                      );
-                    });
-
-                    context.restore();
-                  }
-
-                  const blob = await new Promise<Blob>(
-                    (resolve, reject) => {
-                      canvas.toBlob((result) => {
-                        if (result) {
-                          resolve(result);
-                        } else {
-                          reject(
-                            new Error("Could not create photo file.")
-                          );
-                        }
-                      }, "image/png");
-                    }
-                  );
-
-                  const downloadUrl = URL.createObjectURL(blob);
-                  const link = document.createElement("a");
-
-                  link.href = downloadUrl;
-                  link.download = `chitpix-${Date.now()}.png`;
-
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-
-                  URL.revokeObjectURL(downloadUrl);
-
-                  setExportMessage(
-                    "Your edited photo is ready! ❤️"
-                  );
-                } catch (exportError) {
-                  console.error("Photo export error:", exportError);
-
-                  setError(
-                    exportError instanceof Error
-                      ? exportError.message
-                      : "Photo export failed. Please try again."
-                  );
-                } finally {
-                  setExporting(false);
-                }
-              }}
-              className="w-full rounded-2xl bg-gradient-to-r from-fuchsia-600 to-pink-500 py-4 text-lg font-black text-white shadow-lg disabled:opacity-50"
-            >
-              {exporting ? "Preparing Photo..." : "⬇️ Download Photo"}
-            </button>
-
-            <button
-              type="button"
-              disabled={exporting}
-              onClick={async () => {
-                if (!image) return;
-
-                try {
-                  setExporting(true);
-                  setExportMessage("");
-                  setError("");
-
-                  const sourceImage = new Image();
-                  sourceImage.src = image;
-
-                  await new Promise<void>((resolve, reject) => {
-                    sourceImage.onload = () => resolve();
-                    sourceImage.onerror = () =>
-                      reject(new Error("Could not load your photo."));
-                  });
-
-                  const canvas = document.createElement("canvas");
-
-                  const sideways =
-                    edit.rotation % 180 !== 0;
-
-                  canvas.width = sideways
-                    ? sourceImage.naturalHeight
-                    : sourceImage.naturalWidth;
-
-                  canvas.height = sideways
-                    ? sourceImage.naturalWidth
-                    : sourceImage.naturalHeight;
-
-                  const context = canvas.getContext("2d");
-
-                  if (!context) {
-                    throw new Error("Photo export is not supported.");
-                  }
-
-                  context.translate(
+                  ctx.fillText(
+                    line,
                     canvas.width / 2,
-                    canvas.height / 2
+                    startY + index * lineHeight
                   );
+                });
+              }
 
-                  context.rotate(
-                    (edit.rotation * Math.PI) / 180
+              // Stickers
+              if (stickers.length > 0) {
+                const stickerSize = Math.max(
+                  28,
+                  Math.round(canvas.width * 0.09)
+                );
+
+                stickers.forEach((sticker, index) => {
+                  ctx.font = `${stickerSize}px Arial`;
+                  ctx.textAlign = "center";
+                  ctx.fillText(
+                    sticker,
+                    canvas.width * (0.15 + (index % 4) * 0.22),
+                    canvas.height * (0.15 + Math.floor(index / 4) * 0.13)
                   );
+                });
+              }
 
-                  context.scale(
-                    (edit.flipH ? -1 : 1) * edit.zoom / 100,
-                    (edit.flipV ? -1 : 1) * edit.zoom / 100
-                  );
+              const blob = await new Promise<Blob>((resolve, reject) => {
+                canvas.toBlob((result) => {
+                  if (result) resolve(result);
+                  else reject(new Error("Photo save avvaledu."));
+                }, "image/jpeg", 0.95);
+              });
 
-                  context.filter = [
-                    selectedFilter,
-                    `brightness(${edit.brightness}%)`,
-                    `contrast(${edit.contrast}%)`,
-                    `saturate(${edit.saturation}%)`,
-                    `blur(${edit.blur}px)`,
-                  ]
-                    .filter((value) => value && value !== "none")
-                    .join(" ");
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = `chitpix-edited-${Date.now()}.jpg`;
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+              URL.revokeObjectURL(url);
 
-                  context.drawImage(
-                    sourceImage,
-                    -sourceImage.naturalWidth / 2,
-                    -sourceImage.naturalHeight / 2
-                  );
+              setExportMessage("Photo successfully saved! ❤️");
+            } catch (err) {
+              setError(
+                err instanceof Error
+                  ? err.message
+                  : "Photo export failed. Malli try cheyyi."
+              );
+            } finally {
+              setExporting(false);
+            }
+          }}
+          className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {exporting ? "Saving..." : "⬇️ Download Edited Photo"}
+        </button>
 
-                  context.restore();
+        <button
+          type="button"
+          disabled={!image || exporting}
+          onClick={async () => {
+            if (!image) return;
 
-                  const blob = await new Promise<Blob>(
-                    (resolve, reject) => {
-                      canvas.toBlob((result) => {
-                        if (result) resolve(result);
-                        else reject(new Error("Could not prepare photo."));
-                      }, "image/png");
-                    }
-                  );
+            try {
+              setExporting(true);
+              setError("");
+              setExportMessage("");
 
-                  const shareFile = new File(
-                    [blob],
-                    "chitpix-photo.png",
-                    { type: "image/png" }
-                  );
+              const source = new window.Image();
+              source.crossOrigin = "anonymous";
 
-                  if (
-                    navigator.share &&
-                    navigator.canShare?.({ files: [shareFile] })
-                  ) {
-                    await navigator.share({
-                      title: "My ChitPix Photo",
-                      text: "Edited with ChitPix AI Studio ❤️",
-                      files: [shareFile],
-                    });
+              await new Promise<void>((resolve, reject) => {
+                source.onload = () => resolve();
+                source.onerror = () =>
+                  reject(new Error("Photo load avvaledu. Malli try cheyyi."));
+                source.src = image;
+              });
 
-                    setExportMessage("Photo shared successfully!");
-                  } else {
-                    const shareUrl = URL.createObjectURL(blob);
-                    const link = document.createElement("a");
+              const canvas = document.createElement("canvas");
+              const ctx = canvas.getContext("2d");
 
-                    link.href = shareUrl;
-                    link.download = "chitpix-photo.png";
-                    link.click();
+              if (!ctx) {
+                throw new Error("Photo export support ledu.");
+              }
 
-                    URL.revokeObjectURL(shareUrl);
+              const rotation = ((edit.rotation % 360) + 360) % 360;
+              const sideways = rotation === 90 || rotation === 270;
 
-                    setExportMessage(
-                      "Sharing is not supported here. Photo downloaded instead."
-                    );
-                  }
-                } catch (shareError) {
-                  if (
-                    shareError instanceof Error &&
-                    shareError.name === "AbortError"
-                  ) {
-                    setExportMessage("Sharing cancelled.");
-                  } else {
-                    console.error("Share error:", shareError);
-                    setError("Unable to share photo. Please download it.");
-                  }
-                } finally {
-                  setExporting(false);
-                }
-              }}
-              className="mt-3 w-full rounded-2xl border border-fuchsia-200 bg-fuchsia-50 py-4 font-bold text-fuchsia-700 disabled:opacity-50"
-            >
-              {exporting ? "Preparing..." : "📤 Share Photo"}
-            </button>
+              canvas.width = sideways ? source.height : source.width;
+              canvas.height = sideways ? source.width : source.height;
 
-            {exportMessage && (
-              <p className="mt-4 rounded-xl bg-green-50 p-3 text-center text-sm font-semibold text-green-700">
-                {exportMessage}
-              </p>
-            )}
-          </section>
+              ctx.save();
+              ctx.translate(canvas.width / 2, canvas.height / 2);
+              ctx.rotate((rotation * Math.PI) / 180);
+              ctx.scale(
+                (edit.flipH ? -1 : 1) * (edit.zoom / 100),
+                (edit.flipV ? -1 : 1) * (edit.zoom / 100)
+              );
+
+              ctx.filter = [
+                selectedFilter?.css || "",
+                `brightness(${edit.brightness}%)`,
+                `contrast(${edit.contrast}%)`,
+                `saturate(${edit.saturation}%)`,
+                `blur(${edit.blur}px)`,
+              ]
+                .filter(Boolean)
+                .join(" ");
+
+              ctx.drawImage(
+                source,
+                -source.width / 2,
+                -source.height / 2,
+                source.width,
+                source.height
+              );
+              ctx.restore();
+              ctx.filter = "none";
+
+              if (edit.warmth !== 0) {
+                ctx.fillStyle =
+                  edit.warmth > 0
+                    ? `rgba(255,145,45,${Math.abs(edit.warmth) / 500})`
+                    : `rgba(65,135,255,${Math.abs(edit.warmth) / 500})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+
+              if (edit.vignette > 0) {
+                const radius = Math.max(canvas.width, canvas.height) * 0.75;
+                const gradient = ctx.createRadialGradient(
+                  canvas.width / 2,
+                  canvas.height / 2,
+                  radius * 0.2,
+                  canvas.width / 2,
+                  canvas.height / 2,
+                  radius
+                );
+                gradient.addColorStop(0, "rgba(0,0,0,0)");
+                gradient.addColorStop(
+                  1,
+                  `rgba(0,0,0,${edit.vignette / 100})`
+                );
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+              }
+
+              if (textOverlay.trim()) {
+                const fontSize = Math.max(20, canvas.width * 0.045);
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "bottom";
+                ctx.lineWidth = Math.max(2, fontSize * 0.08);
+                ctx.strokeStyle = "rgba(0,0,0,0.65)";
+                ctx.fillStyle = "#ffffff";
+
+                const lines = textOverlay.split("\n");
+                const lineHeight = fontSize * 1.3;
+                const startY =
+                  canvas.height - 30 - (lines.length - 1) * lineHeight;
+
+                lines.forEach((line, index) => {
+                  ctx.strokeText(line, canvas.width / 2, startY + index * lineHeight);
+                  ctx.fillText(line, canvas.width / 2, startY + index * lineHeight);
+                });
+              }
+
+              stickers.forEach((sticker, index) => {
+                ctx.font = `${Math.max(28, canvas.width * 0.09)}px Arial`;
+                ctx.textAlign = "center";
+                ctx.fillText(
+                  sticker,
+                  canvas.width * (0.15 + (index % 4) * 0.22),
+                  canvas.height * (0.15 + Math.floor(index / 4) * 0.13)
+                );
+              });
+
+              const blob = await new Promise<Blob>((resolve, reject) => {
+                canvas.toBlob((result) => {
+                  if (result) resolve(result);
+                  else reject(new Error("Share photo prepare avvaledu."));
+                }, "image/jpeg", 0.95);
+              });
+
+              const file = new File([blob], "chitpix-edited.jpg", {
+                type: "image/jpeg",
+              });
+
+              if (
+                navigator.share &&
+                navigator.canShare &&
+                navigator.canShare({ files: [file] })
+              ) {
+                await navigator.share({
+                  files: [file],
+                  title: "ChitPix Photo",
+                  text: "My edited photo made with ChitPix ❤️",
+                });
+                setExportMessage("Share completed!");
+              } else {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "chitpix-edited.jpg";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                setExportMessage(
+                  "Direct sharing not supported. Photo downloaded instead."
+                );
+              }
+            } catch (err) {
+              if (err instanceof Error && err.name === "AbortError") {
+                setExportMessage("Sharing cancelled.");
+              } else {
+                setError(
+                  err instanceof Error
+                    ? err.message
+                    : "Share failed. Malli try cheyyi."
+                );
+              }
+            } finally {
+              setExporting(false);
+            }
+          }}
+          className="mt-3 w-full rounded-xl border border-purple-300 bg-white px-5 py-3 font-bold text-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {exporting ? "Preparing..." : "📤 Share Edited Photo"}
+        </button>
+
+        {exportMessage && (
+          <p className="mt-3 text-center text-sm font-medium text-green-600">
+            {exportMessage}
+          </p>
         )}
 
-        {/* FOOTER */}
-        <p className="py-4 text-center text-xs text-slate-400">
-          ChitPix AI Studio · Create Your Own Style ❤️
-        </p>
-      </div>
-    </main>
+        {error && (
+          <p className="mt-3 text-center text-sm text-red-600">
+            {error}
+          </p>
+        )}
+      </section>
+
+      <footer className="mt-8 pb-6 text-center text-xs text-gray-400">
+        Made with ❤️ ChitPix AI Photo Studio
+      </footer>
+    </div>
   );
-                        }
+                  }
