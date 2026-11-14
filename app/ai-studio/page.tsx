@@ -1181,12 +1181,12 @@ export default function AIStudioPage() {
               );
 
               const filter = [
-                selectedFilter
-                `brightness(${edit.brightness}%)`,
-                `contrast(${edit.contrast}%)`,
-                `saturate(${edit.saturation}%)`,
-                `blur(${edit.blur}px)`,
-              ]
+  selectedFilter,
+  `brightness(${edit.brightness}%)`,
+  `contrast(${edit.contrast}%)`,
+  `saturate(${edit.saturation}%)`,
+  `blur(${edit.blur}px)`,
+]
                 .filter(Boolean)
                 .join(" ");
 
@@ -1361,12 +1361,12 @@ export default function AIStudioPage() {
               );
 
               ctx.filter = [
-                selectedFilter
-                `brightness(${edit.brightness}%)`,
-                `contrast(${edit.contrast}%)`,
-                `saturate(${edit.saturation}%)`,
-                `blur(${edit.blur}px)`,
-              ]
+  selectedFilter,
+  `brightness(${edit.brightness}%)`,
+  `contrast(${edit.contrast}%)`,
+  `saturate(${edit.saturation}%)`,
+  `blur(${edit.blur}px)`,
+]
                 .filter(Boolean)
                 .join(" ");
 
