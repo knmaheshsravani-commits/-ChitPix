@@ -963,21 +963,22 @@ const handleProfile = () => {
         )}
 
         
+        
         {/* ACTION BUTTONS */}
-        <div className="grid grid-cols-5 items-center px-4 pt-4 pb-2">
+        <div className="flex items-center gap-4 px-4 pt-4 pb-2">
 
           {/* LIKE */}
           <button
             type="button"
             onClick={handleLike}
             disabled={busy}
-            className={`flex flex-col items-center justify-center gap-1 ${
-              liked ? "text-pink-600" : "text-slate-800"
+            className={`flex items-center gap-1.5 ${
+              liked ? "text-pink-600" : "text-slate-900"
             }`}
             aria-label="Like post"
           >
-            <ChitIcon name="heart" size={29} active={liked} />
-            <span className="text-sm font-semibold">
+            <ChitIcon name="heart" size={30} active={liked} />
+            <span className="text-[18px] font-semibold">
               {likes.toLocaleString("en-IN")}
             </span>
           </button>
@@ -989,11 +990,11 @@ const handleProfile = () => {
               setShowComments(true)
               loadComments()
             }}
-            className="flex flex-col items-center justify-center gap-1 text-slate-800"
+            className="flex items-center gap-1.5 text-slate-900"
             aria-label="Comments"
           >
-            <ChitIcon name="comment" size={29} />
-            <span className="text-sm font-semibold">
+            <ChitIcon name="comment" size={30} />
+            <span className="text-[18px] font-semibold">
               {commentCount.toLocaleString("en-IN")}
             </span>
           </button>
@@ -1002,11 +1003,11 @@ const handleProfile = () => {
           <button
             type="button"
             onClick={handleShare}
-            className="flex flex-col items-center justify-center gap-1 text-slate-800"
+            className="flex items-center gap-1.5 text-slate-900"
             aria-label="Share post"
           >
-            <ChitIcon name="share" size={29} />
-            <span className="text-sm font-semibold">
+            <ChitIcon name="share" size={30} />
+            <span className="text-[18px] font-semibold">
               {shareCount.toLocaleString("en-IN")}
             </span>
           </button>
@@ -1015,26 +1016,22 @@ const handleProfile = () => {
           <button
             type="button"
             onClick={handleDM}
-            className="flex flex-col items-center justify-center gap-1 text-slate-800"
+            className="text-slate-900"
             aria-label="Send post"
           >
-            <ChitIcon name="send" size={29} />
-            <span className="text-sm font-semibold">DM</span>
+            <ChitIcon name="send" size={30} />
           </button>
 
           {/* SAVE */}
           <button
             type="button"
             onClick={handleSave}
-            className={`flex flex-col items-center justify-center gap-1 ${
-              saved ? "text-fuchsia-600" : "text-slate-800"
+            className={`ml-auto ${
+              saved ? "text-fuchsia-600" : "text-slate-900"
             }`}
             aria-label="Save post"
           >
-            <ChitIcon name="bookmark" size={29} active={saved} />
-            <span className="text-sm font-semibold">
-              {saved ? "Saved" : "Save"}
-            </span>
+            <ChitIcon name="bookmark" size={30} active={saved} />
           </button>
 
         </div>
