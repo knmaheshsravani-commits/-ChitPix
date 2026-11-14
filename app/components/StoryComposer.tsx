@@ -2070,7 +2070,7 @@ export default function StoryComposer({
             </button>
 
             <button
-              onClick={() => cameraInputRef.current?.click()}
+              onClick={() => cameraRef.current?.click()}
               className="rounded-xl bg-white/15 p-5"
             >
               🎥 Camera
