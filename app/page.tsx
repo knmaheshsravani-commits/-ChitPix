@@ -1415,6 +1415,7 @@ const formattedPosts: Post[] = postRows.map((post: any) => {
     )
    
 
+
 console.log("DP DEBUG:", {
   postUsername: post.username,
   postUserId: post.user_id,
@@ -1424,6 +1425,7 @@ console.log("DP DEBUG:", {
   profileAvatar: profile?.avatar_url,
   avatarUrl,
 })
+  
   
   
   const avatarUrl = fixAvatarUrl(
