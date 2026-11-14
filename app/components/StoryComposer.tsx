@@ -2193,7 +2193,7 @@ export default function StoryComposer({
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {textLayers.map((item) => (
+              {textItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => deleteText(item.id)}
