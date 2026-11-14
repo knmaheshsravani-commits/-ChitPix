@@ -2021,7 +2021,7 @@ export default function StoryComposer({
             ref={canvasRef}
             className="absolute inset-0 h-full w-full touch-none"
             onPointerDown={startDrawing}
-            onPointerMove={draw}
+            onPointerMove={drawMovement}
             onPointerUp={stopDrawing}
             onPointerLeave={stopDrawing}
           />
