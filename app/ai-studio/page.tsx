@@ -285,7 +285,7 @@ export default function AIStudioPage() {
   // UPDATE EDIT SETTINGS
   // =====================================
 
-  const updateEdit = <K extends keyof EditSettings>(
+  const updateEdit = <K extends keyof EditSettings,>(
     key: K,
     value: EditSettings[K]
   ) => {
@@ -1181,7 +1181,7 @@ export default function AIStudioPage() {
               );
 
               const filter = [
-                selectedFilter?.css || "",
+                selectedFilter
                 `brightness(${edit.brightness}%)`,
                 `contrast(${edit.contrast}%)`,
                 `saturate(${edit.saturation}%)`,
@@ -1361,7 +1361,7 @@ export default function AIStudioPage() {
               );
 
               ctx.filter = [
-                selectedFilter?.css || "",
+                selectedFilter
                 `brightness(${edit.brightness}%)`,
                 `contrast(${edit.contrast}%)`,
                 `saturate(${edit.saturation}%)`,
@@ -1504,9 +1504,10 @@ export default function AIStudioPage() {
         )}
       </section>
 
-      <footer className="mt-8 pb-6 text-center text-xs text-gray-400">
+            <footer className="mt-8 pb-6 text-center text-xs text-gray-400">
         Made with ❤️ ChitPix AI Photo Studio
       </footer>
     </div>
+    </main>
   );
-                  }
+      }
