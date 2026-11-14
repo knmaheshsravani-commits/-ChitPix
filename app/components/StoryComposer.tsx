@@ -1,4 +1,4 @@
-
+⁸
 "use client"
 
 import { useEffect, useRef, useState } from "react"
@@ -2104,22 +2104,28 @@ export default function StoryComposer({
       </div>
 
       {/* TOOL BUTTONS */}
-      <div className="mx-auto grid max-w-md grid-cols-5 gap-2 px-3">
-        {tools.map((tool) => (
-          <button
-            key={tool.id}
-            onClick={() => openTool(tool.id)}
-            className={`rounded-xl p-3 text-center text-xs ${
-              selectedTool === tool.id
-                ? "bg-pink-600"
-                : "bg-white/10"
-            }`}
-          >
-            <div className="mb-1 text-xl">{tool.icon}</div>
-            {tool.label}
-          </button>
-        ))}
-      </div>
+<div className="mx-auto grid max-w-md grid-cols-5 gap-2 px-3">
+  {tools.map((tool) => {
+    const toolId = tool.name.toLowerCase()
+
+    return (
+      <button
+        key={tool.name}
+        onClick={() => openTool(toolId)}
+        className={`rounded-xl p-3 text-center text-xs ${
+          selectedTool === toolId
+            ? "bg-pink-600"
+            : "bg-white/10"
+        }`}
+      >
+        <div className="mb-1 text-xl">
+          <tool.icon size={22} />
+        </div>
+        {tool.name}
+      </button>
+    )
+  })}
+</div>
 
       {/* TOOL PANEL */}
       <div className="mx-auto mt-4 max-w-md px-3 pb-6">
