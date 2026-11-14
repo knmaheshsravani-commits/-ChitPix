@@ -781,23 +781,6 @@ const handleProfile = () => {
 
   router.push(`/profile/${encodeURIComponent(post.username)}`)
 }
-  
-  
-<img
-  src={avatarUrl}
-  alt={`${post.username || "User"} profile`}
-  className="h-full w-full rounded-full object-cover"
-  loading="eager"
-  onLoad={() => {
-    setAvatarLoaded(true)
-    setAvatarFailed(false)
-    console.log("AVATAR LOADED:", post.username, avatarUrl)
-  }}
-  onError={() => {
-    setAvatarFailed(true)
-    console.error("AVATAR FAILED:", post.username, avatarUrl)
-  }}
-/>
 
 
   return (
