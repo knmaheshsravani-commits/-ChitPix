@@ -1423,7 +1423,6 @@ console.log("DP DEBUG:", {
   profileId: profile?.id,
   profileUsername: profile?.username,
   profileAvatar: profile?.avatar_url,
-  avatarUrl,
 })
   
   
