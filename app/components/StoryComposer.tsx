@@ -2223,7 +2223,7 @@ export default function StoryComposer({
         {selectedTool === "draw" && (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
-              {["normal", "neon", "eraser"].map((mode) => (
+              {(["normal", "neon", "eraser"] as const).map((mode) => (
                 <button
                   key={mode}
                   onClick={() => setBrushMode(mode)}
