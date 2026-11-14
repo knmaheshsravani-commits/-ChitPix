@@ -249,7 +249,74 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
       setCreatingCollage(false)
     }
         }
-              
+      
+  // EXPORT EDITED PHOTO
+  const createEditedFile = async (): Promise<File> => {
+    if (!file) throw new Error("Photo select cheyyi.");
+
+    // Videos ni ippatiki original ga publish chestham
+    if (file.type.startsWith("video/")) {
+      return file;
+    }
+
+    const imageUrl = URL.createObjectURL(file);
+
+    try {
+      const image = new Image();
+
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("Photo load avvaledu."));
+        image.src = imageUrl;
+      });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Photo editing support ledu.");
+
+      const filter =
+        effects.find((effect) => effect.id === selectedEffect)?.filter || "none";
+
+      ctx.filter = filter;
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      ctx.filter = "none";
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => {
+          if (result) resolve(result);
+          else reject(new Error("Edited photo create avvaledu."));
+        }, "image/jpeg", 0.95);
+      });
+
+      return new File(
+        [blob],
+        `chitpix-story-edited-${Date.now()}.jpg`,
+        { type: "image/jpeg" }
+      );
+    } finally {
+      URL.revokeObjectURL(imageUrl);
+    }
+  };
+
+  const publishEditedMedia = async () => {
+    if (!file) return;
+
+    try {
+      const editedFile = await createEditedFile();
+      onPublish(editedFile);
+    } catch (error) {
+      console.error("Story edit export failed:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Edited photo save avvaledu. Malli try cheyyi."
+      );
+    }
+  };
+  
   return (
     <div className="fixed inset-0 z-[2147483647] flex flex-col overflow-hidden bg-black text-white">
 
@@ -575,7 +642,7 @@ export default function StoryComposer({ onClose, onPublish }: Props) {
 
         <button
           disabled={!file}
-          onClick={() => file && onPublish(file)}
+          onClick={publishEditedMedia}
           className="flex items-center gap-3 rounded-full bg-indigo-600 px-9 py-4 font-semibold disabled:opacity-40"
         >
           Next
