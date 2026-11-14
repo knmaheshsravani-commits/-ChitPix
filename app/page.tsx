@@ -775,7 +775,13 @@ useEffect(() => {
       setMessage("Report submitted. Thank you!")
     }
   }
+ 
+const handleProfile = () => {
+  if (!post.username) return
 
+  router.push(`/profile/${encodeURIComponent(post.username)}`)
+}
+  
   
 <img
   src={avatarUrl}
