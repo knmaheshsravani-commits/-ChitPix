@@ -1378,7 +1378,8 @@ let profiles: any[] = []
 if (userIds.length > 0) {
   const { data: rows, error: profileError } = await supabase
     .from("profiles")
-    .select("id, username, full_name, avatar_url")
+    
+.select("id, username, avatar_url")
     .in("id", userIds)
 
   if (profileError) {
