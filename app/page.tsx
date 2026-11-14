@@ -2027,7 +2027,7 @@ console.log("DP DEBUG:", {
                   post={post}
                   index={index}
                   currentUserId={currentUserId}
-                  currentUserName={currentUserName}
+                  currentUserName={currentUsername}
                   onRefresh={refreshFeed}
                   galleryRef={fileInputRef}
                 />
