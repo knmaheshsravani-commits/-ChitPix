@@ -359,7 +359,7 @@ export default function StoryComposer({
         const imageUrl = URL.createObjectURL(photo)
 
         try {
-          const image = new Image()
+          const image = document.createElement("img")
 
           await new Promise<void>((resolve, reject) => {
             image.onload = () => resolve()
