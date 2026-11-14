@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -41,7 +40,6 @@ const FILTER_CATEGORIES = [
   "Art",
 ];
 
-
 const DEFAULT_EDIT = {
   brightness: 100,
   contrast: 100,
@@ -57,187 +55,266 @@ const DEFAULT_EDIT = {
 
 type EditSettings = typeof DEFAULT_EDIT;
 
+type EditorSnapshot = {
+  edit: EditSettings;
+  activeFilter: string;
+  overlayText: string;
+  textColor: string;
+  textSize: number;
+  textBold: boolean;
+  sticker: string;
+};
 
-type EditSettings = typeof DEFAULT_EDIT;
 export default function AIStudioPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const imageUrlRef = useRef("");
 
+  // PHOTO STATES
+
   const [image, setImage] = useState("");
   const [fileName, setFileName] = useState("");
   const [error, setError] = useState("");
+
+  // FILTER STATES
+
   const [activeFilter, setActiveFilter] = useState("Normal");
   const [category, setCategory] = useState("All");
 
-  const [edit, setEdit] = useState<EditSettings>(DEFAULT_EDIT);
-  
+  // PHOTO ADJUSTMENT STATES
+
+  const [edit, setEdit] = useState<EditSettings>({
+    ...DEFAULT_EDIT,
+  });
+
+  // TEXT AND STICKER STATES
+
   const [overlayText, setOverlayText] = useState("");
   const [textColor, setTextColor] = useState("#ffffff");
   const [textSize, setTextSize] = useState(28);
   const [textBold, setTextBold] = useState(true);
   const [sticker, setSticker] = useState("");
-  
-  const historyRef = useRef<any[]>([]);
-  const futureRef = useRef<any[]>([]);
-  const currentSnapshotRef = useRef<any>(null);
+
+  // HISTORY STATES
+
+  const historyRef = useRef<EditorSnapshot[]>([]);
+  const futureRef = useRef<EditorSnapshot[]>([]);
+  const currentSnapshotRef = useRef<EditorSnapshot | null>(null);
 
   const [historyCount, setHistoryCount] = useState(0);
   const [futureCount, setFutureCount] = useState(0);
 
-  const createSnapshot = () => ({
-    edit: { ...edit },
-    activeFilter,
-    overlayText,
-    textColor,
-    textSize,
-    textBold,
-    sticker,
-  });
+  // EXPORT STATES
 
-  useEffect(() => {
-    const snapshot = createSnapshot();
+  const [exportMessage, setExportMessage] = useState("");
+  const [exporting, setExporting] = useState(false);
 
-    if (currentSnapshotRef.current === null) {
-      currentSnapshotRef.current = snapshot;
-      return;
-    }
-
-    if (
-      JSON.stringify(currentSnapshotRef.current) !==
-      JSON.stringify(snapshot)
-    ) {
-      historyRef.current.push(currentSnapshotRef.current);
-
-      if (historyRef.current.length > 30) {
-        historyRef.current.shift();
-      }
-
-      currentSnapshotRef.current = snapshot;
-      futureRef.current = [];
-
-      setHistoryCount(historyRef.current.length);
-      setFutureCount(0);
-    }
-  }, [
-    edit,
-    activeFilter,
-    overlayText,
-    textColor,
-    textSize,
-    textBold,
-    sticker,
-  ]);
-
-  function restoreSnapshot(s: any) {
-    setEdit(s.edit);
-    setActiveFilter(s.activeFilter);
-    setOverlayText(s.overlayText);
-    setTextColor(s.textColor);
-    setTextSize(s.textSize);
-    setTextBold(s.textBold);
-    setSticker(s.sticker);
-
-    currentSnapshotRef.current = s;
-  }
-
-  function undoEdit() {
-    if (!historyRef.current.length) return;
-
-    const previous = historyRef.current.pop();
-    futureRef.current.push(createSnapshot());
-
-    restoreSnapshot(previous);
-
-    setHistoryCount(historyRef.current.length);
-    setFutureCount(futureRef.current.length);
-  }
-
-  function redoEdit() {
-    if (!futureRef.current.length) return;
-
-    const next = futureRef.current.pop();
-    historyRef.current.push(createSnapshot());
-
-    restoreSnapshot(next);
-
-    setHistoryCount(historyRef.current.length);
-    setFutureCount(futureRef.current.length);
-  }
-
-  function resetAllEdits() {
-    setActiveFilter("Normal");
-    setCategory("All");
-    setEdit(DEFAULT_EDIT);
-    setOverlayText("");
-    setTextColor("#ffffff");
-    setTextSize(28);
-    setTextBold(true);
-    setSticker("");
-  }
-  
+  // SELECTED FILTER
 
   const selectedFilter =
-    PHOTO_FILTERS.find(f => f.name === activeFilter)?.css || "none";
+    PHOTO_FILTERS.find((f) => f.name === activeFilter)?.css || "none";
+
+  // LIVE PHOTO PREVIEW STYLE
 
   const imageStyle: React.CSSProperties = {
     filter: `${selectedFilter} brightness(${edit.brightness}%) contrast(${edit.contrast}%) saturate(${edit.saturation}%) sepia(${edit.warmth}%) blur(${edit.blur}px)`,
-    transform: `rotate(${edit.rotation}deg) scale(${edit.zoom / 100})`,
-    transition: "filter .2s ease, transform .2s ease",
+    transform: `rotate(${edit.rotation}deg) scale(${edit.zoom / 100}) scaleX(${edit.flipH ? -1 : 1}) scaleY(${edit.flipV ? -1 : 1})`,
+    transition: "all .2s ease",
   };
 
-  function uploadPhoto(file?: File) {
+  // PART 2 CONTINUES BELOW
+  // =========================
+  // PART 2: EDITOR FUNCTIONS
+  // =========================
+
+  const createSnapshot = (): EditorSnapshot => ({
+    edit: { ...edit },
+    activeFilter,
+    textOverlay,
+    stickers: [...stickers],
+  });
+
+  const applySnapshot = (snapshot: EditorSnapshot) => {
+    setEdit({ ...snapshot.edit });
+    setActiveFilter(snapshot.activeFilter);
+    setTextOverlay(snapshot.textOverlay);
+    setStickers([...snapshot.stickers]);
+  };
+
+  const saveHistory = () => {
+    const snapshot = createSnapshot();
+
+    historyRef.current = [
+      ...historyRef.current.slice(0, historyIndexRef.current + 1),
+      snapshot,
+    ];
+
+    if (historyRef.current.length > 30) {
+      historyRef.current.shift();
+    }
+
+    historyIndexRef.current = historyRef.current.length - 1;
+    setHistoryCount(historyRef.current.length);
+    setHistoryIndex(historyIndexRef.current);
+  };
+
+  const undo = () => {
+    if (historyIndexRef.current <= 0) return;
+
+    historyIndexRef.current -= 1;
+
+    const snapshot = historyRef.current[historyIndexRef.current];
+
+    if (snapshot) {
+      applySnapshot(snapshot);
+      setHistoryIndex(historyIndexRef.current);
+    }
+  };
+
+  const redo = () => {
+    if (historyIndexRef.current >= historyRef.current.length - 1) return;
+
+    historyIndexRef.current += 1;
+
+    const snapshot = historyRef.current[historyIndexRef.current];
+
+    if (snapshot) {
+      applySnapshot(snapshot);
+      setHistoryIndex(historyIndexRef.current);
+    }
+  };
+
+  const uploadPhoto = (file?: File) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setError("Please select a valid image.");
+      setError("Please select a valid image file.");
       return;
     }
 
     if (file.size > 20 * 1024 * 1024) {
-      setError("Photo size must be below 20MB.");
+      setError("Image size must be less than 20MB.");
       return;
     }
 
-    if (imageUrlRef.current) {
-      URL.revokeObjectURL(imageUrlRef.current);
+    if (image) {
+      URL.revokeObjectURL(image);
     }
 
     const newUrl = URL.createObjectURL(file);
 
-    const imageStyle: React.CSSProperties = {
-  filter: `${selectedFilter} brightness(${edit.brightness}%) contrast(${edit.contrast}%) saturate(${edit.saturation}%) sepia(${edit.warmth}%) blur(${edit.blur}px)`,
-  transform: `rotate(${edit.rotation}deg) scale(${edit.zoom / 100}) scaleX(${edit.flipH ? -1 : 1}) scaleY(${edit.flipV ? -1 : 1})`,
-  transition: "all .2s ease",
-};
+    setImage(newUrl);
+    setFileName(file.name);
+    setError("");
+    setExportMessage("");
+    setActiveFilter("none");
+    setActiveCategory("All");
+    setEdit({ ...DEFAULT_EDIT });
+    setTextOverlay("");
+    setStickers([]);
 
-  function removePhoto() {
-    if (imageUrlRef.current) {
-      URL.revokeObjectURL(imageUrlRef.current);
-      imageUrlRef.current = "";
+    const initialSnapshot: EditorSnapshot = {
+      edit: { ...DEFAULT_EDIT },
+      activeFilter: "none",
+      textOverlay: "",
+      stickers: [],
+    };
+
+    historyRef.current = [initialSnapshot];
+    historyIndexRef.current = 0;
+    setHistoryCount(1);
+    setHistoryIndex(0);
+  };
+
+  const removePhoto = () => {
+    if (image) {
+      URL.revokeObjectURL(image);
     }
 
-    setImage("");
+    setImage(null);
     setFileName("");
-    setActiveFilter("Normal");
-    setEdit(DEFAULT_EDIT);
     setError("");
+    setExportMessage("");
+    setActiveFilter("none");
+    setActiveCategory("All");
+    setEdit({ ...DEFAULT_EDIT });
+    setTextOverlay("");
+    setStickers([]);
 
-    if (fileRef.current) fileRef.current.value = "";
-    if (cameraRef.current) cameraRef.current.value = "";
-  }
+    historyRef.current = [];
+    historyIndexRef.current = -1;
+    setHistoryCount(0);
+    setHistoryIndex(-1);
+  };
 
+  const resetAllEdits = () => {
+    setActiveFilter("none");
+    setEdit({ ...DEFAULT_EDIT });
+    setTextOverlay("");
+    setStickers([]);
+    setExportMessage("");
+    saveHistory();
+  };
+
+  const updateEdit = <K extends keyof EditSettings>(
+    key: K,
+    value: EditSettings[K]
+  ) => {
+    setEdit((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
+    setExportMessage("");
+  };
+
+  const selectFilter = (filterId: string) => {
+    setActiveFilter(filterId);
+    setExportMessage("");
+  };
+
+  const handleImageUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      uploadPhoto(file);
+    }
+
+    event.target.value = "";
+  };
+
+  const addSticker = (sticker: string) => {
+    setStickers((previous) => [...previous, sticker]);
+    setExportMessage("");
+  };
+
+  const removeSticker = (index: number) => {
+    setStickers((previous) =>
+      previous.filter((_, stickerIndex) => stickerIndex !== index)
+    );
+  };
+
+  const clearTextOverlay = () => {
+    setTextOverlay("");
+    setExportMessage("");
+  };
+
+  // Clean up the temporary image URL when the page is removed.
   useEffect(() => {
     return () => {
-      if (imageUrlRef.current) {
-        URL.revokeObjectURL(imageUrlRef.current);
+      if (image) {
+        URL.revokeObjectURL(image);
       }
     };
-  }, []);
+  }, [image]);
 
-  return (
+  // =========================
+  // PART 3 CONTINUES BELOW
+  // =========================
+        return (
     <main className="min-h-screen bg-[#f7f5fc] pb-10 text-slate-900">
-
+      {/* HEADER */}
       <header className="sticky top-0 z-40 border-b bg-white px-4 py-4">
         <div className="mx-auto flex max-w-xl items-center justify-between">
           <div>
@@ -248,94 +325,69 @@ export default function AIStudioPage() {
               AI PHOTO STUDIO
             </p>
           </div>
-          <span className="rounded-full bg-fuchsia-600 px-4 py-2 text-sm font-bold text-white">
+          <span className="rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 px-4 py-2 text-sm font-bold text-white">
             ✨ AI Studio
           </span>
         </div>
       </header>
 
       <div className="mx-auto max-w-xl space-y-5 p-4">
-
-        <section className="rounded-3xl bg-gradient-to-r from-fuchsia-600 to-pink-500 p-6 text-white">
-          <h2 className="text-2xl font-black">
+        {/* WELCOME */}
+        <section className="rounded-3xl bg-gradient-to-r from-fuchsia-600 to-pink-500 p-6 text-white shadow-lg">
+          <p className="text-sm font-semibold text-white/80">WELCOME TO</p>
+          <h2 className="mt-2 text-2xl font-black">
             AI Photo Studio ✨
           </h2>
-          <p className="mt-2 text-sm">
-            Edit your photos with ChitPix.
+          <p className="mt-2 text-sm text-white/90">
+            Create beautiful photos with ChitPix editing tools.
           </p>
         </section>
 
+        {/* PHOTO UPLOAD */}
         <section className="rounded-3xl bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold">📸 Your Photo</h2>
 
-          <h2 className="mb-4 text-lg font-bold">
-            📸 Your Photo
-          </h2>
+            {image && (
+              <button
+                type="button"
+                onClick={removePhoto}
+                className="text-sm font-bold text-red-500"
+              >
+                Remove
+              </button>
+            )}
+          </div>
 
           {image ? (
-            <>
-              <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-2xl bg-black">
-                <img
-                  src={image}
-                  alt="Photo preview"
-                  className="max-h-[500px] w-full object-contain"
-                  style={imageStyle}
-                />
-              </div>
-
-              <p className="mt-3 truncate text-xs text-slate-500">
-                Selected: {fileName}
-              </p>
-
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="rounded-xl border border-fuchsia-200 bg-fuchsia-50 py-3 font-bold text-fuchsia-700"
-                >
-                  🔄 Change Photo
-                </button>
-
-                <button
-                  type="button"
-                  onClick={removePhoto}
-                  className="rounded-xl bg-red-50 py-3 font-bold text-red-600"
-                >
-                  🗑️ Remove Photo
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-fuchsia-300 bg-fuchsia-50 p-6 text-center">
-              <span className="text-6xl">🖼️</span>
-              <h3 className="mt-4 text-lg font-bold">
-                Upload Your Photo
-              </h3>
-              <p className="mt-2 text-sm text-slate-500">
-                Choose a photo or capture a new one.
-              </p>
-
-              <div className="mt-5 grid w-full grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => fileRef.current?.click()}
-                  className="rounded-xl bg-fuchsia-600 py-3 font-bold text-white"
-                >
-                  🖼️ Gallery
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => cameraRef.current?.click()}
-                  className="rounded-xl bg-slate-900 py-3 font-bold text-white"
-                >
-                  📷 Camera
-                </button>
-              </div>
-
-              <p className="mt-4 text-xs text-slate-400">
-                JPG · PNG · WEBP · Maximum 20MB
-              </p>
+            <div className="flex min-h-[300px] items-center justify-center overflow-hidden rounded-2xl bg-black">
+              <img
+                src={image}
+                alt="Photo preview"
+                className="max-h-[500px] w-full object-contain"
+                style={imageStyle}
+              />
             </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex min-h-[300px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-fuchsia-300 bg-fuchsia-50 p-6 text-center"
+            >
+              <span className="text-6xl">🖼️</span>
+              <span className="mt-4 text-lg font-bold">
+                Upload Your Photo
+              </span>
+              <span className="mt-2 text-sm text-slate-500">
+                Select a photo from your phone
+              </span>
+              <span className="mt-5 rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 px-7 py-3 font-bold text-white">
+                + Select Photo
+              </span>
+              <span className="mt-3 text-xs text-slate-400">
+                JPG · PNG · WEBP · Maximum 20MB
+              </span>
+            </button>
           )}
 
           <input
@@ -343,17 +395,23 @@ export default function AIStudioPage() {
             type="file"
             accept="image/jpeg,image/png,image/webp"
             className="hidden"
-            onChange={e => uploadPhoto(e.target.files?.[0])}
+            onChange={handleImageUpload}
           />
 
-          <input
-            ref={cameraRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={e => uploadPhoto(e.target.files?.[0])}
-          />
+          {image && (
+            <div className="mt-3">
+              <p className="truncate text-xs text-slate-500">
+                Selected: {fileName}
+              </p>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="mt-3 w-full rounded-xl border border-fuchsia-200 bg-fuchsia-50 py-3 font-bold text-fuchsia-700"
+              >
+                Change Photo
+              </button>
+            </div>
+          )}
 
           {error && (
             <p className="mt-3 rounded-xl bg-red-50 p-3 text-center text-sm font-semibold text-red-600">
@@ -362,411 +420,202 @@ export default function AIStudioPage() {
           )}
         </section>
 
-        {/* PART 3 CONTINUES BELOW */}
-                    
-        {/* PART 3 - PHOTO FILTERS */}
-
+        {/* FILTER CATEGORIES AND FILTERS */}
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
-
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-black">
-                  ✨ ChitPix Photo Filters
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Choose your favourite style
-                </p>
-              </div>
-
-              <span className="rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-bold text-fuchsia-700">
-                {PHOTO_FILTERS.length} Filters
-              </span>
-            </div>
-
-            {/* FILTER CATEGORIES */}
+            <h2 className="mb-2 text-lg font-bold">
+              ✨ ChitPix Photo Filters
+            </h2>
+            <p className="mb-4 text-sm text-slate-500">
+              Choose your favourite photo style.
+            </p>
 
             <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
-              {FILTER_CATEGORIES.map((item) => (
+              {["All", ...Array.from(
+                new Set(PHOTO_FILTERS.map((filter) => filter.category))
+              )].map((category) => (
                 <button
-                  key={item}
+                  key={category}
                   type="button"
-                  onClick={() => setCategory(item)}
-                  className={`shrink-0 rounded-full px-5 py-2 text-sm font-bold transition ${
-                    category === item
+                  onClick={() => setActiveCategory(category)}
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${
+                    activeCategory === category
                       ? "bg-fuchsia-600 text-white"
                       : "bg-slate-100 text-slate-600"
                   }`}
                 >
-                  {item}
+                  {category}
                 </button>
               ))}
             </div>
 
-            {/* FILTER OPTIONS */}
-
             <div className="grid grid-cols-3 gap-3">
-
               {PHOTO_FILTERS
-                .filter((filter) =>
-                  category === "All" ||
-                  filter.category === category
+                .filter(
+                  (filter) =>
+                    activeCategory === "All" ||
+                    filter.category === activeCategory
                 )
                 .map((filter) => (
-
                   <button
-                    key={filter.name}
+                    key={filter.id}
                     type="button"
-                    onClick={() => setActiveFilter(filter.name)}
-                    className={`flex min-h-[95px] flex-col items-center justify-center gap-2 rounded-2xl border-2 p-2 transition active:scale-95 ${
-                      activeFilter === filter.name
+                    onClick={() => selectFilter(filter.id)}
+                    className={`flex min-h-[75px] flex-col items-center justify-center gap-1 rounded-2xl border p-2 ${
+                      activeFilter === filter.id
                         ? "border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700 ring-2 ring-fuchsia-200"
                         : "border-slate-200 bg-white text-slate-700"
                     }`}
                   >
-
-                    <span className="text-2xl">
-                      {filter.icon}
-                    </span>
-
+                    <span className="text-xl">{filter.icon}</span>
                     <span className="text-xs font-bold">
                       {filter.name}
                     </span>
-
-                    {activeFilter === filter.name && (
-                      <span className="text-[10px] font-black text-fuchsia-600">
-                        ✓ SELECTED
-                      </span>
-                    )}
-
                   </button>
                 ))}
-
             </div>
-
-            {/* FILTER INFORMATION */}
-
-            <div className="mt-4 rounded-xl bg-fuchsia-50 p-3">
-              <p className="text-sm font-bold text-fuchsia-700">
-                ✨ Active Filter: {activeFilter}
-              </p>
-
-              <p className="mt-1 text-xs text-slate-500">
-                Your selected filter is applied to the photo preview.
-              </p>
-            </div>
-
-            {/* RESET FILTER */}
 
             <button
               type="button"
-              onClick={() => {
-                setActiveFilter("Normal");
-                setCategory("All");
-              }}
-              className="mt-4 w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700 transition hover:bg-slate-200"
+              onClick={() => selectFilter("none")}
+              className="mt-5 w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700"
             >
-              ↺ Reset Filters
+              Reset Filter
             </button>
-
           </section>
         )}
 
-        {/* PART 4 CONTINUES BELOW */}
-                
-        {/* PART 4 - ADVANCED ADJUSTMENTS */}
-
+        {/* BASIC ADJUSTMENTS */}
         {image && (
-          <section className="rounded-3xl bg-white p-4 shadow-sm">
-
-            <div className="mb-5">
-              <h2 className="text-lg font-black">
-                🎛️ Photo Adjustments
-              </h2>
-              <p className="text-xs text-slate-500">
-                Adjust your photo with live controls.
+          <section className="space-y-4 rounded-3xl bg-white p-4 shadow-sm">
+            <div>
+              <h2 className="text-lg font-bold">🎚️ Photo Adjustments</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Adjust your photo brightness, colour and clarity.
               </p>
             </div>
 
-            {/* BRIGHTNESS */}
+            {([
+              {
+                key: "brightness",
+                label: "☀️ Brightness",
+                min: 0,
+                max: 200,
+                value: edit.brightness,
+              },
+              {
+                key: "contrast",
+                label: "◐ Contrast",
+                min: 0,
+                max: 200,
+                value: edit.contrast,
+              },
+              {
+                key: "saturation",
+                label: "🌈 Saturation",
+                min: 0,
+                max: 200,
+                value: edit.saturation,
+              },
+              {
+                key: "warmth",
+                label: "🌅 Warmth",
+                min: -100,
+                max: 100,
+                value: edit.warmth,
+              },
+              {
+                key: "blur",
+                label: "💧 Blur",
+                min: 0,
+                max: 10,
+                value: edit.blur,
+              },
+            ] as const).map((control) => (
+              <div key={control.key}>
+                <div className="mb-2 flex items-center justify-between">
+                  <label className="text-sm font-semibold">
+                    {control.label}
+                  </label>
+                  <span className="text-sm font-bold text-fuchsia-600">
+                    {control.value}
+                  </span>
+                </div>
 
-            <div className="mb-6">
-              <div className="mb-2 flex justify-between">
-                <label className="text-sm font-bold">
-                  ☀️ Brightness
-                </label>
-                <span className="text-sm font-bold text-fuchsia-600">
-                  {edit.brightness}%
-                </span>
+                <input
+                  type="range"
+                  min={control.min}
+                  max={control.max}
+                  value={control.value}
+                  onChange={(event) =>
+                    updateEdit(
+                      control.key,
+                      Number(event.target.value)
+                    )
+                  }
+                  className="w-full accent-fuchsia-600"
+                />
               </div>
-
-              <input
-                type="range"
-                min="0"
-                max="200"
-                value={edit.brightness}
-                onChange={(e) =>
-                  setEdit({
-                    ...edit,
-                    brightness: Number(e.target.value)
-                  })
-                }
-                className="w-full accent-fuchsia-600"
-              />
-            </div>
-
-            {/* CONTRAST */}
-
-            <div className="mb-6">
-              <div className="mb-2 flex justify-between">
-                <label className="text-sm font-bold">
-                  ◐ Contrast
-                </label>
-                <span className="text-sm font-bold text-fuchsia-600">
-                  {edit.contrast}%
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min="0"
-                max="200"
-                value={edit.contrast}
-                onChange={(e) =>
-                  setEdit({
-                    ...edit,
-                    contrast: Number(e.target.value)
-                  })
-                }
-                className="w-full accent-fuchsia-600"
-              />
-            </div>
-
-            {/* SATURATION */}
-
-            <div className="mb-6">
-              <div className="mb-2 flex justify-between">
-                <label className="text-sm font-bold">
-                  🎨 Saturation
-                </label>
-                <span className="text-sm font-bold text-fuchsia-600">
-                  {edit.saturation}%
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min="0"
-                max="200"
-                value={edit.saturation}
-                onChange={(e) =>
-                  setEdit({
-                    ...edit,
-                    saturation: Number(e.target.value)
-                  })
-                }
-                className="w-full accent-fuchsia-600"
-              />
-            </div>
-
-            {/* WARMTH */}
-
-            <div className="mb-6">
-              <div className="mb-2 flex justify-between">
-                <label className="text-sm font-bold">
-                  🌅 Warmth
-                </label>
-                <span className="text-sm font-bold text-fuchsia-600">
-                  {edit.warmth}
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={edit.warmth}
-                onChange={(e) =>
-                  setEdit({
-                    ...edit,
-                    warmth: Number(e.target.value)
-                  })
-                }
-                className="w-full accent-fuchsia-600"
-              />
-            </div>
-
-            {/* BLUR */}
-
-            <div className="mb-6">
-              <div className="mb-2 flex justify-between">
-                <label className="text-sm font-bold">
-                  🌫️ Blur
-                </label>
-                <span className="text-sm font-bold text-fuchsia-600">
-                  {edit.blur}px
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min="0"
-                max="10"
-                step="0.5"
-                value={edit.blur}
-                onChange={(e) =>
-                  setEdit({
-                    ...edit,
-                    blur: Number(e.target.value)
-                  })
-                }
-                className="w-full accent-fuchsia-600"
-              />
-            </div>
-
-            {/* RESET */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setEdit({
-                  ...edit,
-                  brightness: 100,
-                  contrast: 100,
-                  saturation: 100,
-                  warmth: 0,
-                  blur: 0
-                })
-              }
-              className="w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700"
-            >
-              ↺ Reset Adjustments
-            </button>
-
+            ))}
           </section>
         )}
 
-        {/* PART 5 CONTINUES BELOW */}
-        
-        {/* PART 5 - TRANSFORM TOOLS */}
-
+        {/* ROTATE, FLIP AND ZOOM */}
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
-
-            <h2 className="mb-2 text-lg font-black">
-              ✂️ Crop & Transform
+            <h2 className="mb-4 text-lg font-bold">
+              🔄 Transform Photo
             </h2>
 
-            <p className="mb-5 text-xs text-slate-500">
-              Rotate, flip and zoom your photo.
-            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  updateEdit("rotation", (edit.rotation + 90) % 360)
+                }
+                className="rounded-xl bg-fuchsia-50 p-3 font-bold text-fuchsia-700"
+              >
+                ↻ Rotate Right
+              </button>
 
-            {/* CROP */}
+              <button
+                type="button"
+                onClick={() =>
+                  updateEdit("rotation", (edit.rotation + 270) % 360)
+                }
+                className="rounded-xl bg-fuchsia-50 p-3 font-bold text-fuchsia-700"
+              >
+                ↺ Rotate Left
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                const img = new Image();
-                img.onload = () => {
-                  const canvas = document.createElement("canvas");
-                  canvas.width = img.naturalWidth;
-                  canvas.height = img.naturalHeight;
-                  const ctx = canvas.getContext("2d");
-                  if (!ctx) return;
+              <button
+                type="button"
+                onClick={() => updateEdit("flipH", !edit.flipH)}
+                className={`rounded-xl p-3 font-bold ${
+                  edit.flipH
+                    ? "bg-fuchsia-600 text-white"
+                    : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                ↔ Flip Horizontal
+              </button>
 
-                  ctx.drawImage(img, 0, 0);
-                  const link = document.createElement("a");
-                  link.download = "chitpix-crop-source.png";
-                  link.href = canvas.toDataURL("image/png");
-                  link.click();
-                  setError("Crop source downloaded. Full crop selection will be available in the next crop tool update.");
-                };
-                img.src = image;
-              }}
-              className="mb-4 w-full rounded-xl bg-fuchsia-50 py-3 font-bold text-fuchsia-700"
-            >
-              ✂️ Prepare Crop Image
-            </button>
-
-            {/* ROTATION */}
-
-            <div className="mb-5">
-              <p className="mb-3 text-sm font-bold">
-                🔄 Rotate Photo
-              </p>
-
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEdit({
-                      ...edit,
-                      rotation: edit.rotation - 90
-                    })
-                  }
-                  className="rounded-xl bg-slate-100 py-3 font-bold"
-                >
-                  ↶ Rotate Left
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEdit({
-                      ...edit,
-                      rotation: edit.rotation + 90
-                    })
-                  }
-                  className="rounded-xl bg-slate-100 py-3 font-bold"
-                >
-                  ↷ Rotate Right
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => updateEdit("flipV", !edit.flipV)}
+                className={`rounded-xl p-3 font-bold ${
+                  edit.flipV
+                    ? "bg-fuchsia-600 text-white"
+                    : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                ↕ Flip Vertical
+              </button>
             </div>
 
-            {/* FLIP */}
-
-            <div className="mb-5">
-              <p className="mb-3 text-sm font-bold">
-                ↔️ Flip Photo
-              </p>
-
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEdit({
-                      ...edit,
-                      flipH: !edit.flipH
-                    } as EditSettings)
-                  }
-                  className="rounded-xl bg-fuchsia-50 py-3 font-bold text-fuchsia-700"
-                >
-                  ↔️ Horizontal
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEdit({
-                      ...edit,
-                      flipV: !edit.flipV
-                    } as EditSettings)
-                  }
-                  className="rounded-xl bg-fuchsia-50 py-3 font-bold text-fuchsia-700"
-                >
-                  ↕️ Vertical
-                </button>
-              </div>
-            </div>
-
-            {/* ZOOM */}
-
-            <div className="mb-5">
+            <div className="mt-5">
               <div className="mb-2 flex justify-between">
-                <p className="text-sm font-bold">
-                  🔍 Zoom
-                </p>
+                <label className="text-sm font-semibold">🔍 Zoom</label>
                 <span className="text-sm font-bold text-fuchsia-600">
                   {edit.zoom}%
                 </span>
@@ -777,589 +626,615 @@ export default function AIStudioPage() {
                 min="50"
                 max="200"
                 value={edit.zoom}
-                onChange={(e) =>
-                  setEdit({
-                    ...edit,
-                    zoom: Number(e.target.value)
-                  })
+                onChange={(event) =>
+                  updateEdit("zoom", Number(event.target.value))
                 }
                 className="w-full accent-fuchsia-600"
               />
             </div>
-
-            {/* RESET */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setEdit({
-                  ...edit,
-                  rotation: 0,
-                  zoom: 100,
-                  flipH: false,
-                  flipV: false
-                } as EditSettings)
-              }
-              className="w-full rounded-xl bg-slate-900 py-3 font-bold text-white"
-            >
-              ↺ Reset Transform
-            </button>
-
           </section>
         )}
 
-        {/* PART 6 CONTINUES BELOW */}
-        
-        {/* PART 6 - BEFORE AFTER & VIGNETTE */}
-
+        {/* PART 4 CONTINUES BELOW */}
+                {/* VIGNETTE EFFECT */}
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
-
-            <h2 className="mb-2 text-lg font-black">
-              👀 Before & After Studio
+            <h2 className="mb-2 text-lg font-bold">
+              🌑 Vignette Effect
             </h2>
 
-            <p className="mb-4 text-xs text-slate-500">
-              Compare your original and edited photo.
+            <p className="mb-4 text-sm text-slate-500">
+              Add a soft dark border around your photo.
             </p>
 
-            {/* BEFORE AFTER */}
-
-            <div className="grid grid-cols-2 gap-3">
-
-              <div>
-                <p className="mb-2 text-center text-sm font-bold">
-                  Original
-                </p>
-
-                <div className="flex h-48 items-center justify-center overflow-hidden rounded-xl bg-black">
-                  <img
-                    src={image}
-                    alt="Original photo"
-                    className="max-h-full w-full object-contain"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-2 text-center text-sm font-bold text-fuchsia-600">
-                  Edited
-                </p>
-
-                <div className="flex h-48 items-center justify-center overflow-hidden rounded-xl bg-black">
-                  <img
-                    src={image}
-                    alt="Edited photo"
-                    className="max-h-full w-full object-contain"
-                    style={imageStyle}
-                  />
-                </div>
-              </div>
-
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-semibold">
+                Vignette Strength
+              </label>
+              <span className="font-bold text-fuchsia-600">
+                {edit.vignette}%
+              </span>
             </div>
-
-            {/* VIGNETTE */}
-
-            <div className="mt-6">
-              <div className="mb-3 flex justify-between">
-                <label className="text-sm font-bold">
-                  🌑 Vignette Effect
-                </label>
-
-                <span className="text-sm font-bold text-fuchsia-600">
-                  {edit.vignette}%
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={edit.vignette}
-                onChange={(e) =>
-                  setEdit({
-                    ...edit,
-                    vignette: Number(e.target.value)
-                  })
-                }
-                className="w-full accent-fuchsia-600"
-              />
-
-              <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEdit({
-                      ...edit,
-                      vignette: 0
-                    })
-                  }
-                  className="flex-1 rounded-xl bg-slate-100 py-3 text-sm font-bold"
-                >
-                  Reset
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEdit({
-                      ...edit,
-                      vignette: 50
-                    })
-                  }
-                  className="flex-1 rounded-xl bg-fuchsia-100 py-3 text-sm font-bold text-fuchsia-700"
-                >
-                  Medium
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEdit({
-                      ...edit,
-                      vignette: 100
-                    })
-                  }
-                  className="flex-1 rounded-xl bg-fuchsia-600 py-3 text-sm font-bold text-white"
-                >
-                  Strong
-                </button>
-              </div>
-            </div>
-
-            {/* ORIGINAL PREVIEW */}
-
-            <div className="mt-5">
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveFilter("Normal");
-                  setEdit(DEFAULT_EDIT);
-                }}
-                className="w-full rounded-xl bg-slate-900 py-3 font-bold text-white"
-              >
-                ↺ Restore Original Settings
-              </button>
-            </div>
-
-          </section>
-        )}
-
-        {/* PART 7 CONTINUES BELOW */}
-        
-        {/* PART 7 - TEXT EDITOR & STICKERS */}
-
-        {image && (
-          <section className="rounded-3xl bg-white p-4 shadow-sm">
-
-            <h2 className="text-lg font-black">
-              📝 Text & Sticker Studio
-            </h2>
-
-            <p className="mb-4 text-xs text-slate-500">
-              Customize your photo with text and emojis.
-            </p>
-
-            {/* LIVE TEXT PREVIEW */}
-
-            <div className="relative mb-5 flex min-h-[280px] items-center justify-center overflow-hidden rounded-2xl bg-black">
-
-              <img
-                src={image}
-                alt="Text editing preview"
-                className="max-h-[400px] w-full object-contain"
-                style={imageStyle}
-              />
-
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3">
-
-                {sticker && (
-                  <span className="text-5xl drop-shadow-lg">
-                    {sticker}
-                  </span>
-                )}
-
-                {overlayText && (
-                  <span
-                    className="break-words px-4 text-center drop-shadow-lg"
-                    style={{
-                      color: textColor,
-                      fontSize: `${textSize}px`,
-                      fontWeight: textBold ? "bold" : "normal",
-                      textShadow: "2px 2px 5px black",
-                    }}
-                  >
-                    {overlayText}
-                  </span>
-                )}
-
-              </div>
-            </div>
-
-            {/* TEXT INPUT */}
-
-            <label className="mb-2 block text-sm font-bold">
-              ✍️ Enter Your Text
-            </label>
 
             <input
-              type="text"
-              value={overlayText}
-              onChange={(e) => setOverlayText(e.target.value)}
-              placeholder="Write something..."
-              maxLength={100}
-              className="w-full rounded-xl border border-slate-200 p-3 outline-none focus:border-fuchsia-500"
+              type="range"
+              min="0"
+              max="100"
+              value={edit.vignette}
+              onChange={(event) =>
+                updateEdit("vignette", Number(event.target.value))
+              }
+              className="w-full accent-fuchsia-600"
             />
 
-            {/* TEXT COLOR */}
-
-            <div className="mt-5">
-              <label className="mb-3 block text-sm font-bold">
-                🎨 Text Color
-              </label>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={textColor}
-                  onChange={(e) => setTextColor(e.target.value)}
-                  className="h-12 w-16 cursor-pointer rounded-lg"
-                />
-
-                <span className="text-sm font-semibold">
-                  {textColor.toUpperCase()}
-                </span>
-              </div>
-            </div>
-
-            {/* TEXT SIZE */}
-
-            <div className="mt-5">
-              <div className="mb-2 flex justify-between">
-                <label className="text-sm font-bold">
-                  🔠 Text Size
-                </label>
-                <span className="text-sm font-bold text-fuchsia-600">
-                  {textSize}px
-                </span>
-              </div>
-
-              <input
-                type="range"
-                min="12"
-                max="60"
-                value={textSize}
-                onChange={(e) =>
-                  setTextSize(Number(e.target.value))
-                }
-                className="w-full accent-fuchsia-600"
-              />
-            </div>
-
-            {/* BOLD */}
-
             <button
               type="button"
-              onClick={() => setTextBold(!textBold)}
-              className={`mt-4 w-full rounded-xl py-3 font-bold ${
-                textBold
-                  ? "bg-fuchsia-600 text-white"
-                  : "bg-slate-100 text-slate-700"
-              }`}
+              onClick={() => updateEdit("vignette", 0)}
+              className="mt-3 w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700"
             >
-              B {textBold ? "Bold ON" : "Bold OFF"}
+              Reset Vignette
             </button>
-
-            {/* STICKERS */}
-
-            <div className="mt-6">
-              <h3 className="mb-3 text-sm font-bold">
-                😍 Choose Stickers
-              </h3>
-
-              <div className="grid grid-cols-5 gap-3">
-                {[
-                  "❤️", "🔥", "😍", "🥰", "⭐",
-                  "✨", "🌸", "🌹", "👑", "🦋",
-                  "💎", "🎉", "🌈", "💖", "😎"
-                ].map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() => setSticker(item)}
-                    className={`rounded-xl border p-3 text-2xl ${
-                      sticker === item
-                        ? "border-fuchsia-500 bg-fuchsia-50"
-                        : "border-slate-200 bg-white"
-                    }`}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* REMOVE OPTIONS */}
-
-            <div className="mt-5 grid grid-cols-2 gap-3">
-
-              <button
-                type="button"
-                onClick={() => setOverlayText("")}
-                className="rounded-xl bg-red-50 py-3 font-bold text-red-600"
-              >
-                Remove Text
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setSticker("")}
-                className="rounded-xl bg-orange-50 py-3 font-bold text-orange-600"
-              >
-                Remove Sticker
-              </button>
-
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setOverlayText("");
-                setSticker("");
-                setTextColor("#ffffff");
-                setTextSize(28);
-                setTextBold(true);
-              }}
-              className="mt-3 w-full rounded-xl bg-slate-900 py-3 font-bold text-white"
-            >
-              ↺ Reset Text & Stickers
-            </button>
-
           </section>
         )}
 
-        {/* PART 8 CONTINUES BELOW */}
-        
-        {/* PART 8 - EDITING HISTORY */}
-
+        {/* TEXT EDITOR */}
         {image && (
           <section className="rounded-3xl bg-white p-4 shadow-sm">
-
-            <h2 className="mb-2 text-lg font-black">
-              ↶ Editing History
+            <h2 className="mb-2 text-lg font-bold">
+              📝 Add Text to Photo
             </h2>
 
-            <p className="mb-4 text-xs text-slate-500">
-              Undo and redo your editing changes.
+            <p className="mb-4 text-sm text-slate-500">
+              Write a caption or your favourite quote.
+            </p>
+
+            <textarea
+              value={textOverlay}
+              onChange={(event) => {
+                setTextOverlay(event.target.value);
+                setExportMessage("");
+              }}
+              placeholder="Type your photo text here..."
+              rows={3}
+              maxLength={120}
+              className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-fuchsia-500"
+            />
+
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-xs text-slate-400">
+                Maximum 120 characters
+              </span>
+              <span className="text-xs font-semibold text-slate-500">
+                {textOverlay.length}/120
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={clearTextOverlay}
+              disabled={!textOverlay}
+              className="mt-3 w-full rounded-xl bg-slate-100 py-3 font-bold text-slate-700 disabled:opacity-40"
+            >
+              Clear Text
+            </button>
+
+            {textOverlay && (
+              <div className="mt-4 rounded-xl bg-slate-900 p-4 text-center">
+                <p className="break-words text-lg font-black text-white">
+                  {textOverlay}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Text preview
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* STICKER COLLECTION */}
+        {image && (
+          <section className="rounded-3xl bg-white p-4 shadow-sm">
+            <h2 className="mb-2 text-lg font-bold">
+              🎨 Photo Stickers
+            </h2>
+
+            <p className="mb-4 text-sm text-slate-500">
+              Select stickers to add to your photo.
+            </p>
+
+            <div className="grid grid-cols-5 gap-3">
+              {[
+                "❤️",
+                "😍",
+                "🔥",
+                "✨",
+                "🌸",
+                "🌈",
+                "⭐",
+                "🎉",
+                "🥰",
+                "🦋",
+                "🌹",
+                "💖",
+                "☀️",
+                "🌙",
+                "🎀",
+              ].map((sticker, index) => (
+                <button
+                  key={`${sticker}-${index}`}
+                  type="button"
+                  onClick={() => addSticker(sticker)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-2xl transition hover:border-fuchsia-400 hover:bg-fuchsia-50"
+                >
+                  {sticker}
+                </button>
+              ))}
+            </div>
+
+            {stickers.length > 0 && (
+              <div className="mt-5">
+                <h3 className="mb-3 text-sm font-bold">
+                  Selected Stickers
+                </h3>
+
+                <div className="flex flex-wrap gap-2">
+                  {stickers.map((sticker, index) => (
+                    <button
+                      key={`${sticker}-${index}`}
+                      type="button"
+                      onClick={() => removeSticker(index)}
+                      className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-2 text-xl"
+                      title="Remove sticker"
+                    >
+                      {sticker} <span className="text-xs">✕</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* UNDO AND REDO */}
+        {image && (
+          <section className="rounded-3xl bg-white p-4 shadow-sm">
+            <h2 className="mb-2 text-lg font-bold">
+              ↩️ Editing History
+            </h2>
+
+            <p className="mb-4 text-sm text-slate-500">
+              Undo or redo your recent editing changes.
             </p>
 
             <div className="grid grid-cols-2 gap-3">
-
               <button
                 type="button"
-                disabled={historyCount === 0}
-                onClick={undoEdit}
-                className="rounded-xl bg-fuchsia-600 py-4 font-bold text-white disabled:opacity-40"
+                onClick={undo}
+                disabled={historyIndex <= 0}
+                className="rounded-xl bg-fuchsia-50 py-3 font-bold text-fuchsia-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 ↶ Undo
               </button>
 
               <button
                 type="button"
-                disabled={futureCount === 0}
-                onClick={redoEdit}
-                className="rounded-xl bg-slate-900 py-4 font-bold text-white disabled:opacity-40"
+                onClick={redo}
+                disabled={historyIndex >= historyCount - 1}
+                className="rounded-xl bg-fuchsia-50 py-3 font-bold text-fuchsia-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 ↷ Redo
               </button>
-
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
-
-              <div className="rounded-xl bg-fuchsia-50 p-3 text-center">
-                <p className="text-2xl font-black text-fuchsia-600">
-                  {historyCount}
-                </p>
-                <p className="text-xs font-semibold">
-                  Undo Steps
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-slate-100 p-3 text-center">
-                <p className="text-2xl font-black">
-                  {futureCount}
-                </p>
-                <p className="text-xs font-semibold">
-                  Redo Steps
-                </p>
-              </div>
-
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setOverlayText("");
-                setSticker("");
-              }}
-              className="mt-4 w-full rounded-xl bg-orange-50 py-3 font-bold text-orange-600"
-            >
-              🧹 Clear Text & Stickers
-            </button>
-
-            <button
-              type="button"
-              onClick={resetAllEdits}
-              className="mt-3 w-full rounded-xl bg-red-600 py-3 font-bold text-white"
-            >
-              ↺ Reset All Editing
-            </button>
-
+            <p className="mt-3 text-center text-xs text-slate-400">
+              History: {Math.max(0, historyIndex + 1)} / {historyCount}
+            </p>
           </section>
         )}
 
-        {/* PART 9 CONTINUES BELOW */}
-        
-        {/* PART 9 - EXPORT & SHARE */}
-
+        {/* RESET ALL EDITS */}
         {image && (
-          <section className="rounded-3xl bg-white p-4 shadow-sm">
+          <button
+            type="button"
+            onClick={resetAllEdits}
+            className="w-full rounded-2xl border border-red-200 bg-red-50 py-4 font-bold text-red-600"
+          >
+            ↻ Reset All Editing
+          </button>
+        )}
 
-            <h2 className="text-lg font-black">
+        {/* PART 5 CONTINUES BELOW */}
+                {/* EXPORT PHOTO */}
+        {image && (
+          <section className="rounded-3xl bg-white p-5 shadow-sm">
+            <h2 className="mb-2 text-lg font-bold">
               📥 Save Your Edited Photo
             </h2>
 
-            <p className="mb-5 mt-2 text-xs text-slate-500">
-              Download your finished ChitPix creation.
+            <p className="mb-4 text-sm text-slate-500">
+              Export your edited photo and save it to your phone.
             </p>
-
-            <div className="rounded-2xl bg-gradient-to-r from-fuchsia-600 to-pink-500 p-5 text-center text-white">
-              <div className="text-5xl">🖼️</div>
-              <h3 className="mt-3 text-xl font-black">
-                Your Photo Is Ready!
-              </h3>
-              <p className="mt-2 text-sm text-white/90">
-                Filters, adjustments, text and stickers included.
-              </p>
-            </div>
 
             <button
               type="button"
               disabled={exporting}
-              onClick={() => exportPhoto(false)}
-              className="mt-5 w-full rounded-xl bg-fuchsia-600 py-4 font-black text-white disabled:opacity-50"
+              onClick={async () => {
+                if (!image) return;
+
+                try {
+                  setExporting(true);
+                  setExportMessage("");
+                  setError("");
+
+                  const sourceImage = new Image();
+
+                  sourceImage.src = image;
+
+                  await new Promise<void>((resolve, reject) => {
+                    sourceImage.onload = () => resolve();
+                    sourceImage.onerror = () =>
+                      reject(new Error("Could not load your photo."));
+                  });
+
+                  const canvas = document.createElement("canvas");
+                  const context = canvas.getContext("2d");
+
+                  if (!context) {
+                    throw new Error("Photo export is not supported.");
+                  }
+
+                  const rotation =
+                    ((edit.rotation % 360) + 360) % 360;
+
+                  const sideways = rotation === 90 || rotation === 270;
+
+                  canvas.width = sideways
+                    ? sourceImage.naturalHeight
+                    : sourceImage.naturalWidth;
+
+                  canvas.height = sideways
+                    ? sourceImage.naturalWidth
+                    : sourceImage.naturalHeight;
+
+                  context.save();
+
+                  context.translate(
+                    canvas.width / 2,
+                    canvas.height / 2
+                  );
+
+                  context.rotate((rotation * Math.PI) / 180);
+
+                  context.scale(
+                    (edit.flipH ? -1 : 1) * (edit.zoom / 100),
+                    (edit.flipV ? -1 : 1) * (edit.zoom / 100)
+                  );
+
+                  context.filter = [
+                    selectedFilter,
+                    `brightness(${edit.brightness}%)`,
+                    `contrast(${edit.contrast}%)`,
+                    `saturate(${edit.saturation}%)`,
+                    `blur(${edit.blur}px)`,
+                  ]
+                    .filter((value) => value && value !== "none")
+                    .join(" ");
+
+                  context.drawImage(
+                    sourceImage,
+                    -sourceImage.naturalWidth / 2,
+                    -sourceImage.naturalHeight / 2,
+                    sourceImage.naturalWidth,
+                    sourceImage.naturalHeight
+                  );
+
+                  context.restore();
+
+                  // Warmth overlay
+                  if (edit.warmth !== 0) {
+                    context.save();
+
+                    context.globalAlpha =
+                      Math.abs(edit.warmth) / 500;
+
+                    context.fillStyle =
+                      edit.warmth > 0 ? "#ff9b42" : "#65aaff";
+
+                    context.fillRect(
+                      0,
+                      0,
+                      canvas.width,
+                      canvas.height
+                    );
+
+                    context.restore();
+                  }
+
+                  // Vignette effect
+                  if (edit.vignette > 0) {
+                    context.save();
+
+                    const radius = Math.max(
+                      canvas.width,
+                      canvas.height
+                    );
+
+                    const gradient = context.createRadialGradient(
+                      canvas.width / 2,
+                      canvas.height / 2,
+                      radius * 0.15,
+                      canvas.width / 2,
+                      canvas.height / 2,
+                      radius * 0.7
+                    );
+
+                    gradient.addColorStop(0, "rgba(0,0,0,0)");
+                    gradient.addColorStop(
+                      1,
+                      `rgba(0,0,0,${edit.vignette / 100})`
+                    );
+
+                    context.fillStyle = gradient;
+                    context.fillRect(
+                      0,
+                      0,
+                      canvas.width,
+                      canvas.height
+                    );
+
+                    context.restore();
+                  }
+
+                  // Add text overlay
+                  if (textOverlay.trim()) {
+                    context.save();
+
+                    const fontSize = Math.max(
+                      24,
+                      Math.round(canvas.width * 0.055)
+                    );
+
+                    context.font = `bold ${fontSize}px Arial`;
+                    context.textAlign = "center";
+                    context.textBaseline = "middle";
+                    context.fillStyle = "#ffffff";
+                    context.shadowColor = "rgba(0,0,0,0.8)";
+                    context.shadowBlur = 8;
+
+                    const words = textOverlay.split("\n");
+                    const lineHeight = fontSize * 1.4;
+
+                    words.forEach((line, index) => {
+                      context.fillText(
+                        line,
+                        canvas.width / 2,
+                        canvas.height * 0.85 +
+                          (index - (words.length - 1) / 2) *
+                            lineHeight,
+                        canvas.width * 0.9
+                      );
+                    });
+
+                    context.restore();
+                  }
+
+                  // Add selected stickers
+                  if (stickers.length > 0) {
+                    context.save();
+
+                    const stickerSize = Math.max(
+                      30,
+                      Math.round(canvas.width * 0.09)
+                    );
+
+                    context.font = `${stickerSize}px Arial`;
+                    context.textAlign = "center";
+                    context.textBaseline = "middle";
+
+                    stickers.forEach((sticker, index) => {
+                      const columns = 5;
+                      const column = index % columns;
+                      const row = Math.floor(index / columns);
+
+                      context.fillText(
+                        sticker,
+                        canvas.width * (0.12 + column * 0.17),
+                        canvas.height * (0.12 + row * 0.12)
+                      );
+                    });
+
+                    context.restore();
+                  }
+
+                  const blob = await new Promise<Blob>(
+                    (resolve, reject) => {
+                      canvas.toBlob((result) => {
+                        if (result) {
+                          resolve(result);
+                        } else {
+                          reject(
+                            new Error("Could not create photo file.")
+                          );
+                        }
+                      }, "image/png");
+                    }
+                  );
+
+                  const downloadUrl = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+
+                  link.href = downloadUrl;
+                  link.download = `chitpix-${Date.now()}.png`;
+
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+
+                  URL.revokeObjectURL(downloadUrl);
+
+                  setExportMessage(
+                    "Your edited photo is ready! ❤️"
+                  );
+                } catch (exportError) {
+                  console.error("Photo export error:", exportError);
+
+                  setError(
+                    exportError instanceof Error
+                      ? exportError.message
+                      : "Photo export failed. Please try again."
+                  );
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              className="w-full rounded-2xl bg-gradient-to-r from-fuchsia-600 to-pink-500 py-4 text-lg font-black text-white shadow-lg disabled:opacity-50"
             >
-              {exporting ? "⏳ Preparing Photo..." : "⬇️ Download HD Photo"}
+              {exporting ? "Preparing Photo..." : "⬇️ Download Photo"}
             </button>
 
             <button
               type="button"
               disabled={exporting}
-              onClick={() => exportPhoto(true)}
-              className="mt-3 w-full rounded-xl bg-slate-900 py-4 font-bold text-white disabled:opacity-50"
+              onClick={async () => {
+                if (!image) return;
+
+                try {
+                  setExporting(true);
+                  setExportMessage("");
+                  setError("");
+
+                  const sourceImage = new Image();
+                  sourceImage.src = image;
+
+                  await new Promise<void>((resolve, reject) => {
+                    sourceImage.onload = () => resolve();
+                    sourceImage.onerror = () =>
+                      reject(new Error("Could not load your photo."));
+                  });
+
+                  const canvas = document.createElement("canvas");
+
+                  const sideways =
+                    edit.rotation % 180 !== 0;
+
+                  canvas.width = sideways
+                    ? sourceImage.naturalHeight
+                    : sourceImage.naturalWidth;
+
+                  canvas.height = sideways
+                    ? sourceImage.naturalWidth
+                    : sourceImage.naturalHeight;
+
+                  const context = canvas.getContext("2d");
+
+                  if (!context) {
+                    throw new Error("Photo export is not supported.");
+                  }
+
+                  context.translate(
+                    canvas.width / 2,
+                    canvas.height / 2
+                  );
+
+                  context.rotate(
+                    (edit.rotation * Math.PI) / 180
+                  );
+
+                  context.scale(
+                    (edit.flipH ? -1 : 1) * edit.zoom / 100,
+                    (edit.flipV ? -1 : 1) * edit.zoom / 100
+                  );
+
+                  context.filter = [
+                    selectedFilter,
+                    `brightness(${edit.brightness}%)`,
+                    `contrast(${edit.contrast}%)`,
+                    `saturate(${edit.saturation}%)`,
+                    `blur(${edit.blur}px)`,
+                  ]
+                    .filter((value) => value && value !== "none")
+                    .join(" ");
+
+                  context.drawImage(
+                    sourceImage,
+                    -sourceImage.naturalWidth / 2,
+                    -sourceImage.naturalHeight / 2
+                  );
+
+                  context.restore();
+
+                  const blob = await new Promise<Blob>(
+                    (resolve, reject) => {
+                      canvas.toBlob((result) => {
+                        if (result) resolve(result);
+                        else reject(new Error("Could not prepare photo."));
+                      }, "image/png");
+                    }
+                  );
+
+                  const shareFile = new File(
+                    [blob],
+                    "chitpix-photo.png",
+                    { type: "image/png" }
+                  );
+
+                  if (
+                    navigator.share &&
+                    navigator.canShare?.({ files: [shareFile] })
+                  ) {
+                    await navigator.share({
+                      title: "My ChitPix Photo",
+                      text: "Edited with ChitPix AI Studio ❤️",
+                      files: [shareFile],
+                    });
+
+                    setExportMessage("Photo shared successfully!");
+                  } else {
+                    const shareUrl = URL.createObjectURL(blob);
+                    const link = document.createElement("a");
+
+                    link.href = shareUrl;
+                    link.download = "chitpix-photo.png";
+                    link.click();
+
+                    URL.revokeObjectURL(shareUrl);
+
+                    setExportMessage(
+                      "Sharing is not supported here. Photo downloaded instead."
+                    );
+                  }
+                } catch (shareError) {
+                  if (
+                    shareError instanceof Error &&
+                    shareError.name === "AbortError"
+                  ) {
+                    setExportMessage("Sharing cancelled.");
+                  } else {
+                    console.error("Share error:", shareError);
+                    setError("Unable to share photo. Please download it.");
+                  }
+                } finally {
+                  setExporting(false);
+                }
+              }}
+              className="mt-3 w-full rounded-2xl border border-fuchsia-200 bg-fuchsia-50 py-4 font-bold text-fuchsia-700 disabled:opacity-50"
             >
-              📤 Share Edited Photo
+              {exporting ? "Preparing..." : "📤 Share Photo"}
             </button>
 
             {exportMessage && (
-              <p className="mt-4 rounded-xl bg-fuchsia-50 p-3 text-center text-sm font-semibold text-fuchsia-700">
+              <p className="mt-4 rounded-xl bg-green-50 p-3 text-center text-sm font-semibold text-green-700">
                 {exportMessage}
               </p>
             )}
-
-            <p className="mt-4 text-center text-xs text-slate-400">
-              PNG Format · High Quality · ChitPix Studio
-            </p>
-
           </section>
         )}
 
-        {/* PART 10 CONTINUES BELOW */}
-        
-        {/* PART 10 - FINAL STUDIO */}
-
-        <section className="rounded-3xl bg-white p-4 shadow-sm">
-
-          <h2 className="text-lg font-black">
-            ❤️ ChitPix AI Studio
-          </h2>
-
-          <p className="mt-2 text-sm text-slate-500">
-            Create beautiful photos with ChitPix editing tools.
-          </p>
-
-          {image && (
-            <>
-              <div className="mt-4 rounded-xl bg-green-50 p-3 text-center">
-                <p className="font-bold text-green-700">
-                  ✅ Photo Loaded Successfully
-                </p>
-                <p className="mt-1 truncate text-xs text-slate-500">
-                  {fileName}
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  resetAllEdits();
-                  historyRef.current = [];
-                  futureRef.current = [];
-                  currentSnapshotRef.current = null;
-                  setHistoryCount(0);
-                  setFutureCount(0);
-                  setExportMessage("");
-                  setError("");
-                }}
-                className="mt-4 w-full rounded-xl bg-fuchsia-100 py-3 font-bold text-fuchsia-700"
-              >
-                ↺ Reset Complete Studio
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  removePhoto();
-                  resetAllEdits();
-                  historyRef.current = [];
-                  futureRef.current = [];
-                  currentSnapshotRef.current = null;
-                  setHistoryCount(0);
-                  setFutureCount(0);
-                  setExportMessage("");
-                }}
-                className="mt-3 w-full rounded-xl bg-red-50 py-3 font-bold text-red-600"
-              >
-                🗑️ Remove Photo & Start Again
-              </button>
-            </>
-          )}
-
-          {error && (
-            <p className="mt-4 rounded-xl bg-red-50 p-3 text-center text-sm font-semibold text-red-600">
-              {error}
-            </p>
-          )}
-
-          <div className="mt-5 border-t pt-5 text-center">
-            <h3 className="text-xl font-black text-fuchsia-600">
-              ChitPix ✨
-            </h3>
-
-            <p className="mt-2 text-xs text-slate-500">
-              Create · Edit · Share · Inspire
-            </p>
-
-            <p className="mt-3 text-xs text-slate-400">
-              Made with ❤️ for ChitPix Creators
-            </p>
-          </div>
-
-        </section>
-
+        {/* FOOTER */}
+        <p className="py-4 text-center text-xs text-slate-400">
+          ChitPix AI Studio · Create Your Own Style ❤️
+        </p>
       </div>
     </main>
   );
-  }
-  
+                        }
