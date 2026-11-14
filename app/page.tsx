@@ -256,6 +256,7 @@ function PostCard({
   const router = useRouter()
 
   const [liked, setLiked] = useState(false)
+const [shareCount, setShareCount] = useState(0)
   const [saved, setSaved] = useState(false)
   const [followed, setFollowed] = useState(false)
   const [likes, setLikes] = useState(0)
@@ -314,7 +315,16 @@ useEffect(() => {
       if (!cancelled && !countError) {
         setLikes(count || 0)
       }
+      
+const { count: shares, error: sharesError } = await supabase
+  .from("post_shares")
+  .select("id", { count: "exact", head: true })
+  .eq("post_id", post.id)
 
+if (!cancelled && !sharesError) {
+  setShareCount(shares || 0)
+}
+      
       if (!currentUserId) {
         setLiked(false)
         setSaved(false)
