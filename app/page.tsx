@@ -977,8 +977,8 @@ const handleProfile = () => {
             }`}
             aria-label="Like post"
           >
-            <ChitIcon name="heart" size={30} active={liked} />
-            <span className="text-[18px] font-semibold">
+            <ChitIcon name="heart" size={26} active={liked} />
+            <span className="text-[16px] font-semibold">
               {likes.toLocaleString("en-IN")}
             </span>
           </button>
@@ -990,11 +990,11 @@ const handleProfile = () => {
               setShowComments(true)
               loadComments()
             }}
-            className="flex items-center gap-1.5 text-slate-900"
+            className="flex items-center gap-1 text-slate-900"
             aria-label="Comments"
           >
-            <ChitIcon name="comment" size={30} />
-            <span className="text-[18px] font-semibold">
+            <ChitIcon name="comment" size={26} />
+            <span className="text-[16px] font-semibold">
               {commentCount.toLocaleString("en-IN")}
             </span>
           </button>
@@ -1003,11 +1003,11 @@ const handleProfile = () => {
           <button
             type="button"
             onClick={handleShare}
-            className="flex items-center gap-1.5 text-slate-900"
+            className="flex items-center gap-1 text-slate-900"
             aria-label="Share post"
           >
-            <ChitIcon name="share" size={30} />
-            <span className="text-[18px] font-semibold">
+            <ChitIcon name="share" size={26} />
+            <span className="text-[16px] font-semibold">
               {shareCount.toLocaleString("en-IN")}
             </span>
           </button>
@@ -1019,7 +1019,7 @@ const handleProfile = () => {
             className="text-slate-900"
             aria-label="Send post"
           >
-            <ChitIcon name="send" size={30} />
+            <ChitIcon name="send" size={26} />
           </button>
 
           {/* SAVE */}
@@ -1031,7 +1031,7 @@ const handleProfile = () => {
             }`}
             aria-label="Save post"
           >
-            <ChitIcon name="bookmark" size={30} active={saved} />
+            <ChitIcon name="bookmark" size={26} active={saved} />
           </button>
 
         </div>
