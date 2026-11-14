@@ -2084,7 +2084,10 @@ export default function StoryComposer({
           type="file"
           accept="image/*,video/*"
           className="hidden"
-          onChange={selectFile}
+          onChange={(e) => {
+  const selected = e.target.files?.[0]
+  if (selected) selectFile(selected)
+}}
         />
 
         <input
