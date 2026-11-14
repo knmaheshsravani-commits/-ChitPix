@@ -2063,7 +2063,7 @@ export default function StoryComposer({
         {!file && (
           <div className="mt-4 grid grid-cols-2 gap-3">
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => fileRef.current?.click()}
               className="rounded-xl bg-white/15 p-5"
             >
               📷 Gallery
@@ -2080,7 +2080,7 @@ export default function StoryComposer({
 
         {/* HIDDEN INPUTS */}
         <input
-          ref={fileInputRef}
+          ref={fileRef}
           type="file"
           accept="image/*,video/*"
           className="hidden"
