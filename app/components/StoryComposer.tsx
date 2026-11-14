@@ -2185,7 +2185,7 @@ export default function StoryComposer({
               {textColors.map((color) => (
                 <button
                   key={color}
-                  onClick={() => setSelectedTextColor(color)}
+                  onClick={() => setTextColor(color)}
                   className="h-8 w-8 rounded-full border-2 border-white"
                   style={{ backgroundColor: color }}
                 />
