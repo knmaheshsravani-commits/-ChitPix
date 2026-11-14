@@ -1891,6 +1891,15 @@ console.log("DP DEBUG:", {
             >
               <ChitIcon name="send" size={22} />
             </button>
+            {/* AI PHOTO STUDIO */}
+<button
+  type="button"
+  onClick={() => router.push("/ai-studio")}
+  className="flex h-10 items-center gap-1 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-3 text-xs font-bold text-white shadow-md"
+>
+  <span>✨</span>
+  Studio
+</button>
 
             {/* CREATE POST */}
             <button
