@@ -1414,13 +1414,17 @@ const formattedPosts: Post[] = postRows.map((post: any) => {
       String(post.username || "").toLowerCase()
     )
    
+
 console.log("DP DEBUG:", {
   postUsername: post.username,
   postUserId: post.user_id,
   profileFound: !!profile,
+  profileId: profile?.id,
   profileUsername: profile?.username,
   profileAvatar: profile?.avatar_url,
+  avatarUrl,
 })
+  
   
   const avatarUrl = fixAvatarUrl(
     profile?.avatar_url ||
