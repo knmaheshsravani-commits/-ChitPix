@@ -967,7 +967,7 @@ export default function StoryComposer({
     setRedoHistory((items) => [...items, current])
     setDrawingHistory((items) => items.slice(0, -1))
 
-    const image = new Image()
+    document.createElement("img")
 
     image.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
