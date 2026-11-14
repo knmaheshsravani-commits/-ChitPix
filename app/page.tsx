@@ -679,9 +679,10 @@ useEffect(() => {
         const { error } = await supabase
           .from("comment_likes")
           .insert({
-            comment_id: comment.id,
-            user_id: currentUserId,
-          })
+  comment_id: comment.id,
+  user_id: currentUserId,
+  username: currentUserName || "ChitPix User",
+})
 
         if (error && error.code !== "23505") {
           throw error
