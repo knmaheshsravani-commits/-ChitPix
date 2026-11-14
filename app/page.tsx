@@ -242,12 +242,14 @@ function PostCard({
   post,
   index,
   currentUserId,
+  currentUserName,
   onRefresh,
   galleryRef,
 }: {
   post: Post
   index?: number
   currentUserId: string | null
+  currentUserName: string
   onRefresh: () => void
   galleryRef?: React.RefObject<HTMLInputElement | null>
 }) {
@@ -2025,6 +2027,7 @@ console.log("DP DEBUG:", {
                   post={post}
                   index={index}
                   currentUserId={currentUserId}
+                  currentUserName={currentUserName}
                   onRefresh={refreshFeed}
                   galleryRef={fileInputRef}
                 />
