@@ -829,15 +829,6 @@ const handleProfile = () => {
             <p className="truncate text-xs text-slate-500">
               {post.location || "ChitPix"}
             </p>
-            
-<p className="text-[10px] text-red-500">
-  {!avatarUrl
-    ? "DP URL EMPTY"
-    : avatarFailed
-      ? "DP IMAGE ERROR"
-      : "DP URL FOUND"}
-</p>
-            
           </button>
 
           {!isOwner && (
