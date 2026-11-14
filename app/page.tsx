@@ -972,7 +972,7 @@ const handleProfile = () => {
             type="button"
             onClick={handleLike}
             disabled={busy}
-            className={`flex items-center gap-1.5 ${
+            className={`flex items-center gap-1 ${
               liked ? "text-pink-600" : "text-slate-900"
             }`}
             aria-label="Like post"
