@@ -281,11 +281,21 @@ function PostCard({
   post.avatar_url || post.avatar
 )
 
+
 const [avatarFailed, setAvatarFailed] = useState(false)
+const [avatarLoaded, setAvatarLoaded] = useState(false)
 
 useEffect(() => {
   setAvatarFailed(false)
-}, [avatarUrl])
+  setAvatarLoaded(false)
+
+  console.log("AVATAR CHECK:", {
+    username: post.username,
+    avatarUrl,
+    hasAvatar: !!avatarUrl,
+  })
+}, [avatarUrl, post.username])
+  
   const isOwner =
     !!currentUserId && currentUserId === post.user_id
 
@@ -766,11 +776,23 @@ useEffect(() => {
     }
   }
 
-  const handleProfile = () => {
-    if (post.username) {
-      router.push(`/profile/${encodeURIComponent(post.username)}`)
-    }
-  }
+  
+<img
+  src={avatarUrl}
+  alt={`${post.username || "User"} profile`}
+  className="h-full w-full rounded-full object-cover"
+  loading="eager"
+  onLoad={() => {
+    setAvatarLoaded(true)
+    setAvatarFailed(false)
+    console.log("AVATAR LOADED:", post.username, avatarUrl)
+  }}
+  onError={() => {
+    setAvatarFailed(true)
+    console.error("AVATAR FAILED:", post.username, avatarUrl)
+  }}
+/>
+
 
   return (
     <>
