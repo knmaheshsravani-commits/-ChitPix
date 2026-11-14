@@ -976,7 +976,10 @@ const handleProfile = () => {
             aria-label="Comments"
           >
             <ChitIcon name="comment" size={26} />
-          </button>
+<span className="ml-1 text-sm font-semibold">
+  {commentCount.toLocaleString("en-IN")}
+</span>
+</button>
 
           <button
             type="button"
