@@ -2276,7 +2276,7 @@ export default function StoryComposer({
 >
                 ↷ Rotate
               </button>
-              <button onClick={toggleFlip} className="flex-1 rounded-lg bg-white/10 p-3">
+              <button onClick={flipPhotoHorizontal} className="flex-1 rounded-lg bg-white/10 p-3">
                 Flip
               </button>
             </div>
