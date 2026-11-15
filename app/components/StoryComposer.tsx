@@ -2304,7 +2304,10 @@ export default function StoryComposer({
             <input
               type="file"
               accept="audio/*"
-              onChange={handleMusicSelect}
+              onChange={(e) => {
+  const selected = e.target.files?.[0]
+  if (selected) handleMusicSelect(selected)
+}}
               className="w-full text-sm"
             />
             {musicFile && (
