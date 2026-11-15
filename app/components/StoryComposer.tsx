@@ -2264,10 +2264,10 @@ export default function StoryComposer({
             />
 
             <div className="flex gap-2">
-              <button onClick={rotateLeft} className="flex-1 rounded-lg bg-white/10 p-3">
+              <button onClick={rotateImageLeft}> className="flex-1 rounded-lg bg-white/10 p-3">
                 ↶ Rotate
               </button>
-              <button onClick={rotateRight} className="flex-1 rounded-lg bg-white/10 p-3">
+              <button onClick={rotateImageRight}> className="flex-1 rounded-lg bg-white/10 p-3">
                 ↷ Rotate
               </button>
               <button onClick={toggleFlip} className="flex-1 rounded-lg bg-white/10 p-3">
