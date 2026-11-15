@@ -1639,105 +1639,161 @@ export default function ReelsPage() {
             </div>
 
             {/* COMMENT LIST */}
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-3">
-              {commentsLoading ? (
-                <div className="flex justify-center py-10">
-                  <LoaderCircle className="animate-spin" size={25} />
-                </div>
-              ) : comments.length === 0 ? (
-                <div className="py-12 text-center">
-                  <MessageCircle
-                    size={35}
-                    className="mx-auto mb-3 text-white/40"
-                  />
-                  <p className="font-semibold">No comments yet</p>
-                  <p className="mt-1 text-xs text-white/50">
-                    Be the first to comment!
-                  </p>
-                </div>
-              ) : (
-                [...comments]
-                  .sort((a: any, b: any) => {
-                    if (sortBy === "top") {
-                      return (b.likes || 0) - (a.likes || 0)
-                    }
+<div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-3">
+  {commentsLoading ? (
+    <div className="flex justify-center py-10">
+      <LoaderCircle className="animate-spin" size={25} />
+    </div>
+  ) : comments.length === 0 ? (
+    <div className="py-12 text-center">
+      <MessageCircle
+        size={35}
+        className="mx-auto mb-3 text-white/40"
+      />
+      <p className="font-semibold">No comments yet</p>
+      <p className="mt-1 text-xs text-white/50">
+        Be the first to comment!
+      </p>
+    </div>
+  ) : (
+    comments
+      .filter((comment) => {
+        if (!comment.parent_id) return true
 
-                    return (
-                      new Date(b.time || 0).getTime() -
-                      new Date(a.time || 0).getTime()
+        return !comments.some(
+          (parent) =>
+            String(parent.id) === String(comment.parent_id)
+        )
+      })
+      .sort((a, b) => {
+        if (sortBy === "top") {
+          return b.likes - a.likes
+        }
+
+        return (
+          new Date(b.time).getTime() -
+          new Date(a.time).getTime()
+        )
+      })
+      .map((comment) => {
+        const replies = comments
+          .filter(
+            (item) =>
+              String(item.parent_id) === String(comment.id)
+          )
+          .sort(
+            (a, b) =>
+              new Date(a.time).getTime() -
+              new Date(b.time).getTime()
+          )
+
+        return (
+          <div key={comment.id} className="flex gap-3">
+            <img
+              src={comment.avatar || DEFAULT_AVATAR}
+              alt=""
+              className="h-9 w-9 shrink-0 rounded-full object-cover"
+            />
+
+            <div className="min-w-0 flex-1">
+              {/* MAIN COMMENT */}
+              <div className="rounded-2xl bg-white/[0.06] px-3 py-2">
+                <span className="text-xs font-bold">
+                  {comment.username || comment.user || "User"}
+                </span>
+
+                <p className="mt-1 break-words text-sm text-white/90">
+                  {comment.text}
+                </p>
+              </div>
+
+              <div className="mt-2 flex items-center gap-4 px-2 text-[11px] text-white/50">
+                <span>{comment.time}</span>
+
+                <button onClick={() => toggleCommentLike(comment.id)}>
+                  Like {comment.likes ? `· ${comment.likes}` : ""}
+                </button>
+
+                <button
+                  onClick={() => {
+                    setReplyTo(comment)
+                    setCommentText(
+                      `@${comment.username || comment.user || "user"} `
                     )
-                  })
-                  .map((comment: any) => (
-                    <div key={comment.id} className="flex gap-3">
+                  }}
+                >
+                  Reply
+                </button>
+
+                <button
+                  onClick={() =>
+                    setPinnedId(
+                      String(pinnedId) === String(comment.id)
+                        ? null
+                        : comment.id
+                    )
+                  }
+                >
+                  {String(pinnedId) === String(comment.id)
+                    ? "Unpin"
+                    : "Pin"}
+                </button>
+              </div>
+
+              {/* REPLIES UNDER THIS COMMENT */}
+              {replies.length > 0 && (
+                <div className="ml-3 mt-3 space-y-3 border-l-2 border-white/10 pl-3">
+                  {replies.map((reply) => (
+                    <div key={reply.id} className="flex gap-2">
                       <img
-                        src={comment.avatar || DEFAULT_AVATAR}
+                        src={reply.avatar || DEFAULT_AVATAR}
                         alt=""
-                        className="h-9 w-9 shrink-0 rounded-full object-cover"
+                        className="h-7 w-7 shrink-0 rounded-full object-cover"
                       />
 
                       <div className="min-w-0 flex-1">
-                        <div className="rounded-2xl bg-white/[0.06] px-3 py-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="truncate text-xs font-bold">
-                              {comment.username || comment.user || "User"}
-                            </span>
-
-                            {String(pinnedId) === String(comment.id) && (
-                              <span className="text-[10px] text-yellow-400">
-                                Pinned
-                              </span>
-                            )}
-                          </div>
+                        <div className="rounded-xl bg-white/[0.08] px-3 py-2">
+                          <span className="text-xs font-bold">
+                            {reply.username || reply.user || "User"}
+                          </span>
 
                           <p className="mt-1 break-words text-sm text-white/90">
-                            {comment.text}
+                            {reply.text}
                           </p>
                         </div>
 
-                        <div className="mt-2 flex items-center gap-4 px-2 text-[11px] text-white/50">
-                          <span>{comment.time || " "}</span>
+                        <div className="mt-1 flex items-center gap-3 px-2 text-[10px] text-white/50">
+                          <span>{reply.time}</span>
 
                           <button
-                            onClick={() => toggleCommentLike(comment.id)}
-                            className={
-                              commentLikes[comment.id]
-                                ? "font-bold text-pink-400"
-                                : ""
-                            }
+                            onClick={() => toggleCommentLike(reply.id)}
                           >
-                            Like {comment.likes ? `· ${comment.likes}` : ""}
+                            Like {reply.likes ? `· ${reply.likes}` : ""}
                           </button>
 
                           <button
                             onClick={() => {
                               setReplyTo(comment)
                               setCommentText(
-                                `@${comment.username || comment.user || "user"} `
+                                `@${reply.username || reply.user || "user"} `
                               )
                             }}
                           >
                             Reply
                           </button>
-
-                          <button
-                            onClick={() => {
-                              setPinnedId(
-                                String(pinnedId) === String(comment.id)
-                                  ? null
-                                  : comment.id
-                              )
-                            }}
-                          >
-                            {String(pinnedId) === String(comment.id)
-                              ? "Unpin"
-                              : "Pin"}
-                          </button>
                         </div>
                       </div>
                     </div>
-                  ))
+                  ))}
+                </div>
               )}
             </div>
+          </div>
+        )
+      })
+  )}
+</div>
+                            
 
             {/* PART 6 CONTINUES */}
                           
