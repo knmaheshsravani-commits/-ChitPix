@@ -177,15 +177,10 @@ export async function GET(req: Request) {
           : null
 
         const username =
-          profile?.username ||
-          post.username ||
-          post.user ||
-          const username =
   profile?.username ||
   post.username ||
   post.user ||
-  "ChitPix User"
-          "ChitPix User"
+  "ChitPix User";
 
         const avatar =
           profile?.avatar_url ||
