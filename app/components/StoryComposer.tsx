@@ -2339,24 +2339,34 @@ export default function StoryComposer({
         )}
 
         {selectedTool === "privacy" && (
-          <div className="space-y-3">
-            <label className="flex items-center justify-between rounded-xl bg-white/10 p-3">
-              Hide from selected users
-              <input
-                type="checkbox"
-                checked={hideFromUsers}
-                onChange={(e) => setHideFromUsers(e.target.checked)}
-              />
-            </label>
+  <div className="space-y-3">
 
-            <input
-              value={hiddenUserInput}
-              onChange={(e) => setHiddenUserInput(e.target.value)}
-              placeholder="User name"
-              className="w-full rounded-xl bg-white/10 p-3"
-            />
-          </div>
-        )}
+    <label className="block text-sm text-white">
+      Story Privacy
+    </label>
+
+    <select
+      value={storyPrivacy}
+      onChange={(e) => setStoryPrivacy(e.target.value)}
+      className="w-full rounded-xl bg-white/10 p-3 text-white"
+    >
+      <option value="Everyone">Everyone</option>
+      <option value="Followers">Followers</option>
+      <option value="Close Friends">Close Friends</option>
+      <option value="Only Me">Only Me</option>
+    </select>
+
+    <label className="flex items-center justify-between rounded-xl bg-white/10 p-3 text-white">
+      Allow Replies
+      <input
+        type="checkbox"
+        checked={allowReplies}
+        onChange={(e) => setAllowReplies(e.target.checked)}
+      />
+    </label>
+
+  </div>
+)}
 
         {/* DRAFTS */}
         <button
