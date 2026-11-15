@@ -2326,7 +2326,7 @@ export default function StoryComposer({
               type="file"
               accept="image/*"
               multiple
-              onChange={handleCollageSelect}
+              onChange={(e) => handleCollageSelect(e.target.files)}
               className="w-full text-sm"
             />
             <button
