@@ -118,7 +118,7 @@ export async function GET(req: Request) {
     if (userIds.length > 0) {
       const { data: profiles, error: profileError } = await supabase
         .from("profiles")
-        .select("id, username, avatar_url, email")
+        .select("id, username, avatar_url")
         .in("id", userIds)
 
       if (profileError) {
@@ -180,7 +180,11 @@ export async function GET(req: Request) {
           profile?.username ||
           post.username ||
           post.user ||
-          profile?.email?.split("@")[0] ||
+          const username =
+  profile?.username ||
+  post.username ||
+  post.user ||
+  "ChitPix User"
           "ChitPix User"
 
         const avatar =
