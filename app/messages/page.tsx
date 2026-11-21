@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import BottomNav from '../components/BottomNav'
 import { supabase } from '../../lib/supabase'
-
+import { Room, RoomEvent } from 'livekit-client'
 // ==========================================
 // CHITPIX DM — TYPES
 // ==========================================
@@ -117,7 +117,12 @@ export default function MessagesPage() {
   const [followLoading, setFollowLoading] = useState(false)
   const [onlineUsers, setOnlineUsers] = useState<string[]>([])
   const [typingUsers, setTypingUsers] = useState<string[]>([])
+   // LiveKit audio / video calls
+const callRoomRef = useRef<Room | null>(null)
 
+const [callStatus, setCallStatus] = useState('')
+const [callConnecting, setCallConnecting] = useState(false)
+const [callMode, setCallMode] = useState<'audio' | 'video' | null>(null)
   // ==========================================
   // LOAD USERS
   // ==========================================
@@ -1987,7 +1992,123 @@ export default function MessagesPage() {
   const clearSearch = () => {
     setSearch('')
   }
+  
+const startLiveKitCall = async (
+  mode: 'audio' | 'video'
+) => {
+  if (!activeChat || !myId || callConnecting) return
 
+  if (activeChat.conversation_type === 'group') {
+    setError('Group calls next step lo add cheddam.')
+    return
+  }
+
+  try {
+    setCallConnecting(true)
+    setCallStatus('Connecting...')
+    setError('')
+
+    // Previous room unte disconnect
+    if (callRoomRef.current) {
+      await callRoomRef.current.disconnect()
+      callRoomRef.current = null
+    }
+
+    // Supabase login session
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession()
+
+    if (sessionError || !session?.access_token) {
+      throw new Error('Please login again.')
+    }
+
+    // Secure token API
+    const response = await fetch('/api/call-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        roomName: activeChat.conversation_id,
+      }),
+    })
+
+    const tokenData = await response.json()
+
+    if (!response.ok) {
+      throw new Error(
+        tokenData.error || 'Call token create avvaledu.'
+      )
+    }
+
+    const room = new Room()
+
+    callRoomRef.current = room
+
+    room.on(RoomEvent.Connected, () => {
+      setCallStatus(
+        mode === 'video'
+          ? 'Video call connected'
+          : 'Audio call connected'
+      )
+    })
+
+    room.on(RoomEvent.Disconnected, () => {
+      setCallStatus('Call ended')
+      setCallMode(null)
+    })
+
+    room.on(RoomEvent.ParticipantConnected, () => {
+      setCallStatus('Other user connected')
+    })
+
+    // Connect to LiveKit
+    await room.connect(
+      tokenData.serverUrl,
+      tokenData.token
+    )
+
+    // Microphone on
+    await room.localParticipant.setMicrophoneEnabled(true)
+
+    // Camera on for video
+    if (mode === 'video') {
+      await room.localParticipant.setCameraEnabled(true)
+    }
+
+    setCallMode(mode)
+  } catch (err: any) {
+    console.error('LiveKit call error:', err)
+    setCallStatus('')
+    setCallMode(null)
+    setError(err.message || 'Call connect avvaledu.')
+
+    if (callRoomRef.current) {
+      await callRoomRef.current.disconnect()
+      callRoomRef.current = null
+    }
+  } finally {
+    setCallConnecting(false)
+  }
+}
+
+const endLiveKitCall = async () => {
+  try {
+    if (callRoomRef.current) {
+      await callRoomRef.current.disconnect()
+      callRoomRef.current = null
+    }
+
+    setCallMode(null)
+    setCallStatus('Call ended')
+  } catch (err) {
+    console.error('Call disconnect error:', err)
+  }
+}
+  
   // PART 7 CONTINUES BELOW
 return (
   <main className="min-h-screen bg-white text-gray-900 dark:bg-black dark:text-white">
@@ -2206,6 +2327,25 @@ return (
               </span>
             )}
           </div>
+                )}
+
+      {/* LIVEKIT CALL STATUS */}
+      {callStatus && (
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-gray-800">
+          <p className="text-sm text-green-600">
+            {callStatus}
+          </p>
+
+          {callMode && (
+            <button
+              onClick={endLiveKitCall}
+              className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white"
+            >
+              End call
+            </button>
+          )}
+        </div>
+      )}
 
           {/* MESSAGES */}
           <div className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
