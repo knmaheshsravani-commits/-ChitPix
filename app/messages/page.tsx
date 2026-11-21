@@ -2664,7 +2664,7 @@ return (
                 }}
                 rows={1}
                 placeholder={editingMessage ? "Edit message..." : "Message..."}
-                className="max-h-28 min-h-10 flex-1 resize-none rounded-2xl bg-gray-100 px-4 py-3 text-sm outline-none dark:bg-gray-900"
+                className="max-h-28 min-h-10 w-full flex-1 min-w-0 resize-none rounded-2xl bg-gray-100 px-4 py-3 text-sm outline-none dark:bg-gray-800 dark:text-white"
               />
 
               <button
