@@ -119,7 +119,8 @@ export default function MessagesPage() {
   const [typingUsers, setTypingUsers] = useState<string[]>([])
    // LiveKit audio / video calls
 const callRoomRef = useRef<Room | null>(null)
-
+const localVideoRef = useRef<HTMLDivElement>(null)
+const remoteVideoRef = useRef<HTMLDivElement>(null)
 const [callStatus, setCallStatus] = useState('')
 const [callConnecting, setCallConnecting] = useState(false)
 const [callMode, setCallMode] = useState<'audio' | 'video' | null>(null)
@@ -2559,7 +2560,7 @@ return (
           {/* PART 8 CONTINUES BELOW */}
           
           {/* MESSAGE COMPOSER */}
-          <div className="sticky bottom-0 border-t border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-black">
+          <div className="sticky bottom-[76px] z-40 w-full border-t border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-black">
             {replyMessage && (
               <div className="mb-2 flex items-center justify-between rounded-lg bg-gray-100 p-2 text-sm dark:bg-gray-900">
                 <div className="min-w-0">
