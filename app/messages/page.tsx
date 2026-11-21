@@ -2327,7 +2327,6 @@ return (
               </span>
             )}
           </div>
-                )}
 
       {/* LIVEKIT CALL STATUS */}
       {callStatus && (
