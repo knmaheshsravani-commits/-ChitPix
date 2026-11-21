@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AccessToken } from "livekit-server-sdk";
+import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
 
@@ -9,21 +10,58 @@ export async function POST(req: NextRequest) {
     const LIVEKIT_API_KEY = process.env.LIVEKIT_API_KEY;
     const LIVEKIT_API_SECRET = process.env.LIVEKIT_API_SECRET;
 
-    if (!LIVEKIT_URL || !LIVEKIT_API_KEY || !LIVEKIT_API_SECRET) {
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const SUPABASE_ANON_KEY =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (
+      !LIVEKIT_URL ||
+      !LIVEKIT_API_KEY ||
+      !LIVEKIT_API_SECRET ||
+      !SUPABASE_URL ||
+      !SUPABASE_ANON_KEY
+    ) {
       return NextResponse.json(
-        { error: "LiveKit environment variables missing" },
+        { error: "Server environment variables missing" },
         { status: 500 }
       );
     }
 
-    const body = await req.json();
+    const authHeader = req.headers.get("authorization");
+    const accessToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : null;
 
-    const username = String(body.username || "").trim();
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: "Login required" },
+        { status: 401 }
+      );
+    }
+
+    const supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(accessToken);
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Invalid login session" },
+        { status: 401 }
+      );
+    }
+
+    const body = await req.json();
     const roomName = String(body.roomName || "").trim();
 
-    if (!username || !roomName) {
+    if (!roomName) {
       return NextResponse.json(
-        { error: "username and roomName are required" },
+        { error: "roomName is required" },
         { status: 400 }
       );
     }
@@ -32,7 +70,7 @@ export async function POST(req: NextRequest) {
       LIVEKIT_API_KEY,
       LIVEKIT_API_SECRET,
       {
-        identity: username,
+        identity: user.id,
         ttl: "1h",
       }
     );
