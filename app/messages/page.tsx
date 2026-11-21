@@ -2321,6 +2321,27 @@ return (
               <p className="truncate font-semibold">{activeChatTitle}</p>
               <p className="text-xs text-gray-500">{activeChatStatus}</p>
             </div>
+                        {/* AUDIO CALL */}
+            <button
+              onClick={() => startLiveKitCall('audio')}
+              disabled={callConnecting || isGroupChat}
+              className="rounded-full p-2 text-xl hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-gray-800"
+              aria-label="Audio call"
+              title="Audio call"
+            >
+              📞
+            </button>
+
+            {/* VIDEO CALL */}
+            <button
+              onClick={() => startLiveKitCall('video')}
+              disabled={callConnecting || isGroupChat}
+              className="rounded-full p-2 text-xl hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-gray-800"
+              aria-label="Video call"
+              title="Video call"
+            >
+              📹
+            </button>
             {isGroupChat && (
               <span className="text-xs text-gray-500">
                 {activeChat.memberCount} members
